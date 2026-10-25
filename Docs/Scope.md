@@ -13,7 +13,7 @@
 
 ## Must ship (v1.0)
 - **Combat:** turn order (player first), crew HP/MP, ship HP; attack / ability / item / cannon actions; win by sinking the ship or killing the crew; lose the same ways; plunder on crew wipe
-- **Run loop:** 3 captains (1 unique ability each), 7-8 node map following the node rules, shop, ~10-12 events (60/40 good/bad)
+- **Run loop:** 3 captains (2 combat abilities + 1 run rule each), 8-9 node map (excluding boss, 5 fights guaranteed) following the node rules, shop, ~10-12 events (60/40 good/bad)
 - **Content:** 4-5 enemy crews, ~12 crew abilities, 2 items (health / mana restore), Kraken (both phases + tentacle targeting)
 - **Shell:** main menu, settings, pause, run summary. No mid-run saves (runs are ~30 min)
 - **Presentation:** Synty Pirate + VFX art, readable combat UI, hit/cannon VFX, audio
