@@ -27,7 +27,7 @@
 | `ADwMenuGameMode : AGameModeBase` | Core/ | gameplay-engineer | Menu level: shows the main menu via the UI manager, ends any stale run |
 | `ADwGameMode : AGameModeBase` | Core/ | gameplay-engineer | `L_Sea`: binds `UDwRun::OnPhaseChanged`, starts/ends encounters, positions the camera rig for map vs combat, handles dev quick-launch (`UDwDevSettings`, PIE only) |
 | `UDwRunSubsystem` | Run/ | gameplay-engineer | `StartRun` (then `OpenLevel(L_Sea)`), `EndRun` (summary data kept until the summary closes), `AbandonRun` |
-| `UDwGameUserSettings : UGameUserSettings` | Shell/ | gameplay-engineer | Volumes (Master, Music, SFX, UI), `GameSpeed` (presentation playback rate), `bScreenShake`, display settings inherited; `ApplyAudio()`, `ApplyPresentation()` |
+| `UDwGameUserSettings : UGameUserSettings` | Shell/ | gameplay-engineer | Volumes (Master, Music, SFX, UI), `GameSpeed` (`EDwGameSpeed`: `Normal` 1x, `Fast` 1.5x, `Fastest` 2x - presentation playback rate only, never rules, U1), `bScreenShake`, `HighlightPalette` (`Default`, `ColorblindSafe`, U3), display settings inherited (resolution, window mode, vsync); `ApplyAudio()`, `ApplyPresentation()` |
 | Screens (`WBP_MainMenu`, `WBP_CaptainSelect`, `WBP_Settings`, `WBP_Pause`, `WBP_Confirm`, `WBP_RunSummary`) and their view models | UI/ | ui-engineer | Layout and intents only |
 
 - `Config/DefaultEngine.ini`: `GameUserSettingsClassName=/Script/DeadwaterRun.DwGameUserSettings`, `GameViewportClientClassName=/Script/CommonUI.CommonGameViewportClient`, default maps.
@@ -35,8 +35,9 @@
 ## Flows
 - **New run:** Main menu -> Captain select -> Set Sail -> `UDwRunSubsystem::StartRun(Captain, Seed)` -> `OpenLevel(L_Sea)` -> map.
 - **Pause:** `IA_Pause` -> `WBP_Pause` on `UI.Layer.GameMenu` -> `SetGamePaused(true)`. Turn logic is event-driven, so pausing only freezes presentation. Options: Resume, Settings, Abandon Run (confirm), Quit to Desktop (confirm, run lost).
-- **Abandon:** `UDwRun::Abandon()` -> stats finalised -> `WBP_RunSummary` (defeat style, "Abandoned").
-- **End of run:** Victory (Kraken) or Defeat -> run summary (`FDwRunStats`: captain, seed, nodes cleared, fights by outcome - sunk/plundered/surrendered, gold earned and spent, crew lost and where, kills, time) -> Main menu or New run (U4 decides the exact fields).
+- **Settings list (U3, decided):** resolution, window mode, vsync, 4 volumes, game speed (1x/1.5x/2x), screen shake, colourblind-friendly highlights.
+- **Abandon (U5, decided):** `UDwRun::Abandon()` -> stats finalised -> `WBP_RunSummary` (defeat style, "Abandoned").
+- **End of run:** Victory (Kraken) or Defeat (ship sunk, crew dead, or captain dead) -> run summary -> Main menu or New run. Summary fields (U4, decided): captain, seed, nodes cleared, fights by outcome (sunk/plundered/surrendered), gold, crew lost, kills, time - all from `FDwRunStats`, plus the end reason as the headline.
 - **Quit or crash mid-run:** run is gone by design; nothing to clean up because nothing was saved.
 
 ## Connections
@@ -52,7 +53,7 @@
 4. DW-216 (gameplay-engineer): `UDwGameUserSettings` + apply functions; settings view model reads/writes it.
 
 ## How it's tested
-- Test (`DeadwaterRun.Shell.*`): settings round-trip to ini; `ApplyAudio` sets each class override; abandon produces summary stats.
+- Test (`DeadwaterRun.Shell.*`): settings round-trip to ini (including game speed and highlight palette); `ApplyPresentation` sets the playback rate to 1.0/1.5/2.0; a seeded fight gives the same `FDwCombatResult` at every game speed; `ApplyAudio` sets each class override; abandon produces summary stats.
 - QA: start -> abandon -> new run starts clean (gold, crew, map reset); quit from pause; settings persist across restarts; Esc behaviour on every screen.
 
 ## What the player sees

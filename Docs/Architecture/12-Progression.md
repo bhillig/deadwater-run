@@ -28,7 +28,7 @@
 - Multipliers come from `FDwCaptainRules::GetXpMultiplier` and `GetLevelThresholdMultiplier` (Veteran Crew).
 
 ## Flow
-- During combat: kills are recorded in `FDwCombatResult` (killer roster id -> victim XP); no mid-fight level-ups (recommended, P3).
+- During combat: kills are recorded in `FDwCombatResult` (killer roster id -> victim XP); no mid-fight level-ups (recommended, P3). Kill credit rules (C11, decided): a damage-over-time kill credits the GE's instigator (the caster); units killed by a ship sinking give no kill XP to anyone.
 - After victory (`UDwRun::ApplyCombatResult`): kill XP to each killer, clear XP to every living crew member, each level gained pushes an `FDwPendingLevelUp` (crew id, new level, stat delta, perk choices rolled now with `ForRewards` so they are stable).
 - `Rewards` -> `LevelUp` screens, one per pending level-up -> `ChoosePerk(CrewId, PerkId)` -> next or `Map`.
 - Events that grant XP use the same path.

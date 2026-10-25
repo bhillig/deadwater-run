@@ -33,7 +33,7 @@ Moves (BP subclasses of `UDwGA_EffectPayload`, numbers in `DT_AbilityTuning`):
 | `GA_Kraken_KrankySwipe` | `AllEnemies` from the Kraken's view (ship included pending B8) | `GE_Damage` 20 |
 | `GA_Kraken_TentacleGrab` | `SingleUnit` | `GE_Rooted` 1 turn |
 | `GA_Kraken_ArmsOfFury` | `RandomEnemies`, hits 3-5 from tuning | `GE_Damage` 40 per hit |
-| `GA_Kraken_EyesOfTheSea` | `Self` | `GE_KrakenExtraAction`: +1 `MaxActionPoints` next turn (turn duration 1, tick `OwnerSideTurnEnd`) |
+| `GA_Kraken_EyesOfTheSea` | `Self` | `GE_KrakenExtraAction`: +1 `MaxActionPoints` next turn (turn duration 1, tick `OwnerSideTurnEnd`; applied on its own turn, so the same-turn skip rule in `02-GAS-Foundation.md` keeps it alive for the next turn) |
 
 ## Behaviour
 
@@ -43,6 +43,8 @@ Moves (BP subclasses of `UDwGA_EffectPayload`, numbers in `DT_AbilityTuning`):
 - Move choice: weighted pick from the phase's move list using the combat random stream, then a target with `FDwAiScoring` (lowest Health, clustered crew for Swipe, ship when it's low).
 - Intents: at combat start (for its first turn) and at the end of each of its turns the brain calls `DeclareIntent` for next turn's moves; `UDwCombatSubsystem` stores them and emits `IntentDeclared`. On its turn the Kraken executes stored intents, re-targeting only if the target died or left range. UI shows intents above the Kraken and danger highlights on target tiles (B6 decides how much is shown).
 - Tentacles never act on their own; they are targets with Health. A dead tentacle frees its slot (regrow per tuning).
+- Tentacle kills don't count for the Conqueror's kill bonus (K3: `KillBonusIgnoredUnitTags = Unit.Kraken.Tentacle`). Kill XP for a tentacle is its `DT_UnitTuning.XpOnKill` row (placeholder 0 until P1).
+- Captain death = defeat applies here too (C10): Tentacle Slam and Arms of Fury on the captain can end the run, so the intent display (B6) matters even more.
 
 Arena build: `FDwBoardBuilder::BuildKrakenArena(PlayerDeck, Arena)`; encounter kind `Kraken` sets the outcome config to `VictoryBoss` on body death (tentacles don't need to die) and disables the enemy-ship rules.
 

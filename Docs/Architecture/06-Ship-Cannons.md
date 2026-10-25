@@ -5,6 +5,11 @@
 - Firing a cannon is a crew action; crews can't use the other side's cannons.
 - Sinking the enemy ship wins the fight (1x loot) and kills everyone on it - including player boarders. Losing your ship loses the run.
 
+### Decided by Brandon (2026-10-25)
+- C7: the crew member must stand on or 4-way next to one of their own ship's cannon tiles; firing uses their action; each cannon fires at most once per side turn; cannons hit the enemy ship only (never crew on deck).
+- C8: crew attacks never damage the ship. Ship damage comes only from cannons, explosive barrels and specific abilities whose pattern targets a ship (`EnemyShip`, `SingleUnitOrShip`). Explosive barrels are new and not in `DeadwaterRun.md` or Scope - see Open-Questions C8a before anyone builds them.
+- C11/C12: sinking gives no kill XP; if the sinking kills your last crew (or your captain), you lose.
+
 ## Decisions
 | Option | Verdict |
 |---|---|
@@ -27,9 +32,10 @@
 `DT_ShipTuning` rows: `PlayerShip` (MaxHealth 250, CannonDamage 70), one row per enemy ship.
 
 `UDwGA_FireCannon : UDwGA_EffectPayload` (Abilities/)
-- Requires the source unit on (or adjacent to, pending Open-Questions C7 - a `FDwTargetingRules` flag) a `Tile.Cannon` tile whose `Owner` equals the unit's side - this is "player crew cannot use enemy cannons".
-- Each cannon tile fires at most once per side turn (tracked by `UDwCombatSubsystem::CannonsUsedThisTurn`, cleared at side-turn start) - pending C7.
-- Target pattern `EnemyShip` (or `Unit.Kraken.Body` in the Kraken fight, pending B4). Damage = firing ship's `CannonDamage` through `GE_Damage`.
+- Requires the source unit on or 4-way adjacent to an unused `Tile.Cannon` tile whose `Owner` equals the unit's side - this is "player crew cannot use enemy cannons". Pure helper: `FDwCannonRules::FindUsableCannon(Grid, UnitTile, Side, UsedCannons) -> TOptional<FIntPoint>`; if more than one qualifies it picks the unit's own tile first, then the lowest board index (all cannons on a ship deal the same damage, so the choice never matters to the outcome and the player never has to pick).
+- Each cannon tile fires at most once per side turn (tracked by `UDwCombatSubsystem::CannonsUsedThisTurn`, cleared at side-turn start). Costs 1 `ActionPoints`; a unit with no action left can't fire.
+- Target pattern `EnemyShip` only (or `Unit.Kraken.Body` in the Kraken fight, pending B4). Damage = firing ship's `CannonDamage` through `GE_Damage`.
+- `GatherValidTargets` returns nothing when no usable cannon is in reach, so the action bar shows "Stand next to a cannon" as the disabled reason.
 - Cues: `GameplayCue.Cannon.Fire` on the source cannon tile, `GameplayCue.Cannon.Impact` on the target ship.
 
 ## Flow
@@ -76,8 +82,9 @@ sequenceDiagram
 4. DW-204: repair and upgrade purchases; DW-304: upgrade content once P9 is answered.
 
 ## How it's tested
-- Test world: firing from an own cannon tile damages the enemy ship by `CannonDamage`; firing from the enemy's cannon tile is rejected; the same cannon can't fire twice in one side turn; sinking kills enemy-side units and player boarders standing on enemy tiles and gives no kill XP; player ship at 0 -> `DefeatShipSunk`.
+- Pure: `FDwCannonRules::FindUsableCannon` - on the tile, next to it (4-way), diagonal (rejected), enemy cannon (rejected), used cannon (rejected), two in reach (own tile wins).
+- Test world: firing from or next to an own cannon tile damages the enemy ship by `CannonDamage` and spends the action; firing from the enemy's cannon tile is rejected; melee and ranged attacks can't target the ship; the same cannon can't fire twice in one side turn; sinking kills enemy-side units and player boarders standing on enemy tiles and gives no kill XP; player ship at 0 -> `DefeatShipSunk`.
 - Pure: repair never exceeds max; upgrade GE stacking.
 
 ## What the player sees
-- Two ships with big, readable health bars. A pirate walks to a cannon, fires, the shot booms across, the enemy hull splinters and the bar drops 70. When the enemy ship goes down, anyone still aboard goes down with it - so boarding is a gamble.
+- Two ships with big, readable health bars. A pirate walks up to a cannon (each cannon fires once a turn, so two gunners matter), fires, the shot booms across, the enemy hull splinters and the bar drops 70. When the enemy ship goes down, anyone still aboard goes down with it - so boarding is a gamble.

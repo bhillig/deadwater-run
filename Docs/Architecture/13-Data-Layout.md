@@ -68,13 +68,15 @@ All derive from `UDwDefinitionBase : UPrimaryDataAsset` (Core/), which provides 
 | `DT_AbilityTuning` | `FDwAbilityTuningRow` | ability id | ManaCost, Damage, DamageScale, Heal, Fear, Range, MinHits, MaxHits, DurationTurns, ShopPrice |
 | `DT_ItemTuning` | `FDwItemTuningRow` | item id | Price, Amount, Range |
 | `DT_PerkTuning` | `FDwPerkTuningRow` | perk id | Value, Value2 |
-| `DT_CaptainTuning` | `FDwCaptainTuningRow` | captain id | XpMultiplier, LevelThresholdMultiplier, FearPerSurrender, StartingFearCap, KillBonusPerKill, KillBonusCap, SynergyDamageMultiplier |
+| `DT_CaptainTuning` | `FDwCaptainTuningRow` | captain id | XpMultiplier, LevelThresholdMultiplier, FearPerSurrender, StartingFearCap, KillBonusPerKill, KillBonusCap, SynergyDamageMultiplier (Team Leader passive, K4) |
 | `DT_ShipTuning` | `FDwShipTuningRow` | ship id | MaxHealth, CannonDamage |
 | `DT_EncounterTuning` | `FDwEncounterTuningRow` | encounter id | BaseGold, ClearXp |
 | `DT_EconomyTuning` | `FDwEconomyTuningRow` | `Default` | Starting gold, multipliers, prices, shop counts, MaxCrew |
 | `DT_ProgressionTuning` | `FDwProgressionTuningRow` | level | XpToNext |
-| `DT_RunTuning` | `FDwRunTuningRow` | `Default` | GoodEventChance, PerkChoices, MaxLevel, MaxAbilitySlots, bRefillManaOnFightStart, ManaRegenPerTurn |
-| `DT_CombatTuning` | `FDwCombatTuningRow` | `Default` | Grid rules (`04`), MaxFear, FearCowerPolicy, outcome toggles |
+| `DT_RunTuning` | `FDwRunTuningRow` | `Default` | GoodEventChance, PerkChoices, MaxLevel, MaxAbilitySlots |
+| `DT_CombatTuning` | `FDwCombatTuningRow` | `Default` | Grid numbers (`04`: BoardingMoveCost, ClimbMoveCost, RangeBonusPerElevation), MaxFear, FearCowerPolicy |
+
+- Changed 2026-10-25: `bRefillManaOnFightStart`, `ManaRegenPerTurn`, the grid rule flags and the outcome toggles are gone - Brandon answered C1-C4, C9, C10 and C12, so those rules are fixed code, not tuning. Only numbers a balance pass would change stay in tables.
 | `DT_KrakenTuning` | `FDwKrakenTuningRow` | Kraken id | TentacleCount, TentacleHealth, actions per phase, tentacle scaling |
 | `DT_AiTuning` | `FDwAiTuningRow` (owner ai-engineer) | profile id | Weights, Temperature, MaxMoveCandidates |
 

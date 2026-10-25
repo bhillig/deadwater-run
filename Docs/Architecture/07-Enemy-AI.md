@@ -68,7 +68,8 @@ classDiagram
   2. For each move tile (plus "stay"), each usable ability (cost affordable, not blocked), each valid target (`UDwGameplayAbility::GatherValidTargets` on the CDO with a hypothetical source tile), compute `PreviewOutcome` (pure, uses `FDwDamageRules`).
   3. Score with `FDwAiScoring` and the profile weights; pick the max; ties and `Temperature` resolved with the combat random stream.
   4. Emit `Move` first (if the tile differs), then the `Ability` command on the next call, then `EndUnit`.
-- `FDwAiScoring` (pure) terms: expected unit damage, kill bonus, ship damage (cannons), healing/cleansing value, Fear and status value, danger at the destination (threat from player units next turn), boarding preference, sinking-risk avoidance (don't stand on a ship about to sink), focus on low-Health targets, MP conservation.
+- `FDwAiScoring` (pure) terms: expected unit damage, kill bonus, ship damage (cannons), healing/cleansing value, Fear and status value, danger at the destination (threat from player units next turn), boarding preference, sinking-risk avoidance (don't stand on a ship about to sink), focus on low-Health targets, MP conservation, captain pressure (damage to the player captain, since captain death = defeat, C10 - weighted per profile so not every crew hunts the captain; the default weight is a balance call, see Open-Questions C10b).
+- Candidate moves respect the board rules: 4-way, one move per turn, pass through allies (C1-C3). Because the move is single, the brain picks one destination per turn and never plans a second step after acting.
 - `UDwAiProfile : UDwDefinitionBase` - `FDwAiWeights` (one float per term), `Temperature`, `MaxMoveCandidates`, `bPreferCannons`, `bBoarders`; numbers come from `DT_AiTuning` rows so the Balance Designer tunes them in JSON. Each `UDwEncounterDefinition` (crew) and each enemy slot can reference a profile - this is how 4-5 crews get distinct personalities (e.g. "gunners" vs "boarders"; the actual personalities are Brandon's call, Open-Questions N2).
 - `FDwAiIntent` - `AbilityTag`, target, `bTelegraph`. Crews may declare intents (optional); the Kraken always does.
 
@@ -99,7 +100,7 @@ classDiagram
 4. DW-305 support: profiles for each enemy crew once compositions are answered.
 
 ## How it's tested (`DeadwaterRun.AI.*`)
-- Pure scenarios built from hand-made snapshots: finishes a low-Health target when able; fires a cannon when the player ship is nearly sunk and the profile prefers cannons; doesn't board a ship about to sink; doesn't move into a tile threatened by three player units when an equal option is safe; uses a heal on a wounded ally.
+- Pure scenarios built from hand-made snapshots: finishes a low-Health target when able; kills the player captain when it can (it wins the fight); fires a cannon when the player ship is nearly sunk and the profile prefers cannons; doesn't board a ship about to sink; doesn't move into a tile threatened by three player units when an equal option is safe; uses a heal on a wounded ally.
 - Determinism: 1,000 seeded calls on the same snapshot give the same command.
 - Performance: a full enemy turn plans in under 5 ms on a 12x24 board (simulator budget).
 - Simulator: enemy crews each produce a different "where runs die" profile.

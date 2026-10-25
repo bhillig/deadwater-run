@@ -279,8 +279,8 @@ sequenceDiagram
         Combat->>Combat: Detected after the command resolves
     end
     Combat->>Rules: Evaluate(snapshot, outcome config)
-    Rules-->>Combat: VictorySunk or VictoryCrewDefeated or VictorySurrender or Defeat
-    Combat->>Combat: Stop turn manager, build FDwCombatResult (survivor HP and MP, deaths, kills, rounds)
+    Rules-->>Combat: VictorySunk or VictoryCrewDefeated or VictorySurrender or Defeat (ship sunk, crew dead, captain dead)
+    Combat->>Combat: Stop turn manager, build FDwCombatResult (survivor HP, deaths, kills, rounds; MP refills next fight)
     Combat-->>Run: OnCombatEnded(Result)
     alt Defeat
         Run->>Run: Phase = Defeat
@@ -445,6 +445,7 @@ Folders are under `Source/DeadwaterRun/` unless noted. "Content" means `Content/
 | Niagara systems, `GC_*` cue notify assets | Content `VFX/` | gameplay-engineer | 15 |
 | `GA_*` / `GE_*` Blueprints, `BP_Unit_*`, `BP_Ship_*`, input assets, `L_MainMenu`, `L_Sea`, definition assets in Content `Data/` | Content | gameplay-engineer (art integration pending Open-Questions O1) | 02, 13, 16 |
 | `UDwGameUserSettings` | `Shell/` | gameplay-engineer | 16 |
+| `UDwHighlightPalette` (class, `Presentation/`, gameplay-engineer); `DA_HighlightPalette_*` colours (Content `UI/`, ui-engineer, Brandon signs off) | `Presentation/`, Content `UI/` | gameplay-engineer / ui-engineer | 14, 04 |
 | `UDwUIManagerSubsystem`, `UDwPrimaryLayoutWidget`, `UDwActivatableScreen`, `UDwUserWidget`, `UDwViewModelBase` + all view models, `UDwUIScreenSet`, `UDwFloatingTextManager`, `UDwUISoundMap` (class) | `UI/` | ui-engineer | 14 |
 | `WBP_*` widgets, fonts, UI textures | Content `UI/` | ui-engineer | 14 |
 | Widget animations, `DA_UISoundMap` contents | Content `UI/` | ui-juice-engineer | 14 |
@@ -486,7 +487,7 @@ Ticket IDs are defined in `Roadmap.md`.
 | Upgrade crew with new abilities | 10, 12 | DW-203, DW-204 |
 | Crews spawn on own ships, ships adjacent, boarding | 04 | DW-102, DW-103 |
 | No using the other side's cannons | 06 | DW-104 |
-| Move and action in any order, skip allowed | 02, 03 | DW-101, DW-103, DW-104 |
+| Move and action in any order, skip allowed (one move per turn, C3) | 02, 03 | DW-101, DW-103, DW-104 |
 | 5 move spaces per turn unless specified | 02, 04 | DW-101, DW-102 |
 | Sniper's nest (elevated, LOS, range, hiding) | 04 | DW-102 |
 | Crew on enemy ship die when it sinks | 06, 03 | DW-103 |
@@ -499,7 +500,7 @@ Ticket IDs are defined in `Roadmap.md`.
 | 2-3 next choices, forward only, visited marked | 09, 14 | DW-202, DW-211 |
 | Player always starts first | 03 | DW-103 |
 | Actions: attack, ability (MP), item, cannon | 02, 06 | DW-104 |
-| Win by sinking or crew wipe, lose the same ways | 03 | DW-103 |
+| Win by sinking or crew wipe; lose on crew wipe, ship sunk or captain death (C10) | 03 | DW-103 |
 | Plunder on crew wipe (gold and/or random item) | 10 | DW-203 |
 | Shop: repair 100g, abilities 50g, items 30g | 10 | DW-204 |
 | Kraken: tentacle targeting reduces actions or damage | 08 | DW-301, DW-302 |

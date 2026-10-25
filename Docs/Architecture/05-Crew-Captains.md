@@ -44,25 +44,29 @@
 | `FGameplayTagContainer RuleTags` | `Rule.Captain.*` |
 | `TArray<TSubclassOf<UGameplayEffect>> CaptainCombatEffects` | Applied to the captain at spawn (e.g. extra action) |
 | `TArray<TSubclassOf<UGameplayEffect>> CrewCombatEffects` | Applied to non-captain crew at spawn (e.g. grant `Rule.Turn.SingleChoice`) |
-| `FGameplayTagContainer AllowedWeaponTags` | Empty = any; Conqueror = `Ability.Weapon.Sword` |
+| `FGameplayTagContainer BlockedAbilityTags` | Abilities the captain can never learn. Empty = none; Conqueror = `Ability.Weapon.Firearm` (K2) |
+| `FGameplayTagContainer KillBonusIgnoredUnitTags` | Victims that don't count for the kill bonus; Conqueror = `Unit.Kraken.Tentacle` (K3) |
 | `FDataTableRowHandle Tuning` | `DT_CaptainTuning`: XpMultiplier, LevelThresholdMultiplier, FearPerSurrender, StartingFearCap, KillBonusPerKill, KillBonusCap, SynergyDamageMultiplier |
 
-Run-side crew (`Run/`, see `09-Run-Map.md`): `FDwCrewMemberState` - `FGuid Id`, `FPrimaryAssetId UnitDefinition`, `bIsCaptain`, `Level`, `Xp`, `Health`, `Mana`, `TArray<FPrimaryAssetId> Abilities`, `TArray<FPrimaryAssetId> Perks`, `bAlive`. Max crew 4 including the captain (`DT_EconomyTuning.MaxCrew`). Dead crew stay in the array with `bAlive=false` for the run summary.
+Changed 2026-10-25: `AllowedWeaponTags` (an allow-list) became `BlockedAbilityTags` (a block-list) because Brandon's K2 answer is "can't learn firearm abilities" - abilities with no weapon tag (items, cannons, utility abilities) stay allowed without tagging every one of them.
+
+Run-side crew (`Run/`, see `09-Run-Map.md`): `FDwCrewMemberState` - `FGuid Id`, `FPrimaryAssetId UnitDefinition`, `bIsCaptain`, `Level`, `Xp`, `Health` (no `Mana`: MP refills every fight, C9), `TArray<FPrimaryAssetId> Abilities`, `TArray<FPrimaryAssetId> Perks`, `bAlive`. Max crew 4 including the captain (`DT_EconomyTuning.MaxCrew`). Dead crew stay in the array with `bAlive=false` for the run summary.
 
 ## Spawn and write-back
 1. `UDwRun::BuildEncounterSetup` copies living crew, captain definition, counters.
-2. `UDwCombatSubsystem` spawns each crew member's `UnitClass` on a `Tile.Spawn.Player` tile, applies `GE_InitUnitStats` (base + level gains from tuning, current Health/Mana from run state), grants the basic attack, learned abilities, captain abilities (captain only), `Ability.Move`, `Ability.Item`, `Ability.Cannon`; applies perk GEs, `CaptainCombatEffects`/`CrewCombatEffects`, and the Conqueror bonus GE.
-3. At fight end, `FDwCombatResult` returns Health/Mana per survivor and the dead list; `UDwRun::ApplyCombatResult` writes them back. Permadeath = `bAlive=false`, never revived.
+2. `UDwCombatSubsystem` spawns each crew member's `UnitClass` on a `Tile.Spawn.Player` tile, applies `GE_InitUnitStats` (base + level gains from tuning, current Health from run state, Mana = MaxMana), grants the basic attack, learned abilities, captain abilities (captain only), `Ability.Move`, `Ability.Item`, `Ability.Cannon`; applies perk GEs, `CaptainCombatEffects`/`CrewCombatEffects`, and the Conqueror bonus GE.
+3. At fight end, `FDwCombatResult` returns Health per survivor and the dead list; `UDwRun::ApplyCombatResult` writes them back. Permadeath = `bAlive=false`, never revived.
+4. Captain death = defeat (C10). In combat it is outcome `DefeatCaptainDead` (`03-Combat-Turns.md`). The captain is never disbanded and never removed by `UDwEventOutcome_LoseCrew`; whether event damage can kill anyone is C10a.
 
 ## The three captains
 
 | Captain | Combat rule | How it's built | Abilities (BP subclasses, numbers in `DT_AbilityTuning`) | Run rule |
 |---|---|---|---|---|
-| Team Leader | Synergy moves when adjacent | `Rule.Captain.Synergy`: after every move the subsystem sets `State.Synergy.Adjacent` on crew with an adjacent ally; synergy is applied by data per Open-Questions K4 | Rally Cry: `UDwGA_EffectPayload`, `AllAllies`, `GE_Heal` (15) then `GE_Cleanse`. Grapple Hook: `UDwGA_Grapple`, range 10, LOS, unit target of either side | Veteran Crew: `Rule.Captain.VeteranCrew`, `XpMultiplier` and/or `LevelThresholdMultiplier` (K7) |
-| Team Leader | Defend crew | `Rule.Captain.Defend` grants `GA_Defend` (payload: `GE_Guarded` on an adjacent ally, instigator = captain); `UDwGameplayAbility::ResolveTargets` redirects single-target hits on a guarded unit to its guardian (K5) | | |
+| Team Leader | Synergy moves when adjacent | K4 decided: a passive - attacking while 4-way adjacent to an ally deals `SynergyDamageMultiplier` damage (X% is balance, K13). Built as a situational multiplier in `FDwDamageRules` via `FDwSynergyRules::IsActive` (`02-GAS-Foundation.md`); after every resolved command the subsystem also sets `State.Synergy.Adjacent` on crew with an adjacent ally, for the UI indicator only. No synergy abilities, no per-pair content. Scope details are K4a | Rally Cry: `UDwGA_EffectPayload`, `AllAllies`, `GE_Heal` (15) then `GE_Cleanse`. Grapple Hook: `UDwGA_Grapple`, range 10, LOS, unit target of either side | Veteran Crew: `Rule.Captain.VeteranCrew`, `XpMultiplier` and/or `LevelThresholdMultiplier` (K7) |
+| Team Leader | Defend crew | `Rule.Captain.Defend` grants `GA_Defend` (payload: `GE_Guarded` on an adjacent ally, instigator = captain); `UDwGameplayAbility::ResolveTargets` redirects single-target hits on a guarded unit to its guardian (K5, open; now that captain death = defeat, Defend puts the run on the line - Brandon should weigh that in K5) | | |
 | Fearmongerer | Fear, cower at 3, surrender | Fear attribute + `MaxFear` (3); cower check in turn manager; `Rule.Captain.Surrender` enables outcome rule 6 | Smoke and Fire: payload `AllEnemies`: `GE_Damage` with `RequiredTargetTags=Status.Afraid`, then `GE_AddFear` 1. Six Pistols: payload `RandomEnemies`, hits 6, 15 damage | Dread Reputation: `Rule.Captain.DreadReputation`, starting Fear = min(SurrenderWins x FearPerSurrender, StartingFearCap) via `GE_AddFear` at spawn (K9) |
-| The Conqueror | Extra move, much stronger | Captain unit tuning row (higher stats) + `CaptainCombatEffects` (`GE_ConquerorExtraMove`: +1 `MaxActionPoints` or + `MoveRange`, K1) | Charge: `UDwGA_Charge`, up to 6 tiles, first enemy hit. Eye of the Tiger: payload `SingleUnit`, `bIgnoreRange`, no LOS, `GE_Frozen` 1 turn | Kill bonus: `Rule.Captain.KillBonus`, +1% per own kill up to 20% |
-| The Conqueror | Sword only | `AllowedWeaponTags = Ability.Weapon.Sword`: shop/loot never offer him abilities with other weapon tags; basic attack is a sword (K2) | | |
+| The Conqueror | Extra move, much stronger | K1 decided: a second action per turn (2 actions + the normal single move). Captain unit tuning row (higher stats) + `CaptainCombatEffects` (`GE_ConquerorExtraMove`: +1 `MaxActionPoints`). He can move between the two actions (act, move, act). Whether both actions can be the same ability is K1a (placeholder: yes, any two actions; each cannon still fires once per turn) | Charge: `UDwGA_Charge`, up to 6 tiles, first enemy hit. Eye of the Tiger: payload `SingleUnit`, `bIgnoreRange`, no LOS, `GE_Frozen` 1 turn | Kill bonus: `Rule.Captain.KillBonus`, +1% per own kill up to 20%; applies immediately; Kraken tentacles don't count (K3) |
+| The Conqueror | Sword only | K2 decided: basic attack is a sword; `BlockedAbilityTags = Ability.Weapon.Firearm`, so shop, loot, events and perks never offer him firearm abilities. Items and cannons stay allowed (K2a confirms cannons) | | |
 | The Conqueror | Crew: one choice per turn | `CrewCombatEffects` grants `Rule.Turn.SingleChoice`; `UDwGameplayAbility::ApplyCost` zeroes the other budget (`02-GAS-Foundation.md`) | | |
 
 ### Fear (`FDwFearRules`, Combat/, pure)
@@ -73,7 +77,7 @@ Run-side crew (`Run/`, see `09-Run-Map.md`): `FDwCrewMemberState` - `FGuid Id`, 
 
 ### Conqueror kill bonus (`FDwCaptainRules`, Run/, pure)
 - `OnEnemyKilled(Counters, KillerIsCaptain, Tuning) -> Counters` - increments `ConquerorKillBonusPct` by `KillBonusPerKill`, capped at `KillBonusCap`.
-- In combat, `HandleUnitDied` calls it when the instigator is the captain and `Rule.Captain.KillBonus` is present, then refreshes the captain's `GE_DamageBonus` (SetByCaller `Data.DamageBonus`) so it applies immediately (K3). The counter persists in `FDwRunState`.
+- In combat, `HandleUnitDied` calls it when the instigator is the captain, `Rule.Captain.KillBonus` is present and the victim has none of `KillBonusIgnoredUnitTags`, then refreshes the captain's `GE_DamageBonus` (SetByCaller `Data.DamageBonus`) so it applies to his very next hit in the same fight (K3, decided). The counter persists in `FDwRunState`. Killing the Kraken body ends the run, so it never matters for the bonus.
 
 ### Other `FDwCaptainRules` hooks
 - `GetXpMultiplier(Captain, Crew)` and `GetLevelThresholdMultiplier(Captain)` - used by `FDwProgressionRules`.
@@ -86,7 +90,7 @@ Run-side crew (`Run/`, see `09-Run-Map.md`): `FDwCrewMemberState` - `FGuid Id`, 
 - `04-Grid-Board.md`: adjacency for synergy/defend, LOS and lines for Grapple/Charge.
 - `07-Enemy-AI.md`: AI must value Fear, guarded targets and frozen units.
 - `09-Run-Map.md`: roster and counters in run state.
-- `10-Economy-Shop-Loot.md`: recruit/disband, ability offers filtered by `AllowedWeaponTags` and `LearnablePool`; surrender pays plunder.
+- `10-Economy-Shop-Loot.md`: recruit/disband, ability offers filtered by `BlockedAbilityTags` and `LearnablePool`; surrender pays plunder.
 - `12-Progression.md`: XP multipliers, perks.
 - `14-UI.md`: captain select, Fear pips on enemies, guard icon, synergy indicator.
 
@@ -97,9 +101,9 @@ Run-side crew (`Run/`, see `09-Run-Map.md`): `FDwCrewMemberState` - `FGuid Id`, 
 4. DW-214 (ai-engineer): AI handling of Fear, guard, freeze.
 
 ## How it's tested
-- Pure: `FDwFearRules` (cower, policies, surrender with immune and dead enemies); `FDwCaptainRules` (kill bonus cap at 20%, Dread Reputation cap, XP multipliers).
-- Test world: each of the 6 captain abilities against a fixed board (expected HP, tiles, tags); single-choice crew cannot move after attacking; guarded ally's hit lands on the captain; surrender ends the fight with zero enemy deaths; Conqueror bonus raises damage on the next hit.
+- Pure: `FDwFearRules` (cower, policies, surrender with immune and dead enemies); `FDwCaptainRules` (kill bonus cap at 20%, tentacle kills ignored, Dread Reputation cap, XP multipliers); `FDwSynergyRules` (ally on a 4-way neighbour -> active; diagonal ally -> inactive; no Team Leader -> inactive; enemy side never).
+- Test world: each of the 6 captain abilities against a fixed board (expected HP, tiles, tags); single-choice crew cannot move after attacking; the Conqueror can act, move, act and is refused a third action; guarded ally's hit lands on the captain; surrender ends the fight with zero enemy deaths; Conqueror bonus raises damage on the next hit in the same fight; a synergy attack's preview equals its result.
 - Simulator: per-captain win rate reported separately (balance target: similar rates).
 
 ## What the player sees
-- Three captains that each change the run: a Team Leader whose crew fight better shoulder to shoulder, a Fearmongerer whose legend makes later crews surrender faster, and a Conqueror who carves through enemies while his crew make one choice each.
+- Three captains that each change the run: a Team Leader whose crew fight better shoulder to shoulder, a Fearmongerer whose legend makes later crews surrender faster, and a Conqueror who strikes twice a turn and grows stronger with every kill while his crew make one choice each. Every captain is the run: if he falls, the voyage is over.

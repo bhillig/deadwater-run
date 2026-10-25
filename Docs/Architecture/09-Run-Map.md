@@ -101,7 +101,8 @@ classDiagram
 - `UDwRun` is the only writer of `FDwRunState`. Every mutation goes through a named method that calls a pure rule (`FDwRewardRules`, `FDwShopRules`, `FDwEventResolver`, `FDwProgressionRules`, `FDwCaptainRules`), then broadcasts `OnStateChanged` (view models refresh) and, if the phase changed, `OnPhaseChanged`.
 - `EDwRunPhase`: `Map`, `Combat`, `Rewards`, `LevelUp`, `Shop`, `Event`, `Victory`, `Defeat`. Captain select and the summary are shell screens outside the run phases (`16-Shell.md`).
 - Methods validate the phase (e.g. `TryPurchase` only in `Shop`) and return a result; illegal calls `ensure` and do nothing.
-- `FDwRunStats`: nodes cleared, fights by outcome, gold earned/spent, crew lost (name, node), kills, damage dealt, rounds, captain, seed, elapsed real time (game only). Feeds the run summary and the simulator report.
+- `FDwRunStats`: nodes cleared, fights by outcome, gold earned/spent, crew lost (name, node), kills, damage dealt, rounds, captain, seed, elapsed real time (game only), end reason (`Victory`, `ShipSunk`, `CrewDead`, `CaptainDead`, `Abandoned`). Feeds the run summary and the simulator report. The summary screen shows Brandon's U4 list (captain, seed, nodes, fights by outcome, gold, crew lost, kills, time); damage dealt and rounds are for the simulator only.
+- `ApplyCombatResult` writes survivor Health and permadeath back; there is no Mana in run state (C9: MP refills at every fight start). Any `Defeat*` outcome, including `DefeatCaptainDead` (C10), moves the run to `Defeat`.
 
 ### Seeds (`FDwRunRandom`, pure)
 - Run seed: random at Set Sail, or from `-DwSeed=`/dev settings.
@@ -164,7 +165,7 @@ classDiagram
 
 ## How it's tested
 - Pure (`DeadwaterRun.Rules.Map.*`): validator catches each broken rule on hand-made graphs; generator output passes the validator for 10,000 seeds (seed sweep) and is identical for identical seeds.
-- Pure (`DeadwaterRun.Rules.Run.*`): `ChooseNode` rejects backward/non-adjacent nodes; phase guards; `ApplyCombatResult` writes Health/Mana and permadeath; defeat when the result says so.
+- Pure (`DeadwaterRun.Rules.Run.*`): `ChooseNode` rejects backward/non-adjacent nodes; phase guards; `ApplyCombatResult` writes Health and permadeath; defeat on every `Defeat*` outcome including captain death; the next fight's setup starts every crew member at full Mana.
 - Simulator: average run length in nodes is 9-10 including the boss; every run reaches the boss or a defeat.
 
 ## What the player sees

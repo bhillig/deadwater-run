@@ -43,13 +43,13 @@ Attributes, tags, effects, ability base classes and turn-based durations. Every 
 | Attribute | Meaning | Initialised from |
 |---|---|---|
 | `Health`, `MaxHealth` | HP (crew start 100) | Unit tuning row + level gains; `Health` from run state for crew |
-| `Mana`, `MaxMana` | MP (crew start 20) | Same |
+| `Mana`, `MaxMana` | MP (crew start 20) | Tuning + level gains; `Mana` always starts each fight at `MaxMana` (C9), no regen |
 | `AttackDamage` | Base damage of the basic attack | Unit tuning row + level gains |
 | `DamageBonus` | Additive % damage (Conqueror kill bonus, perks) | GEs |
 | `DamageReduction` | Additive % damage taken reduction (perks, defend variants) | GEs, clamp 0..0.9 |
 | `MoveRange` | Tiles per turn (default 5) | Unit tuning row |
 | `MovePoints` | Movement left this turn | Refilled to `MoveRange` at side-turn start |
-| `MaxActionPoints`, `ActionPoints` | Actions per turn (default 1) and left this turn | Unit tuning row; refilled at side-turn start |
+| `MaxActionPoints`, `ActionPoints` | Actions per turn (default 1; the Conqueror has 2, K1) and left this turn | Unit tuning row + `GE_ConquerorExtraMove`; refilled at side-turn start |
 | `Fear`, `MaxFear` | Fear stacks and cower threshold (3) | `MaxFear` from combat tuning |
 | `IncomingDamage`, `IncomingHeal` | Meta attributes (not persisted) | Written by execs/GEs |
 
@@ -63,14 +63,17 @@ Rules in the sets:
 ## Damage pipeline
 - `GE_Damage` (instant) uses `UDwDamageExecution : UGameplayEffectExecutionCalculation`.
 - The exec captures source `AttackDamage`, `DamageBonus`, target `DamageReduction`, reads SetByCaller `Data.Damage` (flat) and `Data.DamageScale` (multiplier of `AttackDamage`), then calls the pure function below and outputs to `IncomingDamage`.
-- `FDwDamageRules::Compute(const FDwDamageInput&) -> FDwDamageOutput` - pure: flat + scaled base, `x (1 + DamageBonus)`, situational multipliers passed in (synergy, elevation if decided), `x (1 - DamageReduction)`, round to int, minimum 0. Same function powers UI damage previews and AI scoring, so previews never lie.
+- `FDwDamageRules::Compute(const FDwDamageInput&) -> FDwDamageOutput` - pure: flat + scaled base, `x (1 + DamageBonus)`, situational multipliers passed in (synergy, K4), `x (1 - DamageReduction)`, round to int, minimum 0. Same function powers UI damage previews and AI scoring, so previews never lie. Elevation gives range only, not damage.
+- Synergy (K4, decided): the caller passes `SynergyMultiplier` = captain tuning `SynergyDamageMultiplier` when `FDwSynergyRules::IsActive(Grid, SourceTile, SourceSide, CaptainRuleTags)` is true (an ally on a 4-way neighbour of the source tile and the side's captain has `Rule.Captain.Synergy`), else 1. The exec gets the source tile from the combat subsystem; `PreviewOutcome` passes the hypothetical source tile, so "move here, then attack" previews include synergy. Which damage it applies to is K4a (placeholder: every ability with `Ability.Attack.*` or a damaging crew ability, not cannons).
 - Ships use the same `GE_Damage`; the exec checks for `UDwShipAttributeSet` and skips unit-only terms.
 
 ## Turn-based durations
 - `UDwTurnDurationComponent : UGameplayEffectComponent` - `int32 Turns` (overridable by SetByCaller `Data.Turns`), `EDwTurnTickPoint TickPoint` (`OwnerSideTurnStart`, `OwnerSideTurnEnd`).
 - `UDwAbilitySystemComponent` records active effects that carry this component (via `OnActiveGameplayEffectAddedDelegateToSelf`) in `TMap<FActiveGameplayEffectHandle, int32> TurnsRemaining`.
 - `UDwTurnManager` calls `HandleTurnBoundary(TickPoint)` on every ASC of the side whose turn starts or ends. The ASC decrements and removes expired effects. No timers, no tick.
-- Convention: "for one turn" = `Turns=1, TickPoint=OwnerSideTurnEnd` - the effect lasts through the target's next side turn and is removed at its end (see Open-Questions C15).
+- Convention (C15, decided): "for one turn" = `Turns=1, TickPoint=OwnerSideTurnEnd` - the effect lasts through the target's next side turn and is removed at its end.
+- Rule that makes the convention hold for every case: an effect applied **during its owner's own side turn** is not decremented at the end of that same turn (the ASC stores the side-turn index at application and skips the boundary of that turn). Without it, Eyes of the Sea (the Kraken buffs itself on its own turn) and any self-side buff would expire before the turn it was meant for. Changed 2026-10-25; covered by a test below.
+- `GE_Guarded` (Defend) is the one exception: it uses `TickPoint=OwnerSideTurnStart` so it protects through the enemy turn and ends when the guarded ally's side starts its next turn (K5 placeholder).
 
 ## Tags (native in `Core/DwGameplayTags`, content-only tags in `Config/DefaultGameplayTags.ini`)
 
@@ -101,7 +104,8 @@ Rules in the sets:
 | `GE_Cleanse` | Instant, `URemoveOtherGameplayEffectComponent` for asset tag `Effect.Debuff` | Rally Cry and cleanse items/perks |
 | `GE_Cowering`, `GE_Frozen` | Infinite + turn duration 1, grant `Status.Incapacitated.*`, asset tag `Effect.Debuff` | Skip turn |
 | `GE_Rooted` | Infinite + turn duration 1, grants `Status.Rooted` | Kraken grab |
-| `GE_Guarded` | Infinite + turn duration 1, grants `Status.Guarded`; instigator = guardian | Team Leader defend |
+| `GE_Guarded` | Infinite + turn duration 1 (tick `OwnerSideTurnStart`), grants `Status.Guarded`; instigator = guardian | Team Leader defend |
+| `GE_ConquerorExtraMove` | Infinite, `MaxActionPoints += 1` (K1: a second action per turn, same single move) | Conqueror |
 | `GE_TurnBudgetRefresh` | Instant, override `ActionPoints`/`MovePoints` to max | Side-turn start |
 | `GE_Cost_Action`, `GE_Cost_Move`, `GE_Cost_Mana` | Instant cost | Ability costs |
 | `GE_SpendAll` | Instant, zero both points | Single-choice rule |
@@ -170,8 +174,8 @@ classDiagram
 - Covers: basic melee and ranged attacks, Rally Cry (heal all allies, then `GE_Cleanse` removing `Effect.Debuff`), Smoke and Fire (damage if `Status.Afraid`, then `GE_AddFear` - order matters, it is data), Six Pistols (`RandomEnemies`, hits = 6), Eye of the Tiger (`SingleUnit`, `bIgnoreRange`, no LOS, `GE_Frozen`), defend (`GE_Guarded` on ally) and all Kraken moves.
 
 Code subclasses (logic that data can't express)
-- `UDwGA_Move` - takes a tile target, asks `FDwPathfinder` for the path, pays path cost, updates grid occupancy at commit (logic is instant), then `UDwAT_MoveAlongPath` animates.
-- `UDwGA_FireCannon` - requires a source tile with `Tile.Cannon` owned by the unit's side; marks that cannon used this side turn (combat subsystem); target is the enemy ship; damage from ship `CannonDamage`.
+- `UDwGA_Move` - takes a tile target, asks `FDwPathfinder` for the path, pays path cost, then zeroes the remaining `MovePoints` (one move per turn, C3), updates grid occupancy at commit (logic is instant), then `UDwAT_MoveAlongPath` animates.
+- `UDwGA_FireCannon` - requires the unit on or 4-way adjacent to an unused `Tile.Cannon` owned by its side (C7); uses the action; marks that cannon used this side turn (combat subsystem); target is the enemy ship only; damage from ship `CannonDamage`. See `06-Ship-Cannons.md`.
 - `UDwGA_UseItem` - item id in the event payload; consumes from run inventory via the combat subsystem; applies the item definition's GE.
 - `UDwGA_Grapple` - pull target to the tile next to the source, or pull source to the tile next to the target; line of sight + range 10 from tuning.
 - `UDwGA_Charge` - dash in a straight line up to N tiles, stop at the first enemy, apply heavy damage.
@@ -208,7 +212,10 @@ Code subclasses (logic that data can't express)
 - Pure (`DeadwaterRun.Rules.Damage.*`): `FDwDamageRules` table tests (bonus, reduction, rounding, zero floor).
 - GAS in a test world (`DeadwaterRun.Gas.*`, using `FDwTestWorld`):
   - Damage reduces Health; Health 0 adds `State.Dead` and notifies once.
-  - A 1-turn `GE_Frozen` survives the owner's next side-turn start and is gone after its end.
+  - A 1-turn `GE_Frozen` applied on the player turn survives the enemy side-turn start and is gone after its end.
+  - A 1-turn effect applied during its owner's own side turn survives that turn's end and expires at the end of the owner's next turn (Eyes of the Sea case).
+  - `GE_Guarded` applied on the player turn lasts through the enemy turn and is gone at the next player turn start.
+  - After `UDwGA_Move`, `MovePoints` is 0 even if the path cost was below `MoveRange`.
   - Mana and action costs block activation when short; single-choice rule zeroes the other budget.
   - `Status.Afraid` toggles with Fear; Rally Cry removes all `Effect.Debuff` effects.
   - Instant mode: an ability activates and ends in the same call stack.

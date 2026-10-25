@@ -32,8 +32,7 @@
 |---|---|
 | `UDwEventOutcome_Gold` | `Delta` (negative allowed, floor 0) |
 | `UDwEventOutcome_ShipHealth` | `Delta` |
-| `UDwEventOutcome_CrewHealth` | `Delta`, `EDwCrewSelector` (`All`, `Random`, `Captain`, `Chosen`) |
-| `UDwEventOutcome_CrewMana` | `Delta`, selector |
+| `UDwEventOutcome_CrewHealth` | `Delta`, `EDwCrewSelector` (`All`, `Random`, `Captain`, `Chosen`). Whether negative deltas can kill (and end the run on the captain, C10) is C10a; placeholder: Health floors at 1 |
 | `UDwEventOutcome_GiveItem` | item, count |
 | `UDwEventOutcome_AbilityChoice` | count (reuses the rewards ability-choice flow) |
 | `UDwEventOutcome_GrantXp` | amount, selector (may queue level-ups) |
@@ -42,6 +41,8 @@
 | `UDwEventOutcome_RandomOf` | weighted list of nested outcomes (gambles) |
 
 `UDwEventRequirement` (abstract, instanced): `_MinGold`, `_CrewCountAtLeast`, `_HasItem`, `_CaptainIs`.
+
+- Changed 2026-10-25: `UDwEventOutcome_CrewMana` is removed. MP refills at every fight start (C9), so a mana change between fights would have no effect.
 
 `FDwEventContext`: `FDwRunState&`, `FRandomStream&`, chosen crew id, out log of applied changes (for the result text and `FDwRunStats`). Outcomes never touch the world.
 

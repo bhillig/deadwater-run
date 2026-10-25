@@ -109,7 +109,7 @@ flowchart LR
     C --> E["DW-102 grid board"]
     D --> F["DW-103 combat core"]
     E --> F
-    Q1["Brandon answers C1-C8, K1 by Oct 27"] --> F
+    Q1["C1-C15, K1 answered Oct 25; follow-ups C5a, C6a, C8a, C13a, K1a by Oct 27"] --> F
     F --> G["DW-104 actions"]
     G --> H["Combat playable Nov 1"]
     H --> I["DW-201 run state"]
@@ -133,7 +133,7 @@ Decision deadlines for Brandon (from `Open-Questions.md`) are on the critical pa
 
 ## Immediate next steps
 1. Brandon reviews and approves this architecture set (or marks changes) - start with `00-Overview.md`, `02-GAS-Foundation.md`, `03-Combat-Turns.md`, `13-Data-Layout.md`.
-2. Brandon answers the **Oct 27** questions in `Open-Questions.md` (C1-C8, K1, C15) and confirms deleting `DeadwaterRunPlayerController` (O5) and the art-integration owner (O1).
+2. Done Oct 25: C1-C15, K1-K4, U1-U5 answered. Brandon answers the **Oct 27** follow-ups in `Open-Questions.md` (C5a, C6a, C8a, C13a, K1a) and confirms deleting `DeadwaterRunPlayerController` (O5) and the art-integration owner (O1).
 3. Orchestrator routes DW-002 (gameplay-engineer) - cleanup and skeleton.
 4. In parallel: DW-005 (asset-scraper: audio, animations, fonts, Kraken model) and DW-006 (release-engineer: checklist with Steam dates).
 5. After DW-002: DW-003 (tools-engineer) and DW-004 (gameplay-engineer) in parallel.
@@ -221,7 +221,8 @@ Out of scope: Concrete abilities (DW-104), combat subsystem (DW-103)
 ```
 Agent:       gameplay-engineer
 Goal:        DW-102 Grid board: model, rules, pathfinding, LOS, deck layouts, board builder, ADwBoard highlights
-Context:     04-Grid-Board.md, Open-Questions C1-C6 (use the doc defaults behind FDwGridRules flags if unanswered)
+Context:     04-Grid-Board.md "Board rules" (C1-C6 decided: 4-way, Manhattan, pass through allies, one move, touching decks,
+             nest rules, LOS heights); C5a/C6a placeholders as written in doc 04
 Acceptance:  - FDwTile, FDwGridModel, FDwGridRules (from DT_CombatTuning), FDwPathfinder, FDwLineOfSight, FDwTargetingQuery
              - UDwDeckLayout with IsDataValid; FDwBoardBuilder::BuildShipBattle
              - ADwBoard: TileToWorld/WorldToTile, highlight layers, editor preview of a layout
@@ -251,7 +252,9 @@ Acceptance:  - UDwGA_Move, UDwGA_EffectPayload, UDwGA_FireCannon, UDwGA_UseItem;
                UDwPresentationSubsystem with instant mode
              - BP abilities: GA_Move, GA_Attack_Sword, GA_Attack_Rifle, GA_FireCannon, GA_UseItem; DA_Item_HealthRestore,
                DA_Item_ManaRestore
-             - Cannon: own cannon tile only, once per cannon per side turn, 70 damage to the enemy ship
+             - Cannon: on or 4-way next to an own cannon tile, uses the action, once per cannon per side turn, 70 damage to the
+               enemy ship only (FDwCannonRules::FindUsableCannon)
+             - Move: one move per turn (MovePoints zeroed after the move)
 Proof:       Tests for each action (doc 02/06 lists); clip of a crew member moving, attacking and firing a cannon
 Out of scope: Captain abilities (DW-206 to DW-208), Synty art
 ```
@@ -450,8 +453,9 @@ Out of scope: AI valuation of Fear (DW-214)
 ```
 Agent:       gameplay-engineer
 Goal:        DW-207 Team Leader: synergy, defend, Rally Cry, Grapple Hook, Veteran Crew
-Context:     05-Crew-Captains.md, Open-Questions K4-K7
-Acceptance:  Adjacency tag upkeep, synergy per K4 answer, GA_Defend + redirect, Rally Cry, UDwGA_Grapple, Veteran Crew multipliers
+Context:     05-Crew-Captains.md, Open-Questions K4a, K5-K7 (K4 decided: passive damage multiplier when adjacent)
+Acceptance:  FDwSynergyRules + synergy multiplier in FDwDamageRules (preview = result), adjacency tag upkeep for the UI,
+             GA_Defend + redirect, Rally Cry, UDwGA_Grapple, Veteran Crew multipliers
 Proof:       Tests; clip of grapple pull and a guarded hit
 Out of scope: Other captains
 ```
@@ -459,8 +463,9 @@ Out of scope: Other captains
 ```
 Agent:       gameplay-engineer
 Goal:        DW-208 Conqueror: extra move, sword only, single-choice crew, Charge, Eye of the Tiger, kill bonus
-Context:     05-Crew-Captains.md, Open-Questions K1-K3, K12
-Acceptance:  Captain/crew combat GEs, weapon tag filter in offers, UDwGA_Charge, Eye of the Tiger BP, kill bonus counter + GE refresh
+Context:     05-Crew-Captains.md (K1-K3 decided), Open-Questions K1a, K2a, K12
+Acceptance:  GE_ConquerorExtraMove (+1 MaxActionPoints), crew single-choice GE, BlockedAbilityTags filter (no firearm abilities) in
+             offers, UDwGA_Charge, Eye of the Tiger BP, kill bonus counter + immediate GE refresh, tentacles ignored
 Proof:       Tests; clip of a charge kill and the bonus increasing
 Out of scope: Other captains
 ```
@@ -533,7 +538,8 @@ Out of scope: Changing values (proposal only this week)
 Agent:       gameplay-engineer
 Goal:        DW-216 Game user settings and music states
 Context:     16-Shell.md, 15-Audio-VFX.md
-Acceptance:  UDwGameUserSettings (volumes, game speed, screen shake), ApplyAudio/ApplyPresentation, music state changes per phase
+Acceptance:  UDwGameUserSettings (volumes, game speed 1x/1.5x/2x, screen shake, highlight palette), UDwHighlightPalette class +
+             placeholder DA_HighlightPalette_Default/_ColorblindSafe read by ADwBoard, ApplyAudio/ApplyPresentation, music states per phase
 Proof:       Shell tests; clip of volume slider changing music
 Out of scope: Settings screen layout (DW-210)
 ```

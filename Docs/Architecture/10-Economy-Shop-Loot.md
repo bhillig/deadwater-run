@@ -23,7 +23,7 @@
 - `ComputeRewards(const FDwCombatResult&, const FDwEncounterTuningRow&, const FDwEconomyTuningRow&, FRandomStream&) -> FDwRewardBundle`
   - `Gold = round(BaseGold x Multiplier(Outcome))` where multiplier is sink 1.0 / crew defeated 1.5 / surrender 1.5 / boss 0.
   - Plunder (crew defeated or surrender): roll `PlunderItemChance` for one random item from the shop item list (P6).
-  - `AbilityChoices`: `RewardAbilityChoices` abilities drawn from the living crew's learnable pools, filtered by the captain's `AllowedWeaponTags` and abilities already known (P5).
+  - `AbilityChoices`: `RewardAbilityChoices` abilities drawn from the living crew's learnable pools, filtered by the captain's `BlockedAbilityTags` (Conqueror: no `Ability.Weapon.Firearm`, K2) and abilities already known (P5).
   - XP: see `12-Progression.md`.
 - `UDwRun` stores the bundle in `PendingRewards`; `ClaimRewards(Choices)` applies gold, items and the chosen ability (to the chosen crew member) and moves to `LevelUp` or `Map`.
 
@@ -31,7 +31,8 @@
 - `GenerateInventory(const FDwRunState&, const UDwShopDefinition&, FRandomStream&) -> FDwShopInventory` - offers with stable `OfferId`s: `Repair`, `Item` x N, `Ability` (ability + eligible crew) x N, `Recruit` (unit def + cost) x N, `ShipUpgrade` x N, `Disband` (per living non-captain crew).
 - `CanPurchase(State, Offer, TargetCrew) -> EDwPurchaseResult` (`Ok`, `NotEnoughGold`, `CrewFull`, `AlreadyKnown`, `NoSlot`, `ShipFull`, `InvalidTarget`, `SoldOut`).
 - `ApplyPurchase(State&, Offer, TargetCrew)` - deducts gold, mutates state, marks the offer sold out where appropriate.
-- Rules enforced: crew never exceeds `MaxCrew`; the captain can't be disbanded; repair never exceeds max ship Health; ability slots per crew member (P4); Conqueror's weapon restriction on captain abilities.
+- Rules enforced: crew never exceeds `MaxCrew`; the captain can't be disbanded; repair never exceeds max ship Health; ability slots per crew member (P4); the captain's `BlockedAbilityTags` (Conqueror can't learn firearm abilities, K2).
+- Mana restore items only matter inside a fight, because MP refills at every fight start (C9). Whether items can be used outside combat at all is C9a.
 - Recruits are created by `FDwCrewFactory::Create(UnitDefinition, Level, Rng)` (Run/) - the same function the run uses for the starting crew.
 
 ```mermaid
