@@ -74,3 +74,11 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Claude Code agent change log (local, not shared)
+.claude/logs/
+.claude/settings.local.json
+.claude/worktrees/
+
+# Agentic Personal Context
+context/
