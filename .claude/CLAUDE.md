@@ -31,11 +31,11 @@ Load the relevant files before starting any task. Assumptions are the enemy - if
 
 ## Memory - you get smarter every week
 
-Your memory lives in `MEMORY.md`, and this line loads it into every session along with this file:
+Your memory lives in `.claude/MEMORY.md`, and this line loads it into every session along with this file:
 
 @MEMORY.md
 
-When I correct you, write the lesson in `MEMORY.md` as a new rule. Check it before every task.
+When I correct you, write the lesson in `.claude/MEMORY.md` as a new rule. Check it before every task.
 This is how you go from "good assistant" to "knows exactly how I like things done"
 
 ## The Product - Deadwater Run
