@@ -11,6 +11,7 @@ class UDwDeckLayout;
 class UInstancedStaticMeshComponent;
 class UMaterialInterface;
 class UStaticMesh;
+class UStaticMeshComponent;
 
 /** World-space highlight layers (Docs/Architecture/04-Grid-Board.md "Presentation"). */
 UENUM(BlueprintType)
@@ -89,6 +90,27 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board")
 	TMap<EDwHighlightLayer, TObjectPtr<UMaterialInterface>> LayerMaterials;
 
+	/** Colour of a layer that has no material in LayerMaterials (tinted BasicShapeMaterial). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board")
+	TMap<EDwHighlightLayer, FLinearColor> LayerColors;
+
+	/** Placeholder ship decks until the Synty ships are aligned (DW-307): every board tile drawn, coloured by owner. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Placeholder")
+	bool bDrawPlaceholderDecks = true;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Placeholder")
+	FLinearColor PlayerDeckColor = FLinearColor(0.11f, 0.06f, 0.025f);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Placeholder")
+	FLinearColor EnemyDeckColor = FLinearColor(0.09f, 0.02f, 0.02f);
+
+	/** Cannons, ladders, crates and masts. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Placeholder")
+	FLinearColor FeatureColor = FLinearColor(0.01f, 0.01f, 0.01f);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Placeholder")
+	FLinearColor WaterColor = FLinearColor(0.004f, 0.03f, 0.07f);
+
 	/** Editor-only alignment aid in dev maps: draws this layout's walkable tiles. Never set in shipped levels. */
 	UPROPERTY(EditInstanceOnly, Category = "Board|Preview")
 	TObjectPtr<UDwDeckLayout> PreviewLayout;
@@ -98,6 +120,8 @@ protected:
 
 private:
 	UInstancedStaticMeshComponent* GetLayer(EDwHighlightLayer Layer) const;
+	void DrawPlaceholderDecks();
+	UMaterialInterface* MakeTint(const FLinearColor& Color);
 	FTransform MakeInstanceTransform(FIntPoint Tile, EDwHighlightLayer Layer) const;
 	void ApplyLayerMaterials();
 
@@ -106,6 +130,12 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Board")
 	TArray<TObjectPtr<UInstancedStaticMeshComponent>> HighlightLayers;
+
+	UPROPERTY(VisibleAnywhere, Category = "Board|Placeholder") TObjectPtr<UInstancedStaticMeshComponent> PlayerDeck;
+	UPROPERTY(VisibleAnywhere, Category = "Board|Placeholder") TObjectPtr<UInstancedStaticMeshComponent> EnemyDeck;
+	UPROPERTY(VisibleAnywhere, Category = "Board|Placeholder") TObjectPtr<UInstancedStaticMeshComponent> Features;
+	UPROPERTY(VisibleAnywhere, Category = "Board|Placeholder") TObjectPtr<UStaticMeshComponent> Water;
+	UPROPERTY(Transient) TObjectPtr<UMaterialInterface> TintBase;
 
 	UPROPERTY(Transient)
 	FDwGridModel Grid;

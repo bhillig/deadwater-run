@@ -29,6 +29,8 @@ public class DeadwaterRunEditor : ModuleRules
 			"Blutility",
 			"UMGEditor",
 			"EditorScriptingUtilities",
+			"EnhancedInput",
+			"InputCore",
 			"GameplayAbilities",
 			"GameplayTags",
 			"Json",

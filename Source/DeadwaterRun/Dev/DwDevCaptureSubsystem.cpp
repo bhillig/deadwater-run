@@ -1,0 +1,126 @@
+// Copyright Brandon Hillig 2026
+
+#include "Dev/DwDevCaptureSubsystem.h"
+
+#include "Board/DwGridQueries.h"
+#include "Combat/DwCombatInteraction.h"
+#include "Combat/DwCombatRules.h"
+#include "Combat/DwCombatSubsystem.h"
+#include "Combat/DwCombatUnit.h"
+#include "Combat/DwShip.h"
+#include "Core/DwGameplayTags.h"
+#include "Core/DwLog.h"
+#include "Core/DwPlayerController.h"
+#include "Engine/World.h"
+#include "HighResScreenshot.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "TimerManager.h"
+#include "UnrealClient.h"
+
+bool UDwDevCaptureSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+#if UE_BUILD_SHIPPING
+	return false;
+#else
+	return Super::ShouldCreateSubsystem(Outer) && FCString::Strifind(FCommandLine::Get(), TEXT("-DwCapture=")) != nullptr;
+#endif
+}
+
+bool UDwDevCaptureSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType) const
+{
+	return WorldType == EWorldType::Game || WorldType == EWorldType::PIE;
+}
+
+void UDwDevCaptureSubsystem::OnWorldBeginPlay(UWorld& InWorld)
+{
+	Super::OnWorldBeginPlay(InWorld);
+	if (!FParse::Value(FCommandLine::Get(), TEXT("DwCapture="), Path) || Path.IsEmpty())
+	{
+		return;
+	}
+	float Delay = 4.f;
+	FParse::Value(FCommandLine::Get(), TEXT("DwCaptureDelay="), Delay);
+	FParse::Value(FCommandLine::Get(), TEXT("DwCaptureDemo="), Demo);
+	UE_LOG(LogDw, Log, TEXT("Dev capture: %s in %.1f s (demo '%s')"), *Path, Delay, *Demo);
+	InWorld.GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::StageDemo), FMath::Max(Delay - 1.f, 0.1f), false);
+}
+
+void UDwDevCaptureSubsystem::StageDemo()
+{
+	UWorld* World = GetWorld();
+	const ADwPlayerController* PC = World ? Cast<ADwPlayerController>(World->GetFirstPlayerController()) : nullptr;
+	UDwCombatInteraction* Interaction = PC ? PC->GetInteraction() : nullptr;
+	UDwCombatSubsystem* Combat = World ? World->GetSubsystem<UDwCombatSubsystem>() : nullptr;
+	if (Interaction && Combat && Combat->IsActive())
+	{
+		const FDwCombatSnapshot Snapshot = Combat->GetSnapshot();
+		auto FirstOf = [&Snapshot](EDwSide Side, const FGameplayTag& Tag)
+		{
+			for (const FDwUnitSnapshot& Unit : Snapshot.Units)
+			{
+				if (Unit.Side == Side && Unit.bAlive && (!Tag.IsValid() || Unit.Tags.HasTag(Tag)))
+				{
+					return Unit.Handle;
+				}
+			}
+			return FDwUnitHandle();
+		};
+		if (Demo == TEXT("move"))
+		{
+			// The captain selected, hovering the farthest reachable tile: move range plus path preview.
+			Interaction->SelectUnit(FirstOf(EDwSide::Player, DwTags::Unit_Role_Captain));
+			const TArray<FIntPoint>& Reach = Interaction->GetReachable();
+			if (!Reach.IsEmpty())
+			{
+				Interaction->HoverTile(Reach.Last());
+			}
+		}
+		else if (Demo == TEXT("aim"))
+		{
+			// The sniper up in the nest (+2 range, sees over crates) aiming its musket: targets plus damage preview.
+			const FDwUnitHandle Sniper = FirstOf(EDwSide::Player, DwTags::Unit_Archetype_Sniper);
+			for (int32 Index = 0; Index < Snapshot.Grid.Tiles.Num(); ++Index)
+			{
+				const FDwTile& Tile = Snapshot.Grid.Tiles[Index];
+				if (Tile.Kind == EDwTileKind::Nest && Tile.Owner == EDwSide::Player && !Snapshot.Grid.IsOccupied(Snapshot.Grid.ToTile(Index)))
+				{
+					Combat->MoveUnit(Sniper, Snapshot.Grid.ToTile(Index), /*bSnapActor*/ true);
+					break;
+				}
+			}
+			const FDwCombatSnapshot InNest = Combat->GetSnapshot();
+			Interaction->SelectUnit(Sniper);
+			const FDwUnitSnapshot* Unit = InNest.FindUnit(Sniper);
+			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Attack_Ranged)) && !Interaction->GetValidTargets().IsEmpty())
+			{
+				Interaction->HoverTile(Interaction->GetValidTargets()[0].Tile);
+			}
+		}
+		else if (Demo == TEXT("cannon"))
+		{
+			// The swordsman next to a cannon, aiming it: the enemy deck lights up.
+			const FDwUnitHandle Gunner = FirstOf(EDwSide::Player, DwTags::Unit_Archetype_Swordsman);
+			const ADwShip* Ship = Combat->GetShip(EDwSide::Player);
+			if (Ship && !Ship->GetCannonTiles().IsEmpty())
+			{
+				Combat->MoveUnit(Gunner, Ship->GetCannonTiles()[0], /*bSnapActor*/ true);
+			}
+			Interaction->SelectUnit(Gunner);
+			const FDwUnitSnapshot* Unit = Combat->GetSnapshot().FindUnit(Gunner);
+			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Cannon)))
+			{
+				Interaction->HoverTile(Combat->FindUnit(FirstOf(EDwSide::Enemy, FGameplayTag()))->GetTile());
+			}
+		}
+	}
+	World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::Capture), 1.f, false);
+}
+
+void UDwDevCaptureSubsystem::Capture()
+{
+	FScreenshotRequest::RequestScreenshot(Path, /*bShowUI*/ true, /*bAddFilenameSuffix*/ false);
+	UE_LOG(LogDw, Log, TEXT("Dev capture requested: %s"), *Path);
+	// Give the renderer a moment to write the file, then quit.
+	GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateLambda([]() { FPlatformMisc::RequestExit(false); }), 1.5f, false);
+}

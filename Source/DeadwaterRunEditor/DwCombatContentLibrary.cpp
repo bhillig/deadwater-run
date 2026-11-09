@@ -25,6 +25,17 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "UObject/Package.h"
+#include "Components/DirectionalLightComponent.h"
+#include "Components/SkyAtmosphereComponent.h"
+#include "Components/SkyLightComponent.h"
+#include "Engine/DirectionalLight.h"
+#include "Engine/SkyLight.h"
+#include "EngineUtils.h"
+#include "FileHelpers.h"
+#include "InputAction.h"
+#include "InputMappingContext.h"
+#include "InputModifiers.h"
+#include "InputCoreTypes.h"
 
 namespace DwCombatContent
 {
@@ -36,6 +47,8 @@ namespace DwCombatContent
 	const FString Ships = TEXT("/Game/DeadwaterRun/Ships");
 	const FString Tuning = TEXT("/Game/DeadwaterRun/Data/Tuning");
 	const FString Boards = TEXT("/Game/DeadwaterRun/Data/Boards");
+	const FString Input = TEXT("/Game/DeadwaterRun/Input");
+	const FString SeaLevel = TEXT("/Game/DeadwaterRun/Maps/L_Sea");
 
 	template <typename T>
 	T* Load(const FString& Folder, const FString& Name)
@@ -110,6 +123,50 @@ namespace DwCombatContent
 			bOk = false;
 		}
 		return Handle;
+	}
+
+	/** Adds a sun, sky atmosphere and sky light to L_Sea if it has none (all movable: no lighting build needed). */
+	bool PrepareSeaLevel(TArray<FString>& Log)
+	{
+		UWorld* World = UEditorLoadingAndSavingUtils::LoadMap(SeaLevel);
+		if (!World)
+		{
+			Log.Add(TEXT("ERROR could not load L_Sea"));
+			return false;
+		}
+		auto Has = [World](UClass* Class) { return TActorIterator<AActor>(World, Class) ? true : false; };
+		bool bChanged = false;
+		if (!Has(ADirectionalLight::StaticClass()))
+		{
+			ADirectionalLight* Sun = World->SpawnActor<ADirectionalLight>(FVector(0.f, 0.f, 1000.f), FRotator(-50.f, -60.f, 0.f));
+			Sun->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+			if (UDirectionalLightComponent* Light = Cast<UDirectionalLightComponent>(Sun->GetLightComponent()))
+			{
+				Light->SetAtmosphereSunLight(true);
+			}
+			Sun->SetActorLabel(TEXT("Sun"));
+			bChanged = true;
+		}
+		if (!Has(ASkyAtmosphere::StaticClass()))
+		{
+			World->SpawnActor<ASkyAtmosphere>()->SetActorLabel(TEXT("SkyAtmosphere"));
+			bChanged = true;
+		}
+		if (!Has(ASkyLight::StaticClass()))
+		{
+			ASkyLight* Sky = World->SpawnActor<ASkyLight>(FVector(0.f, 0.f, 500.f), FRotator::ZeroRotator);
+			Sky->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+			Sky->GetLightComponent()->bRealTimeCapture = true;
+			Sky->SetActorLabel(TEXT("SkyLight"));
+			bChanged = true;
+		}
+		if (bChanged && !UEditorLoadingAndSavingUtils::SaveMap(World, SeaLevel))
+		{
+			Log.Add(TEXT("ERROR could not save L_Sea"));
+			return false;
+		}
+		Log.Add(bChanged ? TEXT("Lit L_Sea (sun, sky atmosphere, sky light)") : TEXT("L_Sea already lit"));
+		return true;
 	}
 
 	FGameplayTagContainer Tags(std::initializer_list<FGameplayTag> List)
@@ -260,7 +317,7 @@ TArray<FString> UDwCombatContentLibrary::CreateCombatPlaceholderContent()
 		bOk &= Save(Unit, OutLog);
 		return Unit;
 	};
-	MakeUnit(TEXT("DA_Unit_Captain_TeamLeader"), TEXT("Captain"), SwordDef, Tags({ DwTags::Unit_Role_Captain }), TEXT("Captain_TeamLeader"));
+	MakeUnit(TEXT("DA_Unit_Captain_TeamLeader"), TEXT("Team Leader"), SwordDef, Tags({ DwTags::Unit_Role_Captain }), TEXT("Captain_TeamLeader"));
 	UDwUnitDefinition* Swordsman = MakeUnit(TEXT("DA_Unit_Swordsman"), TEXT("Swordsman"), SwordDef, Tags({ DwTags::Unit_Archetype_Swordsman }), TEXT("Swordsman"));
 	UDwUnitDefinition* Sniper = MakeUnit(TEXT("DA_Unit_Sniper"), TEXT("Sniper"), RifleDef, Tags({ DwTags::Unit_Archetype_Sniper }), TEXT("Sniper"));
 
@@ -297,6 +354,71 @@ TArray<FString> UDwCombatContentLibrary::CreateCombatPlaceholderContent()
 		GameData->PlayerShipTuning = Row(ShipTable, TEXT("PlayerShip"), OutLog, bOk);
 	}
 	bOk &= Save(GameData, OutLog);
+
+	// 8. Input (Docs/Architecture/03 "Player input") and the dev fight L_Sea starts until the run exists (DW-201).
+	auto MakeAction = [&](const TCHAR* AssetName, EInputActionValueType Type)
+	{
+		UInputAction* Action = FindOrCreate<UInputAction>(Input, AssetName, OutLog);
+		Action->ValueType = Type;
+		bOk &= Save(Action, OutLog);
+		return Action;
+	};
+	FDwInputConfig& Config = GameData->Input;
+	Config.Select = MakeAction(TEXT("IA_Select"), EInputActionValueType::Boolean);
+	Config.Cancel = MakeAction(TEXT("IA_Cancel"), EInputActionValueType::Boolean);
+	Config.EndTurn = MakeAction(TEXT("IA_EndTurn"), EInputActionValueType::Boolean);
+	Config.NextUnit = MakeAction(TEXT("IA_NextUnit"), EInputActionValueType::Boolean);
+	Config.Pause = MakeAction(TEXT("IA_Pause"), EInputActionValueType::Boolean);
+	Config.CameraPan = MakeAction(TEXT("IA_CameraPan"), EInputActionValueType::Axis2D);
+	Config.CameraZoom = MakeAction(TEXT("IA_CameraZoom"), EInputActionValueType::Axis1D);
+	Config.Abilities.Reset();
+	for (int32 Slot = 1; Slot <= 6; ++Slot)
+	{
+		Config.Abilities.Add(MakeAction(*FString::Printf(TEXT("IA_Ability%d"), Slot), EInputActionValueType::Boolean));
+	}
+
+	UInputMappingContext* Context = FindOrCreate<UInputMappingContext>(Input, TEXT("IMC_Combat"), OutLog);
+	Context->UnmapAll();
+	Context->MapKey(Config.Select, EKeys::LeftMouseButton);
+	Context->MapKey(Config.Cancel, EKeys::RightMouseButton);
+	Context->MapKey(Config.EndTurn, EKeys::SpaceBar);
+	Context->MapKey(Config.NextUnit, EKeys::Tab);
+	Context->MapKey(Config.Pause, EKeys::Escape);
+	Context->MapKey(Config.CameraZoom, EKeys::MouseWheelAxis);
+	const FKey Keys[6] = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six };
+	for (int32 Slot = 0; Slot < 6; ++Slot)
+	{
+		Context->MapKey(Config.Abilities[Slot], Keys[Slot]);
+	}
+	// Pan: D/Right = +X, A/Left = -X, W/Up = +Y, S/Down = -Y (swizzle puts a 1D key on the Y axis).
+	auto MapPan = [&](FKey Key, bool bNegate, bool bVertical)
+	{
+		FEnhancedActionKeyMapping& Mapping = Context->MapKey(Config.CameraPan, Key);
+		if (bVertical)
+		{
+			Mapping.Modifiers.Add(NewObject<UInputModifierSwizzleAxis>(Context));
+		}
+		if (bNegate)
+		{
+			Mapping.Modifiers.Add(NewObject<UInputModifierNegate>(Context));
+		}
+	};
+	MapPan(EKeys::D, false, false); MapPan(EKeys::Right, false, false);
+	MapPan(EKeys::A, true, false);  MapPan(EKeys::Left, true, false);
+	MapPan(EKeys::W, false, true);  MapPan(EKeys::Up, false, true);
+	MapPan(EKeys::S, true, true);   MapPan(EKeys::Down, true, true);
+	bOk &= Save(Context, OutLog);
+	Config.CombatContext = Context;
+
+	GameData->DevEncounter = Encounter;
+	GameData->DevCrew = { Load<UDwUnitDefinition>(UnitData, TEXT("DA_Unit_Captain_TeamLeader")), Swordsman, Sniper };
+	GameData->DevItems.Reset();
+	GameData->DevItems.Add(Load<UDwItemDefinition>(ItemData, TEXT("DA_Item_HealthRestore")), 2);
+	GameData->DevItems.Add(Load<UDwItemDefinition>(ItemData, TEXT("DA_Item_ManaRestore")), 1);
+	bOk &= Save(GameData, OutLog);
+
+	// 9. Light L_Sea (the template left it empty): sun, sky and sky light, all movable so nothing needs a lighting build.
+	bOk &= PrepareSeaLevel(OutLog);
 
 	// 8. What the placeholder fight will look like.
 	for (const UDwDeckLayout* Deck : { GameData->DefaultPlayerDeck.Get(), EnemyDeck })

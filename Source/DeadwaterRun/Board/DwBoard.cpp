@@ -7,6 +7,9 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Components/StaticMeshComponent.h"
+#include "Core/DwGameplayTags.h"
 #include "UObject/ConstructorHelpers.h"
 
 namespace DwBoardPresentation
@@ -27,6 +30,39 @@ ADwBoard::ADwBoard()
 	{
 		TileMesh = PlaneMesh.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> BasicMaterial(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+	if (BasicMaterial.Succeeded())
+	{
+		TintBase = BasicMaterial.Object;
+	}
+	LayerColors = {
+		{ EDwHighlightLayer::Move, FLinearColor(0.1f, 0.4f, 0.9f) },
+		{ EDwHighlightLayer::Path, FLinearColor(0.95f, 0.85f, 0.2f) },
+		{ EDwHighlightLayer::Target, FLinearColor(0.95f, 0.1f, 0.85f) },
+		{ EDwHighlightLayer::AreaOfEffect, FLinearColor(0.95f, 0.45f, 0.1f) },
+		{ EDwHighlightLayer::Danger, FLinearColor(0.6f, 0.05f, 0.35f) },
+		{ EDwHighlightLayer::Hover, FLinearColor(0.9f, 0.9f, 0.9f) },
+		{ EDwHighlightLayer::Preview, FLinearColor(0.3f, 0.8f, 0.3f) } };
+
+	auto MakeTileLayer = [this](const TCHAR* Name)
+	{
+		UInstancedStaticMeshComponent* Layer = CreateDefaultSubobject<UInstancedStaticMeshComponent>(Name);
+		Layer->SetupAttachment(Root);
+		Layer->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Layer->SetCastShadow(false);
+		Layer->SetStaticMesh(TileMesh);
+		return Layer;
+	};
+	PlayerDeck = MakeTileLayer(TEXT("PlaceholderPlayerDeck"));
+	EnemyDeck = MakeTileLayer(TEXT("PlaceholderEnemyDeck"));
+	Features = MakeTileLayer(TEXT("PlaceholderFeatures"));
+	Water = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderWater"));
+	Water->SetupAttachment(Root);
+	Water->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Water->SetCastShadow(false);
+	Water->SetStaticMesh(TileMesh);
+	Water->SetVisibility(false);
 
 	const UEnum* LayerEnum = StaticEnum<EDwHighlightLayer>();
 	for (int32 Index = 0; Index < static_cast<int32>(EDwHighlightLayer::Count); ++Index)
@@ -73,6 +109,11 @@ void ADwBoard::SetGrid(const FDwGridModel& InGrid, float InTileSize)
 	Grid = InGrid;
 	TileSize = FMath::Max(InTileSize, 1.f);
 	ClearAllHighlights();
+	ApplyLayerMaterials();
+	if (bDrawPlaceholderDecks)
+	{
+		DrawPlaceholderDecks();
+	}
 }
 
 FVector ADwBoard::TileToWorld(FIntPoint Tile) const
@@ -191,6 +232,58 @@ void ADwBoard::ApplyLayerMaterials()
 			{
 				HighlightLayers[Index]->SetMaterial(0, *Material);
 			}
+			else if (const FLinearColor* Color = LayerColors.Find(static_cast<EDwHighlightLayer>(Index)))
+			{
+				HighlightLayers[Index]->SetMaterial(0, MakeTint(*Color));
+			}
 		}
 	}
+}
+
+UMaterialInterface* ADwBoard::MakeTint(const FLinearColor& Color)
+{
+	if (!TintBase)
+	{
+		return nullptr;
+	}
+	UMaterialInstanceDynamic* Tint = UMaterialInstanceDynamic::Create(TintBase, this);
+	Tint->SetVectorParameterValue(TEXT("Color"), Color);
+	return Tint;
+}
+
+void ADwBoard::DrawPlaceholderDecks()
+{
+	PlayerDeck->ClearInstances();
+	EnemyDeck->ClearInstances();
+	Features->ClearInstances();
+	PlayerDeck->SetMaterial(0, MakeTint(PlayerDeckColor));
+	EnemyDeck->SetMaterial(0, MakeTint(EnemyDeckColor));
+	Features->SetMaterial(0, MakeTint(FeatureColor));
+
+	const float DeckScale = TileSize * 0.97f / DwBoardPresentation::PlaneSize;
+	const float FeatureScale = TileSize * 0.45f / DwBoardPresentation::PlaneSize;
+	for (int32 Index = 0; Index < Grid.Tiles.Num(); ++Index)
+	{
+		const FDwTile& Tile = Grid.Tiles[Index];
+		if (Tile.Kind == EDwTileKind::None || Tile.Kind == EDwTileKind::Water)
+		{
+			continue;
+		}
+		const FIntPoint Coord = Grid.ToTile(Index);
+		const FVector Centre((Coord.X + 0.5f) * TileSize, (Coord.Y + 0.5f) * TileSize, Tile.Elevation * ElevationHeight + 0.5f);
+		(Tile.Owner == EDwSide::Enemy ? EnemyDeck : PlayerDeck)->AddInstance(FTransform(FQuat::Identity, Centre, FVector(DeckScale, DeckScale, 1.f)));
+		const bool bFeature = Tile.Kind == EDwTileKind::Ladder || Tile.Kind == EDwTileKind::Obstacle || Tile.BlockerHeight > 0
+			|| Tile.Tags.HasTagExact(DwTags::Tile_Cannon);
+		if (bFeature)
+		{
+			Features->AddInstance(FTransform(FQuat::Identity, Centre + FVector(0.f, 0.f, 1.f), FVector(FeatureScale, FeatureScale, 1.f)));
+		}
+	}
+
+	// A sea under both ships, wide enough to fill the framed view.
+	const FVector2D Size(Grid.Size.X * TileSize, Grid.Size.Y * TileSize);
+	Water->SetRelativeLocation(FVector(Size.X * 0.5f, Size.Y * 0.5f, -20.f));
+	Water->SetRelativeScale3D(FVector(Size.X * 4.f / DwBoardPresentation::PlaneSize, Size.Y * 10.f / DwBoardPresentation::PlaneSize, 1.f));
+	Water->SetMaterial(0, MakeTint(WaterColor));
+	Water->SetVisibility(Grid.Tiles.Num() > 0);
 }

@@ -5,6 +5,8 @@
 #include "Abilities/DwAbilitySystemComponent.h"
 #include "Abilities/DwAttributeSets.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/TextRenderComponent.h"
+#include "Data/DwUnitDefinition.h"
 #include "Core/DwGameplayTags.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -23,6 +25,11 @@ ADwCombatUnit::ADwCombatUnit()
 	Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
 	Body->SetupAttachment(GetRootComponent());
 	Body->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> BasicMaterial(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+	if (BasicMaterial.Succeeded())
+	{
+		TintBase = BasicMaterial.Object;
+	}
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> Cylinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
 	if (Cylinder.Succeeded())
 	{
@@ -30,6 +37,16 @@ ADwCombatUnit::ADwCombatUnit()
 		Body->SetRelativeScale3D(FVector(0.6f, 0.6f, 1.6f));
 		Body->SetRelativeLocation(FVector(0.f, 0.f, 80.f)); // the engine cylinder is 100 tall, centred
 	}
+
+	Label = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Label"));
+	Label->SetupAttachment(GetRootComponent());
+	Label->SetRelativeLocation(FVector(0.f, 0.f, 210.f));
+	Label->SetUsingAbsoluteRotation(true);
+	Label->SetWorldRotation(FRotator(30.f, 90.f, 0.f)); // faces the camera rig (at +Y looking -Y, pitched down)
+	Label->SetHorizontalAlignment(EHTA_Center);
+	Label->SetVerticalAlignment(EVRTA_TextBottom);
+	Label->SetWorldSize(18.f);
+	Label->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 UAbilitySystemComponent* ADwCombatUnit::GetAbilitySystemComponent() const
@@ -53,6 +70,9 @@ void ADwCombatUnit::InitializeFromSpawnParams(const FDwUnitSpawnParams& Params)
 	bIsCaptain = Params.bIsCaptain;
 	GrantedAbilities.Reset();
 	ApplyPlaceholderTint();
+	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UDwUnitAttributeSet::GetHealthAttribute()).AddUObject(this, &ThisClass::HandleStatChanged);
+	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UDwUnitAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::HandleStatChanged);
+	UpdateLabel();
 }
 
 bool ADwCombatUnit::IsAlive() const
@@ -67,13 +87,29 @@ void ADwCombatUnit::OnDied_Implementation()
 
 void ADwCombatUnit::ApplyPlaceholderTint()
 {
-	if (!Body || !Body->GetStaticMesh() || !Body->GetMaterial(0))
+	// Only the placeholder cylinder is tinted; BP_Unit_* meshes keep their own materials.
+	if (!Body || !TintBase || Body->GetStaticMesh() != GetDefault<ADwCombatUnit>()->Body->GetStaticMesh())
 	{
 		return;
 	}
-	UMaterialInstanceDynamic* Material = Body->CreateAndSetMaterialInstanceDynamic(0);
-	if (Material)
+	UMaterialInstanceDynamic* Material = UMaterialInstanceDynamic::Create(TintBase, this);
+	Material->SetVectorParameterValue(TEXT("Color"), bIsCaptain ? CaptainColor : (Side == EDwSide::Player ? PlayerColor : EnemyColor));
+	Body->SetMaterial(0, Material);
+}
+
+void ADwCombatUnit::HandleStatChanged(const FOnAttributeChangeData& /*Data*/)
+{
+	UpdateLabel();
+}
+
+void ADwCombatUnit::UpdateLabel()
+{
+	if (!Label || !Attributes)
 	{
-		Material->SetVectorParameterValue(TEXT("Color"), bIsCaptain ? CaptainColor : (Side == EDwSide::Player ? PlayerColor : EnemyColor));
+		return;
 	}
+	const FString Name = Definition ? Definition->DisplayName.ToString() : GetName();
+	Label->SetText(FText::FromString(FString::Printf(TEXT("%s%s\n%d / %d"), bIsCaptain ? TEXT("Capt. ") : TEXT(""), *Name,
+		FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()))));
+	Label->SetTextRenderColor((Side == EDwSide::Player ? PlayerColor : EnemyColor).ToFColor(true));
 }

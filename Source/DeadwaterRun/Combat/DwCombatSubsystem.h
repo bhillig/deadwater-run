@@ -101,8 +101,11 @@ public:
 
 	// --- Called by abilities (DW-104) ------------------------------------------------------------------------------
 
-	/** Moves a unit on the grid (logic is instant; presentation animates separately) and emits UnitMoved. */
-	void MoveUnit(FDwUnitHandle Unit, FIntPoint Tile);
+	/**
+	 * Moves a unit on the grid and emits UnitMoved. Logic is instant; UDwGA_Move animates the actor separately.
+	 * bSnapActor also teleports the actor (abilities that relocate without walking, tests, dev tools).
+	 */
+	void MoveUnit(FDwUnitHandle Unit, FIntPoint Tile, bool bSnapActor = false);
 	/** Marks a cannon tile as fired for the rest of this side turn (C7). */
 	void MarkCannonUsed(FIntPoint CannonTile);
 	/** Spends one item from the run inventory view. False if none left. */

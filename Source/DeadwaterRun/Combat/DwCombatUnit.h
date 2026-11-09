@@ -13,6 +13,9 @@ class UDwAbilitySystemComponent;
 class UDwUnitAttributeSet;
 class UDwUnitDefinition;
 class UStaticMeshComponent;
+class UMaterialInterface;
+class UTextRenderComponent;
+struct FOnAttributeChangeData;
 
 /** What the combat subsystem tells a unit when it spawns it (Docs/Architecture/03 "ADwCombatUnit"). */
 USTRUCT(BlueprintType)
@@ -73,6 +76,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Deadwater")
 	TObjectPtr<UStaticMeshComponent> Body;
 
+	/** Placeholder name and HP above the unit until the HUD's unit frames exist (DW-107). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Deadwater")
+	TObjectPtr<UTextRenderComponent> Label;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Placeholder")
 	FLinearColor PlayerColor = FLinearColor(0.1f, 0.35f, 0.9f);
 
@@ -84,6 +91,9 @@ public:
 
 private:
 	void ApplyPlaceholderTint();
+	UPROPERTY() TObjectPtr<UMaterialInterface> TintBase;
+	void UpdateLabel();
+	void HandleStatChanged(const FOnAttributeChangeData& Data);
 
 	UPROPERTY(VisibleAnywhere, Category = "Deadwater")
 	TObjectPtr<UDwAbilitySystemComponent> AbilitySystem;

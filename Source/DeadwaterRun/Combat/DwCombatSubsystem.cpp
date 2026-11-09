@@ -257,7 +257,23 @@ ADwShip* UDwCombatSubsystem::SpawnShip(EDwSide Side, const FDwShipSetup& ShipSet
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	UClass* Class = ShipSetup.ShipClass ? ShipSetup.ShipClass.Get() : ADwShip::StaticClass();
-	ADwShip* Ship = GetWorld()->SpawnActor<ADwShip>(Class, Board->GetActorTransform(), Params);
+	// The ship actor stands at the centre of its own deck (the Synty mesh aligns from there, DW-307).
+	FVector Centre = FVector::ZeroVector;
+	int32 DeckTiles = 0;
+	for (int32 Index = 0; Index < Grid.Tiles.Num(); ++Index)
+	{
+		if (Grid.Tiles[Index].Owner == Side && Grid.Tiles[Index].Elevation == 0 && Grid.IsStandable(Grid.ToTile(Index)))
+		{
+			Centre += Board->TileToWorld(Grid.ToTile(Index));
+			++DeckTiles;
+		}
+	}
+	FTransform Transform = Board->GetActorTransform();
+	if (DeckTiles > 0)
+	{
+		Transform.SetLocation(Centre / DeckTiles);
+	}
+	ADwShip* Ship = GetWorld()->SpawnActor<ADwShip>(Class, Transform, Params);
 	Ship->GetDwAbilitySystem()->bSuppressGameplayCues = UDwPresentationSubsystem::IsInstant(this);
 	Ship->InitializeFromSetup(Side, ShipSetup, CannonTiles);
 	BindShip(*Ship);
@@ -405,6 +421,7 @@ EDwCommandResult UDwCombatSubsystem::SubmitCommand(const FDwCombatCommand& Comma
 		Record.Commands.Add(Command);
 		OnCommandResolved.Broadcast(Command);
 		TurnManager->NotifyUnitDone(Command.Unit);
+		SuggestEndTurnIfIdle();
 		return EDwCommandResult::Accepted;
 
 	default:
@@ -934,7 +951,7 @@ EDwSide UDwCombatSubsystem::GetActiveSide() const
 // ---------------------------------------------------------------------------------------------------------------------
 // Ability services
 
-void UDwCombatSubsystem::MoveUnit(FDwUnitHandle Handle, FIntPoint Tile)
+void UDwCombatSubsystem::MoveUnit(FDwUnitHandle Handle, FIntPoint Tile, bool bSnapActor)
 {
 	ADwCombatUnit* Unit = FindUnit(Handle);
 	if (!Unit || !Grid.IsStandable(Tile))
@@ -947,6 +964,10 @@ void UDwCombatSubsystem::MoveUnit(FDwUnitHandle Handle, FIntPoint Tile)
 	}
 	Grid.SetOccupant(Tile, Handle, Unit->GetSide());
 	Unit->SetTile(Tile);
+	if (bSnapActor && Board)
+	{
+		Unit->SetActorLocation(Board->TileToWorld(Tile));
+	}
 
 	FDwCombatEvent Moved;
 	Moved.Type = EDwCombatEventType::UnitMoved;

@@ -2,6 +2,21 @@
 
 A turn-based pirate roguelike built in Unreal Engine 5.8 by one developer and a crew of coordinated AI agents.
 
+## Combat Playable: DW-103 / 104 / 105 (2026-11-09)
+
+| # | Ticket | Branch | What it is |
+|---|---|---|---|
+| 1 | **DW-103** Combat core | `orchestrator/dw-103-combat-core` | `UDwCombatSubsystem` (one validated `SubmitCommand` for player, AI, tests, simulator), `UDwTurnManager` (player first, enemies one by one, skips, durations), outcome rules (defeats first), death and sinking, replayable `FDwCombatRecord` |
+| 2 | **DW-104** Core actions | `orchestrator/dw-104-core-actions` | Move (one per turn), payload attacks, cannons, items, presentation tasks with instant mode; placeholder content: `GA_*`, `DA_Ability_*`, items, units, `DA_Encounter_Placeholder` |
+| 3 | **DW-105** Input and camera | `orchestrator/dw-105-input-camera` | `ADwPlayerController` + Enhanced Input (`IMC_Combat`), `UDwCombatInteraction` (select, path preview, targets, damage preview, cancel), `ADwCameraRig`; placeholder decks, HP labels and a text HUD until DW-107 |
+
+**Play it:** open the project, press Play on `L_Sea`. A 3 v 3 starts on two 250 HP ships. Left-click a pirate, then a blue tile to move or a lit enemy to attack. Keys `1`-`6` pick an action, right-click cancels, `Tab` picks the next pirate, `Space` ends the turn, `WASD` pans and the wheel zooms. Enemies don't act yet: their AI is DW-106.
+
+**Scripts** (first output line is PASS/FAIL):
+- `./Tools/Build.ps1` then `./Tools/Test.ps1`: 145 tests
+- `./Tools/CreateCombatContent.ps1`: rebuilds the placeholder content and syncs the DataTables it reads, headless and idempotent
+- `./Tools/Capture.ps1 -Demo move|aim|cannon`: plays `L_Sea` and saves a screenshot to `Saved/Captures/`, so proof doesn't need the editor MCP
+
 ## First Build: Week 0 Foundation (2026-11-08)
 
 The first three pieces from [Docs/Architecture/Roadmap.md](Docs/Architecture/Roadmap.md), built from the architecture docs.
