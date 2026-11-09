@@ -1,3 +1,4 @@
 [
-	{ "Name": "PlayerShip", "MaxHealth": 250, "CannonDamage": 70 }
+	{ "Name": "PlayerShip",       "MaxHealth": 250, "CannonDamage": 70 },
+	{ "Name": "EnemyPlaceholder", "MaxHealth": 250, "CannonDamage": 70 }
 ]

@@ -61,3 +61,13 @@ struct DEADWATERRUN_API FDwCombatQueries
 	 */
 	static bool SideHasAvailableAction(const FDwCombatSnapshot& Snapshot, EDwSide Side);
 };
+
+/** Cannons (Docs/Architecture/06-Ship-Cannons.md, C7). */
+struct DEADWATERRUN_API FDwCannonRules
+{
+	/**
+	 * An unused Tile.Cannon of Side's own ship on UnitTile or 4-way next to it. The unit's own tile wins, then the lowest
+	 * board index (every cannon on a ship deals the same damage, so the choice never changes the outcome).
+	 */
+	static TOptional<FIntPoint> FindUsableCannon(const FDwGridModel& Grid, FIntPoint UnitTile, EDwSide Side, const TArray<FIntPoint>& UsedCannons);
+};

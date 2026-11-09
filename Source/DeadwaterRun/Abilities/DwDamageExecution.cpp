@@ -54,14 +54,15 @@ void UDwDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	Input.SituationalMultiplier = Spec.GetSetByCallerMagnitude(DwTags::Data_DamageMultiplier, false, 1.f);
 	// Missing captures (a ship or the environment as the source) leave the defaults: 0 attack, 0 bonus.
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Defs.AttackDamage, Params, Input.AttackDamage);
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Defs.DamageBonus, Params, Input.DamageBonus);
 
 	const UAbilitySystemComponent* Target = ExecutionParams.GetTargetAbilitySystemComponent();
 	const bool bTargetIsUnit = Target && Target->GetSet<UDwUnitAttributeSet>() != nullptr;
 	const bool bTargetIsShip = !bTargetIsUnit && Target && Target->GetSet<UDwShipAttributeSet>() != nullptr;
+	// Unit-only terms: a ship takes flat ship damage (cannon = the firing ship's CannonDamage), never the gunner's bonus.
 	if (bTargetIsUnit)
 	{
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Defs.DamageReduction, Params, Input.DamageReduction);
+		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Defs.DamageBonus, Params, Input.DamageBonus);
 	}
 
 	const FDwDamageOutput Output = FDwDamageRules::Compute(Input);

@@ -20,6 +20,7 @@
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
+#include "Presentation/DwPresentationSubsystem.h"
 #include "Engine/World.h"
 #include "GameplayEffectExtension.h"
 
@@ -74,7 +75,16 @@ bool UDwCombatSubsystem::StartEncounter(const FDwEncounterSetup& InSetup)
 	Record.Seed = Setup.Seed;
 	Result = FDwCombatResult();
 	Outcome = EDwCombatOutcome::None;
-	Items = Setup.Items;
+	Items.Reset();
+	ItemDefinitions.Reset();
+	for (const FDwItemStack& Stack : Setup.Items)
+	{
+		if (Stack.Item)
+		{
+			Items.FindOrAdd(Stack.Item->GetFName()) += Stack.Count;
+			ItemDefinitions.Add(Stack.Item->GetFName(), Stack.Item);
+		}
+	}
 	ItemsUsed.Reset();
 	Kills.Reset();
 	CannonsUsed.Reset();
@@ -248,6 +258,7 @@ ADwShip* UDwCombatSubsystem::SpawnShip(EDwSide Side, const FDwShipSetup& ShipSet
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	UClass* Class = ShipSetup.ShipClass ? ShipSetup.ShipClass.Get() : ADwShip::StaticClass();
 	ADwShip* Ship = GetWorld()->SpawnActor<ADwShip>(Class, Board->GetActorTransform(), Params);
+	Ship->GetDwAbilitySystem()->bSuppressGameplayCues = UDwPresentationSubsystem::IsInstant(this);
 	Ship->InitializeFromSetup(Side, ShipSetup, CannonTiles);
 	BindShip(*Ship);
 	return Ship;
@@ -285,6 +296,7 @@ ADwCombatUnit* UDwCombatSubsystem::SpawnUnit(const FDwCombatantSetup& Combatant,
 	Unit->InitializeFromSpawnParams(Spawn);
 
 	UDwAbilitySystemComponent* Asc = Unit->GetDwAbilitySystem();
+	Asc->bSuppressGameplayCues = UDwPresentationSubsystem::IsInstant(this); // nothing to watch in tests and the simulator
 	Asc->AddLooseGameplayTags(Definition->UnitTags);
 	if (Spawn.bIsCaptain && !Asc->HasMatchingGameplayTag(DwTags::Unit_Role_Captain))
 	{
@@ -825,6 +837,7 @@ FDwCombatSnapshot UDwCombatSubsystem::GetSnapshot() const
 	Snapshot.OutcomeConfig = Setup.OutcomeConfig;
 	Snapshot.CannonsUsed = CannonsUsed;
 	Snapshot.Items = Items;
+	Snapshot.ItemDefinitions = ItemDefinitions;
 	Snapshot.Outcome = Outcome;
 
 	const FGameplayEffectQuery GuardQuery = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(DwTags::Status_Guarded));

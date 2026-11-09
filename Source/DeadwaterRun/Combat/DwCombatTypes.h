@@ -14,6 +14,7 @@ class ADwCombatUnit;
 class ADwShip;
 class UDwAbilityDefinition;
 class UDwEncounterDefinition;
+class UDwItemDefinition;
 class UDwUnitDefinition;
 class UGameplayEffect;
 
@@ -208,6 +209,16 @@ struct DEADWATERRUN_API FDwShipSetup
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") TSubclassOf<ADwShip> ShipClass;
 };
 
+/** Items of one kind carried into a fight. */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwItemStack
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item") TObjectPtr<const UDwItemDefinition> Item;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item", meta = (ClampMin = "0")) int32 Count = 0;
+};
+
 /**
  * Everything a fight needs (Docs/Architecture/03 "FDwEncounterSetup"). Built by UDwRun (DW-201), by the dev quick start,
  * or inline by tests. The board is passed as a built grid so tests can author decks in ASCII.
@@ -237,8 +248,8 @@ struct DEADWATERRUN_API FDwEncounterSetup
 	/** Ability.Move, Ability.Cannon, Ability.Item: granted to every unit (UDwGameData::CommonAbilities). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") TArray<TObjectPtr<const UDwAbilityDefinition>> CommonAbilities;
 
-	/** Run inventory view: item id -> count. UseItem spends from it; the result reports what was used. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") TMap<FName, int32> Items;
+	/** Run inventory view. UseItem spends from it; the result reports what was used. Item id = definition asset name. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") TArray<FDwItemStack> Items;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") FDwOutcomeConfig OutcomeConfig;
 	/** Captain rule tags (Rule.Captain.*), read by synergy, defend, surrender (DW-206..208). */

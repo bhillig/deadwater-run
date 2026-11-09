@@ -8,6 +8,9 @@
 #include "Abilities/DwGameplayEffects.h"
 #include "Board/DwGridQueries.h"
 #include "Combat/DwCombatSnapshot.h"
+#include "Combat/DwCombatSubsystem.h"
+#include "Combat/DwCombatUnit.h"
+#include "Engine/World.h"
 #include "Core/DwAssetManager.h"
 #include "Engine/Engine.h"
 #include "Core/DwGameData.h"
@@ -208,7 +211,8 @@ void UDwGameplayAbility::ApplyCost(const FGameplayAbilitySpecHandle Handle, cons
 
 int32 UDwGameplayAbility::GetRange(const FDwTargetingContext& Context) const
 {
-	if (Targeting.bIgnoreRange)
+	const FDwTargetingRules& Rules = GetTargetingRules(Context);
+	if (Rules.bIgnoreRange)
 	{
 		return MAX_int32 / 2;
 	}
@@ -219,6 +223,7 @@ int32 UDwGameplayAbility::GetRange(const FDwTargetingContext& Context) const
 bool UDwGameplayAbility::IsUnitTargetable(const FDwTargetingContext& Context, const FDwUnitSnapshot& Source, FIntPoint SourceTile,
 	const FDwUnitSnapshot& Candidate, int32 Range, FText* OutReason) const
 {
+	const FDwTargetingRules& Rules = GetTargetingRules(Context);
 	auto Fail = [OutReason](const FText& Reason) { if (OutReason) { *OutReason = Reason; } return false; };
 	const FDwGridModel& Grid = Context.Snapshot->Grid;
 
@@ -227,15 +232,15 @@ bool UDwGameplayAbility::IsUnitTargetable(const FDwTargetingContext& Context, co
 		return Fail(LOCTEXT("Dead", "Already dead"));
 	}
 	const bool bSameSide = Candidate.Side == Source.Side;
-	if ((Targeting.Side == EDwTargetSide::Enemy && bSameSide) || (Targeting.Side == EDwTargetSide::Ally && !bSameSide))
+	if ((Rules.Side == EDwTargetSide::Enemy && bSameSide) || (Rules.Side == EDwTargetSide::Ally && !bSameSide))
 	{
 		return Fail(LOCTEXT("Side", "Wrong side"));
 	}
-	if (!Candidate.Tags.HasAll(Targeting.RequiredTargetTags) || Candidate.Tags.HasAny(Targeting.BlockedTargetTags))
+	if (!Candidate.Tags.HasAll(Rules.RequiredTargetTags) || Candidate.Tags.HasAny(Rules.BlockedTargetTags))
 	{
 		return Fail(LOCTEXT("Tags", "Can't target this unit"));
 	}
-	if (!Targeting.bCanTargetElevated)
+	if (!Rules.bCanTargetElevated)
 	{
 		const FDwTile* TargetTile = Grid.GetTile(Candidate.Tile);
 		const FDwTile* FromTile = Grid.GetTile(SourceTile);
@@ -245,13 +250,13 @@ bool UDwGameplayAbility::IsUnitTargetable(const FDwTargetingContext& Context, co
 			return Fail(LOCTEXT("Elevated", "Out of reach (sniper's nest)"));
 		}
 	}
-	if (&Candidate != &Source || Targeting.Pattern != EDwTargetPattern::Self)
+	if (&Candidate != &Source || Rules.Pattern != EDwTargetPattern::Self)
 	{
 		if (!FDwTargetingQuery::IsInRange(Grid, Context.Snapshot->GridRules, SourceTile, Candidate.Tile, Range))
 		{
 			return Fail(LOCTEXT("Range", "Out of range"));
 		}
-		if (Targeting.bRequiresLineOfSight && !FDwLineOfSight::HasLineOfSight(Grid, SourceTile, Candidate.Tile))
+		if (Rules.bRequiresLineOfSight && !FDwLineOfSight::HasLineOfSight(Grid, SourceTile, Candidate.Tile))
 		{
 			return Fail(LOCTEXT("LOS", "No line of sight"));
 		}
@@ -261,6 +266,7 @@ bool UDwGameplayAbility::IsUnitTargetable(const FDwTargetingContext& Context, co
 
 void UDwGameplayAbility::GatherValidTargets(const FDwTargetingContext& Context, TArray<FDwAbilityTarget>& OutTargets) const
 {
+	const FDwTargetingRules& Rules = GetTargetingRules(Context);
 	OutTargets.Reset();
 	const FDwUnitSnapshot* Source = Context.Snapshot ? Context.Snapshot->FindUnit(Context.Source) : nullptr;
 	const TOptional<FIntPoint> SourceTile = Context.GetSourceTile();
@@ -270,7 +276,7 @@ void UDwGameplayAbility::GatherValidTargets(const FDwTargetingContext& Context, 
 	}
 	const FDwGridModel& Grid = Context.Snapshot->Grid;
 	const FDwTile* FromTile = Grid.GetTile(SourceTile.GetValue());
-	if (!Targeting.RequiredSourceTileTags.IsEmpty() && (!FromTile || !FromTile->Tags.HasAll(Targeting.RequiredSourceTileTags)))
+	if (!Rules.RequiredSourceTileTags.IsEmpty() && (!FromTile || !FromTile->Tags.HasAll(Rules.RequiredSourceTileTags)))
 	{
 		return;
 	}
@@ -278,7 +284,7 @@ void UDwGameplayAbility::GatherValidTargets(const FDwTargetingContext& Context, 
 	const int32 Range = GetRange(Context);
 	const EDwSide EnemySide = Source->Side == EDwSide::Player ? EDwSide::Enemy : EDwSide::Player;
 
-	switch (Targeting.Pattern)
+	switch (Rules.Pattern)
 	{
 	case EDwTargetPattern::Self:
 		OutTargets.Add(FDwAbilityTarget::MakeUnit(Source->Handle, SourceTile.GetValue()));
@@ -296,7 +302,7 @@ void UDwGameplayAbility::GatherValidTargets(const FDwTargetingContext& Context, 
 				OutTargets.Add(FDwAbilityTarget::MakeUnit(Candidate.Handle, Candidate.Tile));
 			}
 		}
-		if (Targeting.Pattern == EDwTargetPattern::SingleUnitOrShip && Targeting.Side != EDwTargetSide::Ally && Context.Snapshot->FindShip(EnemySide))
+		if (Rules.Pattern == EDwTargetPattern::SingleUnitOrShip && Rules.Side != EDwTargetSide::Ally && Context.Snapshot->FindShip(EnemySide))
 		{
 			OutTargets.Add(FDwAbilityTarget::MakeShip(EnemySide));
 		}
@@ -314,7 +320,7 @@ void UDwGameplayAbility::GatherValidTargets(const FDwTargetingContext& Context, 
 		{
 			const FIntPoint Tile = Grid.ToTile(Index);
 			if (Grid.IsStandable(Tile) && FDwTargetingQuery::IsInRange(Grid, Context.Snapshot->GridRules, SourceTile.GetValue(), Tile, Range)
-				&& (!Targeting.bRequiresLineOfSight || FDwLineOfSight::HasLineOfSight(Grid, SourceTile.GetValue(), Tile)))
+				&& (!Rules.bRequiresLineOfSight || FDwLineOfSight::HasLineOfSight(Grid, SourceTile.GetValue(), Tile)))
 			{
 				OutTargets.Add(FDwAbilityTarget::MakeTile(Tile));
 			}
@@ -336,10 +342,11 @@ void UDwGameplayAbility::GatherValidTargets(const FDwTargetingContext& Context, 
 
 bool UDwGameplayAbility::IsValidTarget(const FDwTargetingContext& Context, const FDwAbilityTarget& Target, FText* OutReason) const
 {
+	const FDwTargetingRules& Rules = GetTargetingRules(Context);
 	TArray<FDwAbilityTarget> Valid;
 	GatherValidTargets(Context, Valid);
-	const bool bGroup = Targeting.Pattern == EDwTargetPattern::AllEnemies || Targeting.Pattern == EDwTargetPattern::AllAllies
-		|| Targeting.Pattern == EDwTargetPattern::RandomEnemies;
+	const bool bGroup = Rules.Pattern == EDwTargetPattern::AllEnemies || Rules.Pattern == EDwTargetPattern::AllAllies
+		|| Rules.Pattern == EDwTargetPattern::RandomEnemies;
 	if ((bGroup && Valid.Num() > 0) || Valid.Contains(Target))
 	{
 		return true;
@@ -360,11 +367,12 @@ bool UDwGameplayAbility::IsValidTarget(const FDwTargetingContext& Context, const
 
 void UDwGameplayAbility::ResolveTargets(const FDwTargetingContext& Context, const FDwAbilityTarget& Target, TArray<FDwAbilityTarget>& OutTargets) const
 {
+	const FDwTargetingRules& Rules = GetTargetingRules(Context);
 	OutTargets.Reset();
 	TArray<FDwAbilityTarget> Valid;
 	GatherValidTargets(Context, Valid);
 
-	switch (Targeting.Pattern)
+	switch (Rules.Pattern)
 	{
 	case EDwTargetPattern::AllEnemies:
 	case EDwTargetPattern::AllAllies:
@@ -403,7 +411,7 @@ void UDwGameplayAbility::ResolveTargets(const FDwTargetingContext& Context, cons
 	}
 
 	// Defend redirect: a single-target enemy hit on a guarded unit goes to its guardian, if alive and next to it.
-	const bool bSingle = Targeting.Pattern == EDwTargetPattern::SingleUnit || Targeting.Pattern == EDwTargetPattern::SingleUnitOrShip;
+	const bool bSingle = Rules.Pattern == EDwTargetPattern::SingleUnit || Rules.Pattern == EDwTargetPattern::SingleUnitOrShip;
 	const FDwUnitSnapshot* Source = Context.Snapshot->FindUnit(Context.Source);
 	const FDwUnitSnapshot* Victim = Context.Snapshot->FindUnit(Target.Unit);
 	if (bSingle && Source && Victim && Victim->Side != Source->Side && Victim->Tags.HasTagExact(DwTags::Status_Guarded))
@@ -420,6 +428,7 @@ void UDwGameplayAbility::ResolveTargets(const FDwTargetingContext& Context, cons
 
 FDwAbilityPreview UDwGameplayAbility::PreviewOutcome(const FDwTargetingContext& Context, const FDwAbilityTarget& Target) const
 {
+	const FDwTargetingRules& Rules = GetTargetingRules(Context);
 	FDwAbilityPreview Preview;
 	if (!IsValidTarget(Context, Target, &Preview.Reason))
 	{
@@ -430,7 +439,7 @@ FDwAbilityPreview UDwGameplayAbility::PreviewOutcome(const FDwTargetingContext& 
 
 	const FDwAbilityTuningRow* Tuning = GetTuning(Context.Ability);
 	const FDwUnitSnapshot* Source = Context.Snapshot->FindUnit(Context.Source);
-	if (Targeting.Pattern == EDwTargetPattern::RandomEnemies && Tuning)
+	if (Rules.Pattern == EDwTargetPattern::RandomEnemies && Tuning)
 	{
 		Preview.MinHits = FMath::Max(1, Tuning->MinHits);
 		Preview.MaxHits = FMath::Max(Preview.MinHits, Tuning->MaxHits);
@@ -464,6 +473,7 @@ FDwAbilityPreview UDwGameplayAbility::PreviewOutcome(const FDwTargetingContext& 
 		}
 		else if (const FDwShipSnapshot* Ship = Hit.bShip ? Context.Snapshot->FindShip(Hit.ShipSide) : nullptr)
 		{
+			Input.DamageBonus = 0.f; // ships take flat damage (UDwDamageExecution skips unit-only terms)
 			Health = Ship->Health;
 		}
 		Entry.Damage = (Tuning->Damage > 0 || Tuning->DamageScale > 0.f) ? FDwDamageRules::Compute(Input).Damage : 0;
@@ -497,6 +507,38 @@ void UDwGameplayAbility::ApplyTuningToSpec(FGameplayEffectSpec& Spec, const FDwA
 	{
 		Spec.SetSetByCallerMagnitude(DwTags::Data_Turns, Tuning.DurationTurns);
 	}
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Combat helpers
+
+UDwCombatSubsystem* UDwGameplayAbility::GetCombat() const
+{
+	const AActor* Avatar = GetAvatarActorFromActorInfo();
+	const UWorld* World = Avatar ? Avatar->GetWorld() : nullptr;
+	return World ? World->GetSubsystem<UDwCombatSubsystem>() : nullptr;
+}
+
+ADwCombatUnit* UDwGameplayAbility::GetOwnerUnit() const
+{
+	return Cast<ADwCombatUnit>(GetAvatarActorFromActorInfo());
+}
+
+const FDwGameplayAbilityTargetData_Grid* UDwGameplayAbility::GetGridTarget(const FGameplayEventData* EventData)
+{
+	if (!EventData || !EventData->TargetData.IsValid(0))
+	{
+		return nullptr;
+	}
+	const FGameplayAbilityTargetData* Data = EventData->TargetData.Get(0);
+	return Data && Data->GetScriptStruct() == FDwGameplayAbilityTargetData_Grid::StaticStruct()
+		? static_cast<const FDwGameplayAbilityTargetData_Grid*>(Data) : nullptr;
+}
+
+void UDwGameplayAbility::CancelActivation()
+{
+	EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), /*bReplicateEndAbility*/ false, /*bWasCancelled*/ true);
 }
 
 #undef LOCTEXT_NAMESPACE

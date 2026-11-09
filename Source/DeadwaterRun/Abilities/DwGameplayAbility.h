@@ -8,7 +8,9 @@
 #include "Abilities/DwTargetingRules.h"
 #include "DwGameplayAbility.generated.h"
 
+class ADwCombatUnit;
 class UDwAbilityDefinition;
+class UDwCombatSubsystem;
 struct FDwAbilityTuningRow;
 struct FDwSharedEffects;
 struct FDwUnitSnapshot;
@@ -66,6 +68,9 @@ public:
 	/** Pure budget check shared by CheckCost and the UI. */
 	EDwCostCheck CheckBudget(const UDwAbilityDefinition* Definition, float Mana, float ActionPoints, float MovePoints) const;
 
+	/** The targeting rules for this context: the ability's own, or (items) the aimed item's. */
+	virtual const FDwTargetingRules& GetTargetingRules(const FDwTargetingContext& Context) const { return Targeting; }
+
 	/** Every target this ability may be aimed at from the context's source (tile). */
 	virtual void GatherValidTargets(const FDwTargetingContext& Context, TArray<FDwAbilityTarget>& OutTargets) const;
 
@@ -88,8 +93,23 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 protected:
+	/** Tiles of reach from tuning (or unlimited with bIgnoreRange). Items read their own tuning row. */
+	virtual int32 GetRange(const FDwTargetingContext& Context) const;
+
 	/** MovePoints this activation spends when ActionCost is Move (UDwGA_Move returns the path cost). */
 	virtual float GetMoveCost(const FGameplayAbilityActorInfo* ActorInfo) const { return 0.f; }
+
+	/** The fight this ability runs in (the avatar's world), or nullptr outside combat. */
+	UDwCombatSubsystem* GetCombat() const;
+
+	/** The avatar as a combat unit, or nullptr. */
+	ADwCombatUnit* GetOwnerUnit() const;
+
+	/** The grid target of an Event.Ability.Activate payload, or nullptr. */
+	static const FDwGameplayAbilityTargetData_Grid* GetGridTarget(const FGameplayEventData* EventData);
+
+	/** Ends this activation as cancelled (validation passed but the ability can't go ahead). */
+	void CancelActivation();
 
 	/** A spec of EffectClass with every standard SetByCaller filled from the tuning row (Damage, DamageScale, Heal, Fear, Turns). */
 	FGameplayEffectSpecHandle MakeTunedSpec(TSubclassOf<UGameplayEffect> EffectClass) const;
@@ -100,7 +120,6 @@ protected:
 private:
 	bool IsUnitTargetable(const FDwTargetingContext& Context, const FDwUnitSnapshot& Source, FIntPoint SourceTile,
 		const FDwUnitSnapshot& Candidate, int32 Range, FText* OutReason) const;
-	int32 GetRange(const FDwTargetingContext& Context) const;
 };
 
 /** The shared effect classes from DA_GameData, with native defaults for any empty slot. */

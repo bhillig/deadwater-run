@@ -43,6 +43,7 @@ struct DEADWATERRUN_API FDwTargetPreview
 	/** Per hit for RandomEnemies patterns. */
 	UPROPERTY(BlueprintReadOnly, Category = "Preview") int32 Damage = 0;
 	UPROPERTY(BlueprintReadOnly, Category = "Preview") int32 Heal = 0;
+	UPROPERTY(BlueprintReadOnly, Category = "Preview") int32 Mana = 0;
 	UPROPERTY(BlueprintReadOnly, Category = "Preview") int32 Fear = 0;
 	UPROPERTY(BlueprintReadOnly, Category = "Preview") bool bLethal = false;
 };

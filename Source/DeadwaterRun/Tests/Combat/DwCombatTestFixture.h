@@ -16,6 +16,12 @@
 #include "Combat/DwShip.h"
 #include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
+#include "Data/DwItemDefinition.h"
+#include "Abilities/DwGA_FireCannon.h"
+#include "Abilities/DwGA_Move.h"
+#include "Abilities/DwGA_UseItem.h"
+#include "Abilities/DwGameplayEffects.h"
+#include "Presentation/DwPresentationSubsystem.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 #include "Engine/DataTable.h"
@@ -41,6 +47,18 @@ struct FDwCombatFixture
 	UDwAbilityDefinition* Latent = nullptr;
 	UDwUnitDefinition* Grunt = nullptr;
 
+	// Real DW-104 actions (UseRealActions)
+	UDwAbilityDefinition* Melee = nullptr;     // Ability.Attack.Melee payload: 25 damage, range 1
+	UDwAbilityDefinition* Volley = nullptr;    // Ability.Attack.Ranged: 3-5 random hits of 10, range 20
+	UDwAbilityDefinition* Terror = nullptr;    // Ability.Captain.SmokeAndFire: 15 to the afraid, then +1 Fear to all
+	UDwAbilityDefinition* Move = nullptr;
+	UDwAbilityDefinition* Cannon = nullptr;
+	UDwAbilityDefinition* Item = nullptr;
+	UDwItemDefinition* Potion = nullptr;       // heals 30, self or adjacent ally
+	UDwItemDefinition* Tonic = nullptr;        // restores 10 MP, self or adjacent ally
+	UDwUnitDefinition* Sailor = nullptr;
+	UDataTable* ItemTable = nullptr;
+
 	FDwEncounterSetup Setup;
 	TArray<UObject*> Rooted;
 
@@ -59,6 +77,7 @@ struct FDwCombatFixture
 		GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
 		World->InitializeActorsForPlay(FURL()); // or ASCs never register their attribute sets
 		Combat = World->GetSubsystem<UDwCombatSubsystem>();
+		World->GetSubsystem<UDwPresentationSubsystem>()->SetInstant(true); // tests resolve in one call stack unless a test opts out
 
 		Listener = Root(NewObject<UDwTestCombatListener>());
 		Listener->Bind(*Combat);
@@ -105,6 +124,66 @@ struct FDwCombatFixture
 			Setup.Enemies.Add(Enemy);
 		}
 		Setup.Seed = 7;
+	}
+
+	/** Crew and enemies become Sailors: melee + volley + Move, FireCannon, UseItem; the crew carries 2 potions and 1 tonic. */
+	void UseRealActions()
+	{
+		FDwAbilityTuningRow Row;
+		Row.Damage = 25; Row.Range = 1; AbilityTable->AddRow(TEXT("Melee"), Row);
+		Row = FDwAbilityTuningRow(); Row.Damage = 10; Row.Range = 20; Row.MinHits = 3; Row.MaxHits = 5; AbilityTable->AddRow(TEXT("Volley"), Row);
+		Row = FDwAbilityTuningRow(); Row.Damage = 15; Row.Fear = 1; Row.Range = 20; AbilityTable->AddRow(TEXT("Terror"), Row);
+		Row = FDwAbilityTuningRow(); AbilityTable->AddRow(TEXT("Move"), Row);
+		AbilityTable->AddRow(TEXT("Cannon"), Row);
+		AbilityTable->AddRow(TEXT("Item"), Row);
+
+		Melee = MakeAbility(TEXT("Melee"), UDwTestPayload_Melee::StaticClass(), DwTags::Ability_Attack_Melee);
+		Volley = MakeAbility(TEXT("Volley"), UDwTestPayload_Volley::StaticClass(), DwTags::Ability_Attack_Ranged);
+		Terror = MakeAbility(TEXT("Terror"), UDwTestPayload_Terror::StaticClass(), DwTags::Ability_Captain_SmokeAndFire);
+		Move = MakeAbility(TEXT("Move"), UDwGA_Move::StaticClass(), DwTags::Ability_Move);
+		Cannon = MakeAbility(TEXT("Cannon"), UDwGA_FireCannon::StaticClass(), DwTags::Ability_Cannon);
+		Item = MakeAbility(TEXT("Item"), UDwGA_UseItem::StaticClass(), DwTags::Ability_Item);
+
+		ItemTable = Root(NewObject<UDataTable>(GetTransientPackage()));
+		ItemTable->RowStruct = FDwItemTuningRow::StaticStruct();
+		FDwItemTuningRow ItemRow;
+		ItemRow.Range = 1;
+		ItemRow.Amount = 30; ItemTable->AddRow(TEXT("Potion"), ItemRow);
+		ItemRow.Amount = 10; ItemTable->AddRow(TEXT("Tonic"), ItemRow);
+		Potion = MakeItem(TEXT("Potion"), UDwGE_Heal::StaticClass());
+		Tonic = MakeItem(TEXT("Tonic"), UDwGE_RestoreMana::StaticClass());
+
+		Sailor = Root(NewObject<UDwUnitDefinition>(GetTransientPackage(), MakeUniqueObjectName(GetTransientPackage(), UDwUnitDefinition::StaticClass(), TEXT("DA_Unit_TestSailor"))));
+		Sailor->BasicAttack = Melee;
+		Sailor->DefaultAbilities = { Volley };
+		Sailor->Tuning = Grunt->Tuning;
+		for (FDwCombatantSetup& Crew : Setup.Crew) { Crew.Definition = Sailor; }
+		for (FDwCombatantSetup& Enemy : Setup.Enemies) { Enemy.Definition = Sailor; }
+		Setup.CommonAbilities = { Move, Cannon, Item };
+		Setup.Items.Reset();
+		FDwItemStack& Potions = Setup.Items.AddDefaulted_GetRef(); Potions.Item = Potion; Potions.Count = 2;
+		FDwItemStack& Tonics = Setup.Items.AddDefaulted_GetRef(); Tonics.Item = Tonic; Tonics.Count = 1;
+	}
+
+	EDwCommandResult MoveTo(FDwUnitHandle Unit, FIntPoint Tile)
+	{
+		return Combat->SubmitCommand(FDwCombatCommand::MakeMove(Unit, Tile));
+	}
+
+	EDwCommandResult UseItem(FDwUnitHandle Source, UDwItemDefinition* ItemDef, FDwUnitHandle Target)
+	{
+		return Combat->SubmitCommand(FDwCombatCommand::MakeAbility(Source, DwTags::Ability_Item,
+			FDwAbilityTarget::MakeUnit(Target, Unit(Target)->GetTile()), ItemDef->GetFName()));
+	}
+
+	FDwTargetingContext Context(const FDwCombatSnapshot& Snapshot, FDwUnitHandle Source, const UDwAbilityDefinition* Ability, FName ItemId = NAME_None) const
+	{
+		FDwTargetingContext C;
+		C.Snapshot = &Snapshot;
+		C.Ability = Ability;
+		C.Source = Source;
+		C.ItemId = ItemId;
+		return C;
 	}
 
 	void Destroy()
@@ -170,6 +249,17 @@ struct FDwCombatFixture
 		Object->AddToRoot();
 		Rooted.Add(Object);
 		return Object;
+	}
+
+	UDwItemDefinition* MakeItem(const TCHAR* Name, UClass* Effect)
+	{
+		UDwItemDefinition* ItemDef = Root(NewObject<UDwItemDefinition>(GetTransientPackage(), MakeUniqueObjectName(GetTransientPackage(), UDwItemDefinition::StaticClass(), *FString::Printf(TEXT("DA_Item_Test%s"), Name))));
+		ItemDef->Effect = Effect;
+		ItemDef->Targeting.Pattern = EDwTargetPattern::SingleUnit;
+		ItemDef->Targeting.Side = EDwTargetSide::Ally;
+		ItemDef->Tuning.DataTable = ItemTable;
+		ItemDef->Tuning.RowName = Name;
+		return ItemDef;
 	}
 
 private:

@@ -290,4 +290,30 @@ bool FDwCombatQueries::SideHasAvailableAction(const FDwCombatSnapshot& Snapshot,
 	return false;
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Cannons
+
+TOptional<FIntPoint> FDwCannonRules::FindUsableCannon(const FDwGridModel& Grid, FIntPoint UnitTile, EDwSide Side, const TArray<FIntPoint>& UsedCannons)
+{
+	auto IsUsable = [&](FIntPoint Tile)
+	{
+		const FDwTile* Data = Grid.GetTile(Tile);
+		return Data && Data->Owner == Side && Data->Tags.HasTagExact(DwTags::Tile_Cannon) && !UsedCannons.Contains(Tile);
+	};
+	if (IsUsable(UnitTile))
+	{
+		return UnitTile;
+	}
+	TOptional<FIntPoint> Best;
+	for (const FIntPoint& Dir : FDwGridModel::Directions)
+	{
+		const FIntPoint Tile = UnitTile + Dir;
+		if (IsUsable(Tile) && (!Best.IsSet() || Grid.ToIndex(Tile) < Grid.ToIndex(Best.GetValue())))
+		{
+			Best = Tile;
+		}
+	}
+	return Best;
+}
 #undef LOCTEXT_NAMESPACE

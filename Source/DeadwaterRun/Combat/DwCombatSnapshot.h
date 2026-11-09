@@ -7,6 +7,7 @@
 #include "Board/DwGridModel.h"
 #include "Combat/DwCombatTypes.h"
 #include "Core/DwTypes.h"
+#include "Data/DwItemDefinition.h"
 #include "DwCombatSnapshot.generated.h"
 
 class UDwAbilityDefinition;
@@ -81,11 +82,19 @@ struct DEADWATERRUN_API FDwCombatSnapshot
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") TArray<FIntPoint> CannonsUsed;
 	/** Run inventory view: item id -> count left. */
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") TMap<FName, int32> Items;
+	/** Definition of every item id the fight knows (pure item targeting and previews). */
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") TMap<FName, TObjectPtr<const UDwItemDefinition>> ItemDefinitions;
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") EDwCombatOutcome Outcome = EDwCombatOutcome::None;
 
 	const FDwUnitSnapshot* FindUnit(FDwUnitHandle Handle) const
 	{
 		return Units.FindByPredicate([Handle](const FDwUnitSnapshot& U) { return U.Handle == Handle; });
+	}
+
+	const UDwItemDefinition* FindItem(FName ItemId) const
+	{
+		const TObjectPtr<const UDwItemDefinition>* Item = ItemDefinitions.Find(ItemId);
+		return Item ? Item->Get() : nullptr;
 	}
 
 	const FDwShipSnapshot* FindShip(EDwSide Side) const

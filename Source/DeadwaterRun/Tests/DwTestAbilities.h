@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/DwGameplayAbility.h"
+#include "Abilities/DwGA_EffectPayload.h"
 #include "Combat/DwCombatSideController.h"
 #include "Combat/DwCombatTypes.h"
 #include "DwTestAbilities.generated.h"
@@ -87,4 +88,31 @@ public:
 	UFUNCTION() void HandleResolved(const FDwCombatCommand& Command) { Resolved.Add(Command); }
 	UFUNCTION() void HandleEnded(const FDwCombatResult& Result) { Ended.Add(Result); }
 	UFUNCTION() void HandleEndTurnSuggested() { ++EndTurnSuggestions; }
+};
+
+/** Test-only payloads (content uses GA_* Blueprints). Melee: single enemy, can't reach the nest, GE_Damage. */
+UCLASS(NotBlueprintable, HideDropdown, meta = (HiddenNode))
+class DEADWATERRUN_API UDwTestPayload_Melee : public UDwGA_EffectPayload
+{
+	GENERATED_BODY()
+public:
+	UDwTestPayload_Melee();
+};
+
+/** RandomEnemies, MinHits..MaxHits from tuning: proves the combat random stream is used and replayable. */
+UCLASS(NotBlueprintable, HideDropdown, meta = (HiddenNode))
+class DEADWATERRUN_API UDwTestPayload_Volley : public UDwGA_EffectPayload
+{
+	GENERATED_BODY()
+public:
+	UDwTestPayload_Volley();
+};
+
+/** AllEnemies: GE_Damage only on Status.Afraid targets, then GE_AddFear on all (Smoke and Fire's shape: order matters). */
+UCLASS(NotBlueprintable, HideDropdown, meta = (HiddenNode))
+class DEADWATERRUN_API UDwTestPayload_Terror : public UDwGA_EffectPayload
+{
+	GENERATED_BODY()
+public:
+	UDwTestPayload_Terror();
 };

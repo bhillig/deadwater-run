@@ -4,6 +4,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/DwGameplayEffects.h"
 #include "Core/DwGameData.h"
 #include "Core/DwGameplayTags.h"
 #include "Combat/DwCombatSubsystem.h"
@@ -106,4 +107,37 @@ void UDwTestCombatListener::Reset()
 int32 UDwTestCombatListener::Count(EDwCombatEventType Type, FDwUnitHandle Target) const
 {
 	return Events.FilterByPredicate([&](const FDwCombatEvent& E) { return E.Type == Type && (!Target.IsValid() || E.Target == Target); }).Num();
+}
+
+UDwTestPayload_Melee::UDwTestPayload_Melee()
+{
+	Targeting.Pattern = EDwTargetPattern::SingleUnit;
+	Targeting.Side = EDwTargetSide::Enemy;
+	Targeting.bCanTargetElevated = false;
+	FDwEffectApplication Damage;
+	Damage.Effect = UDwGE_Damage::StaticClass();
+	Applications.Add(Damage);
+	HitCue = DwTags::GameplayCue_Hit_Melee;
+}
+
+UDwTestPayload_Volley::UDwTestPayload_Volley()
+{
+	Targeting.Pattern = EDwTargetPattern::RandomEnemies;
+	Targeting.Side = EDwTargetSide::Enemy;
+	FDwEffectApplication Damage;
+	Damage.Effect = UDwGE_Damage::StaticClass();
+	Applications.Add(Damage);
+}
+
+UDwTestPayload_Terror::UDwTestPayload_Terror()
+{
+	Targeting.Pattern = EDwTargetPattern::AllEnemies;
+	Targeting.Side = EDwTargetSide::Enemy;
+	FDwEffectApplication Damage;
+	Damage.Effect = UDwGE_Damage::StaticClass();
+	Damage.RequiredTargetTags.AddTag(DwTags::Status_Afraid);
+	Applications.Add(Damage);
+	FDwEffectApplication Fear;
+	Fear.Effect = UDwGE_AddFear::StaticClass();
+	Applications.Add(Fear);
 }

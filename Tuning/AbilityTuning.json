@@ -1,6 +1,9 @@
 [
-	{ "Name": "Attack_Sword",          "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
-	{ "Name": "Attack_Rifle",          "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
+	{ "Name": "Attack_Sword",          "ManaCost": 0, "Damage": 25, "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 1,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
+	{ "Name": "Attack_Rifle",          "ManaCost": 0, "Damage": 20, "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 6,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
+	{ "Name": "Move",                  "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
+	{ "Name": "FireCannon",            "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
+	{ "Name": "UseItem",               "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
 	{ "Name": "Captain_Defend",        "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 1, "ShopPrice": 0 },
 	{ "Name": "Captain_RallyCry",      "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 15, "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
 	{ "Name": "Captain_GrappleHook",   "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 10, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },

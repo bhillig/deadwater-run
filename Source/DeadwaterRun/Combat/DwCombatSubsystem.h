@@ -165,7 +165,8 @@ private:
 	UPROPERTY() TScriptInterface<IDwCombatSideController> EnemyController;
 	UPROPERTY() TObjectPtr<UDwPassiveSideController> DefaultEnemyController;
 
-	FDwEncounterSetup Setup;
+	/** Holds definition pointers: a UPROPERTY so they stay referenced for the whole fight. */
+	UPROPERTY() FDwEncounterSetup Setup;
 	FDwGridModel Grid;
 	FDwGridRules GridRules;
 	FRandomStream Random;
@@ -177,6 +178,7 @@ private:
 	TArray<FIntPoint> CannonsUsed;
 	TMap<FName, int32> Items;
 	TMap<FName, int32> ItemsUsed;
+	UPROPERTY() TMap<FName, TObjectPtr<const UDwItemDefinition>> ItemDefinitions;
 	TArray<FDwKillRecord> Kills;
 	TMap<FDwUnitHandle, FActiveGameplayEffectHandle> CoweringEffects;
 
