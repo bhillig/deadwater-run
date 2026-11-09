@@ -72,6 +72,7 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(Data_Cost_Mana, "Data.Cost.Mana");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Cost_Move, "Data.Cost.Move");
 	UE_DEFINE_GAMEPLAY_TAG(Data_DamageBonus, "Data.DamageBonus");
+	UE_DEFINE_GAMEPLAY_TAG(Data_DamageMultiplier, "Data.DamageMultiplier");
 	UE_DEFINE_GAMEPLAY_TAG(Data_Value, "Data.Value");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Hit_Melee, "GameplayCue.Hit.Melee");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Hit_Ranged, "GameplayCue.Hit.Ranged");
