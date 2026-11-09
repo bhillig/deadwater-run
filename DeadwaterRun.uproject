@@ -7,11 +7,7 @@
 		{
 			"Name": "DeadwaterRun",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"UMG",
-				"AIModule"
-			]
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -24,26 +20,47 @@
 		},
 		{
 			"Name": "StateTree",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "GameplayStateTree",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "ModelContextProtocol",
-			"Enabled": true
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		},
 		{
 			"Name": "AllToolsets",
-			"Enabled": true
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		},
 		{
 			"Name": "Terminal",
-			"Enabled": true
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
 		},
 		{
 			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
+		},
+		{
+			"Name": "DataValidation",
+			"Enabled": true
+		},
+		{
+			"Name": "EditorScriptingUtilities",
 			"Enabled": true
 		}
 	]

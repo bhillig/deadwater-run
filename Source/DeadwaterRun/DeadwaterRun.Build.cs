@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Brandon Hillig 2026
 
 using UnrealBuildTool;
 
@@ -8,43 +8,31 @@ public class DeadwaterRun : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		// Dependencies per Docs/Architecture/01-Project-Structure.md "Module dependencies".
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
 			"CoreUObject",
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
-			"AIModule",
-			"NavigationSystem",
-			"StateTreeModule",
-			"GameplayStateTreeModule",
-			"Niagara",
-			"UMG",
-			"Slate",
-			"SlateCore",
 			"GameplayAbilities",
 			"GameplayTags",
-			"GameplayTasks"
+			"GameplayTasks",
+			"UMG",
+			"CommonUI",
+			"CommonInput"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
-
-		PublicIncludePaths.AddRange(new string[] {
-			"DeadwaterRun",
-			"DeadwaterRun/Variant_Strategy",
-			"DeadwaterRun/Variant_Strategy/UI",
-			"DeadwaterRun/Variant_TwinStick",
-			"DeadwaterRun/Variant_TwinStick/AI",
-			"DeadwaterRun/Variant_TwinStick/Gameplay",
-			"DeadwaterRun/Variant_TwinStick/UI"
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"Slate",
+			"SlateCore",
+			"Niagara",
+			"DeveloperSettings",
+			"Json",
+			"JsonUtilities"
 		});
 
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
-
-		// Uncomment if you are using online features
-		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
-
-		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
+		// Module root, so includes read "Core/DwGameMode.h", "Board/DwTile.h", ...
+		PublicIncludePaths.Add(ModuleDirectory);
 	}
 }
