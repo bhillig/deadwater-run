@@ -2,6 +2,28 @@
 
 A turn-based pirate roguelike built in Unreal Engine 5.8 by one developer and a crew of coordinated AI agents.
 
+## First Build: Week 0 Foundation (2026-11-08)
+
+The first three pieces from [Docs/Architecture/Roadmap.md](Docs/Architecture/Roadmap.md), built from the architecture docs.
+
+| # | Ticket | Branch | What it is | Proof |
+|---|---|---|---|---|
+| 1 | **DW-002** Template cleanup + skeleton | `orchestrator/dw-002-cleanup` | Deleted the UE template code and content (Strategy, TwinStick, TopDown). New `Build.cs` and `.uproject` plugins (MCP/Terminal set to editor-only). `ADwGameMode`, `ADwMenuGameMode`, `ADwPlayerController`. Empty `L_MainMenu` and `L_Sea` levels set as the default maps | Editor build passes with 0 warnings. A headless script loads both maps and all 3 classes |
+| 2 | **DW-003** Editor module + scripts | `orchestrator/dw-003-editor-module` | `DeadwaterRunEditor` module. `Tools/Build.ps1` and `Tools/Test.ps1` print `PASS`/`FAIL` on the first line and return non-zero on failure. Placeholder test | `BUILD PASS`, `TEST PASS 1/1`. Failure paths checked on purpose: a forced compile error gives BUILD FAIL, a wrong expectation gives TEST FAIL, and a filter that matches nothing also fails |
+| 3 | **DW-004** Shared core layer | `orchestrator/dw-004-core-layer` | 88 native gameplay tags, log categories, shared types. `UDwDefinitionBase`, `UDwAssetManager`, `UDwGameData`. All 15 definition classes and 12 tuning row structs. `Tuning/*.json` holds every number from the design doc and is imported into the `DT_*Tuning` tables and `DA_GameData` | Editor and Game targets build with 0 project warnings. `TEST PASS 15/15`: tags, the Asset Manager, design numbers read back from the DataTables, and validation rules |
+
+I can run them via: `./Tools/Build.ps1` then `./Tools/Test.ps1`. Set `$env:UE_ENGINE_DIR` if UE 5.8 is somewhere unusual.
+
+### What We Caught
+
+**Bugs found and fixed while building**
+- **Every commandlet exited 1.** The project was already logging a `GameFeatureData` Asset Manager error at startup (it's in `Saved/Logs/DeadwaterRun_2.log` too). That error would have made every PASS/FAIL script fail. Fixed in `DefaultGame.ini`
+- **The Asset Manager preloaded nothing in the editor.** At `StartInitialLoading` the asset registry is still scanning, so the eager load quietly loaded 0 types. It now runs after the scan, and a test fails if it ever stops working
+- **"Zero warnings" couldn't be met on the Game target.** Epic's own 5.8.4 headers produce 19 deprecation warnings. `Build.ps1` now fails only on warnings in our files and reports the engine count separately
+- **Doc 01's cleanup list was incomplete.** It missed `Content/__ExternalActors__` and `__ExternalObjects__`, the One File Per Actor (OFPA) data for the deleted template levels. Those are removed too
+- **UE 5.8 isn't installed in the default folder.** It's at `%USERPROFILE%\Epic Games\UE_5.8` and isn't in the launcher manifest, so the scripts look for it instead of assuming a path
+
+
 - **Design doc:** [DeadwaterRun.md](DeadwaterRun.md) · **Scope:** [Docs/Scope.md](Docs/Scope.md) · **Architecture:** [Docs/Architecture/](Docs/Architecture/)
 
 ## The Game
@@ -126,3 +148,14 @@ flowchart TD
 - **Stay in scope** - anything outside `Docs/Scope.md` goes on the post-launch list
 
 Full details: [Docs/Orchestration.md](Docs/Orchestration.md) · Agent definitions: [.claude/agents/](.claude/agents/)
+
+**Architecture gaps for the Technical Architect**
+- **Prices are defined twice.** Doc 10 puts `AbilityUnlockCost`, `ItemCost` and `RecruitCostDefault` in `DT_EconomyTuning`. Doc 13 also puts `ShopPrice`, `Price` and `RecruitCost` on each row. That breaks rule 1 (one source of truth). For now the design numbers (50/30) live only in the economy table, and the per-row fields are 0
+- **Ship upgrade price has no home.** Doc 06 says upgrades have a "tuning row (price)", but doc 13 lists no ship-upgrade table
+- **AI ownership overlaps.** DW-004 says "all tuning rows and definitions", but doc 00 gives `FDwAiTuningRow` and `UDwAiProfile` to ai-engineer (DW-106). I only stubbed the profile class so encounters can reference it
+- **`FDwUnitHandle` was never specified.** I made it an `int32` id, where `INDEX_NONE` means invalid
+- **Enemy ship stats aren't in the design doc.** Only the player ship (250 HP, 70 cannon) has numbers. Enemy ships arrive with DW-305
+
+**Design questions**
+- **Veteran Crew (K7):** the design text says both "+50% XP" and "levels twice as fast". The JSON has both literally, which is about 3x speed
+- **Schedule:** the Roadmap has "Full run playable" due today (Nov 8), but Week 0 code had not started. The store page is due Nov 12
