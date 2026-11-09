@@ -24,6 +24,10 @@ namespace DwAttributes
 		{
 			return;
 		}
+		if (UDwAbilitySystemComponent* DamagedAsc = Cast<UDwAbilitySystemComponent>(Set.GetOwningAbilitySystemComponent()))
+		{
+			DamagedAsc->SetLastHealthInstigator(GetInstigator(Data)); // Health is set directly below, so its change delegate has no GE data
+		}
 		const float OldHealth = Set.GetHealth();
 		Set.SetHealth(FMath::Clamp(OldHealth - Damage, 0.f, Set.GetMaxHealth()));
 		if (OldHealth > 0.f && Set.GetHealth() <= 0.f)
@@ -117,6 +121,10 @@ void UDwUnitAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCall
 	{
 		const float Heal = GetIncomingHeal();
 		SetIncomingHeal(0.f);
+		if (UDwAbilitySystemComponent* HealedAsc = Cast<UDwAbilitySystemComponent>(GetOwningAbilitySystemComponent()))
+		{
+			HealedAsc->SetLastHealthInstigator(DwAttributes::GetInstigator(Data));
+		}
 		if (Heal > 0.f && GetHealth() > 0.f) // the dead are never healed (permadeath)
 		{
 			SetHealth(FMath::Clamp(GetHealth() + Heal, 0.f, GetMaxHealth()));

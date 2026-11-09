@@ -47,6 +47,10 @@ public:
 	/** Called by the attribute sets when Health reaches 0. Adds State.Dead and broadcasts once per life. */
 	void NotifyHealthDepleted(AActor* Instigator);
 
+	/** Instigator of the most recent damage or heal (attribute-change listeners can't see it: Health is set from a meta attribute). */
+	AActor* GetLastHealthInstigator() const { return LastHealthInstigator.Get(); }
+	void SetLastHealthInstigator(AActor* Instigator) { LastHealthInstigator = Instigator; }
+
 	FDwOnHealthDepleted OnHealthDepleted;
 	FDwOnDwAbilityEnded OnDwAbilityEnded;
 
@@ -71,4 +75,5 @@ private:
 	bool bOwnerSideTurnActive = false;
 	bool bHealthDepletedNotified = false;
 	bool bEffectDelegateBound = false;
+	TWeakObjectPtr<AActor> LastHealthInstigator;
 };

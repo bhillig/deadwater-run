@@ -60,6 +60,9 @@ public:
 	/** Tuning row of a definition, or nullptr. */
 	static const FDwAbilityTuningRow* GetTuning(const UDwAbilityDefinition* Definition);
 
+	/** Owner tags that block activation (Status.Incapacitated, State.Dead, Status.Rooted for moves). Read by pure command validation. */
+	const FGameplayTagContainer& GetBlockingTags() const { return ActivationBlockedTags; }
+
 	/** Pure budget check shared by CheckCost and the UI. */
 	EDwCostCheck CheckBudget(const UDwAbilityDefinition* Definition, float Mana, float ActionPoints, float MovePoints) const;
 

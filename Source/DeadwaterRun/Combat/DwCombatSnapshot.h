@@ -5,8 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Board/DwGridModel.h"
+#include "Combat/DwCombatTypes.h"
 #include "Core/DwTypes.h"
 #include "DwCombatSnapshot.generated.h"
+
+class UDwAbilityDefinition;
 
 /**
  * A pure copy of one unit for rules, AI, UI and the simulator (Docs/Architecture/03-Combat-Turns.md "FDwCombatSnapshot").
@@ -40,6 +43,8 @@ struct DEADWATERRUN_API FDwUnitSnapshot
 	UPROPERTY(BlueprintReadOnly, Category = "Tags") FGameplayTagContainer Tags;
 	/** AbilityTag of every granted ability. */
 	UPROPERTY(BlueprintReadOnly, Category = "Tags") FGameplayTagContainer GrantedAbilityTags;
+	/** Definition of every granted ability, in grant order (pure queries run each ability's CDO against these). */
+	UPROPERTY(BlueprintReadOnly, Category = "Tags") TArray<TObjectPtr<const UDwAbilityDefinition>> Abilities;
 
 	/** The guardian of a Status.Guarded unit (GE_Guarded instigator). */
 	UPROPERTY(BlueprintReadOnly, Category = "Defend") FDwUnitHandle GuardedBy;
@@ -57,7 +62,7 @@ struct DEADWATERRUN_API FDwShipSnapshot
 	UPROPERTY(BlueprintReadOnly, Category = "Ship") TArray<FIntPoint> CannonTiles;
 };
 
-/** The whole fight as plain data. DW-103 adds the outcome config. */
+/** The whole fight as plain data, built on demand by UDwCombatSubsystem::GetSnapshot (cheap: fewer than 20 units). */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwCombatSnapshot
 {
@@ -69,6 +74,14 @@ struct DEADWATERRUN_API FDwCombatSnapshot
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") FDwGridRules GridRules;
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") int32 Round = 1;
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") EDwSide ActiveSide = EDwSide::Player;
+	/** Enemy side: the unit whose turn it is in the fixed sequence (C14). Invalid on the player side. */
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") FDwUnitHandle ActingUnit;
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") FDwOutcomeConfig OutcomeConfig;
+	/** Cannon tiles already fired this side turn (each cannon fires once per side turn, C7). */
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") TArray<FIntPoint> CannonsUsed;
+	/** Run inventory view: item id -> count left. */
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") TMap<FName, int32> Items;
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") EDwCombatOutcome Outcome = EDwCombatOutcome::None;
 
 	const FDwUnitSnapshot* FindUnit(FDwUnitHandle Handle) const
 	{

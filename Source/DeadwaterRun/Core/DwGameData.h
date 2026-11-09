@@ -8,6 +8,7 @@
 #include "DwGameData.generated.h"
 
 class ADwShip;
+class UDwAbilityDefinition;
 class UDwCaptainDefinition;
 class UDwDeckLayout;
 class UDwEncounterDefinition;
@@ -91,6 +92,14 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Run")
 	TObjectPtr<UDwEncounterDefinition> KrakenEncounter;
+
+	/** Granted to every combatant on top of its own abilities: Ability.Move, Ability.Cannon, Ability.Item (DW-104). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	TArray<TObjectPtr<UDwAbilityDefinition>> CommonAbilities;
+
+	/** DT_CombatTuning row with grid costs, MaxFear and the cower policy. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat")
+	FName CombatTuningRow = TEXT("Default");
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ship")
 	TObjectPtr<UDwDeckLayout> DefaultPlayerDeck;

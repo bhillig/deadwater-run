@@ -4,6 +4,11 @@
 
 #include "Abilities/DwAbilitySystemComponent.h"
 #include "Abilities/DwAttributeSets.h"
+#include "Components/StaticMeshComponent.h"
+#include "Core/DwGameplayTags.h"
+#include "Engine/StaticMesh.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "UObject/ConstructorHelpers.h"
 
 ADwCombatUnit::ADwCombatUnit()
 {
@@ -13,6 +18,18 @@ ADwCombatUnit::ADwCombatUnit()
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 	AbilitySystem = CreateDefaultSubobject<UDwAbilitySystemComponent>(TEXT("AbilitySystem"));
 	Attributes = CreateDefaultSubobject<UDwUnitAttributeSet>(TEXT("Attributes")); // found by the ASC as an owner subobject
+
+	// Placeholder: a 0.6 x 0.6 x 1.6 m cylinder standing on the tile. BP_Unit_* replace the mesh.
+	Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
+	Body->SetupAttachment(GetRootComponent());
+	Body->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> Cylinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+	if (Cylinder.Succeeded())
+	{
+		Body->SetStaticMesh(Cylinder.Object);
+		Body->SetRelativeScale3D(FVector(0.6f, 0.6f, 1.6f));
+		Body->SetRelativeLocation(FVector(0.f, 0.f, 80.f)); // the engine cylinder is 100 tall, centred
+	}
 }
 
 UAbilitySystemComponent* ADwCombatUnit::GetAbilitySystemComponent() const
@@ -24,4 +41,39 @@ void ADwCombatUnit::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	AbilitySystem->InitAbilityActorInfo(this, this);
+}
+
+void ADwCombatUnit::InitializeFromSpawnParams(const FDwUnitSpawnParams& Params)
+{
+	Handle = Params.Handle;
+	Side = Params.Side;
+	Tile = Params.Tile;
+	RosterId = Params.RosterId;
+	Definition = Params.Definition;
+	bIsCaptain = Params.bIsCaptain;
+	GrantedAbilities.Reset();
+	ApplyPlaceholderTint();
+}
+
+bool ADwCombatUnit::IsAlive() const
+{
+	return AbilitySystem && !AbilitySystem->HasMatchingGameplayTag(DwTags::State_Dead);
+}
+
+void ADwCombatUnit::OnDied_Implementation()
+{
+	SetActorHiddenInGame(true);
+}
+
+void ADwCombatUnit::ApplyPlaceholderTint()
+{
+	if (!Body || !Body->GetStaticMesh() || !Body->GetMaterial(0))
+	{
+		return;
+	}
+	UMaterialInstanceDynamic* Material = Body->CreateAndSetMaterialInstanceDynamic(0);
+	if (Material)
+	{
+		Material->SetVectorParameterValue(TEXT("Color"), bIsCaptain ? CaptainColor : (Side == EDwSide::Player ? PlayerColor : EnemyColor));
+	}
 }

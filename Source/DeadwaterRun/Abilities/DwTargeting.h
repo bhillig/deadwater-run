@@ -76,6 +76,8 @@ struct DEADWATERRUN_API FDwTargetingContext
 	float DamageMultiplier = 1.f;
 	/** Combat random stream for random patterns. Required by ResolveTargets for RandomEnemies. */
 	FRandomStream* Rng = nullptr;
+	/** Ability.Item: the item being aimed (its definition decides the targeting). */
+	FName ItemId;
 
 	/** The source's tile, or the override. Unset if the source is not on the board. */
 	TOptional<FIntPoint> GetSourceTile() const;
