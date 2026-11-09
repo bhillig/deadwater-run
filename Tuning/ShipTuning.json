@@ -1,0 +1,3 @@
+[
+	{ "Name": "PlayerShip", "MaxHealth": 250, "CannonDamage": 70 }
+]

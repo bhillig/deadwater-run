@@ -1,0 +1,3 @@
+[
+	{ "Name": "Default", "BoardingMoveCost": 1, "ClimbMoveCost": 2, "RangeBonusPerElevation": 2, "MaxFear": 3, "FearCowerPolicy": "ResetToZero" }
+]

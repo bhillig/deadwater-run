@@ -1,0 +1,5 @@
+[
+	{ "Name": "TeamLeader",   "XpMultiplier": 1.5, "LevelThresholdMultiplier": 0.5, "FearPerSurrender": 0, "StartingFearCap": 0, "KillBonusPerKill": 0.0,  "KillBonusCap": 0.0, "SynergyDamageMultiplier": 1.0 },
+	{ "Name": "Fearmongerer", "XpMultiplier": 1.0, "LevelThresholdMultiplier": 1.0, "FearPerSurrender": 1, "StartingFearCap": 0, "KillBonusPerKill": 0.0,  "KillBonusCap": 0.0, "SynergyDamageMultiplier": 1.0 },
+	{ "Name": "Conqueror",    "XpMultiplier": 1.0, "LevelThresholdMultiplier": 1.0, "FearPerSurrender": 0, "StartingFearCap": 0, "KillBonusPerKill": 0.01, "KillBonusCap": 0.2, "SynergyDamageMultiplier": 1.0 }
+]

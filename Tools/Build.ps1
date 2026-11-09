@@ -30,10 +30,14 @@ $output = & $buildBat $Target Win64 $Config "-Project=$(Get-DwProject)" -WaitMut
 $exit = $LASTEXITCODE
 $output | Set-Content -Path $log -Encoding utf8
 
-# Code warnings only: "File(12): warning C4996", "File(12,3): Warning: ..." (UHT), "warning LNK4xxx".
-# Toolchain notices such as "Visual Studio compiler ... is not a preferred version" are not code warnings.
-$warnings = @($output | Where-Object { $_ -match '\(\d+(,\d+)?\)\s*:\s*warning' -or $_ -match '\bwarning LNK\d+' })
-$errors   = @($output | Where-Object { $_ -match '\(\d+(,\d+)?\)\s*:\s*(fatal )?error' -or $_ -match '\berror LNK\d+' })
+# Warnings that count: compiler/UHT warnings in OUR files ("<repo>\Source\...(12): warning C4996") and linker warnings.
+# Epic's engine headers raise deprecation warnings we can't fix (19 on a Game target with 5.8.4); those are reported
+# separately and never fail the build. Toolchain notices ("compiler ... is not a preferred version") are ignored.
+$repoPattern = [regex]::Escape((Get-DwRepoRoot))
+$allWarnings = @($output | Where-Object { $_ -match '\(\d+(,\d+)?\)\s*:\s*warning' -or $_ -match '\bwarning LNK\d+' })
+$warnings    = @($allWarnings | Where-Object { $_ -match "^\s*$repoPattern" -or $_ -match '\bwarning LNK\d+' })
+$engineWarns = $allWarnings.Count - $warnings.Count
+$errors      = @($output | Where-Object { $_ -match '\(\d+(,\d+)?\)\s*:\s*(fatal )?error' -or $_ -match '\berror LNK\d+' })
 
 if ($exit -eq 0 -and ($warnings.Count -eq 0 -or $AllowWarnings)) {
     Write-Output "BUILD PASS ($($warnings.Count) warnings) $Target $Config"
@@ -42,6 +46,7 @@ if ($exit -eq 0 -and ($warnings.Count -eq 0 -or $AllowWarnings)) {
 }
 $errors   | Select-Object -First 20 | ForEach-Object { Write-Output "  $_" }
 $warnings | Select-Object -First 20 | ForEach-Object { Write-Output "  $_" }
+if ($engineWarns -gt 0) { Write-Output "  ($engineWarns warnings from engine headers ignored, see log)" }
 Write-Output "  log: $log"
 
 if ($exit -ne 0) { exit $exit }

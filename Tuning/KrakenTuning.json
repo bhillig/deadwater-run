@@ -1,0 +1,3 @@
+[
+	{ "Name": "Kraken", "TentacleCount": 0, "TentacleHealth": 0, "BaseActionsPerTurn": [], "ActionsLostPerTentacle": 0.0, "DamageMultiplierPerMissingTentacle": 0.0, "TentacleRegrowTurns": 0 }
+]

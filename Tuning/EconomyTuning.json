@@ -1,0 +1,21 @@
+[
+	{
+		"Name": "Default",
+		"StartingGold": 0,
+		"SinkLootMultiplier": 1.0,
+		"PlunderLootMultiplier": 1.5,
+		"SurrenderLootMultiplier": 1.5,
+		"PlunderItemChance": 0.0,
+		"RepairCost": 100,
+		"RepairAmount": 0,
+		"AbilityUnlockCost": 50,
+		"ItemCost": 30,
+		"RecruitCostDefault": 0,
+		"DisbandRefund": 0,
+		"MaxCrew": 4,
+		"ShopAbilityOffers": 0,
+		"ShopRecruitOffers": 0,
+		"ShopUpgradeOffers": 0,
+		"RewardAbilityChoices": 0
+	}
+]

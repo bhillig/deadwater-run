@@ -1,0 +1,96 @@
+// Copyright Brandon Hillig 2026
+
+#include "Core/DwGameplayTags.h"
+
+// Generated from DwGameplayTags.h: each name maps to its dotted tag (underscore -> dot).
+namespace DwTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Move, "Ability.Move");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack, "Ability.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Melee, "Ability.Attack.Melee");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Ranged, "Ability.Attack.Ranged");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Cannon, "Ability.Cannon");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Item, "Ability.Item");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Captain_Defend, "Ability.Captain.Defend");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Captain_RallyCry, "Ability.Captain.RallyCry");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Captain_GrappleHook, "Ability.Captain.GrappleHook");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Captain_SmokeAndFire, "Ability.Captain.SmokeAndFire");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Captain_SixPistols, "Ability.Captain.SixPistols");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Captain_Charge, "Ability.Captain.Charge");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Captain_EyeOfTheTiger, "Ability.Captain.EyeOfTheTiger");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Kraken_TentacleSlam, "Ability.Kraken.TentacleSlam");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Kraken_KrankySwipe, "Ability.Kraken.KrankySwipe");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Kraken_TentacleGrab, "Ability.Kraken.TentacleGrab");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Kraken_ArmsOfFury, "Ability.Kraken.ArmsOfFury");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Kraken_EyesOfTheSea, "Ability.Kraken.EyesOfTheSea");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Weapon_Sword, "Ability.Weapon.Sword");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Weapon_Firearm, "Ability.Weapon.Firearm");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Afraid, "Status.Afraid");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Incapacitated, "Status.Incapacitated");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Incapacitated_Cowering, "Status.Incapacitated.Cowering");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Incapacitated_Frozen, "Status.Incapacitated.Frozen");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Rooted, "Status.Rooted");
+	UE_DEFINE_GAMEPLAY_TAG(Status_Guarded, "Status.Guarded");
+	UE_DEFINE_GAMEPLAY_TAG(State_Dead, "State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(State_OnEnemyDeck, "State.OnEnemyDeck");
+	UE_DEFINE_GAMEPLAY_TAG(State_InNest, "State.InNest");
+	UE_DEFINE_GAMEPLAY_TAG(State_Synergy_Adjacent, "State.Synergy.Adjacent");
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Buff, "Effect.Buff");
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Debuff, "Effect.Debuff");
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Perk, "Effect.Perk");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Role_Captain, "Unit.Role.Captain");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Archetype_Swordsman, "Unit.Archetype.Swordsman");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Archetype_Sniper, "Unit.Archetype.Sniper");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Kraken_Body, "Unit.Kraken.Body");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Kraken_Tentacle, "Unit.Kraken.Tentacle");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Immune_Fear, "Unit.Immune.Fear");
+	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Synergy, "Rule.Captain.Synergy");
+	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Defend, "Rule.Captain.Defend");
+	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Surrender, "Rule.Captain.Surrender");
+	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_KillBonus, "Rule.Captain.KillBonus");
+	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_VeteranCrew, "Rule.Captain.VeteranCrew");
+	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_DreadReputation, "Rule.Captain.DreadReputation");
+	UE_DEFINE_GAMEPLAY_TAG(Rule_Turn_SingleChoice, "Rule.Turn.SingleChoice");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Deck, "Tile.Deck");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Nest, "Tile.Nest");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Ladder, "Tile.Ladder");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Cannon, "Tile.Cannon");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_BoardingEdge, "Tile.BoardingEdge");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Water, "Tile.Water");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Spawn_Player, "Tile.Spawn.Player");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Spawn_Enemy, "Tile.Spawn.Enemy");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Kraken_Body, "Tile.Kraken.Body");
+	UE_DEFINE_GAMEPLAY_TAG(Tile_Kraken_Tentacle, "Tile.Kraken.Tentacle");
+	UE_DEFINE_GAMEPLAY_TAG(Ship_Upgrade_ExtraCannon, "Ship.Upgrade.ExtraCannon");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Ability_Activate, "Event.Ability.Activate");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Presentation_Impact, "Event.Presentation.Impact");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Damage, "Data.Damage");
+	UE_DEFINE_GAMEPLAY_TAG(Data_DamageScale, "Data.DamageScale");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Heal, "Data.Heal");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Fear, "Data.Fear");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Turns, "Data.Turns");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Cost_Mana, "Data.Cost.Mana");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Cost_Move, "Data.Cost.Move");
+	UE_DEFINE_GAMEPLAY_TAG(Data_DamageBonus, "Data.DamageBonus");
+	UE_DEFINE_GAMEPLAY_TAG(Data_Value, "Data.Value");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Hit_Melee, "GameplayCue.Hit.Melee");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Hit_Ranged, "GameplayCue.Hit.Ranged");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Cannon_Fire, "GameplayCue.Cannon.Fire");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Cannon_Impact, "GameplayCue.Cannon.Impact");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Ship_Sink, "GameplayCue.Ship.Sink");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Unit_Death, "GameplayCue.Unit.Death");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Unit_Heal, "GameplayCue.Unit.Heal");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Fear, "GameplayCue.Status.Fear");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_Enrage, "GameplayCue.Kraken.Enrage");
+	UE_DEFINE_GAMEPLAY_TAG(Music_Menu, "Music.Menu");
+	UE_DEFINE_GAMEPLAY_TAG(Music_Map, "Music.Map");
+	UE_DEFINE_GAMEPLAY_TAG(Music_Combat, "Music.Combat");
+	UE_DEFINE_GAMEPLAY_TAG(Music_Boss, "Music.Boss");
+	UE_DEFINE_GAMEPLAY_TAG(Music_Boss_Enraged, "Music.Boss.Enraged");
+	UE_DEFINE_GAMEPLAY_TAG(Music_Victory, "Music.Victory");
+	UE_DEFINE_GAMEPLAY_TAG(Music_Defeat, "Music.Defeat");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Layer_Game, "UI.Layer.Game");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Layer_GameMenu, "UI.Layer.GameMenu");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Layer_Menu, "UI.Layer.Menu");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Layer_Modal, "UI.Layer.Modal");
+}
