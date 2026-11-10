@@ -602,7 +602,10 @@ TArray<FString> UDwArtContentLibrary::CreateArtContent()
 			bOk &= Save(Unit, Log);
 		}
 	};
+	// One captain look for all three until each captain gets its own Synty character (follow-up of DW-307).
 	SetUnitClass(TEXT("DA_Unit_Captain_TeamLeader"), TEXT("BP_Unit_Captain"));
+	SetUnitClass(TEXT("DA_Unit_Captain_Fearmongerer"), TEXT("BP_Unit_Captain"));
+	SetUnitClass(TEXT("DA_Unit_Captain_Conqueror"), TEXT("BP_Unit_Captain"));
 	SetUnitClass(TEXT("DA_Unit_Swordsman"), TEXT("BP_Unit_Swordsman"));
 	SetUnitClass(TEXT("DA_Unit_Sniper"), TEXT("BP_Unit_Sniper"));
 

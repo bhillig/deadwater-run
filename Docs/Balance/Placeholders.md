@@ -43,3 +43,11 @@ All of `AiTuning.json` row `Default` (used by `DA_AiProfile_Default`, the placeh
 | `Weights.CannonAffinity` | 10 | Only for profiles with `bPreferCannons` (none yet) |
 | `Temperature` | 0 | Always the best move: readable and repeatable |
 | `MaxMoveCandidates` | 16 | Destinations kept before danger is scored; full enemy turn plans in about 1-1.5 ms on a 12x24 board |
+
+## Set by DW-201 (run state), 2026-11-10
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `EconomyTuning.json` | `Default` | `StartingGold` | 100 | Brandon's pick: one repair (100g) or two abilities (50g) before the first fight's 150 base gold |
+
+Captain abilities (`AbilityTuning.json` `Captain_*`) still have `ManaCost` 0 (K13); they are placeholder definitions with no effect until DW-206..208.

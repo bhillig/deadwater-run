@@ -11,12 +11,15 @@
   ./Tools/Capture.ps1 -Demo hit             # sniper shot just landed: floating text, HP bars, spent action greyed
   ./Tools/Capture.ps1 -Demo endturn         # turn ended: the turn banner for the next side
   ./Tools/Capture.ps1 -Demo enemy           # player passes twice; the crew AI plays two enemy turns (frames <file>-01.png, ...)
+  ./Tools/Capture.ps1 -Demo run             # a run (DW-201): map readout, fight 1, back on the map with losses, fight 2 (frames -01..-03)
   ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p
   ./Tools/Capture.ps1 -Mood Storm           # the storm look (default Day; Random rolls from the seed)
   ./Tools/Capture.ps1 -Zoom 0.3 -Tile "0,1" # close-up of a tile for art review
 #>
 param(
-    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy')] [string] $Demo = 'none',
+    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run')] [string] $Demo = 'none',
+    # Start a run with this captain (TeamLeader, Fearmongerer, Conqueror) instead of the dev fight. -Demo run defaults to TeamLeader.
+    [string] $Captain = '',
     [int] $Seed = 7,
     [float] $Delay = 6,
     [int] $ResX = 1600,
@@ -54,6 +57,8 @@ $gameArgs = @(
     '-nosound', '-nosplash', '-unattended', "-abslog=$log"
 )
 if ($Mood -and $Mood -ne 'Random') { $gameArgs += "-DwMood=$Mood" }
+if ($Demo -eq 'run' -and -not $Captain) { $Captain = 'TeamLeader' }
+if ($Captain) { $gameArgs += "-DwCaptain=$Captain" }
 if ($Zoom -gt 0) { $gameArgs += "-DwCaptureZoom=$Zoom" }
 if ($Tile) { $gameArgs += "-DwCaptureTile=$Tile" }
 $process = Start-Process -FilePath $editor -ArgumentList $gameArgs -PassThru -Wait

@@ -100,8 +100,16 @@ classDiagram
 
 - `UDwRun` is the only writer of `FDwRunState`. Every mutation goes through a named method that calls a pure rule (`FDwRewardRules`, `FDwShopRules`, `FDwEventResolver`, `FDwProgressionRules`, `FDwCaptainRules`), then broadcasts `OnStateChanged` (view models refresh) and, if the phase changed, `OnPhaseChanged`.
 - `EDwRunPhase`: `Map`, `Combat`, `Rewards`, `LevelUp`, `Shop`, `Event`, `Victory`, `Defeat`. Captain select and the summary are shell screens outside the run phases (`16-Shell.md`).
-- Methods validate the phase (e.g. `TryPurchase` only in `Shop`) and return a result; illegal calls `ensure` and do nothing.
-- `FDwRunStats`: nodes cleared, fights by outcome, gold earned/spent, crew lost (name, node), kills, damage dealt, rounds, captain, seed, elapsed real time (game only), end reason (`Victory`, `ShipSunk`, `CrewDead`, `CaptainDead`, `Abandoned`). Feeds the run summary and the simulator report. The summary screen shows Brandon's U4 list (captain, seed, nodes, fights by outcome, gold, crew lost, kills, time); damage dealt and rounds are for the simulator only.
+- Methods validate the phase (e.g. `TryPurchase` only in `Shop`) and return false; illegal calls log a `LogDwRun` warning ("... refused: ...") and change nothing. (Changed in DW-201 from `ensure`: the simulator and tests probe illegal calls on purpose.)
+- `FDwRunStats`: nodes cleared, fights by outcome, gold earned/spent, crew lost (name, node), kills, rounds, captain, seed, elapsed real time (game only), end reason (`Victory`, `ShipSunk`, `CrewDead`, `CaptainDead`, `Abandoned`). Feeds the run summary and the simulator report. The summary screen shows Brandon's U4 list (captain, seed, nodes, fights by outcome, gold, crew lost, kills, time); rounds are for the simulator only. Damage dealt joins when `FDwCombatResult` reports it (DW-212).
+
+### As built in DW-201 (2026-11-10)
+- Definitions in run state are object pointers (`TObjectPtr<const UDwUnitDefinition>` etc.), not `FPrimaryAssetId`s, matching `FDwCombatantSetup`: transient test content works, `UDwRun` keeps them referenced, and every definition is resident anyway (`UDwAssetManager`).
+- Roster ids are seeded (`FDwRunRandom::ForCrew` + a serial in `FDwRunState::LastCrewSerial`), so a seed reproduces the same ids.
+- Until DW-202, `UDwRun::Initialize` builds `FDwPlaceholderMap` (`Run/Map/`): the D2 lane shape with every node a fight, encounters picked by weight and layer tier from `UDwRunSubsystem::GatherEncounterPool` (sorted by name). DW-202 swaps that one call for generate + validate.
+- After a won fight the run goes straight back to `Map`; DW-203 inserts `Rewards`/`LevelUp`. `LeaveShop()` / `LeaveEvent()` return a shop or event node to the map; DW-204/DW-205 add the purchases and outcomes before them.
+- The boss node's encounter is `DA_GameData.KrakenEncounter`; until DW-209 sets it, `BuildEncounterSetup` reports why the boss fight can't start.
+- `ADwGameMode` is the phase bridge: `Combat` -> `BuildEncounterSetup` -> `StartEncounter`; `OnCombatEnded` -> `PostCombatSeconds` beat (next tick in instant mode) -> `EndEncounter` -> `ApplyCombatResult`.
 - `ApplyCombatResult` writes survivor Health and permadeath back; there is no Mana in run state (C9: MP refills at every fight start). Any `Defeat*` outcome, including `DefeatCaptainDead` (C10), moves the run to `Defeat`.
 
 ### Seeds (`FDwRunRandom`, pure)

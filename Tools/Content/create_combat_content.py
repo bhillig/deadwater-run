@@ -1,11 +1,12 @@
 # Copyright Brandon Hillig 2026
 # Run by Tools/CreateCombatContent.ps1 inside UnrealEditor-Cmd. All logic lives in C++ (UDwCombatContentLibrary, then
-# UDwAiContentLibrary and UDwArtContentLibrary, which need the combat content); this only calls them and prints their logs between markers the
-# PowerShell wrapper extracts. The last line is PASS only if every step passed.
+# UDwRunContentLibrary, UDwAiContentLibrary and UDwArtContentLibrary, which need the combat content); this only calls them and prints their logs
+# between markers the PowerShell wrapper extracts. The last line is PASS only if every step passed.
 import unreal
 
 steps = [
     unreal.DwCombatContentLibrary.create_combat_placeholder_content,
+    unreal.DwRunContentLibrary.create_run_content,
     unreal.DwAiContentLibrary.create_ai_content,
     unreal.DwArtContentLibrary.create_art_content,
 ]

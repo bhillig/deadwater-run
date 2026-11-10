@@ -344,13 +344,12 @@ ADwCombatUnit* UDwCombatSubsystem::SpawnUnit(const FDwCombatantSetup& Combatant,
 	}
 
 	// Stats: tuning + level gains; Health carries over (C9), Mana always starts full, no regen.
-	const int32 Gains = FMath::Max(0, Combatant.Level - 1);
 	FDwUnitInitValues Values;
-	Values.MaxHealth = Row->MaxHealth + Row->HealthPerLevel * Gains;
+	Values.MaxHealth = Row->GetMaxHealthAtLevel(Combatant.Level);
 	Values.Health = Combatant.Health < 0.f ? Values.MaxHealth : FMath::Clamp(Combatant.Health, 0.f, Values.MaxHealth);
-	Values.MaxMana = Row->MaxMana + Row->ManaPerLevel * Gains;
+	Values.MaxMana = Row->GetMaxManaAtLevel(Combatant.Level);
 	Values.Mana = Values.MaxMana;
-	Values.AttackDamage = Row->AttackDamage + Row->AttackDamagePerLevel * Gains;
+	Values.AttackDamage = Row->GetAttackDamageAtLevel(Combatant.Level);
 	Values.MoveRange = Row->MoveRange;
 	Values.MovePoints = Row->MoveRange;
 	Values.MaxActionPoints = Row->MaxActionPoints;

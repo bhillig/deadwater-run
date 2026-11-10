@@ -31,6 +31,11 @@ struct DEADWATERRUN_API FDwUnitTuningRow : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Run") int32 XpOnKill = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Run") int32 RecruitCost = 0;
+
+	/** Gains apply per level above 1. Combat spawn and run state both use these, so they always agree. */
+	int32 GetMaxHealthAtLevel(int32 Level) const { return MaxHealth + HealthPerLevel * FMath::Max(0, Level - 1); }
+	int32 GetMaxManaAtLevel(int32 Level) const { return MaxMana + ManaPerLevel * FMath::Max(0, Level - 1); }
+	int32 GetAttackDamageAtLevel(int32 Level) const { return AttackDamage + AttackDamagePerLevel * FMath::Max(0, Level - 1); }
 };
 
 /** DT_AbilityTuning, keyed by ability id. Fields an ability doesn't use stay 0. */

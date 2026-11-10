@@ -1,7 +1,8 @@
 <#
 .SYNOPSIS
   Creates or updates the placeholder combat content (DW-104) headless: GA_* abilities, DA_* definitions, items, units,
-  DA_Encounter_Placeholder, BP_Ship_Placeholder, DA_GameData slots, and the DT_*Tuning rows they read.
+  DA_Encounter_Placeholder, BP_Ship_Placeholder, the three captains (DW-201), DA_GameData slots, and the DT_*Tuning rows
+  they read; then the AI content (DW-106) and the Synty art pass (DW-307).
   First output line is "CONTENT PASS" or "CONTENT FAIL ...". Exit code 0 only on PASS. Idempotent.
 .EXAMPLE
   ./Tools/CreateCombatContent.ps1

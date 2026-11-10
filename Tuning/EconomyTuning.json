@@ -1,7 +1,7 @@
 [
 	{
 		"Name": "Default",
-		"StartingGold": 0,
+		"StartingGold": 100,
 		"SinkLootMultiplier": 1.0,
 		"PlunderLootMultiplier": 1.5,
 		"SurrenderLootMultiplier": 1.5,

@@ -32,6 +32,12 @@
 
 - `Config/DefaultEngine.ini`: `GameUserSettingsClassName=/Script/DeadwaterRun.DwGameUserSettings`, `GameViewportClientClassName=/Script/CommonUI.CommonGameViewportClient`, default maps.
 
+### Dev entry points (DW-201, not in Shipping)
+- `-DwCaptain=<TeamLeader|Fearmongerer|Conqueror> [-DwSeed=<n>]` on an L_Sea launch starts a run without the menu; without it L_Sea still starts the dev fight (`bStartDevFight`).
+- `ADwHUD` draws a text readout of the run outside combat (phase, crew, ship, gold, numbered routes); `dw.Run.Readout 0` hides it. It is a stand-in until the map and summary screens (DW-210, DW-211).
+- Console: `Dw.Run.Start [Captain] [Seed]`, `Dw.Run.Choose <n>`, `Dw.Run.Abandon`. Fight cheats stay with DW-111.
+- `Tools/Capture.ps1 -Demo run` plays map -> fight -> map -> fight headless and saves a frame of each.
+
 ## Flows
 - **New run:** Main menu -> Captain select -> Set Sail -> `UDwRunSubsystem::StartRun(Captain, Seed)` -> `OpenLevel(L_Sea)` -> map.
 - **Pause:** `IA_Pause` -> `WBP_Pause` on `UI.Layer.GameMenu` -> `SetGamePaused(true)`. Turn logic is event-driven, so pausing only freezes presentation. Options: Resume, Settings, Abandon Run (confirm), Quit to Desktop (confirm, run lost).

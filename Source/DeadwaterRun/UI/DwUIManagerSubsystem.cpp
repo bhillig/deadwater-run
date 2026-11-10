@@ -11,6 +11,8 @@
 #include "Engine/GameViewportClient.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
+#include "Run/DwRun.h"
+#include "Run/DwRunSubsystem.h"
 #include "UI/DwActivatableScreen.h"
 #include "UI/DwCombatViewModels.h"
 #include "UI/DwFloatingText.h"
@@ -44,6 +46,7 @@ void UDwUIManagerSubsystem::PlayerControllerChanged(APlayerController* NewPlayer
 		return;
 	}
 	UnbindCombat();
+	UnbindRuns();
 	DestroyLayout();
 	PlayerController = NewPlayerController;
 	// Only real game viewports get UI (automation worlds and commandlets have none).
@@ -51,12 +54,14 @@ void UDwUIManagerSubsystem::PlayerControllerChanged(APlayerController* NewPlayer
 	{
 		CreateLayout(*NewPlayerController);
 		BindCombat(NewPlayerController->GetWorld());
+		BindRuns(NewPlayerController->GetWorld());
 	}
 }
 
 void UDwUIManagerSubsystem::Deinitialize()
 {
 	UnbindCombat();
+	UnbindRuns();
 	DestroyLayout();
 	Super::Deinitialize();
 }
@@ -151,8 +156,79 @@ void UDwUIManagerSubsystem::UnbindCombat()
 
 void UDwUIManagerSubsystem::HandleCombatStarted()
 {
-	// Stand-in for UDwRun::OnPhaseChanged(Combat) until DW-201 (see the class comment).
 	ShowCombatHud();
+}
+
+void UDwUIManagerSubsystem::BindRuns(UWorld* World)
+{
+	UDwRunSubsystem* RunSubsystem = UDwRunSubsystem::Get(World);
+	if (!RunSubsystem)
+	{
+		return;
+	}
+	Runs = RunSubsystem;
+	RunSubsystem->OnRunStarted.AddDynamic(this, &ThisClass::HandleRunStarted);
+	RunSubsystem->OnRunCleared.AddDynamic(this, &ThisClass::HandleRunCleared);
+	BindRun(RunSubsystem->GetRun());
+}
+
+void UDwUIManagerSubsystem::UnbindRuns()
+{
+	BindRun(nullptr);
+	if (UDwRunSubsystem* RunSubsystem = Runs.Get())
+	{
+		RunSubsystem->OnRunStarted.RemoveAll(this);
+		RunSubsystem->OnRunCleared.RemoveAll(this);
+	}
+	Runs = nullptr;
+}
+
+void UDwUIManagerSubsystem::BindRun(UDwRun* Run)
+{
+	if (UDwRun* Old = BoundRun.Get())
+	{
+		Old->OnPhaseChanged.RemoveAll(this);
+	}
+	BoundRun = Run;
+	if (Run)
+	{
+		Run->OnPhaseChanged.AddDynamic(this, &ThisClass::HandleRunPhaseChanged);
+	}
+}
+
+void UDwUIManagerSubsystem::HandleRunStarted(UDwRun* Run)
+{
+	BindRun(Run);
+}
+
+void UDwUIManagerSubsystem::HandleRunCleared()
+{
+	BindRun(nullptr);
+}
+
+void UDwUIManagerSubsystem::HandleRunPhaseChanged(EDwRunPhase NewPhase, EDwRunPhase OldPhase)
+{
+	if (OldPhase == EDwRunPhase::Combat && NewPhase != EDwRunPhase::Combat)
+	{
+		HideCombatHud();
+	}
+}
+
+void UDwUIManagerSubsystem::HideCombatHud()
+{
+	if (CombatHudScreen)
+	{
+		PopScreen(CombatHudScreen);
+		CombatHudScreen = nullptr;
+	}
+	if (CombatHud)
+	{
+		CombatHud->Shutdown();
+	}
+	if (FloatingText)
+	{
+		FloatingText->Shutdown();
+	}
 }
 
 void UDwUIManagerSubsystem::ShowCombatHud()

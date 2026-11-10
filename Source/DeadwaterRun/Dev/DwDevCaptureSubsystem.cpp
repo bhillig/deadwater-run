@@ -17,7 +17,10 @@
 #include "Core/DwGameplayTags.h"
 #include "Core/DwLog.h"
 #include "Core/DwPlayerController.h"
+#include "Abilities/DwAttributeSets.h"
 #include "Engine/World.h"
+#include "Run/DwRun.h"
+#include "Run/DwRunSubsystem.h"
 #include "HighResScreenshot.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -59,6 +62,12 @@ void UDwDevCaptureSubsystem::StageDemo()
 	const ADwPlayerController* PC = World ? Cast<ADwPlayerController>(World->GetFirstPlayerController()) : nullptr;
 	UDwCombatInteraction* Interaction = PC ? PC->GetInteraction() : nullptr;
 	UDwCombatSubsystem* Combat = World ? World->GetSubsystem<UDwCombatSubsystem>() : nullptr;
+
+	if (Demo == TEXT("run"))
+	{
+		RunDemoStep();
+		return;
+	}
 
 	// Close-ups for art review: -DwCaptureZoom=0.3 (fraction of the framed distance) -DwCaptureTile=2,1 (focus tile).
 	float Zoom = 0.f;
@@ -205,6 +214,76 @@ void UDwDevCaptureSubsystem::CaptureEnemyTurn()
 		return;
 	}
 	GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::CaptureEnemyTurn), 0.7f, false);
+}
+
+void UDwDevCaptureSubsystem::CaptureFrame(int32 Frame) const
+{
+	FScreenshotRequest::RequestScreenshot(FPaths::GetBaseFilename(Path, false) + FString::Printf(TEXT("-%02d.png"), Frame), /*bShowUI*/ true, false);
+}
+
+void UDwDevCaptureSubsystem::RunDemoStep()
+{
+	UWorld* World = GetWorld();
+	const UDwRunSubsystem* Runs = UDwRunSubsystem::Get(World);
+	UDwRun* Run = Runs ? Runs->GetRun() : nullptr;
+	UDwCombatSubsystem* Combat = World->GetSubsystem<UDwCombatSubsystem>();
+	auto Next = [this, World](float Seconds)
+	{
+		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::RunDemoStep), Seconds, false);
+	};
+	auto Sail = [Run]() { const TArray<int32> Choices = Run->GetChoices(); return !Choices.IsEmpty() && Run->ChooseNode(Choices[0]); };
+	if (!Run || !Combat)
+	{
+		UE_LOG(LogDw, Error, TEXT("Dev capture 'run': no run (start the game with -DwCaptain=<name>)."));
+		Capture();
+		return;
+	}
+
+	switch (RunStep++)
+	{
+	case 0: // Set Sail: the readout on the map
+		CaptureFrame(1);
+		Next(0.5f);
+		return;
+	case 1:
+		UE_CLOG(!Sail(), LogDw, Error, TEXT("Dev capture 'run': could not sail to the first route."));
+		Next(2.5f); // spawn and settle
+		return;
+	case 2: // fight 1, then the captain takes a beating, the sniper falls and the enemy crew is wiped
+	{
+		CaptureFrame(2);
+		const FGuid CaptainId = Run->GetState().Crew[0].Id;
+		const FGuid SniperId = Run->GetState().Crew.Num() > 2 ? Run->GetState().Crew[2].Id : FGuid();
+		const TSubclassOf<UGameplayEffect> Kill = DwGas::GetSharedEffects().Kill;
+		for (const ADwCombatUnit* Unit : Combat->GetUnits())
+		{
+			UDwAbilitySystemComponent* Asc = Unit->GetDwAbilitySystem();
+			if (Unit->GetRosterId() == CaptainId)
+			{
+				Asc->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), 60.f);
+			}
+			else if ((Unit->GetSide() == EDwSide::Enemy || Unit->GetRosterId() == SniperId) && Unit->IsAlive() && Kill)
+			{
+				Asc->ApplyGameplayEffectToSelf(Kill->GetDefaultObject<UGameplayEffect>(), 1.f, Asc->MakeEffectContext());
+			}
+		}
+		Combat->SubmitCommand(FDwCombatCommand::MakeEndTurn(EDwSide::Player)); // deaths outside a command count at the turn boundary
+		Next(1.0f + 2.5f); // ADwGameMode::PostCombatSeconds, then back on the map
+		return;
+	}
+	case 3: // back on the map: Health and the loss carried over
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'run': phase %s after fight 1."), *DwRun::PhaseName(Run->GetPhase()));
+		CaptureFrame(3);
+		Next(0.5f);
+		return;
+	case 4:
+		UE_CLOG(!Sail(), LogDw, Error, TEXT("Dev capture 'run': could not sail on after fight 1."));
+		Next(2.5f);
+		return;
+	default: // fight 2: two crew aboard, the captain at 60 HP
+		Capture();
+		return;
+	}
 }
 
 void UDwDevCaptureSubsystem::Capture()
