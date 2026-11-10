@@ -163,6 +163,20 @@ public:
 	UDwGE_DamageBonus();
 };
 
+/**
+ * Parent of every perk effect (GE_Perk_*, 12-Progression.md): infinite, asset tag Effect.Perk. A perk Blueprint adds its
+ * modifiers with SetByCaller Data.Value; the spawn fills Data.Value from the perk's DT_PerkTuning row.
+ */
+UCLASS(Abstract)
+class DEADWATERRUN_API UDwGE_Perk : public UDwGameplayEffect
+{
+	GENERATED_BODY()
+public:
+	UDwGE_Perk();
+	/** Content tools: add "Attribute (Op) Data.Value" to a perk Blueprint's defaults. */
+	void AddValueModifier(const FGameplayAttribute& Attribute, EGameplayModOp::Type Op);
+};
+
 /** Instant at side-turn start: ActionPoints = MaxActionPoints, MovePoints = MoveRange. */
 UCLASS()
 class DEADWATERRUN_API UDwGE_TurnBudgetRefresh : public UDwGameplayEffect

@@ -1,4 +1,4 @@
 [
-	{ "Name": "Placeholder", "BaseGold": 150, "ClearXp": 0 },
-	{ "Name": "Kraken",      "BaseGold": 0,   "ClearXp": 0 }
+	{ "Name": "Placeholder", "BaseGold": 150, "ClearXp": 80, "bGrantsAbilityChoice": true },
+	{ "Name": "Kraken",      "BaseGold": 0,   "ClearXp": 0,  "bGrantsAbilityChoice": false }
 ]

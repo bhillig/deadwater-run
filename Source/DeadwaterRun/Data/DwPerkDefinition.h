@@ -36,6 +36,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Perk", meta = (ClampMin = "0"))
 	float Weight = 1.f;
 
+	/** Description with {Value}, {ValuePct}, {Value2}, {Value2Pct} filled from the DT_PerkTuning row (0.1 -> "10"). */
+	UFUNCTION(BlueprintPure, Category = "Perk")
+	FText GetFormattedDescription() const;
+
 	virtual FPrimaryAssetType GetDwAssetType() const override { return FTypes::Perk; }
 	virtual const UScriptStruct* GetTuningRowStruct() const override;
 };

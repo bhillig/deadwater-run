@@ -171,7 +171,86 @@ struct DEADWATERRUN_API FDwMapGraph
 	TArray<int32> GetChoices(int32 Current) const;
 };
 
-/** Everything a run is (09 "FDwRunState"). Only UDwRun writes it. Shop, event, reward and level-up state arrive with DW-203..205. */
+/** One "learn a new move" choice after a fight (P5): the ability and who may learn it (10 "Rewards"). */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwAbilityOffer
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") TObjectPtr<const UDwAbilityDefinition> Ability;
+	/** Living crew whose learnable pool has it, who don't know it yet and aren't blocked from it (K2). Never empty. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") TArray<FGuid> EligibleCrew;
+};
+
+/** XP one crew member earned in a fight, for the rewards screen's XP bars (12 "Flow"). */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwXpGain
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") FGuid CrewId;
+	/** After the captain's XP multiplier. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") int32 Xp = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") int32 LevelsGained = 0;
+};
+
+/** What a won fight pays, waiting for ClaimRewards (10 "Rewards"). Gold and items are added on claim, XP already counted. */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwRewardBundle
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") EDwCombatOutcome Outcome = EDwCombatOutcome::None;
+	/** round(BaseGold x the outcome's loot multiplier). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") int32 Gold = 0;
+	/** Plunder (crew defeated or surrender, P6). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") TArray<FDwItemStack> Items;
+	/** Pick at most one (P5). Empty when no living crew can learn anything. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") TArray<FDwAbilityOffer> AbilityChoices;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rewards") TArray<FDwXpGain> Xp;
+};
+
+/** Per-level stat gains (12 "a stat increase"), shown before/after on the level-up screen. */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwLevelStats
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") int32 MaxHealth = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") int32 MaxMana = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") int32 AttackDamage = 0;
+
+	FDwLevelStats operator-(const FDwLevelStats& Other) const
+	{
+		FDwLevelStats Out;
+		Out.MaxHealth = MaxHealth - Other.MaxHealth;
+		Out.MaxMana = MaxMana - Other.MaxMana;
+		Out.AttackDamage = AttackDamage - Other.AttackDamage;
+		return Out;
+	}
+};
+
+/** One level gained, waiting for its perk pick (12 "Flow"). The level and stats are already applied. */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwPendingLevelUp
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") FGuid CrewId;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") int32 NewLevel = 0;
+	/** Stats at NewLevel minus stats at NewLevel - 1. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") FDwLevelStats StatGain;
+	/**
+	 * Rolled when this level-up reaches the front of the queue (FDwRunRandom::ForPerks), so an earlier pick's stacks
+	 * count. Empty when the pool has nothing left to offer: the level-up is then confirmed with ChoosePerk(INDEX_NONE).
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") TArray<TObjectPtr<const UDwPerkDefinition>> PerkChoices;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") bool bPerksRolled = false;
+	/** Position in this node's level-up queue: picks the perk stream, so the choices don't depend on the order of calls. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level") int32 Ordinal = 0;
+};
+
+/** Everything a run is (09 "FDwRunState"). Only UDwRun writes it. Shop and event state arrive with DW-204/205. */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwRunState
 {
@@ -192,12 +271,18 @@ struct DEADWATERRUN_API FDwRunState
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Run") FDwRunStats Stats;
 	/** Serial of the last roster id handed out (starting crew, then recruits in DW-204): ids are seeded, never random. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Run") int32 LastCrewSerial = 0;
+	/** Rewards phase: the bundle ClaimRewards applies. Empty otherwise. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Run") FDwRewardBundle PendingRewards;
+	/** LevelUp phase (and Rewards, as a preview): one entry per level gained, in roster order; the front is the one shown. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Run") TArray<FDwPendingLevelUp> PendingLevelUps;
 
 	const FDwCrewMemberState* FindCrew(const FGuid& Id) const;
 	FDwCrewMemberState* FindCrew(const FGuid& Id);
 	const FDwCrewMemberState* GetCaptainMember() const;
 	int32 CountLivingCrew() const;
 	int32 CountItem(FName ItemId) const;
+	/** Adds to the item's stack (one stack per item). Inventory caps are Open-Questions P10 (none yet). */
+	void AddItem(const UDwItemDefinition* Item, int32 Count);
 	bool IsOver() const { return Phase == EDwRunPhase::Victory || Phase == EDwRunPhase::Defeat; }
 };
 

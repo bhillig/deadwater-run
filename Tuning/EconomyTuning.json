@@ -5,7 +5,7 @@
 		"SinkLootMultiplier": 1.0,
 		"PlunderLootMultiplier": 1.5,
 		"SurrenderLootMultiplier": 1.5,
-		"PlunderItemChance": 0.0,
+		"PlunderItemChance": 1.0,
 		"RepairCost": 100,
 		"RepairAmount": 0,
 		"AbilityUnlockCost": 50,
@@ -16,6 +16,6 @@
 		"ShopAbilityOffers": 0,
 		"ShopRecruitOffers": 0,
 		"ShopUpgradeOffers": 0,
-		"RewardAbilityChoices": 0
+		"RewardAbilityChoices": 3
 	}
 ]

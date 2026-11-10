@@ -82,7 +82,8 @@ bool FDwCombatResult::operator==(const FDwCombatResult& Other) const
 	{
 		const FDwKillRecord& A = Kills[Index];
 		const FDwKillRecord& B = Other.Kills[Index];
-		if (A.KillerRosterId != B.KillerRosterId || A.Killer != B.Killer || A.Victim != B.Victim || A.VictimDefinition != B.VictimDefinition)
+		if (A.KillerRosterId != B.KillerRosterId || A.Killer != B.Killer || A.Victim != B.Victim || A.VictimDefinition != B.VictimDefinition
+			|| A.Xp != B.Xp)
 		{
 			return false;
 		}

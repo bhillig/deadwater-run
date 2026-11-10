@@ -2,11 +2,17 @@
 
 #include "DwRunContentLibrary.h"
 
+#include "Abilities/DwAttributeSets.h"
 #include "Abilities/DwGA_EffectPayload.h"
+#include "Abilities/DwGameplayEffects.h"
 #include "Core/DwGameData.h"
 #include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwCaptainDefinition.h"
+#include "Data/DwItemDefinition.h"
+#include "Data/DwPerkDefinition.h"
+#include "Data/DwPools.h"
+#include "Data/DwShopDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "DwCombatContentLibrary.h"
 #include "DwContentAssetUtils.h"
@@ -70,6 +76,35 @@ namespace DwRunContent
 		};
 	}
 
+	const FString PerkEffects = TEXT("/Game/DeadwaterRun/Abilities/Perks");
+	const FString PerkData = TEXT("/Game/DeadwaterRun/Data/Perks");
+	const FString RulesData = TEXT("/Game/DeadwaterRun/Data/Rules");
+	const FString ItemData = TEXT("/Game/DeadwaterRun/Data/Items");
+
+	struct FPerkSpec
+	{
+		const TCHAR* Asset;
+		const TCHAR* Effect;
+		const TCHAR* Name;
+		const TCHAR* TuningRow;
+		const TCHAR* Description;
+		FGameplayAttribute Attribute;
+		int32 MaxStacks;
+	};
+
+	/** DW-203 placeholders (final perks: DW-304, P2). Numbers live in Tuning/PerkTuning.json. */
+	TArray<FPerkSpec> Perks()
+	{
+		return {
+			{ TEXT("DA_Perk_SeaLegs"), TEXT("GE_Perk_SeaLegs"), TEXT("Sea Legs"), TEXT("SeaLegs"),
+				TEXT("Moves {Value} more tile each turn."), UDwUnitAttributeSet::GetMoveRangeAttribute(), 1 },
+			{ TEXT("DA_Perk_Hardened"), TEXT("GE_Perk_Hardened"), TEXT("Hardened"), TEXT("Hardened"),
+				TEXT("Takes {ValuePct}% less damage."), UDwUnitAttributeSet::GetDamageReductionAttribute(), 2 },
+			{ TEXT("DA_Perk_Cutthroat"), TEXT("GE_Perk_Cutthroat"), TEXT("Cutthroat"), TEXT("Cutthroat"),
+				TEXT("Deals {ValuePct}% more damage."), UDwUnitAttributeSet::GetDamageBonusAttribute(), 2 },
+		};
+	}
+
 	FGameplayTagContainer Container(const TArray<FGameplayTag>& Tags)
 	{
 		FGameplayTagContainer Out;
@@ -90,7 +125,7 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 	auto Fail = [&Log]() { Log.Add(TEXT("CONTENT FAIL")); return Log; };
 
 	// 1. Tuning the run reads: captain rows, starting gold, captain unit rows.
-	for (const TCHAR* Table : { TEXT("Captain"), TEXT("Economy"), TEXT("Unit") })
+	for (const TCHAR* Table : { TEXT("Captain"), TEXT("Economy"), TEXT("Unit"), TEXT("Encounter"), TEXT("Perk"), TEXT("Progression"), TEXT("Run") })
 	{
 		bOk &= UDwCombatContentLibrary::SyncTuningTable(Table, Log);
 	}
@@ -167,6 +202,67 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 
 	// 6. Captain select order.
 	GameData->Captains = Captains;
+
+	// 7. DW-203 placeholder perks: one shared pool (P2 placeholder) for every crew archetype and captain. Each perk is a
+	//    GE_Perk_* Blueprint whose single modifier reads Data.Value, filled at spawn from DT_PerkTuning.
+	UDataTable* PerkTable = Load<UDataTable>(Tuning, TEXT("DT_PerkTuning"));
+	UDwPerkPool* PerkPool = FindOrCreate<UDwPerkPool>(PerkData, TEXT("DA_PerkPool_Shared"), Log);
+	PerkPool->DisplayName = FText::FromString(TEXT("Shared perks"));
+	PerkPool->Perks.Reset();
+	for (const FPerkSpec& Spec : Perks())
+	{
+		UBlueprint* EffectBp = FindOrCreateBlueprint(PerkEffects, Spec.Effect, UDwGE_Perk::StaticClass(), Log);
+		UDwGE_Perk* Effect = Defaults<UDwGE_Perk>(EffectBp);
+		if (!Effect)
+		{
+			return Fail();
+		}
+		Effect->Modifiers.Reset();
+		Effect->AddValueModifier(Spec.Attribute, EGameplayModOp::AddBase);
+		bOk &= Save(EffectBp, Log);
+
+		UDwPerkDefinition* Perk = FindOrCreate<UDwPerkDefinition>(PerkData, Spec.Asset, Log);
+		Perk->DisplayName = FText::FromString(Spec.Name);
+		Perk->Description = FText::FromString(Spec.Description);
+		Perk->Effect = TSubclassOf<UGameplayEffect>(EffectBp->GeneratedClass.Get());
+		Perk->GrantedAbility = nullptr;
+		Perk->RequiredUnitTags = FGameplayTagContainer();
+		Perk->MaxStacks = Spec.MaxStacks;
+		Perk->Weight = 1.f;
+		Perk->Tuning = Row(PerkTable, Spec.TuningRow, Log, bOk);
+		bOk &= Save(Perk, Log);
+		PerkPool->Perks.Add(Perk);
+	}
+	bOk &= Save(PerkPool, Log);
+	TArray<UDwUnitDefinition*> CrewUnits = { Swordsman, Sniper };
+	for (const UDwCaptainDefinition* Captain : Captains)
+	{
+		CrewUnits.Add(Captain->CaptainUnit);
+	}
+	for (UDwUnitDefinition* Unit : CrewUnits)
+	{
+		Unit->PerkPool = PerkPool;
+		bOk &= Save(Unit, Log);
+	}
+
+	// 8. DA_Shop_Default: only the item list for now (plunder drops one of them, P6); DW-204 fills in the rest.
+	UDwShopDefinition* Shop = FindOrCreate<UDwShopDefinition>(RulesData, TEXT("DA_Shop_Default"), Log);
+	Shop->DisplayName = FText::FromString(TEXT("Shop"));
+	Shop->Items.Reset();
+	for (const TCHAR* ItemName : { TEXT("DA_Item_HealthRestore"), TEXT("DA_Item_ManaRestore") })
+	{
+		if (UDwItemDefinition* Item = Load<UDwItemDefinition>(ItemData, ItemName))
+		{
+			Shop->Items.Add(Item);
+		}
+		else
+		{
+			Log.Add(FString::Printf(TEXT("ERROR %s is missing (run the combat content first)"), ItemName));
+			bOk = false;
+		}
+	}
+	bOk &= Save(Shop, Log);
+	GameData->DefaultShop = Shop;
 	bOk &= Save(GameData, Log);
 
 	Log.Add(bOk ? TEXT("CONTENT PASS") : TEXT("CONTENT FAIL"));

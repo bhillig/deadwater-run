@@ -176,7 +176,7 @@ void FDwDataSpec::Define()
 			if (!TestTrue(TEXT("All rows exist"), Leader && Fear && Conq && Eco && Run && Combat && Fight)) { return; }
 
 			TestEqual(TEXT("Veteran Crew +50% XP"), Leader->XpMultiplier, 1.5f);
-			TestEqual(TEXT("Veteran Crew levels twice as fast"), Leader->LevelThresholdMultiplier, 0.5f);
+			TestEqual(TEXT("Veteran Crew: +50% XP only, no threshold change (K7 a, 2026-11-10)"), Leader->LevelThresholdMultiplier, 1.f);
 			TestEqual(TEXT("Dread Reputation +1 Fear per surrender"), Fear->FearPerSurrender, 1);
 			TestEqual(TEXT("Conqueror +1% per kill"), Conq->KillBonusPerKill, 0.01f);
 			TestEqual(TEXT("Conqueror max 20%"), Conq->KillBonusCap, 0.2f);

@@ -219,6 +219,17 @@ UDwGE_DamageBonus::UDwGE_DamageBonus()
 	AddAssetTags(FGameplayTagContainer(DwTags::Effect_Buff));
 }
 
+UDwGE_Perk::UDwGE_Perk()
+{
+	DurationPolicy = EGameplayEffectDurationType::Infinite;
+	AddAssetTags(FGameplayTagContainer(DwTags::Effect_Perk));
+}
+
+void UDwGE_Perk::AddValueModifier(const FGameplayAttribute& Attribute, EGameplayModOp::Type Op)
+{
+	AddSetByCaller(Attribute, Op, DwTags::Data_Value);
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Turn budget and costs
 

@@ -20,12 +20,13 @@
 - `UDwAbilityPool : UDwDefinitionBase`: weighted list of `UDwAbilityDefinition`; each unit definition points at its learnable pool.
 
 ## Rewards (`FDwRewardRules`, Run/Economy/, pure)
-- `ComputeRewards(const FDwCombatResult&, const FDwEncounterTuningRow&, const FDwEconomyTuningRow&, FRandomStream&) -> FDwRewardBundle`
+Built in DW-203 (`Source/DeadwaterRun/Run/Economy/DwRewardRules.h`).
+- `ComputeRewards(const FDwRewardContext&, FRandomStream&) -> FDwRewardBundle`. The context holds the outcome, the node's `FDwEncounterTuningRow`, `FDwEconomyTuningRow`, the run state and the plunder item list (`DA_GameData.DefaultShop->Items`). The stream is `FDwRunRandom::ForRewards(Seed, Node)`.
   - `Gold = round(BaseGold x Multiplier(Outcome))` where multiplier is sink 1.0 / crew defeated 1.5 / surrender 1.5 / boss 0.
-  - Plunder (crew defeated or surrender): roll `PlunderItemChance` for one random item from the shop item list (P6).
-  - `AbilityChoices`: `RewardAbilityChoices` abilities drawn from the living crew's learnable pools, filtered by the captain's `BlockedAbilityTags` (Conqueror: no `Ability.Weapon.Firearm`, K2) and abilities already known (P5).
-  - XP: see `12-Progression.md`.
-- `UDwRun` stores the bundle in `PendingRewards`; `ClaimRewards(Choices)` applies gold, items and the chosen ability (to the chosen crew member) and moves to `LevelUp` or `Map`.
+  - Plunder (crew defeated or surrender): roll `PlunderItemChance` for one random item from the shop item list. P6 answered: always one item (`PlunderItemChance` 1.0).
+  - `AbilityChoices` (`FDwAbilityOffer`: ability + `EligibleCrew`): `RewardAbilityChoices` abilities, weighted and without repeats, drawn from the living crew's learnable pools. A crew member is eligible if the ability is in their pool, they don't know it yet (P5), and, for the captain, it has none of the captain's `BlockedAbilityTags` (Conqueror: no `Ability.Weapon.Firearm`, K2). `DT_EncounterTuning.bGrantsAbilityChoice` turns it off per encounter. Until the crew abilities exist (N1), the pools are empty and no choice is offered.
+  - XP: see `12-Progression.md`. The bundle lists each living crew member's XP gain for the rewards screen.
+- `UDwRun::ApplyCombatResult` stores the bundle in `PendingRewards` (phase `Rewards`). `ClaimRewards(AbilityChoice, CrewId, ReplaceSlot)` banks gold (`Stats.GoldEarned`) and items (one stack per item, no cap until P10) and teaches the chosen ability. `INDEX_NONE` skips the ability. With `MaxAbilitySlots` (P4 placeholder 3) learned already, `ReplaceSlot` names the ability it replaces. Then `LevelUp` or `Map`.
 
 ## Shop (`FDwShopRules`, Run/Economy/, pure)
 - `GenerateInventory(const FDwRunState&, const UDwShopDefinition&, FRandomStream&) -> FDwShopInventory` - offers with stable `OfferId`s: `Repair`, `Item` x N, `Ability` (ability + eligible crew) x N, `Recruit` (unit def + cost) x N, `ShipUpgrade` x N, `Disband` (per living non-captain crew).
@@ -68,7 +69,9 @@ sequenceDiagram
 
 ## How it's tested (`DeadwaterRun.Rules.Economy.*`, pure)
 - Gold: 150 base -> 150 sunk, 225 crew defeated, 225 surrender, 0 boss.
-- Plunder item roll stable per seed; never on sink.
+- Plunder item roll stable per seed; never on sink; chance 0.5 drops about half the time.
+- Ability choices: count, no repeats, weights, eligibility (pool, already known, dead crew, captain blocked tags), off per encounter and for the boss.
+- Suites: `DeadwaterRun.Rules.Economy` (pure), `DeadwaterRun.Rules.Run` "Rewards (DW-203)" (flow, claims, slot replacement, refusals), `DeadwaterRun.Run.Content` (real plunder).
 - Every `EDwPurchaseResult` reachable and correct; gold never negative; crew max 4; captain never disbanded; repair clamps.
 - Simulator report: gold at each shop visit, purchases by type, % of runs that can't afford repair before the boss.
 

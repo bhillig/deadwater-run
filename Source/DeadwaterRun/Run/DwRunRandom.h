@@ -17,6 +17,8 @@ struct DEADWATERRUN_API FDwRunRandom
 	static int32 ForNode(int32 RunSeed, int32 NodeIndex);
 	/** Rewards after the fight at a node (DW-203). */
 	static int32 ForRewards(int32 RunSeed, int32 NodeIndex);
+	/** Perk choices of the Ordinal-th level-up after the fight at a node (DW-203): one stream per level-up, rolled in order. */
+	static int32 ForPerks(int32 RunSeed, int32 NodeIndex, int32 Ordinal);
 	/** Roster ids (starting crew and recruits). */
 	static int32 ForCrew(int32 RunSeed);
 

@@ -11,7 +11,7 @@
   ./Tools/Capture.ps1 -Demo hit             # sniper shot just landed: floating text, HP bars, spent action greyed
   ./Tools/Capture.ps1 -Demo endturn         # turn ended: the turn banner for the next side
   ./Tools/Capture.ps1 -Demo enemy           # player passes twice; the crew AI plays two enemy turns (frames <file>-01.png, ...)
-  ./Tools/Capture.ps1 -Demo run             # a run (DW-201): map readout, fight 1, back on the map with losses, fight 2 (frames -01..-03)
+  ./Tools/Capture.ps1 -Demo run             # a run (DW-201/203): map readout, fight 1, rewards, level-up, back on the map, fight 2 (frames -01..-05)
   ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p
   ./Tools/Capture.ps1 -Mood Storm           # the storm look (default Day; Random rolls from the seed)
   ./Tools/Capture.ps1 -Zoom 0.3 -Tile "0,1" # close-up of a tile for art review

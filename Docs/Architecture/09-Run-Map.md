@@ -37,8 +37,8 @@ classDiagram
         +ChooseNode(NodeIndex) bool
         +BuildEncounterSetup() FDwEncounterSetup
         +ApplyCombatResult(Result)
-        +ClaimRewards(Choices)
-        +ChoosePerk(CrewId, PerkId)
+        +ClaimRewards(AbilityChoice, CrewId, ReplaceSlot)
+        +ChoosePerk(ChoiceIndex)
         +TryPurchase(OfferId, TargetCrewId) EDwPurchaseResult
         +LeaveShop()
         +ChooseEventOption(ChoiceIndex)
@@ -58,7 +58,7 @@ classDiagram
         +int32 CurrentNode
         +FDwCaptainCounters Counters
         +TArray~FDwPendingLevelUp~ PendingLevelUps
-        +FDwPendingRewards PendingRewards
+        +FDwRewardBundle PendingRewards
         +FDwShopInventory Shop
         +FDwActiveEvent Event
         +TArray~FPrimaryAssetId~ SeenEvents
@@ -107,14 +107,14 @@ classDiagram
 - Definitions in run state are object pointers (`TObjectPtr<const UDwUnitDefinition>` etc.), not `FPrimaryAssetId`s, matching `FDwCombatantSetup`: transient test content works, `UDwRun` keeps them referenced, and every definition is resident anyway (`UDwAssetManager`).
 - Roster ids are seeded (`FDwRunRandom::ForCrew` + a serial in `FDwRunState::LastCrewSerial`), so a seed reproduces the same ids.
 - Until DW-202, `UDwRun::Initialize` builds `FDwPlaceholderMap` (`Run/Map/`): the D2 lane shape with every node a fight, encounters picked by weight and layer tier from `UDwRunSubsystem::GatherEncounterPool` (sorted by name). DW-202 swaps that one call for generate + validate.
-- After a won fight the run goes straight back to `Map`; DW-203 inserts `Rewards`/`LevelUp`. `LeaveShop()` / `LeaveEvent()` return a shop or event node to the map; DW-204/DW-205 add the purchases and outcomes before them.
+- After a won fight (not the boss) the run enters `Rewards` (DW-203): `ClaimRewards` banks gold and items and teaches the chosen move, then `LevelUp` once per level gained (`ChoosePerk` on the front of `PendingLevelUps`), then `Map`. The node counts as cleared only when the last level-up is confirmed. `LeaveShop()` / `LeaveEvent()` return a shop or event node to the map; DW-204/DW-205 add the purchases and outcomes before them.
 - The boss node's encounter is `DA_GameData.KrakenEncounter`; until DW-209 sets it, `BuildEncounterSetup` reports why the boss fight can't start.
 - `ADwGameMode` is the phase bridge: `Combat` -> `BuildEncounterSetup` -> `StartEncounter`; `OnCombatEnded` -> `PostCombatSeconds` beat (next tick in instant mode) -> `EndEncounter` -> `ApplyCombatResult`.
 - `ApplyCombatResult` writes survivor Health and permadeath back; there is no Mana in run state (C9: MP refills at every fight start). Any `Defeat*` outcome, including `DefeatCaptainDead` (C10), moves the run to `Defeat`.
 
 ### Seeds (`FDwRunRandom`, pure)
 - Run seed: random at Set Sail, or from `-DwSeed=`/dev settings.
-- Derived streams: `ForMap(Seed, Attempt)`, `ForNode(Seed, NodeIndex)` (combat, shop, event at that node), `ForRewards(Seed, NodeIndex)`. Derivation = `HashCombine` of the seed and a fixed salt per purpose, so choices at one node never shift randomness at another.
+- Derived streams: `ForMap(Seed, Attempt)`, `ForNode(Seed, NodeIndex)` (combat, shop, event at that node), `ForRewards(Seed, NodeIndex)` (gold, plunder, ability choices), `ForPerks(Seed, NodeIndex, Ordinal)` (one stream per level-up, rolled when it reaches the front of the queue). Derivation = `HashCombine` of the seed and a fixed salt per purpose, so choices at one node never shift randomness at another.
 
 ### Node entry
 | Node | `ChooseNode` does | Next phase |

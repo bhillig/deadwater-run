@@ -115,6 +115,8 @@ struct DEADWATERRUN_API FDwEncounterTuningRow : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Encounter") int32 BaseGold = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Encounter") int32 ClearXp = 0;
+	/** Whether winning offers "learn a new move" (P5). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Encounter") bool bGrantsAbilityChoice = true;
 };
 
 /** DT_EconomyTuning, single row "Default". Field list from Docs/Architecture/10-Economy-Shop-Loot.md. */

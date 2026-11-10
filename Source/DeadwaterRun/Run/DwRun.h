@@ -10,6 +10,8 @@
 class UDwCaptainDefinition;
 class UDwEncounterDefinition;
 class UDwGameData;
+struct FDwEconomyTuningRow;
+struct FDwRunTuningRow;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDwOnRunPhaseChanged, EDwRunPhase, NewPhase, EDwRunPhase, OldPhase);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDwOnRunStateChanged);
@@ -20,8 +22,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDwOnRunStateChanged);
  * phase, applies the change, then broadcasts OnStateChanged and (if the phase moved) OnPhaseChanged.
  * Calls in the wrong phase are refused (false, logged as a warning) and change nothing.
  *
- * Flow today: Map -> ChooseNode(fight) -> Combat -> ApplyCombatResult -> Map (DW-203 inserts Rewards / LevelUp)
- * ... -> ChooseNode(boss) -> Combat -> Victory. Any defeat -> Defeat. Abandon -> Defeat (Abandoned).
+ * Flow: Map -> ChooseNode(fight) -> Combat -> ApplyCombatResult -> Rewards -> ClaimRewards -> [LevelUp -> ChoosePerk]
+ * x levels gained -> Map ... -> ChooseNode(boss) -> Combat -> Victory. Any defeat -> Defeat. Abandon -> Defeat (Abandoned).
  */
 UCLASS(BlueprintType)
 class DEADWATERRUN_API UDwRun : public UObject
@@ -70,9 +72,29 @@ public:
 	/**
 	 * Combat phase only. Writes Health back, applies permadeath (bAlive = false, never revived), the ship's Health and the
 	 * items used, and updates stats. Any Defeat* (including captain death, C10) -> Defeat; VictoryBoss -> Victory;
-	 * other victories -> Map.
+	 * other victories -> Rewards: kill XP to each living killer and ClearXp to every living crew member (x the captain's
+	 * Veteran Crew multipliers), level-ups queued in PendingLevelUps, gold/plunder/ability choices in PendingRewards.
 	 */
 	bool ApplyCombatResult(const FDwCombatResult& Result);
+
+	/**
+	 * Rewards phase only. Adds the pending gold and items and, if AbilityChoice is a valid index, teaches that offer's
+	 * ability to CrewId (one of its EligibleCrew). With MaxAbilitySlots learned already, ReplaceSlot (an index into the
+	 * crew member's Abilities) must name the one it replaces (P4); otherwise the claim is refused. INDEX_NONE skips the
+	 * ability. Then LevelUp if level-ups are pending, else back to the map.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
+	bool ClaimRewards(int32 AbilityChoice, FGuid CrewId, int32 ReplaceSlot = -1);
+
+	/**
+	 * LevelUp phase only. Applies PerkChoices[ChoiceIndex] of the front level-up to its crew member (INDEX_NONE only when
+	 * there were no choices), then shows the next level-up or returns to the map.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
+	bool ChoosePerk(int32 ChoiceIndex);
+
+	/** The level-up on screen (front of PendingLevelUps), or null. */
+	const FDwPendingLevelUp* GetCurrentLevelUp() const;
 
 	/** Shop phase only: back to the map. DW-204 adds purchases before it. */
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
@@ -101,6 +123,12 @@ private:
 	void AddCrewMember(const UDwUnitDefinition& Unit, bool bIsCaptain);
 	/** Back to the map after a completed node (counts it as cleared). */
 	void CompleteNode();
+	/** XP, level-ups and the reward bundle after a won (non-boss) fight. */
+	void QueueRewards(const FDwCombatResult& Result);
+	/** Rolls the front level-up's perk choices once. */
+	void RollCurrentLevelUp();
+	const FDwEconomyTuningRow* GetEconomyTuning() const;
+	const FDwRunTuningRow* GetRunTuning() const;
 	void EndRun(EDwRunPhase Phase, EDwRunEndReason Reason);
 	/** OnStateChanged, then OnPhaseChanged if the phase moved away from OldPhase. */
 	void Changed(EDwRunPhase OldPhase);

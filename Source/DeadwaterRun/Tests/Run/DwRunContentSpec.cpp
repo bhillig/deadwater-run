@@ -1,7 +1,7 @@
 // Copyright Brandon Hillig 2026
 
 // DW-201: the real captains (Tools/CreateCombatContent.ps1) start runs, and a run's fights are played through the real
-// combat subsystem: Health and permadeath carry over, Mana always starts full (C9).
+// combat subsystem: Health and permadeath carry over, Mana always starts full (C9). DW-203: real rewards, XP and perks.
 
 #include "Misc/AutomationTest.h"
 
@@ -12,6 +12,11 @@
 #include "Core/DwAssetManager.h"
 #include "Core/DwGameData.h"
 #include "Data/DwCaptainDefinition.h"
+#include "Data/DwPerkDefinition.h"
+#include "Data/DwPools.h"
+#include "Data/DwShopDefinition.h"
+#include "Data/DwUnitDefinition.h"
+#include "Data/Tuning/DwTuningRows.h"
 #include "Misc/DataValidation.h"
 #include "Run/DwRun.h"
 #include "Run/DwRunRandom.h"
@@ -91,6 +96,46 @@ BEGIN_DEFINE_SPEC(FDwRunContentSpec, "DeadwaterRun.Run.Content",
 	void ResolveOutsideKills()
 	{
 		F.EndTurn(EDwSide::Player);
+	}
+
+	/** The enemy crew dies by Killer's hand (kill XP), the fight ends, the result goes to the run. */
+	bool WinBy(const FGuid& Killer)
+	{
+		const FDwUnitHandle Source = FindCrewUnit(Killer);
+		for (const ADwCombatUnit* Unit : F.Combat->GetUnits())
+		{
+			if (Unit->GetSide() == EDwSide::Enemy && Unit->IsAlive())
+			{
+				F.ApplyEffect(DwGas::GetSharedEffects().Kill, Unit->GetHandle(), Source);
+			}
+		}
+		ResolveOutsideKills();
+		const FDwCombatResult Result = F.Combat->GetResult();
+		F.Combat->EndEncounter();
+		return TestEqual(TEXT("Plundered"), Result.Outcome, EDwCombatOutcome::VictoryCrewDefeated) && TestTrue(TEXT("Applied"), Run->ApplyCombatResult(Result));
+	}
+
+	/** Claims without a new move; each level-up takes the perk named Pick if offered, else the first. */
+	bool FinishRewards(const UDwPerkDefinition* Pick = nullptr)
+	{
+		if (!TestEqual(TEXT("Rewards"), Run->GetPhase(), EDwRunPhase::Rewards) || !Run->ClaimRewards(INDEX_NONE, FGuid()))
+		{
+			return false;
+		}
+		while (const FDwPendingLevelUp* LevelUp = Run->GetPhase() == EDwRunPhase::LevelUp ? Run->GetCurrentLevelUp() : nullptr)
+		{
+			const int32 Index = LevelUp->PerkChoices.IndexOfByKey(Pick);
+			Run->ChoosePerk(LevelUp->PerkChoices.IsEmpty() ? INDEX_NONE : FMath::Max(Index, 0));
+		}
+		return TestEqual(TEXT("Map"), Run->GetPhase(), EDwRunPhase::Map);
+	}
+
+	const UDwPerkDefinition* FindPerk(const TCHAR* Name) const
+	{
+		const UDwUnitDefinition* Unit = GameData && !GameData->Captains.IsEmpty() ? GameData->Captains[0]->CaptainUnit.Get() : nullptr;
+		const UDwPerkPool* Pool = Unit ? Unit->PerkPool.Get() : nullptr;
+		const TObjectPtr<UDwPerkDefinition>* Found = Pool ? Pool->Perks.FindByPredicate([Name](const UDwPerkDefinition* P) { return P && P->GetName() == Name; }) : nullptr;
+		return Found ? Found->Get() : nullptr;
 	}
 
 END_DEFINE_SPEC(FDwRunContentSpec)
@@ -195,12 +240,14 @@ void FDwRunContentSpec::Define()
 		TestTrue(TEXT("Applied"), Run->ApplyCombatResult(Result));
 
 		const FDwRunState& S = Run->GetState();
-		TestEqual(TEXT("Back on the map"), S.Phase, EDwRunPhase::Map);
-		TestEqual(TEXT("Captain kept 60 HP"), S.FindCrew(CaptainId)->Health, 60.f);
+		if (!FinishRewards()) { return; }
+		// Veteran Crew: 80 clear XP x 1.5 = 120, level 2: +10 max HP, and the new 10 HP are usable (12-Progression.md).
+		TestEqual(TEXT("Captain at level 2"), S.FindCrew(CaptainId)->Level, 2);
+		TestEqual(TEXT("Captain kept 60 HP + 10 from the level"), S.FindCrew(CaptainId)->Health, 70.f);
 		TestFalse(TEXT("Sniper lost"), S.FindCrew(SniperId)->bAlive);
 		TestEqual(TEXT("One cleared"), S.Stats.NodesCleared, 1);
 
-		// Fight 2: two crew; the captain starts at 60 HP and full Mana.
+		// Fight 2: two crew; the captain starts at 70 HP and full Mana.
 		FDwEncounterSetup Setup;
 		if (!StartNextFight(&Setup)) { return; }
 		TestEqual(TEXT("Only the living sail on"), Setup.Crew.Num(), 2);
@@ -208,9 +255,105 @@ void FDwRunContentSpec::Define()
 		TestFalse(TEXT("No sniper aboard"), FindCrewUnit(SniperId).IsValid());
 		const FDwUnitHandle Again = FindCrewUnit(CaptainId);
 		if (!TestTrue(TEXT("Captain aboard"), Again.IsValid())) { return; }
-		TestEqual(TEXT("Health carried"), F.Health(Again), 60.f);
+		TestEqual(TEXT("Health carried"), F.Health(Again), 70.f);
+		TestEqual(TEXT("Level 2 max HP"), F.Attr(Again, UDwUnitAttributeSet::GetMaxHealthAttribute()), 110.f);
 		TestEqual(TEXT("Mana full"), F.Attr(Again, UDwUnitAttributeSet::GetManaAttribute()), F.Attr(Again, UDwUnitAttributeSet::GetMaxManaAttribute()));
 		TestTrue(TEXT("Max Mana is 20"), F.Attr(Again, UDwUnitAttributeSet::GetMaxManaAttribute()) == 20.f);
+	});
+
+#if WITH_EDITOR
+	It("has three valid placeholder perks in one shared pool on every crew archetype and captain, and a plunder item list", [this]()
+	{
+		if (!TestNotNull(TEXT("DA_GameData"), GameData)) { return; }
+		const UDwPerkPool* Pool = GameData->Captains[0]->CaptainUnit->PerkPool;
+		if (!TestNotNull(TEXT("DA_PerkPool_Shared"), Pool) || !TestEqual(TEXT("3 perks"), Pool->Perks.Num(), 3)) { return; }
+		for (const UDwPerkDefinition* Perk : Pool->Perks)
+		{
+			FDataValidationContext Context;
+			TestEqual(*FString::Printf(TEXT("%s is valid"), *GetNameSafe(Perk)), Perk ? Perk->IsDataValid(Context) : EDataValidationResult::Invalid,
+				EDataValidationResult::Valid);
+			if (!Perk) { continue; }
+			TestTrue(TEXT("Tuning row"), Perk->GetTuningRow<FDwPerkTuningRow>() != nullptr);
+			TestTrue(TEXT("Effect is a GE_Perk"), Perk->Effect && Perk->Effect->IsChildOf(UDwGE_Perk::StaticClass()));
+			const UGameplayEffect* Effect = Perk->Effect ? Perk->Effect->GetDefaultObject<UGameplayEffect>() : nullptr;
+			TestTrue(TEXT("Infinite"), Effect && Effect->DurationPolicy == EGameplayEffectDurationType::Infinite);
+			TestTrue(TEXT("Tagged Effect.Perk"), Effect && Effect->GetAssetTags().HasTagExact(DwTags::Effect_Perk));
+			TestTrue(TEXT("One Data.Value modifier"), Effect && Effect->Modifiers.Num() == 1
+				&& Effect->Modifiers[0].ModifierMagnitude.GetSetByCallerFloat().DataTag == DwTags::Data_Value);
+			TestFalse(TEXT("Description tokens filled"), Perk->GetFormattedDescription().ToString().Contains(TEXT("{")));
+		}
+		const UDwPerkDefinition* Hardened = FindPerk(TEXT("DA_Perk_Hardened"));
+		TestEqual(TEXT("Hardened text"), Hardened ? Hardened->GetFormattedDescription().ToString() : FString(), FString(TEXT("Takes 10% less damage.")));
+		for (const UDwCaptainDefinition* Def : GameData->Captains)
+		{
+			TestTrue(TEXT("Captain unit uses the shared pool"), Def->CaptainUnit->PerkPool.Get() == Pool);
+			for (const UDwUnitDefinition* Unit : Def->StartingCrew)
+			{
+				TestTrue(TEXT("Crew uses the shared pool"), Unit->PerkPool.Get() == Pool);
+			}
+		}
+		TestTrue(TEXT("DA_Shop_Default lists the two items"), GameData->DefaultShop && GameData->DefaultShop->Items.Num() == 2);
+	});
+#endif
+
+	It("pays a real plunder: 225 gold, one item, kill XP to the killer, and Veteran Crew levels everyone up", [this]()
+	{
+		if (!StartRun(Captain(TEXT("TeamLeader"))) || !StartNextFight()) { return; }
+		const FDwRunState& S = Run->GetState();
+		if (!WinBy(S.Crew[1].Id)) { return; } // the swordsman cuts down all three
+		TestEqual(TEXT("Rewards"), S.Phase, EDwRunPhase::Rewards);
+		TestEqual(TEXT("150 x 1.5"), S.PendingRewards.Gold, 225);
+		TestEqual(TEXT("One plunder item (P6: always)"), S.PendingRewards.Items.Num(), 1);
+		TestTrue(TEXT("No learnable moves yet (N1)"), S.PendingRewards.AbilityChoices.IsEmpty());
+		// Clear 80 for all; the swordsman also has 3 x 20 kill XP. Team Leader: x1.5.
+		TestEqual(TEXT("Captain 120 XP"), S.PendingRewards.Xp[0].Xp, 120);
+		TestEqual(TEXT("Swordsman 210 XP"), S.PendingRewards.Xp[1].Xp, 210);
+		TestEqual(TEXT("Swordsman level 3 (100 + 110)"), S.Crew[1].Level, 3);
+		TestEqual(TEXT("Four level-ups"), S.PendingLevelUps.Num(), 4);
+		if (!FinishRewards()) { return; }
+		TestEqual(TEXT("325 gold"), S.Gold, 325);
+		TestEqual(TEXT("The item is aboard"), S.Inventory.Num(), 1);
+		TestEqual(TEXT("A perk per level"), S.Crew[0].Perks.Num() + S.Crew[1].Perks.Num() + S.Crew[2].Perks.Num(), 4);
+	});
+
+	It("gives the Conqueror's crew plain XP (no Veteran Crew)", [this]()
+	{
+		if (!StartRun(Captain(TEXT("Conqueror"))) || !StartNextFight()) { return; }
+		if (!WinBy(Run->GetState().Crew[0].Id)) { return; }
+		TestEqual(TEXT("Captain: 80 + 60"), Run->GetState().PendingRewards.Xp[0].Xp, 140);
+		TestEqual(TEXT("Sniper: 80"), Run->GetState().PendingRewards.Xp[2].Xp, 80);
+		TestEqual(TEXT("Sniper still level 1"), Run->GetState().Crew[2].Level, 1);
+	});
+
+	It("applies perks in the next fight: Sea Legs +1 move, Hardened 10% less damage", [this]()
+	{
+		const UDwPerkDefinition* SeaLegs = FindPerk(TEXT("DA_Perk_SeaLegs"));
+		const UDwPerkDefinition* Hardened = FindPerk(TEXT("DA_Perk_Hardened"));
+		if (!TestNotNull(TEXT("Sea Legs"), SeaLegs) || !TestNotNull(TEXT("Hardened"), Hardened)) { return; }
+		if (!StartRun(Captain(TEXT("Fearmongerer"))) || !StartNextFight()) { return; }
+		const FGuid CaptainId = Run->GetState().Crew[0].Id;
+		const FGuid SwordsmanId = Run->GetState().Crew[1].Id;
+		if (!WinBy(CaptainId) || !Run->ClaimRewards(INDEX_NONE, FGuid())) { return; }
+		// Captain (80 + 60 = 140) and swordsman (80): only the captain levels. Pick Sea Legs if offered.
+		const FDwPendingLevelUp* LevelUp = Run->GetCurrentLevelUp();
+		if (!TestTrue(TEXT("Captain levelled"), LevelUp && LevelUp->CrewId == CaptainId)) { return; }
+		if (!TestTrue(TEXT("Sea Legs offered (3 of 3)"), LevelUp->PerkChoices.Contains(SeaLegs))) { return; }
+		Run->ChoosePerk(LevelUp->PerkChoices.IndexOfByKey(SeaLegs));
+		TestEqual(TEXT("Map"), Run->GetPhase(), EDwRunPhase::Map);
+		// Give the swordsman Hardened by hand: the second fight checks both effects.
+		FDwCrewMemberState* Swordsman = const_cast<FDwRunState&>(Run->GetState()).FindCrew(SwordsmanId);
+		Swordsman->Perks.Add(Hardened);
+
+		FDwEncounterSetup Setup;
+		if (!StartNextFight(&Setup)) { return; }
+		TestTrue(TEXT("Perks in the setup"), Setup.Crew[0].Perks.Contains(SeaLegs) && Setup.Crew[1].Perks.Contains(Hardened));
+		const FDwUnitHandle CaptainUnit = FindCrewUnit(CaptainId);
+		const FDwUnitHandle SwordsmanUnit = FindCrewUnit(SwordsmanId);
+		TestEqual(TEXT("Move range 5 + 1"), F.Attr(CaptainUnit, UDwUnitAttributeSet::GetMoveRangeAttribute()), 6.f);
+		TestEqual(TEXT("Move points 6 on the first turn"), F.Attr(CaptainUnit, UDwUnitAttributeSet::GetMovePointsAttribute()), 6.f);
+		TestEqual(TEXT("Swordsman's move unchanged"), F.Attr(SwordsmanUnit, UDwUnitAttributeSet::GetMoveRangeAttribute()), 5.f);
+		TestEqual(TEXT("Damage reduction 0.1"), F.Attr(SwordsmanUnit, UDwUnitAttributeSet::GetDamageReductionAttribute()), 0.1f, 1e-4f);
+		TestEqual(TEXT("Captain has none"), F.Attr(CaptainUnit, UDwUnitAttributeSet::GetDamageReductionAttribute()), 0.f);
 	});
 
 	It("ends the run when the captain dies (C10)", [this]()

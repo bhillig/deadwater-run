@@ -3,7 +3,7 @@
 - Every creative or design call the architecture needs. Agents never pick; they build the recommended default behind a data flag, clearly marked as a placeholder, until you answer.
 - **Where it lives** = the data field that holds your answer. Almost all answers are data, not code. Questions marked **(code)** change behaviour that data can't express.
 - **Needed by** follows the critical path in `Roadmap.md`.
-- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-10-25 (C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
+- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-10 (K7, P6, P11 answered during DW-201/DW-203; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
 
 ## Top 5 (they shape the most work)
 1. **C8a** - Explosive barrels: new in your C8 answer, not in the design doc or Scope. In v1 or post-launch?
@@ -40,7 +40,6 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 |---|---|---|---|---|
 | K5 | Defend - how does it work? ("move onto them") | a) An action: move adjacent to an ally; until your next turn, single-target attacks on that ally hit the captain b) Passive: any adjacent ally is protected automatically c) Captain shares the ally's tile | a) - no tile stacking, clear counterplay; AoE not redirected. **New since C10:** captain death = defeat, so every redirected hit risks the run - consider capping redirected damage or letting Defend grant the captain damage reduction | `GA_Defend`, `GE_Guarded`, redirect rule |
 | K6 | Grapple: which tile does the target land on? Across ships? Out of the nest? MP cost? | a) Nearest free tile next to the captain along the line; works across ships and out of the nest b) Can't pull from the nest c) Pull only on the same ship | a) | `UDwGA_Grapple` + tuning |
-| K7 | Veteran Crew: "+50% XP and levels up twice as fast" | a) Only +50% XP b) Only half the XP needed per level (2x speed) c) Both (about 3x speed) | a) or b) - c) likely too strong; your call | `XpMultiplier`, `LevelThresholdMultiplier` |
 | K8 | After an enemy cowers, what happens to its Fear? | a) Resets to 0 b) Stays at 3 (cowers every turn) c) Drops to 1 | a) - b) is a lock | `DT_CombatTuning.FearCowerPolicy` |
 | K9 | Dread Reputation: starting Fear could reach 3 and cause instant surrender | a) Cap starting Fear at 2 b) No cap (later fights can be won on turn 1) c) Cap at 1 | a) | `StartingFearCap` |
 | K10 | Is the Kraken immune to Fear, freeze (Eye of the Tiger), grapple? | a) Immune to Fear and grapple; freeze works on tentacles only b) Immune to all three c) Not immune | a) | `Unit.Immune.*` tags |
@@ -58,12 +57,10 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 | P3 | Level-ups mid-fight or after? | a) After the fight b) Immediately on the kill | a) | Flow (code is the same) |
 | P4 | Ability slots per crew member; can abilities be replaced? | a) 3 slots + basic attack, replace when full b) Unlimited c) 2 slots | a) | `MaxAbilitySlots` |
 | P5 | "A new move" on victory: how? | a) Choose 1 of 3 abilities and who learns it b) Random ability to a random crew member c) Skip allowed for gold | a) | `RewardAbilityChoices` |
-| P6 | Plunder: 1.5x gold plus a random item always, or a chance? | a) 1.5x gold + item chance 50% b) 1.5x gold + always 1 item c) 1.5x gold only, item on surrender | Your call | `PlunderItemChance` |
 | P7 | Repair: 100 gold for how much hull? | a) +100 HP b) Full repair c) +50% max | a) - keeps the heal-or-upgrade tension | `RepairAmount` |
 | P8 | Recruit/disband: cost, which archetypes, recruit level, refund | a) Swordsman/Sniper (+ any new archetypes), cost ~80, level = crew average - 1, no refund b) Random archetype | Tuning + N5 | `DT_UnitTuning.RecruitCost`, shop recruit pool |
 | P9 | Ship upgrades list and prices | a) +50 max HP, +20 cannon damage, third cannon b) a) + armour (-X% ship damage) c) Only HP and cannon damage | a) | `UDwShipUpgradeDefinition` assets |
 | P10 | Items: restore amounts, who can be targeted, inventory shared or per crew, cap | a) Shared ship inventory, cap 6, self or adjacent ally, +40 HP / +10 MP b) Per crew inventory | a) | `UDwItemDefinition`, `DT_ItemTuning` |
-| P11 | Starting gold | Tuning (0, 50 or 100) | Balance | `StartingGold` |
 
 ## Content (needed by Nov 8 - week 3 is content week)
 
@@ -177,3 +174,10 @@ U1-U5 answered - see Resolved. Follow-up U3a above.
 | U3 | Settings list | Resolution, window mode, vsync, 4 volumes, game speed, screen shake + colourblind-friendly highlights (must ship; palettes: U3a) | `16`, `14`, `04` (`UDwHighlightPalette`) |
 | U4 | Run summary | Captain, seed, nodes, fights by outcome, gold, crew lost, kills, time | `16`, `09` (`FDwRunStats`, end reason) |
 | U5 | Abandon goes to summary | a) Yes | `16` |
+
+### Answered 2026-11-10 (DW-201, DW-203)
+| ID | Question | Decision | Now in |
+|---|---|---|---|
+| K7 | Veteran Crew: "+50% XP and levels up twice as fast" | a) Only +50% XP (`XpMultiplier` 1.5, `LevelThresholdMultiplier` 1.0). The threshold multiplier still works if set, for balance passes | `12`, `Tuning/CaptainTuning.json`, `FDwCaptainRules` |
+| P6 | Plunder: 1.5x gold plus an item always, or a chance? | b) 1.5x gold + always 1 random item from `DA_Shop_Default`'s item list (`PlunderItemChance` 1.0); surrender pays the same | `10`, `Tuning/EconomyTuning.json` |
+| P11 | Starting gold | 100 | `Tuning/EconomyTuning.json`, `Docs/Balance/Placeholders.md` |

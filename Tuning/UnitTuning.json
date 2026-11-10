@@ -1,9 +1,9 @@
 [
-	{ "Name": "Captain_TeamLeader",   "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 0, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
-	{ "Name": "Captain_Fearmongerer", "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 0, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
-	{ "Name": "Captain_Conqueror",    "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 0, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
-	{ "Name": "Swordsman",            "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 0, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
-	{ "Name": "Sniper",               "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 0, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
+	{ "Name": "Captain_TeamLeader",   "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 10, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
+	{ "Name": "Captain_Fearmongerer", "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 10, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
+	{ "Name": "Captain_Conqueror",    "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 10, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
+	{ "Name": "Swordsman",            "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 10, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 20, "RecruitCost": 0 },
+	{ "Name": "Sniper",               "MaxHealth": 100, "MaxMana": 20, "AttackDamage": 0, "MoveRange": 5, "MaxActionPoints": 1, "HealthPerLevel": 10, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 20, "RecruitCost": 0 },
 	{ "Name": "KrakenBody",           "MaxHealth": 500, "MaxMana": 0,  "AttackDamage": 0, "MoveRange": 0, "MaxActionPoints": 0, "HealthPerLevel": 0, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 },
 	{ "Name": "KrakenTentacle",       "MaxHealth": 0,   "MaxMana": 0,  "AttackDamage": 0, "MoveRange": 0, "MaxActionPoints": 0, "HealthPerLevel": 0, "ManaPerLevel": 0, "AttackDamagePerLevel": 0, "XpOnKill": 0, "RecruitCost": 0 }
 ]

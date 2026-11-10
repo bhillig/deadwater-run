@@ -1,2 +1,5 @@
 [
+	{ "Name": "SeaLegs",   "Value": 1.0, "Value2": 0.0 },
+	{ "Name": "Hardened",  "Value": 0.1, "Value2": 0.0 },
+	{ "Name": "Cutthroat", "Value": 0.1, "Value2": 0.0 }
 ]

@@ -16,118 +16,12 @@
 #include "Run/DwRun.h"
 #include "Run/DwRunRandom.h"
 #include "Run/Map/DwPlaceholderMap.h"
+#include "Tests/Run/DwRunTestContent.h"
 #include "Tests/Run/DwRunTestListener.h"
-
-namespace DwRunSpec
-{
-	/** Transient captain, crew, tables and encounters: Initialize and the pure flow need nothing else. */
-	struct FContent
-	{
-		TArray<UObject*> Rooted;
-		UDwGameData* GameData = nullptr;
-		UDwCaptainDefinition* Captain = nullptr;
-		UDwUnitDefinition* CaptainUnit = nullptr;
-		UDwUnitDefinition* Deckhand = nullptr;
-		UDwEncounterDefinition* Early = nullptr;  // layers 0-99
-		UDwEncounterDefinition* Late = nullptr;   // layers 4-99
-		UDwEncounterDefinition* Kraken = nullptr;
-		UDataTable* Economy = nullptr;
-
-		template <typename T>
-		T* Make(const TCHAR* Name)
-		{
-			T* Object = NewObject<T>(GetTransientPackage(), MakeUniqueObjectName(GetTransientPackage(), T::StaticClass(), Name));
-			Object->AddToRoot();
-			Rooted.Add(Object);
-			return Object;
-		}
-
-		template <typename TRow>
-		UDataTable* Table(const TCHAR* RowName, const TRow& Row)
-		{
-			UDataTable* Result = Make<UDataTable>(TEXT("DT_Test"));
-			Result->RowStruct = TRow::StaticStruct();
-			Result->AddRow(RowName, Row);
-			return Result;
-		}
-
-		void Create()
-		{
-			UDataTable* Units = Make<UDataTable>(TEXT("DT_TestUnits"));
-			Units->RowStruct = FDwUnitTuningRow::StaticStruct();
-			FDwUnitTuningRow Row;
-			Row.MaxHealth = 100; Row.MaxMana = 20; Row.HealthPerLevel = 10;
-			Units->AddRow(TEXT("Cap"), Row);
-			Row.MaxHealth = 80;
-			Units->AddRow(TEXT("Hand"), Row);
-
-			CaptainUnit = Make<UDwUnitDefinition>(TEXT("DA_Unit_TestCaptain"));
-			CaptainUnit->DisplayName = FText::FromString(TEXT("Test Captain"));
-			CaptainUnit->Tuning.DataTable = Units;
-			CaptainUnit->Tuning.RowName = TEXT("Cap");
-			Deckhand = Make<UDwUnitDefinition>(TEXT("DA_Unit_TestHand"));
-			Deckhand->DisplayName = FText::FromString(TEXT("Deckhand"));
-			Deckhand->Tuning.DataTable = Units;
-			Deckhand->Tuning.RowName = TEXT("Hand");
-
-			Captain = Make<UDwCaptainDefinition>(TEXT("DA_Captain_Test"));
-			Captain->CaptainUnit = CaptainUnit;
-			Captain->StartingCrew = { Deckhand, Deckhand };
-
-			FDwEconomyTuningRow EconomyRow;
-			EconomyRow.StartingGold = 100;
-			Economy = Table(TEXT("Default"), EconomyRow);
-			FDwShipTuningRow ShipRow;
-			ShipRow.MaxHealth = 250; ShipRow.CannonDamage = 70;
-
-			GameData = Make<UDwGameData>(TEXT("DA_GameData_Test"));
-			GameData->TuningTables.Economy = Economy;
-			GameData->PlayerShipTuning.DataTable = Table(TEXT("PlayerShip"), ShipRow);
-			GameData->PlayerShipTuning.RowName = TEXT("PlayerShip");
-
-			Early = Make<UDwEncounterDefinition>(TEXT("DA_Encounter_TestEarly"));
-			Late = Make<UDwEncounterDefinition>(TEXT("DA_Encounter_TestLate"));
-			Late->MinLayer = 4;
-			Kraken = Make<UDwEncounterDefinition>(TEXT("DA_Encounter_TestKraken"));
-			Kraken->Kind = EDwEncounterKind::Kraken;
-			GameData->KrakenEncounter = Kraken;
-		}
-
-		TArray<const UDwEncounterDefinition*> Pool() const { return { Early, Late, Kraken }; }
-
-		void Destroy()
-		{
-			for (UObject* Object : Rooted)
-			{
-				Object->RemoveFromRoot();
-			}
-			Rooted.Reset();
-		}
-	};
-
-	/** A fight result where everyone survives at the given Health, the enemy crew dead. */
-	static FDwCombatResult Won(const FDwRunState& State, float Health, EDwCombatOutcome Outcome = EDwCombatOutcome::VictoryCrewDefeated)
-	{
-		FDwCombatResult Result;
-		Result.Outcome = Outcome;
-		Result.Rounds = 4;
-		Result.PlayerShipHealth = State.Ship.Health;
-		for (const FDwCrewMemberState& Member : State.Crew)
-		{
-			if (Member.bAlive)
-			{
-				FDwCrewResult& Crew = Result.Crew.AddDefaulted_GetRef();
-				Crew.RosterId = Member.Id;
-				Crew.Health = Health;
-			}
-		}
-		return Result;
-	}
-}
 
 BEGIN_DEFINE_SPEC(FDwRunSpec, "DeadwaterRun.Rules.Run",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ClientContext | EAutomationTestFlags::ProductFilter)
-	DwRunSpec::FContent C;
+	DwRunTest::FContent C;
 	UDwRun* Run = nullptr;
 	UDwRunTestListener* Listener = nullptr;
 
@@ -152,11 +46,30 @@ BEGIN_DEFINE_SPEC(FDwRunSpec, "DeadwaterRun.Rules.Run",
 		const TArray<int32> Choices = Run->GetChoices();
 		return TestTrue(TEXT("Has a route"), !Choices.IsEmpty()) && TestTrue(TEXT("Chosen"), Run->ChooseNode(Choices[0]));
 	}
+
+	/** After a won fight: claim the rewards (no new move) and take the first perk of every level-up, back to the map. */
+	bool FinishNode()
+	{
+		if (!TestEqual(TEXT("Rewards after a won fight"), Run->GetPhase(), EDwRunPhase::Rewards) || !Run->ClaimRewards(INDEX_NONE, FGuid()))
+		{
+			return false;
+		}
+		while (const FDwPendingLevelUp* LevelUp = Run->GetPhase() == EDwRunPhase::LevelUp ? Run->GetCurrentLevelUp() : nullptr)
+		{
+			if (!TestTrue(TEXT("Perk taken"), Run->ChoosePerk(LevelUp->PerkChoices.IsEmpty() ? INDEX_NONE : 0)))
+			{
+				return false;
+			}
+		}
+		return TestEqual(TEXT("Back on the map"), Run->GetPhase(), EDwRunPhase::Map);
+	}
+
+	FDwCrewMemberState& CrewAt(int32 Index) { return const_cast<FDwCrewMemberState&>(Run->GetState().Crew[Index]); }
 END_DEFINE_SPEC(FDwRunSpec)
 
 void FDwRunSpec::Define()
 {
-	using namespace DwRunSpec;
+	using namespace DwRunTest;
 
 	BeforeEach([this]()
 	{
@@ -331,6 +244,7 @@ void FDwRunSpec::Define()
 			const int32 First = Run->GetState().CurrentNode;
 			const int32 Sibling = First + 1; // lane 1 of layer 0
 			Run->ApplyCombatResult(Won(Run->GetState(), 50.f));
+			if (!FinishNode()) { return; }
 			TestFalse(TEXT("Same node"), Run->ChooseNode(First));
 			TestFalse(TEXT("Same layer"), Run->ChooseNode(Sibling));
 			TestTrue(TEXT("Next layer is fine"), Run->ChooseNode(Run->GetChoices()[0]));
@@ -359,7 +273,9 @@ void FDwRunSpec::Define()
 			TestEqual(TEXT("Captain 55"), S.Crew[0].Health, 55.f);
 			TestEqual(TEXT("Clamped to 80"), S.Crew[1].Health, 80.f);
 			TestEqual(TEXT("Ship 180"), S.Ship.Health, 180.f);
-			TestEqual(TEXT("Map"), S.Phase, EDwRunPhase::Map);
+			TestEqual(TEXT("Rewards first"), S.Phase, EDwRunPhase::Rewards);
+			TestEqual(TEXT("Not cleared before the rewards are taken"), S.Stats.NodesCleared, 0);
+			if (!FinishNode()) { return; }
 			TestEqual(TEXT("Cleared 1"), S.Stats.NodesCleared, 1);
 			TestEqual(TEXT("Plundered 1"), S.Stats.FightsPlundered, 1);
 			TestEqual(TEXT("Rounds"), S.Stats.Rounds, 4);
@@ -386,6 +302,7 @@ void FDwRunSpec::Define()
 				TestEqual(TEXT("Name"), S.Stats.CrewLost[0].Name.ToString(), FString(TEXT("Deckhand")));
 			}
 
+			if (!FinishNode()) { return; }
 			// A later result that claims the dead one lived (a bug elsewhere) never revives them.
 			Run->ChooseNode(Run->GetChoices()[0]);
 			FDwCombatResult Lie = Won(Run->GetState(), 40.f);
@@ -437,6 +354,7 @@ void FDwRunSpec::Define()
 			{
 				if (!SailOn()) { return; }
 				Run->ApplyCombatResult(Won(Run->GetState(), 70.f, Layer % 2 ? EDwCombatOutcome::VictorySunk : EDwCombatOutcome::VictoryCrewDefeated));
+				if (!FinishNode()) { return; }
 			}
 			const TArray<int32> Last = Run->GetChoices();
 			if (!TestTrue(TEXT("Only the boss is left"), Last.Num() == 1 && Last[0] == Run->GetState().Map.BossNode)) { return; }
@@ -483,6 +401,7 @@ void FDwRunSpec::Define()
 		{
 			if (!SailOn()) { return; }
 			Run->ApplyCombatResult(Won(Run->GetState(), 60.f));
+			if (!FinishNode()) { return; }
 			Run->Abandon();
 			Run->SetElapsedSeconds(123.f);
 			const FDwRunStats& Stats = Run->GetState().Stats;
@@ -499,6 +418,273 @@ void FDwRunSpec::Define()
 			ExpectRefusals(2);
 			TestFalse(TEXT("LeaveShop on the map"), Run->LeaveShop());
 			TestFalse(TEXT("LeaveEvent on the map"), Run->LeaveEvent());
+		});
+	});
+
+	Describe("Rewards (DW-203)", [this]()
+	{
+		It("follows a won fight with Rewards: plunder pays 1.5x gold, one item and three new moves; claiming banks them", [this]()
+		{
+			if (!SailOn()) { return; }
+			const int32 Node = Run->GetState().CurrentNode;
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			const FDwRunState& S = Run->GetState();
+			TestEqual(TEXT("Rewards"), S.Phase, EDwRunPhase::Rewards);
+			TestEqual(TEXT("Combat -> Rewards"), Listener->Phases.Last().Key, EDwRunPhase::Rewards);
+			TestEqual(TEXT("225 gold pending"), S.PendingRewards.Gold, 225);
+			TestEqual(TEXT("One plunder item"), S.PendingRewards.Items.Num(), 1);
+			TestEqual(TEXT("Three moves"), S.PendingRewards.AbilityChoices.Num(), 3);
+			TestEqual(TEXT("Gold not banked yet"), S.Gold, 100);
+			TestEqual(TEXT("Still at the node"), S.CurrentNode, Node);
+			TestTrue(TEXT("No routes before claiming"), Run->GetChoices().IsEmpty());
+
+			TestTrue(TEXT("Claimed"), Run->ClaimRewards(INDEX_NONE, FGuid()));
+			TestEqual(TEXT("325 gold"), S.Gold, 325);
+			TestEqual(TEXT("Earned stat"), S.Stats.GoldEarned, 225);
+			TestEqual(TEXT("Item in the hold"), S.Inventory.Num(), 1);
+			TestEqual(TEXT("No move learned when skipped"), S.Crew[0].Abilities.Num() + S.Crew[1].Abilities.Num() + S.Crew[2].Abilities.Num(), 0);
+			TestEqual(TEXT("Map"), S.Phase, EDwRunPhase::Map);
+			TestEqual(TEXT("Cleared"), S.Stats.NodesCleared, 1);
+			TestEqual(TEXT("Bundle cleared"), S.PendingRewards.Gold, 0);
+		});
+
+		It("pays a sink 1x with no item, and stacks plunder of the same item", [this]()
+		{
+			if (!SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f, EDwCombatOutcome::VictorySunk));
+			TestEqual(TEXT("150"), Run->GetState().PendingRewards.Gold, 150);
+			TestTrue(TEXT("No item"), Run->GetState().PendingRewards.Items.IsEmpty());
+			if (!FinishNode()) { return; }
+
+			C.GameData->DefaultShop->Items = { C.Grog };
+			for (int32 Fight = 0; Fight < 2; ++Fight)
+			{
+				if (!SailOn()) { return; }
+				Run->ApplyCombatResult(Won(Run->GetState(), 70.f, EDwCombatOutcome::VictorySurrender));
+				if (!FinishNode()) { return; }
+			}
+			TestEqual(TEXT("One stack"), Run->GetState().Inventory.Num(), 1);
+			TestEqual(TEXT("Two grog"), Run->GetState().CountItem(C.Grog->GetFName()), 2);
+			TestEqual(TEXT("150 + 225 + 225 earned"), Run->GetState().Stats.GoldEarned, 600);
+		});
+
+		It("teaches the chosen move to someone who can learn it, and refuses anyone else", [this]()
+		{
+			ExpectRefusals(3);
+			if (!SailOn()) { return; }
+			FDwCombatResult Result = Won(Run->GetState(), 70.f);
+			Result.Crew[2].bAlive = false;
+			Run->ApplyCombatResult(Result);
+			const FDwRunState& S = Run->GetState();
+			const TArray<FDwAbilityOffer>& Offers = S.PendingRewards.AbilityChoices;
+			// Rigging is the deckhands' only, Lantern the captain's only: three of four always include one of them.
+			int32 Choice = INDEX_NONE;
+			FGuid Outsider;
+			for (int32 Index = 0; Index < Offers.Num() && Choice == INDEX_NONE; ++Index)
+			{
+				for (const FDwCrewMemberState& Member : S.Crew)
+				{
+					if (Member.bAlive && !Offers[Index].EligibleCrew.Contains(Member.Id))
+					{
+						Choice = Index;
+						Outsider = Member.Id;
+						break;
+					}
+				}
+			}
+			if (!TestTrue(TEXT("An offer someone can't take"), Choice != INDEX_NONE)) { return; }
+			for (const FDwAbilityOffer& Offer : Offers)
+			{
+				TestFalse(TEXT("The dead are never eligible"), Offer.EligibleCrew.Contains(S.Crew[2].Id));
+			}
+			TestFalse(TEXT("Not eligible"), Run->ClaimRewards(Choice, Outsider));
+			TestFalse(TEXT("No such choice"), Run->ClaimRewards(7, S.Crew[0].Id));
+			TestFalse(TEXT("The dead can't learn"), Run->ClaimRewards(Choice, S.Crew[2].Id));
+			TestEqual(TEXT("Nothing banked by a refusal"), S.Gold, 100);
+
+			const FGuid Learner = Offers[Choice].EligibleCrew[0];
+			const UDwAbilityDefinition* Ability = Offers[Choice].Ability;
+			TestTrue(TEXT("Learned"), Run->ClaimRewards(Choice, Learner));
+			const FDwCrewMemberState* Member = S.FindCrew(Learner);
+			TestTrue(TEXT("Knows it"), Member && Member->Abilities.Num() == 1 && Member->Abilities[0] == Ability);
+		});
+
+		It("with every ability slot full, a new move needs a slot to replace (P4)", [this]()
+		{
+			ExpectRefusals(2);
+			UDwAbilityDefinition* Old1 = C.Ability(TEXT("Old1"));
+			UDwAbilityDefinition* Old2 = C.Ability(TEXT("Old2"));
+			CrewAt(1).Abilities = { Old1, Old2 }; // MaxAbilitySlots 2
+			if (!SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			const FGuid Hand = Run->GetState().Crew[1].Id;
+			const int32 Choice = Run->GetState().PendingRewards.AbilityChoices.IndexOfByPredicate(
+				[&Hand](const FDwAbilityOffer& Offer) { return Offer.EligibleCrew.Contains(Hand); });
+			if (!TestTrue(TEXT("Something for the deckhand"), Choice != INDEX_NONE)) { return; }
+			const UDwAbilityDefinition* New = Run->GetState().PendingRewards.AbilityChoices[Choice].Ability;
+			TestFalse(TEXT("Full without a slot"), Run->ClaimRewards(Choice, Hand));
+			TestFalse(TEXT("No slot 5"), Run->ClaimRewards(Choice, Hand, 5));
+			TestTrue(TEXT("Replace slot 1"), Run->ClaimRewards(Choice, Hand, 0));
+			const TArray<TObjectPtr<const UDwAbilityDefinition>>& Abilities = Run->GetState().Crew[1].Abilities;
+			TestTrue(TEXT("Old1 replaced, Old2 kept"), Abilities.Num() == 2 && Abilities[0] == New && Abilities[1] == Old2);
+		});
+
+		It("refuses rewards and perks outside their phases, and can be abandoned mid-rewards", [this]()
+		{
+			ExpectRefusals(4);
+			TestFalse(TEXT("Claim on the map"), Run->ClaimRewards(INDEX_NONE, FGuid()));
+			TestFalse(TEXT("Perk on the map"), Run->ChoosePerk(0));
+			if (!SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			TestFalse(TEXT("No sailing from the rewards"), Run->ChooseNode(Run->GetState().Map.Nodes[Run->GetState().CurrentNode].Next[0]));
+			TestFalse(TEXT("No perk before the claim"), Run->ChoosePerk(0));
+			TestTrue(TEXT("Abandon"), Run->Abandon());
+			TestEqual(TEXT("Defeat"), Run->GetPhase(), EDwRunPhase::Defeat);
+		});
+
+		It("gives the same rewards for the same seed and node", [this]()
+		{
+			UDwRun* A = NewRun(42);
+			UDwRun* B = NewRun(42);
+			for (UDwRun* Each : { A, B })
+			{
+				Each->ChooseNode(Each->GetChoices()[1]);
+				Each->ApplyCombatResult(Won(Each->GetState(), 70.f));
+			}
+			const FDwRewardBundle& RA = A->GetState().PendingRewards;
+			const FDwRewardBundle& RB = B->GetState().PendingRewards;
+			TestTrue(TEXT("Same item"), RA.Items.Num() == 1 && RB.Items.Num() == 1 && RA.Items[0].Item == RB.Items[0].Item);
+			TestEqual(TEXT("Same count"), RA.AbilityChoices.Num(), RB.AbilityChoices.Num());
+			for (int32 Index = 0; Index < RA.AbilityChoices.Num(); ++Index)
+			{
+				TestTrue(TEXT("Same moves"), RA.AbilityChoices[Index].Ability == RB.AbilityChoices[Index].Ability);
+			}
+		});
+	});
+
+	Describe("XP and level-ups (DW-203)", [this]()
+	{
+		It("gives kill XP to the killer and clear XP to every living crew member; sinking and friendly kills give none", [this]()
+		{
+			if (!SailOn()) { return; }
+			const FDwRunState& S = Run->GetState();
+			const FGuid Captain = S.Crew[0].Id, Hand = S.Crew[1].Id, Fallen = S.Crew[2].Id;
+			FDwCombatResult Result = Won(S, 40.f);
+			Result.Crew[2].bAlive = false;
+			Result.Kills = { KillBy(Hand, 25), KillBy(Hand, 25), KillBy(FGuid(), 25), KillBy(Fallen, 25), KillBy(Hand, 25, EDwSide::Player) };
+			Run->ApplyCombatResult(Result);
+
+			TestEqual(TEXT("Captain: clear 50"), S.FindCrew(Captain)->Xp, 50);
+			TestEqual(TEXT("Deckhand: 50 + 2 x 25 = level 2"), S.FindCrew(Hand)->Level, 2);
+			TestEqual(TEXT("Deckhand: 0 XP into level 2"), S.FindCrew(Hand)->Xp, 0);
+			TestTrue(TEXT("The fallen gain nothing"), S.FindCrew(Fallen)->Level == 1 && S.FindCrew(Fallen)->Xp == 0);
+			TestEqual(TEXT("XP gains listed for the living"), S.PendingRewards.Xp.Num(), 2);
+			const FDwXpGain* Gain = S.PendingRewards.Xp.FindByPredicate([&Hand](const FDwXpGain& G) { return G.CrewId == Hand; });
+			TestTrue(TEXT("Deckhand gain"), Gain && Gain->Xp == 100 && Gain->LevelsGained == 1);
+
+			if (!TestEqual(TEXT("One level-up"), S.PendingLevelUps.Num(), 1)) { return; }
+			const FDwPendingLevelUp& LevelUp = S.PendingLevelUps[0];
+			TestTrue(TEXT("Deckhand to level 2"), LevelUp.CrewId == Hand && LevelUp.NewLevel == 2);
+			TestTrue(TEXT("+10 HP, +2 MP"), LevelUp.StatGain.MaxHealth == 10 && LevelUp.StatGain.MaxMana == 2);
+			TestEqual(TEXT("Health grows with MaxHealth"), S.FindCrew(Hand)->Health, 50.f);
+			TestTrue(TEXT("Perks rolled for the rewards screen"), LevelUp.bPerksRolled && LevelUp.PerkChoices.Num() == 3);
+		});
+
+		It("multiplies XP for a Veteran Crew captain (K7: +50% XP)", [this]()
+		{
+			C.Captain->RuleTags.AddTag(DwTags::Rule_Captain_VeteranCrew);
+			if (!SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			TestEqual(TEXT("50 x 1.5"), Run->GetState().Crew[1].Xp, 75);
+			TestEqual(TEXT("Shown as 75"), Run->GetState().PendingRewards.Xp[1].Xp, 75);
+		});
+
+		It("queues a level-up per level gained, in roster order, then back to the map", [this]()
+		{
+			ExpectRefusals(1);
+			C.EncounterRow().ClearXp = 250; // 100 + 100 + 50: two levels each
+			if (!SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			const FDwRunState& S = Run->GetState();
+			if (!TestEqual(TEXT("Six level-ups"), S.PendingLevelUps.Num(), 6)) { return; }
+			TestTrue(TEXT("Captain first, level 2 then 3"), S.PendingLevelUps[0].CrewId == S.Crew[0].Id && S.PendingLevelUps[0].NewLevel == 2
+				&& S.PendingLevelUps[1].CrewId == S.Crew[0].Id && S.PendingLevelUps[1].NewLevel == 3);
+			TestTrue(TEXT("Only the first is rolled yet"), S.PendingLevelUps[0].bPerksRolled && !S.PendingLevelUps[1].bPerksRolled);
+
+			Run->ClaimRewards(INDEX_NONE, FGuid());
+			TestEqual(TEXT("LevelUp"), S.Phase, EDwRunPhase::LevelUp);
+			const FDwPendingLevelUp* First = Run->GetCurrentLevelUp();
+			if (!TestTrue(TEXT("Three perks: Tough, Swift, Lamplighter (no Marksman)"), First && First->PerkChoices.Num() == 3
+				&& !First->PerkChoices.Contains(C.Marksman))) { return; }
+			TestFalse(TEXT("Out of range"), Run->ChoosePerk(3));
+			const int32 Swift = First->PerkChoices.IndexOfByKey(C.Swift);
+			TestTrue(TEXT("Swift"), Run->ChoosePerk(Swift));
+			TestTrue(TEXT("Captain has Swift"), S.Crew[0].Perks.Num() == 1 && S.Crew[0].Perks[0] == C.Swift);
+
+			const FDwPendingLevelUp* Second = Run->GetCurrentLevelUp();
+			if (!TestTrue(TEXT("Second level-up rolled now, without Swift (1 stack)"), Second && Second->bPerksRolled && Second->NewLevel == 3
+				&& Second->PerkChoices.Num() == 2 && !Second->PerkChoices.Contains(C.Swift))) { return; }
+			TestTrue(TEXT("Lamplighter"), Run->ChoosePerk(Second->PerkChoices.IndexOfByKey(C.Lamplighter)));
+			TestTrue(TEXT("Lantern learned through the perk"), S.Crew[0].Abilities.Contains(C.Lantern));
+			for (int32 Left = 4; Left > 0; --Left)
+			{
+				TestEqual(TEXT("Still levelling"), S.Phase, EDwRunPhase::LevelUp);
+				TestTrue(TEXT("Perk"), Run->ChoosePerk(0));
+			}
+			TestEqual(TEXT("Map"), S.Phase, EDwRunPhase::Map);
+			TestEqual(TEXT("Cleared once"), S.Stats.NodesCleared, 1);
+			TestTrue(TEXT("Queue empty"), S.PendingLevelUps.IsEmpty());
+			TestEqual(TEXT("Everyone level 3"), S.Crew[0].Level + S.Crew[1].Level + S.Crew[2].Level, 9);
+		});
+
+		It("confirms a level-up with nothing left to offer with INDEX_NONE", [this]()
+		{
+			ExpectRefusals(1);
+			C.Perks->Perks.Reset();
+			C.EncounterRow().ClearXp = 100;
+			if (!SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			Run->ClaimRewards(INDEX_NONE, FGuid());
+			TestTrue(TEXT("No choices"), Run->GetCurrentLevelUp() && Run->GetCurrentLevelUp()->PerkChoices.IsEmpty());
+			TestFalse(TEXT("Index 0 refused"), Run->ChoosePerk(0));
+			for (int32 Each = 0; Each < 3; ++Each)
+			{
+				TestTrue(TEXT("Confirmed"), Run->ChoosePerk(INDEX_NONE));
+			}
+			TestEqual(TEXT("Map"), Run->GetPhase(), EDwRunPhase::Map);
+			TestEqual(TEXT("Level 2 anyway"), Run->GetState().Crew[0].Level, 2);
+		});
+
+		It("stops at MaxLevel", [this]()
+		{
+			C.RunRow().MaxLevel = 2;
+			C.EncounterRow().ClearXp = 1000;
+			if (!SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			TestEqual(TEXT("One level-up each"), Run->GetState().PendingLevelUps.Num(), 3);
+			TestTrue(TEXT("Level 2, no XP"), Run->GetState().Crew[0].Level == 2 && Run->GetState().Crew[0].Xp == 0);
+		});
+
+		It("rolls the same perk choices for the same seed", [this]()
+		{
+			C.EncounterRow().ClearXp = 250;
+			UDwRun* A = NewRun(42);
+			UDwRun* B = NewRun(42);
+			for (UDwRun* Each : { A, B })
+			{
+				Each->ChooseNode(Each->GetChoices()[0]);
+				Each->ApplyCombatResult(Won(Each->GetState(), 70.f));
+				Each->ClaimRewards(INDEX_NONE, FGuid());
+			}
+			for (int32 Step = 0; Step < 6; ++Step)
+			{
+				const FDwPendingLevelUp* LA = A->GetCurrentLevelUp();
+				const FDwPendingLevelUp* LB = B->GetCurrentLevelUp();
+				if (!TestTrue(TEXT("Both levelling"), LA && LB)) { return; }
+				TestTrue(TEXT("Same choices"), LA->PerkChoices == LB->PerkChoices);
+				A->ChoosePerk(0);
+				B->ChoosePerk(0);
+			}
 		});
 	});
 

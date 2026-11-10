@@ -10,9 +10,14 @@
 #include "Data/DwCaptainDefinition.h"
 #include "Data/DwEncounterDefinition.h"
 #include "Data/DwItemDefinition.h"
+#include "Data/DwPerkDefinition.h"
+#include "Data/DwShopDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
+#include "Run/DwCaptainRules.h"
+#include "Run/DwProgressionRules.h"
 #include "Run/DwRunRandom.h"
+#include "Run/Economy/DwRewardRules.h"
 #include "Run/Map/DwPlaceholderMap.h"
 
 const FName UDwRun::DefaultTuningRow(TEXT("Default"));
@@ -218,6 +223,7 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 		Combatant.Health = Member.Health;
 		Combatant.bIsCaptain = Member.bIsCaptain;
 		Combatant.ExtraAbilities = Member.Abilities;
+		Combatant.Perks = Member.Perks;
 		if (Member.bIsCaptain)
 		{
 			for (const UDwAbilityDefinition* Ability : Captain->CaptainAbilities)
@@ -338,8 +344,234 @@ bool UDwRun::ApplyCombatResult(const FDwCombatResult& Result)
 	State.Stats.FightsSunk += Result.Outcome == EDwCombatOutcome::VictorySunk ? 1 : 0;
 	State.Stats.FightsPlundered += Result.Outcome == EDwCombatOutcome::VictoryCrewDefeated ? 1 : 0;
 	State.Stats.FightsSurrendered += Result.Outcome == EDwCombatOutcome::VictorySurrender ? 1 : 0;
-	CompleteNode(); // DW-203: Rewards (and LevelUp) come between the fight and the map
+	const EDwRunPhase Old = State.Phase;
+	QueueRewards(Result);
+	State.Phase = EDwRunPhase::Rewards;
+	Changed(Old);
 	return true;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Rewards and level-ups
+
+void UDwRun::QueueRewards(const FDwCombatResult& Result)
+{
+	const FDwMapNode* Node = GetCurrentNode();
+	const FDwEncounterTuningRow* EncounterRow = Node && Node->Encounter ? Node->Encounter->GetTuningRow<FDwEncounterTuningRow>() : nullptr;
+	const FDwRunTuningRow* RunRow = GetRunTuning();
+	const UDataTable* Progression = GameData ? GameData->TuningTables.Progression.Get() : nullptr;
+	const float XpMultiplier = FDwCaptainRules::GetXpMultiplier(State.Captain);
+	const float ThresholdMultiplier = FDwCaptainRules::GetLevelThresholdMultiplier(State.Captain);
+	const int32 ClearXp = EncounterRow ? EncounterRow->ClearXp : 0;
+
+	// Gold, plunder and ability choices, from the node's own reward stream.
+	FDwRewardContext Context;
+	Context.Outcome = Result.Outcome;
+	Context.Encounter = EncounterRow;
+	Context.Economy = GetEconomyTuning();
+	Context.State = &State;
+	if (GameData && GameData->DefaultShop)
+	{
+		for (const UDwItemDefinition* Item : GameData->DefaultShop->Items)
+		{
+			Context.PlunderItems.Add(Item);
+		}
+	}
+	FRandomStream Random(FDwRunRandom::ForRewards(State.Seed, State.CurrentNode));
+	State.PendingRewards = FDwRewardRules::ComputeRewards(Context, Random);
+
+	// XP (12 "Flow"): kill XP to each living killer, clear XP to every living crew member; sinking credits nobody (C11).
+	State.PendingLevelUps.Reset();
+	for (FDwCrewMemberState& Member : State.Crew)
+	{
+		if (!Member.bAlive)
+		{
+			continue;
+		}
+		int32 Xp = ClearXp;
+		for (const FDwKillRecord& Kill : Result.Kills)
+		{
+			Xp += Kill.KillerRosterId == Member.Id && Kill.VictimSide == EDwSide::Enemy ? Kill.Xp : 0;
+		}
+		const int32 OldLevel = Member.Level;
+		const int32 Gained = FDwProgressionRules::GrantXp(Member, Xp, XpMultiplier, ThresholdMultiplier, Progression, RunRow ? RunRow->MaxLevel : 0);
+
+		FDwXpGain& Gain = State.PendingRewards.Xp.AddDefaulted_GetRef();
+		Gain.CrewId = Member.Id;
+		Gain.Xp = FMath::RoundToInt(Xp * XpMultiplier);
+		Gain.LevelsGained = Gained;
+
+		const FDwUnitTuningRow* UnitRow = Member.Unit ? Member.Unit->GetTuningRow<FDwUnitTuningRow>() : nullptr;
+		for (int32 Level = OldLevel + 1; Level <= OldLevel + Gained; ++Level)
+		{
+			FDwPendingLevelUp& LevelUp = State.PendingLevelUps.AddDefaulted_GetRef();
+			LevelUp.CrewId = Member.Id;
+			LevelUp.NewLevel = Level;
+			LevelUp.Ordinal = State.PendingLevelUps.Num() - 1;
+			if (UnitRow)
+			{
+				LevelUp.StatGain = FDwProgressionRules::GetLevelStats(*UnitRow, Level) - FDwProgressionRules::GetLevelStats(*UnitRow, Level - 1);
+			}
+		}
+		UE_CLOG(Gained > 0, LogDwRun, Log, TEXT("%s gained %d XP: level %d -> %d."), *Member.GetDisplayName().ToString(), Gain.Xp, OldLevel, Member.Level);
+	}
+	RollCurrentLevelUp(); // the rewards screen can preview the first one
+
+	const FDwRewardBundle& Bundle = State.PendingRewards;
+	UE_LOG(LogDwRun, Log, TEXT("Rewards at node %d: %d gold, %d item(s), %d ability choice(s), %d level-up(s)."), State.CurrentNode, Bundle.Gold,
+		Bundle.Items.Num(), Bundle.AbilityChoices.Num(), State.PendingLevelUps.Num());
+}
+
+bool UDwRun::ClaimRewards(int32 AbilityChoice, FGuid CrewId, int32 ReplaceSlot)
+{
+	if (!RequirePhase(EDwRunPhase::Rewards, TEXT("ClaimRewards")))
+	{
+		return false;
+	}
+	FDwRewardBundle& Bundle = State.PendingRewards;
+
+	// Validate the ability pick before changing anything.
+	FDwCrewMemberState* Learner = nullptr;
+	const UDwAbilityDefinition* Ability = nullptr;
+	if (AbilityChoice != INDEX_NONE)
+	{
+		if (!Bundle.AbilityChoices.IsValidIndex(AbilityChoice))
+		{
+			UE_LOG(LogDwRun, Warning, TEXT("ClaimRewards refused: no ability choice %d (%d offered)."), AbilityChoice, Bundle.AbilityChoices.Num());
+			return false;
+		}
+		const FDwAbilityOffer& Offer = Bundle.AbilityChoices[AbilityChoice];
+		Learner = State.FindCrew(CrewId);
+		if (!Learner || !Learner->bAlive || !Offer.EligibleCrew.Contains(CrewId))
+		{
+			UE_LOG(LogDwRun, Warning, TEXT("ClaimRewards refused: %s can't learn %s."), Learner ? *Learner->GetDisplayName().ToString() : *CrewId.ToString(),
+				*GetNameSafe(Offer.Ability));
+			return false;
+		}
+		const FDwRunTuningRow* RunRow = GetRunTuning();
+		const int32 MaxSlots = RunRow ? RunRow->MaxAbilitySlots : 0;
+		const bool bFull = MaxSlots > 0 && Learner->Abilities.Num() >= MaxSlots;
+		if (ReplaceSlot != INDEX_NONE && !Learner->Abilities.IsValidIndex(ReplaceSlot))
+		{
+			UE_LOG(LogDwRun, Warning, TEXT("ClaimRewards refused: %s has no ability slot %d."), *Learner->GetDisplayName().ToString(), ReplaceSlot);
+			return false;
+		}
+		if (bFull && ReplaceSlot == INDEX_NONE)
+		{
+			UE_LOG(LogDwRun, Warning, TEXT("ClaimRewards refused: %s already has %d abilities; name the one to replace."),
+				*Learner->GetDisplayName().ToString(), MaxSlots);
+			return false;
+		}
+		Ability = Offer.Ability;
+	}
+
+	// Apply.
+	const EDwRunPhase Old = State.Phase;
+	State.Gold += Bundle.Gold;
+	State.Stats.GoldEarned += Bundle.Gold;
+	for (const FDwItemStack& Stack : Bundle.Items)
+	{
+		State.AddItem(Stack.Item, Stack.Count);
+	}
+	if (Learner && Ability)
+	{
+		if (ReplaceSlot != INDEX_NONE)
+		{
+			UE_LOG(LogDwRun, Log, TEXT("%s forgets %s."), *Learner->GetDisplayName().ToString(), *GetNameSafe(Learner->Abilities[ReplaceSlot]));
+			Learner->Abilities[ReplaceSlot] = Ability;
+		}
+		else
+		{
+			Learner->Abilities.Add(Ability);
+		}
+		UE_LOG(LogDwRun, Log, TEXT("%s learns %s."), *Learner->GetDisplayName().ToString(), *GetNameSafe(Ability));
+	}
+	State.PendingRewards = FDwRewardBundle();
+
+	if (State.PendingLevelUps.IsEmpty())
+	{
+		CompleteNode();
+		return true;
+	}
+	RollCurrentLevelUp();
+	State.Phase = EDwRunPhase::LevelUp;
+	Changed(Old);
+	return true;
+}
+
+bool UDwRun::ChoosePerk(int32 ChoiceIndex)
+{
+	if (!RequirePhase(EDwRunPhase::LevelUp, TEXT("ChoosePerk")) || !ensure(!State.PendingLevelUps.IsEmpty()))
+	{
+		return false;
+	}
+	RollCurrentLevelUp();
+	const FDwPendingLevelUp& LevelUp = State.PendingLevelUps[0];
+	FDwCrewMemberState* Member = State.FindCrew(LevelUp.CrewId);
+	const bool bHasChoices = !LevelUp.PerkChoices.IsEmpty();
+	if (bHasChoices ? !LevelUp.PerkChoices.IsValidIndex(ChoiceIndex) : ChoiceIndex != INDEX_NONE)
+	{
+		UE_LOG(LogDwRun, Warning, TEXT("ChoosePerk(%d) refused: %d perk choice(s) offered."), ChoiceIndex, LevelUp.PerkChoices.Num());
+		return false;
+	}
+	if (bHasChoices && Member)
+	{
+		const UDwPerkDefinition* Perk = LevelUp.PerkChoices[ChoiceIndex];
+		if (!Perk || !FDwProgressionRules::ApplyPerk(*Member, *Perk))
+		{
+			UE_LOG(LogDwRun, Warning, TEXT("ChoosePerk(%d) refused: %s can't take %s."), ChoiceIndex, *Member->GetDisplayName().ToString(), *GetNameSafe(Perk));
+			return false;
+		}
+		UE_LOG(LogDwRun, Log, TEXT("%s (level %d) takes %s."), *Member->GetDisplayName().ToString(), LevelUp.NewLevel, *GetNameSafe(Perk));
+	}
+
+	State.PendingLevelUps.RemoveAt(0);
+	if (State.PendingLevelUps.IsEmpty())
+	{
+		CompleteNode();
+		return true;
+	}
+	RollCurrentLevelUp();
+	Changed(State.Phase);
+	return true;
+}
+
+const FDwPendingLevelUp* UDwRun::GetCurrentLevelUp() const
+{
+	return State.PendingLevelUps.IsEmpty() ? nullptr : &State.PendingLevelUps[0];
+}
+
+void UDwRun::RollCurrentLevelUp()
+{
+	if (State.PendingLevelUps.IsEmpty() || State.PendingLevelUps[0].bPerksRolled)
+	{
+		return;
+	}
+	FDwPendingLevelUp& LevelUp = State.PendingLevelUps[0];
+	LevelUp.bPerksRolled = true;
+	const FDwCrewMemberState* Member = State.FindCrew(LevelUp.CrewId);
+	const FDwRunTuningRow* RunRow = GetRunTuning();
+	if (!Member || !Member->Unit || !RunRow)
+	{
+		return;
+	}
+	FRandomStream Random(FDwRunRandom::ForPerks(State.Seed, State.CurrentNode, LevelUp.Ordinal));
+	for (const UDwPerkDefinition* Perk : FDwProgressionRules::RollPerkChoices(*Member, Member->Unit->PerkPool, RunRow->PerkChoices, Random))
+	{
+		LevelUp.PerkChoices.Add(Perk);
+	}
+}
+
+const FDwEconomyTuningRow* UDwRun::GetEconomyTuning() const
+{
+	const UDataTable* Table = GameData ? GameData->TuningTables.Economy.Get() : nullptr;
+	return Table ? Table->FindRow<FDwEconomyTuningRow>(DefaultTuningRow, TEXT("UDwRun"), /*bWarnIfRowMissing*/ false) : nullptr;
+}
+
+const FDwRunTuningRow* UDwRun::GetRunTuning() const
+{
+	const UDataTable* Table = GameData ? GameData->TuningTables.Run.Get() : nullptr;
+	return Table ? Table->FindRow<FDwRunTuningRow>(DefaultTuningRow, TEXT("UDwRun"), /*bWarnIfRowMissing*/ false) : nullptr;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

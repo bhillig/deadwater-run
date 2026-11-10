@@ -17,6 +17,7 @@ class UDwAbilityDefinition;
 class UDwAiProfile;
 class UDwEncounterDefinition;
 class UDwItemDefinition;
+class UDwPerkDefinition;
 class UDwUnitDefinition;
 class UGameplayEffect;
 
@@ -188,8 +189,10 @@ struct DEADWATERRUN_API FDwCombatantSetup
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") bool bIsCaptain = false;
 	/** Learned and captain abilities, on top of the definition's basic attack and defaults. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") TArray<TObjectPtr<const UDwAbilityDefinition>> ExtraAbilities;
-	/** Perks, captain rule GEs (applied at spawn). */
+	/** Captain rule GEs (applied at spawn). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") TArray<TSubclassOf<UGameplayEffect>> SpawnEffects;
+	/** Level-up perks (12-Progression.md): each one's Effect is applied at spawn with Data.Value from its tuning row. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") TArray<TObjectPtr<const UDwPerkDefinition>> Perks;
 	/** Dread Reputation and similar (K9). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") float StartingFear = 0.f;
 	/** Overrides the definition's UnitClass (tests, placeholder visuals). */
@@ -284,6 +287,8 @@ struct DEADWATERRUN_API FDwKillRecord
 	UPROPERTY(BlueprintReadOnly, Category = "Result") FDwUnitHandle Victim;
 	UPROPERTY(BlueprintReadOnly, Category = "Result") FPrimaryAssetId VictimDefinition;
 	UPROPERTY(BlueprintReadOnly, Category = "Result") EDwSide VictimSide = EDwSide::Enemy;
+	/** The victim's DT_UnitTuning XpOnKill, earned by the killer (12 "XP sources"). */
+	UPROPERTY(BlueprintReadOnly, Category = "Result") int32 Xp = 0;
 };
 
 USTRUCT(BlueprintType)

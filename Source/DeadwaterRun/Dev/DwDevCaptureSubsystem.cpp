@@ -249,38 +249,75 @@ void UDwDevCaptureSubsystem::RunDemoStep()
 		UE_CLOG(!Sail(), LogDw, Error, TEXT("Dev capture 'run': could not sail to the first route."));
 		Next(2.5f); // spawn and settle
 		return;
-	case 2: // fight 1, then the captain takes a beating, the sniper falls and the enemy crew is wiped
+	case 2: // fight 1, then the captain takes a beating, the sniper falls and the captain cuts down the enemy crew
 	{
 		CaptureFrame(2);
 		const FGuid CaptainId = Run->GetState().Crew[0].Id;
 		const FGuid SniperId = Run->GetState().Crew.Num() > 2 ? Run->GetState().Crew[2].Id : FGuid();
 		const TSubclassOf<UGameplayEffect> Kill = DwGas::GetSharedEffects().Kill;
+		UDwAbilitySystemComponent* CaptainAsc = nullptr;
+		for (const ADwCombatUnit* Unit : Combat->GetUnits())
+		{
+			if (Unit->GetRosterId() == CaptainId)
+			{
+				CaptainAsc = Unit->GetDwAbilitySystem();
+				CaptainAsc->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), 60.f);
+			}
+		}
 		for (const ADwCombatUnit* Unit : Combat->GetUnits())
 		{
 			UDwAbilitySystemComponent* Asc = Unit->GetDwAbilitySystem();
-			if (Unit->GetRosterId() == CaptainId)
-			{
-				Asc->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), 60.f);
-			}
-			else if ((Unit->GetSide() == EDwSide::Enemy || Unit->GetRosterId() == SniperId) && Unit->IsAlive() && Kill)
+			if (Unit->GetRosterId() == SniperId && Unit->IsAlive() && Kill)
 			{
 				Asc->ApplyGameplayEffectToSelf(Kill->GetDefaultObject<UGameplayEffect>(), 1.f, Asc->MakeEffectContext());
 			}
+			else if (Unit->GetSide() == EDwSide::Enemy && Unit->IsAlive() && Kill && CaptainAsc)
+			{
+				// The captain is the instigator: his kills earn kill XP, so he levels up after the fight (DW-203).
+				CaptainAsc->ApplyGameplayEffectToTarget(Kill->GetDefaultObject<UGameplayEffect>(), Asc, 1.f, CaptainAsc->MakeEffectContext());
+			}
 		}
 		Combat->SubmitCommand(FDwCombatCommand::MakeEndTurn(EDwSide::Player)); // deaths outside a command count at the turn boundary
-		Next(1.0f + 2.5f); // ADwGameMode::PostCombatSeconds, then back on the map
+		Next(1.0f + 2.5f); // ADwGameMode::PostCombatSeconds, then the rewards
 		return;
 	}
-	case 3: // back on the map: Health and the loss carried over
-		UE_LOG(LogDw, Log, TEXT("Dev capture 'run': phase %s after fight 1."), *DwRun::PhaseName(Run->GetPhase()));
+	case 3: // rewards: gold, the plunder item, XP and the captain's level-up
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'run': phase %s after fight 1; %d gold, %d item(s), %d level-up(s) pending."),
+			*DwRun::PhaseName(Run->GetPhase()), Run->GetState().PendingRewards.Gold, Run->GetState().PendingRewards.Items.Num(),
+			Run->GetState().PendingLevelUps.Num());
 		CaptureFrame(3);
-		Next(0.5f);
+		Next(0.5f); // the screenshot is taken at the end of the frame: act on the next step
 		return;
 	case 4:
+		UE_CLOG(!Run->ClaimRewards(INDEX_NONE, FGuid()), LogDw, Error, TEXT("Dev capture 'run': could not claim the rewards."));
+		Next(0.5f);
+		return;
+	case 5: // level-up: the perk choices
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'run': phase %s after claiming."), *DwRun::PhaseName(Run->GetPhase()));
+		CaptureFrame(4);
+		Next(0.5f);
+		return;
+	case 6:
+		while (const FDwPendingLevelUp* LevelUp = Run->GetPhase() == EDwRunPhase::LevelUp ? Run->GetCurrentLevelUp() : nullptr)
+		{
+			if (!Run->ChoosePerk(LevelUp->PerkChoices.IsEmpty() ? INDEX_NONE : 0))
+			{
+				UE_LOG(LogDw, Error, TEXT("Dev capture 'run': could not choose a perk."));
+				break;
+			}
+		}
+		Next(0.5f);
+		return;
+	case 7: // back on the map: gold, item, level, perk, Health and the loss carried over
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'run': phase %s after the level-up."), *DwRun::PhaseName(Run->GetPhase()));
+		CaptureFrame(5);
+		Next(0.5f);
+		return;
+	case 8:
 		UE_CLOG(!Sail(), LogDw, Error, TEXT("Dev capture 'run': could not sail on after fight 1."));
 		Next(2.5f);
 		return;
-	default: // fight 2: two crew aboard, the captain at 60 HP
+	default: // fight 2: two crew aboard, the captain at level 2 with a perk
 		Capture();
 		return;
 	}

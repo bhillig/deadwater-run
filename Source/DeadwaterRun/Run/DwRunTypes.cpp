@@ -75,6 +75,22 @@ int32 FDwRunState::CountItem(FName ItemId) const
 	return Count;
 }
 
+void FDwRunState::AddItem(const UDwItemDefinition* Item, int32 Count)
+{
+	if (!Item || Count <= 0)
+	{
+		return;
+	}
+	if (FDwItemStack* Stack = Inventory.FindByPredicate([Item](const FDwItemStack& S) { return S.Item == Item; }))
+	{
+		Stack->Count += Count;
+		return;
+	}
+	FDwItemStack& Stack = Inventory.AddDefaulted_GetRef();
+	Stack.Item = Item;
+	Stack.Count = Count;
+}
+
 namespace DwRun
 {
 	FString PhaseName(EDwRunPhase Phase)

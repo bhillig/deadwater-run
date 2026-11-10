@@ -1,2 +1,11 @@
 [
+	{ "Name": "1", "XpToNext": 100 },
+	{ "Name": "2", "XpToNext": 110 },
+	{ "Name": "3", "XpToNext": 120 },
+	{ "Name": "4", "XpToNext": 130 },
+	{ "Name": "5", "XpToNext": 140 },
+	{ "Name": "6", "XpToNext": 150 },
+	{ "Name": "7", "XpToNext": 160 },
+	{ "Name": "8", "XpToNext": 170 },
+	{ "Name": "9", "XpToNext": 180 }
 ]

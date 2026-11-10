@@ -19,6 +19,7 @@
 #include "Core/DwGameplayTags.h"
 #include "Core/DwLog.h"
 #include "Data/DwAbilityDefinition.h"
+#include "Data/DwPerkDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 #include "Presentation/DwPresentationSubsystem.h"
@@ -366,6 +367,22 @@ ADwCombatUnit* UDwCombatSubsystem::SpawnUnit(const FDwCombatantSetup& Combatant,
 			ApplyEffectToSelf(*Asc, Effect);
 		}
 	}
+	// Perks: infinite GEs whose magnitude is the perk's tuning Value (12-Progression.md). A granted ability arrives
+	// through ExtraAbilities (FDwProgressionRules::ApplyPerk adds it to the crew member's abilities).
+	for (const UDwPerkDefinition* Perk : Combatant.Perks)
+	{
+		if (!Perk || !Perk->Effect)
+		{
+			continue;
+		}
+		const FDwPerkTuningRow* PerkRow = Perk->GetTuningRow<FDwPerkTuningRow>();
+		FGameplayEffectSpecHandle PerkSpec = Asc->MakeOutgoingSpec(Perk->Effect, 1, Asc->MakeEffectContext());
+		if (PerkSpec.IsValid())
+		{
+			PerkSpec.Data->SetSetByCallerMagnitude(DwTags::Data_Value, PerkRow ? PerkRow->Value : 0.f);
+			Asc->ApplyGameplayEffectSpecToSelf(*PerkSpec.Data);
+		}
+	}
 
 	// Abilities: basic attack, definition defaults, learned/captain abilities, then Move/Cannon/Item. One per tag.
 	TArray<const UDwAbilityDefinition*> Grants;
@@ -686,6 +703,8 @@ void UDwCombatSubsystem::HandleUnitDied(ADwCombatUnit& Victim, AActor* Instigato
 		Kill.Victim = Victim.GetHandle();
 		Kill.VictimDefinition = Victim.GetDefinition() ? Victim.GetDefinition()->GetPrimaryAssetId() : FPrimaryAssetId();
 		Kill.VictimSide = Victim.GetSide();
+		const FDwUnitTuningRow* VictimRow = Victim.GetDefinition() ? Victim.GetDefinition()->GetTuningRow<FDwUnitTuningRow>() : nullptr;
+		Kill.Xp = VictimRow ? VictimRow->XpOnKill : 0;
 		Died.Source = Killer->GetHandle();
 		// Conqueror kill bonus (FDwCaptainRules::OnEnemyKilled) hooks in here with DW-208.
 	}

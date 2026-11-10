@@ -190,3 +190,16 @@ EDataValidationResult UDwMapRules::IsDataValid(FDataValidationContext& Context) 
 #endif // WITH_EDITOR
 
 #undef LOCTEXT_NAMESPACE
+
+FText UDwPerkDefinition::GetFormattedDescription() const
+{
+	const FDwPerkTuningRow* Row = GetTuningRow<FDwPerkTuningRow>();
+	const float Value = Row ? Row->Value : 0.f;
+	const float Value2 = Row ? Row->Value2 : 0.f;
+	FFormatNamedArguments Args;
+	Args.Add(TEXT("Value"), FText::AsNumber(Value));
+	Args.Add(TEXT("ValuePct"), FText::AsNumber(FMath::RoundToInt(Value * 100.f)));
+	Args.Add(TEXT("Value2"), FText::AsNumber(Value2));
+	Args.Add(TEXT("Value2Pct"), FText::AsNumber(FMath::RoundToInt(Value2 * 100.f)));
+	return FText::Format(Description, Args);
+}

@@ -51,3 +51,18 @@ All of `AiTuning.json` row `Default` (used by `DA_AiProfile_Default`, the placeh
 | `EconomyTuning.json` | `Default` | `StartingGold` | 100 | Brandon's pick: one repair (100g) or two abilities (50g) before the first fight's 150 base gold |
 
 Captain abilities (`AbilityTuning.json` `Captain_*`) still have `ManaCost` 0 (K13); they are placeholder definitions with no effect until DW-206..208.
+
+## Set by DW-203 (rewards and progression), 2026-11-10
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `EconomyTuning.json` | `Default` | `PlunderItemChance` | 1.0 | Brandon's P6 answer: plunder always drops one item |
+| `EconomyTuning.json` | `Default` | `RewardAbilityChoices` | 3 | P5 recommendation: pick 1 of 3. No learnable abilities exist yet (N1), so no choice is offered today |
+| `CaptainTuning.json` | `TeamLeader` | `LevelThresholdMultiplier` | 1.0 (was 0.5) | Brandon's K7 answer: Veteran Crew = +50% XP only (`XpMultiplier` stays 1.5) |
+| `EncounterTuning.json` | `Placeholder` | `ClearXp` | 80 | With 20 per kill, a crew member earns about 100 XP per fight: about one level per encounter early on (12 target) |
+| `EncounterTuning.json` | `Placeholder`, `Kraken` | `bGrantsAbilityChoice` | true, false | The boss ends the run |
+| `UnitTuning.json` | `Swordsman`, `Sniper` | `XpOnKill` | 20 | Three placeholder enemies = 60 kill XP per fight, shared by whoever lands the blows |
+| `UnitTuning.json` | crew and captains | `HealthPerLevel` | 10 | "A stat increase" on every level-up (fixed decision); Mana and attack gains stay 0 |
+| `ProgressionTuning.json` | `1`..`9` | `XpToNext` | 100, 110, ... 180 | Flat curve: about 1 level per fight early, a bit slower later; max level 10 |
+| `RunTuning.json` | `Default` | `PerkChoices` / `MaxLevel` / `MaxAbilitySlots` | 3 / 10 / 3 | P2 a), P1, P4 a) recommendations |
+| `PerkTuning.json` | `SeaLegs` / `Hardened` / `Cutthroat` | `Value` | 1 / 0.1 / 0.1 | +1 move tile, 10% less damage taken, 10% more damage dealt |
