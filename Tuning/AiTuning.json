@@ -1,0 +1,26 @@
+[
+	{
+		"Name": "Default",
+		"Weights": {
+			"Damage": 1.0,
+			"Kill": 40.0,
+			"Win": 1000.0,
+			"ShipDamage": 0.25,
+			"ShipLowHull": 1.0,
+			"FriendlyFire": 1.5,
+			"Heal": 0.8,
+			"Fear": 10.0,
+			"LowHealthFocus": 20.0,
+			"CaptainPressure": 0.0,
+			"ManaCost": 0.5,
+			"Danger": 0.25,
+			"SinkingRisk": 60.0,
+			"Approach": 3.0,
+			"HighGround": 8.0,
+			"Boarding": 10.0,
+			"CannonAffinity": 10.0
+		},
+		"Temperature": 0.0,
+		"MaxMoveCandidates": 16
+	}
+]
