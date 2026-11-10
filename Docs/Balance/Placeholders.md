@@ -17,3 +17,29 @@ Values in `Tuning/*.json` that are **not** from `DeadwaterRun.md`. They exist so
 | `ShipTuning.json` | `EnemyPlaceholder` | `MaxHealth` / `CannonDamage` | 250 / 70 | Mirrors the player ship until enemy ships are designed (P9 / DW-304) |
 
 New rows with no numbers (all zeros, structure only): `AbilityTuning.json` `Move`, `FireCannon`, `UseItem`. Move cost comes from the path, cannon damage from the firing ship's `CannonDamage`, and item amounts from `ItemTuning.json`.
+
+## Set by DW-106 (crew AI), 2026-11-09
+
+All of `AiTuning.json` row `Default` (used by `DA_AiProfile_Default`, the placeholder crew). Scores are in "hit points of value": one point of damage dealt to a pirate is worth 1. Terms are defined in `FDwAiWeights` (`Source/DeadwaterRun/Data/Tuning/DwAiTuningRow.h`); `DeadwaterRun.AI.Brain` checks the doc 07 behaviours with these values.
+
+| Field | Placeholder | Why this number |
+|---|---|---|
+| `Weights.Damage` | 1.0 | The unit of value |
+| `Weights.Kill` | 40 | A kill is worth more than the HP it removes (one fewer attacker) |
+| `Weights.Win` | 1000 | Ending the fight (e.g. killing the captain, C10) beats anything else |
+| `Weights.ShipDamage` | 0.25 | At full hull a cannon shot (70 -> 17.5) is worth less than a cutlass hit (25) or a musket shot (20) |
+| `Weights.ShipLowHull` | 1.0 | Grows with hull already lost: at half hull a shot is worth 52, so crews fire cannons when your hull is low |
+| `Weights.FriendlyFire` | 1.5 | Hurting your own side is worse than the same damage to the enemy is good |
+| `Weights.Heal` | 0.8 | A heal is worth a bit less than the same damage dealt |
+| `Weights.Fear` | 10 | Three Fear makes a pirate cower for a turn (MaxFear 3) |
+| `Weights.LowHealthFocus` | 20 | Focus the wounded: a target at 20% Health adds 16 |
+| `Weights.CaptainPressure` | 0 | No extra captain hunting until Brandon answers C10b |
+| `Weights.ManaCost` | 0.5 | MP never comes back in a fight (C9) |
+| `Weights.Danger` | 0.25 | A quarter of the damage the player could deal next turn: three cutlasses on a tile cost 18.75 |
+| `Weights.SinkingRisk` | 60 | More than any normal attack is worth: don't board a ship your side is about to sink |
+| `Weights.Approach` | 3 | Per tile short of attack range: pulls crews forward and snipers into range or the nest |
+| `Weights.HighGround` | 8 | Snipers like the nest (+2 range) |
+| `Weights.Boarding` | 10 | Only for profiles with `bBoarders` (none yet) |
+| `Weights.CannonAffinity` | 10 | Only for profiles with `bPreferCannons` (none yet) |
+| `Temperature` | 0 | Always the best move: readable and repeatable |
+| `MaxMoveCandidates` | 16 | Destinations kept before danger is scored; full enemy turn plans in about 1-1.5 ms on a 12x24 board |

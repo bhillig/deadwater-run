@@ -7,9 +7,10 @@
   ./Tools/Capture.ps1 -Demo move -Seed 7    # captain selected, path to the farthest reachable tile
   ./Tools/Capture.ps1 -Demo aim             # sniper aiming: targets and damage preview
   ./Tools/Capture.ps1 -Demo cannon          # gunner at a cannon: enemy ship targeted
+  ./Tools/Capture.ps1 -Demo enemy           # player passes twice; the crew AI plays two enemy turns (frames <file>-01.png, ...)
 #>
 param(
-    [ValidateSet('none', 'move', 'aim', 'cannon')] [string] $Demo = 'none',
+    [ValidateSet('none', 'move', 'aim', 'cannon', 'enemy')] [string] $Demo = 'none',
     [int] $Seed = 7,
     [float] $Delay = 6,
     [string] $Out = ''
@@ -29,6 +30,7 @@ if (-not $Out) { $Out = Join-Path $root "Saved\Captures\combat-$Demo.png" }
 $Out = [IO.Path]::GetFullPath($Out)
 New-Item -ItemType Directory -Force (Split-Path $Out) | Out-Null
 if (Test-Path $Out) { Remove-Item $Out -Force }
+Get-ChildItem (Split-Path $Out) -Filter "$([IO.Path]::GetFileNameWithoutExtension($Out))-??.png" -ErrorAction SilentlyContinue | Remove-Item -Force
 $logDir = Join-Path $root 'Saved\Tools'
 New-Item -ItemType Directory -Force $logDir | Out-Null
 $log = Join-Path $logDir 'Capture.log'
@@ -45,5 +47,7 @@ if (-not (Test-Path $Out)) {
     exit 1
 }
 Write-Output "CAPTURE PASS $Out"
+$stem = [IO.Path]::GetFileNameWithoutExtension($Out)
+Get-ChildItem (Split-Path $Out) -Filter "$stem-??.png" -ErrorAction SilentlyContinue | Sort-Object Name | ForEach-Object { Write-Output "  frame: $($_.FullName)" }
 Write-Output "  log: $log"
 exit 0

@@ -84,6 +84,8 @@ struct DEADWATERRUN_API FDwTuningTables
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tuning") TObjectPtr<UDataTable> Run;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tuning") TObjectPtr<UDataTable> Combat;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tuning") TObjectPtr<UDataTable> Kraken;
+	/** DT_AiTuning (DW-106): crew AI weights, one row per UDwAiProfile. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tuning") TObjectPtr<UDataTable> Ai;
 };
 
 /**

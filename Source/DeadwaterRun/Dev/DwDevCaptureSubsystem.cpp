@@ -15,6 +15,7 @@
 #include "HighResScreenshot.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
+#include "Misc/Paths.h"
 #include "TimerManager.h"
 #include "UnrealClient.h"
 
@@ -97,6 +98,13 @@ void UDwDevCaptureSubsystem::StageDemo()
 				Interaction->HoverTile(Interaction->GetValidTargets()[0].Tile);
 			}
 		}
+		else if (Demo == TEXT("enemy"))
+		{
+			// The player ends the turn and the crew AI (DW-106) plays the enemy side; Capture() takes a frame sequence.
+			Combat->SubmitCommand(FDwCombatCommand::MakeEndTurn(EDwSide::Player));
+			World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::CaptureEnemyTurn), 0.5f, false);
+			return;
+		}
 		else if (Demo == TEXT("cannon"))
 		{
 			// The swordsman next to a cannon, aiming it: the enemy deck lights up.
@@ -115,6 +123,31 @@ void UDwDevCaptureSubsystem::StageDemo()
 		}
 	}
 	World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::Capture), 1.f, false);
+}
+
+void UDwDevCaptureSubsystem::CaptureEnemyTurn()
+{
+	// <file>-01.png, -02.png, ... while the enemy side plays EnemyTurns turns (the player passes in between); the frame
+	// after the last one hands back to the player is also <file>.
+	UDwCombatSubsystem* Combat = GetWorld()->GetSubsystem<UDwCombatSubsystem>();
+	const bool bOver = !Combat || !Combat->IsActive() || Combat->GetOutcome() != EDwCombatOutcome::None;
+	const bool bTurnDone = bOver || Combat->GetActiveSide() == EDwSide::Player;
+	++EnemyFrame;
+	FScreenshotRequest::RequestScreenshot(FPaths::GetBaseFilename(Path, false) + FString::Printf(TEXT("-%02d.png"), EnemyFrame), /*bShowUI*/ true, false);
+	if (bTurnDone && !bOver && ++EnemyTurnsPlayed < EnemyTurns && EnemyFrame < MaxEnemyFrames)
+	{
+		Combat->SubmitCommand(FDwCombatCommand::MakeEndTurn(EDwSide::Player));
+		GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::CaptureEnemyTurn), 0.7f, false);
+		return;
+	}
+	const bool bDone = bOver || (bTurnDone && EnemyTurnsPlayed >= EnemyTurns);
+	if (bDone || EnemyFrame >= MaxEnemyFrames)
+	{
+		UE_LOG(LogDw, Log, TEXT("Dev capture: enemy turn %s after %d frames"), bDone ? TEXT("finished") : TEXT("still running"), EnemyFrame);
+		GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::Capture), 0.5f, false);
+		return;
+	}
+	GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::CaptureEnemyTurn), 0.7f, false);
 }
 
 void UDwDevCaptureSubsystem::Capture()
