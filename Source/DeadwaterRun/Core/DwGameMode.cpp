@@ -13,6 +13,8 @@
 #include "Data/DwItemDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "Presentation/DwSeaEnvironment.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 
@@ -78,6 +80,25 @@ bool ADwGameMode::StartDevFight(int32 Seed)
 			Stack.Count = Item.Value;
 		}
 	}
-	UE_LOG(LogDwCombat, Log, TEXT("Dev fight: %s, seed %d (replay with -DwSeed=%d)"), *GameData->DevEncounter->GetName(), Seed, Seed);
+	const UDwSeaMood* Mood = ApplySeaMood(Seed);
+	UE_LOG(LogDwCombat, Log, TEXT("Dev fight: %s, seed %d, sea %s (replay with -DwSeed=%d -DwMood=%s)"), *GameData->DevEncounter->GetName(), Seed,
+		*GetNameSafe(Mood), Seed, *GetNameSafe(Mood));
 	return Combat->StartEncounter(Setup);
+}
+
+const UDwSeaMood* ADwGameMode::ApplySeaMood(int32 Seed)
+{
+	const UDwGameData* GameData = UDwAssetManager::Get().GetGameData();
+	if (!GameData)
+	{
+		return nullptr;
+	}
+	FString Forced;
+	FParse::Value(FCommandLine::Get(), TEXT("DwMood="), Forced);
+	const UDwSeaMood* Mood = ADwSeaEnvironment::PickMood(GameData->SeaMoods, Seed, Forced);
+	for (TActorIterator<ADwSeaEnvironment> It(GetWorld()); Mood && It; ++It)
+	{
+		It->ApplyMood(Mood);
+	}
+	return Mood;
 }

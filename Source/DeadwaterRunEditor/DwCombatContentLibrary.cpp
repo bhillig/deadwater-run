@@ -25,13 +25,6 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "UObject/Package.h"
-#include "Components/DirectionalLightComponent.h"
-#include "Components/SkyAtmosphereComponent.h"
-#include "Components/SkyLightComponent.h"
-#include "Engine/DirectionalLight.h"
-#include "Engine/SkyLight.h"
-#include "EngineUtils.h"
-#include "FileHelpers.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
@@ -48,7 +41,6 @@ namespace DwCombatContent
 	const FString Tuning = TEXT("/Game/DeadwaterRun/Data/Tuning");
 	const FString Boards = TEXT("/Game/DeadwaterRun/Data/Boards");
 	const FString Input = TEXT("/Game/DeadwaterRun/Input");
-	const FString SeaLevel = TEXT("/Game/DeadwaterRun/Maps/L_Sea");
 
 	template <typename T>
 	T* Load(const FString& Folder, const FString& Name)
@@ -123,50 +115,6 @@ namespace DwCombatContent
 			bOk = false;
 		}
 		return Handle;
-	}
-
-	/** Adds a sun, sky atmosphere and sky light to L_Sea if it has none (all movable: no lighting build needed). */
-	bool PrepareSeaLevel(TArray<FString>& Log)
-	{
-		UWorld* World = UEditorLoadingAndSavingUtils::LoadMap(SeaLevel);
-		if (!World)
-		{
-			Log.Add(TEXT("ERROR could not load L_Sea"));
-			return false;
-		}
-		auto Has = [World](UClass* Class) { return TActorIterator<AActor>(World, Class) ? true : false; };
-		bool bChanged = false;
-		if (!Has(ADirectionalLight::StaticClass()))
-		{
-			ADirectionalLight* Sun = World->SpawnActor<ADirectionalLight>(FVector(0.f, 0.f, 1000.f), FRotator(-50.f, -60.f, 0.f));
-			Sun->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-			if (UDirectionalLightComponent* Light = Cast<UDirectionalLightComponent>(Sun->GetLightComponent()))
-			{
-				Light->SetAtmosphereSunLight(true);
-			}
-			Sun->SetActorLabel(TEXT("Sun"));
-			bChanged = true;
-		}
-		if (!Has(ASkyAtmosphere::StaticClass()))
-		{
-			World->SpawnActor<ASkyAtmosphere>()->SetActorLabel(TEXT("SkyAtmosphere"));
-			bChanged = true;
-		}
-		if (!Has(ASkyLight::StaticClass()))
-		{
-			ASkyLight* Sky = World->SpawnActor<ASkyLight>(FVector(0.f, 0.f, 500.f), FRotator::ZeroRotator);
-			Sky->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-			Sky->GetLightComponent()->bRealTimeCapture = true;
-			Sky->SetActorLabel(TEXT("SkyLight"));
-			bChanged = true;
-		}
-		if (bChanged && !UEditorLoadingAndSavingUtils::SaveMap(World, SeaLevel))
-		{
-			Log.Add(TEXT("ERROR could not save L_Sea"));
-			return false;
-		}
-		Log.Add(bChanged ? TEXT("Lit L_Sea (sun, sky atmosphere, sky light)") : TEXT("L_Sea already lit"));
-		return true;
 	}
 
 	FGameplayTagContainer Tags(std::initializer_list<FGameplayTag> List)
@@ -334,7 +282,10 @@ TArray<FString> UDwCombatContentLibrary::CreateCombatPlaceholderContent()
 	Encounter->DisplayName = FText::FromString(TEXT("Placeholder Raiders"));
 	Encounter->Kind = EDwEncounterKind::ShipBattle;
 	Encounter->ShipDeck = EnemyDeck;
-	Encounter->ShipClass = ShipClass;
+	if (Encounter->ShipClass.IsNull())
+	{
+		Encounter->ShipClass = ShipClass; // grey-box until UDwArtContentLibrary gives the crew its sloop
+	}
 	Encounter->ShipTuning = Row(ShipTable, TEXT("EnemyPlaceholder"), OutLog, bOk);
 	Encounter->Tuning = Row(EncounterTable, TEXT("Placeholder"), OutLog, bOk);
 	Encounter->Units.Reset();
@@ -348,7 +299,10 @@ TArray<FString> UDwCombatContentLibrary::CreateCombatPlaceholderContent()
 
 	// 7. DA_GameData slots.
 	GameData->CommonAbilities = { MoveDef, CannonDef, ItemDef };
-	GameData->PlayerShipClass = ShipClass;
+	if (GameData->PlayerShipClass.IsNull())
+	{
+		GameData->PlayerShipClass = ShipClass;
+	}
 	if (!GameData->PlayerShipTuning.DataTable)
 	{
 		GameData->PlayerShipTuning = Row(ShipTable, TEXT("PlayerShip"), OutLog, bOk);
@@ -417,10 +371,7 @@ TArray<FString> UDwCombatContentLibrary::CreateCombatPlaceholderContent()
 	GameData->DevItems.Add(Load<UDwItemDefinition>(ItemData, TEXT("DA_Item_ManaRestore")), 1);
 	bOk &= Save(GameData, OutLog);
 
-	// 9. Light L_Sea (the template left it empty): sun, sky and sky light, all movable so nothing needs a lighting build.
-	bOk &= PrepareSeaLevel(OutLog);
-
-	// 8. What the placeholder fight will look like.
+	// 9. What the fight's decks look like (the level's sea, the ships and the pirates are UDwArtContentLibrary, DW-307).
 	for (const UDwDeckLayout* Deck : { GameData->DefaultPlayerDeck.Get(), EnemyDeck })
 	{
 		if (Deck)

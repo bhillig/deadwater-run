@@ -29,7 +29,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Layout")
 	int32 BoardingRowOffset = 0;
 
-	/** Grid origin relative to the ship mesh pivot, so tiles sit on the Synty deck. */
+	/**
+	 * Where the ship's hull sits under this deck, so tiles lie on the Synty deck (DW-307): the hull's pivot relative to
+	 * the centre of the deck rectangle at deck height, in deck space (+X = boarding edge, +Y = towards the camera).
+	 * Scale enlarges the hull. ADwShip applies it; the enemy ship mirrors it with its layout.
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Layout")
 	FTransform MeshAlignment;
 

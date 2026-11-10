@@ -10,7 +10,7 @@
  * Creates or updates the placeholder combat content of DW-104 so it is reproducible and reviewable instead of
  * hand-clicked: GA_* ability Blueprints, DA_Ability_* / DA_Item_* / DA_Unit_* definitions, DA_Encounter_Placeholder,
  * BP_Ship_Placeholder, IA_* / IMC_Combat, the DA_GameData slots they plug into (incl. the dev fight), the DT_*Tuning rows
- * they read (from Tuning/*.json), and lighting for L_Sea.
+ * they read (from Tuning/*.json). Ships, pirates and the sea are UDwArtContentLibrary (DW-307), which runs after this.
  * Idempotent: running it again rewrites the same assets with the same values. Run headless with
  * Tools/CreateCombatContent.ps1. Real art (DW-307) and real tuning (DW-112) replace values, not structure.
  */

@@ -34,7 +34,7 @@ ADwBoard::ADwBoard()
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> BasicMaterial(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
 	if (BasicMaterial.Succeeded())
 	{
-		TintBase = BasicMaterial.Object;
+		HighlightBaseMaterial = BasicMaterial.Object;
 	}
 	LayerColors = {
 		{ EDwHighlightLayer::Move, FLinearColor(0.1f, 0.4f, 0.9f) },
@@ -57,6 +57,7 @@ ADwBoard::ADwBoard()
 	PlayerDeck = MakeTileLayer(TEXT("PlaceholderPlayerDeck"));
 	EnemyDeck = MakeTileLayer(TEXT("PlaceholderEnemyDeck"));
 	Features = MakeTileLayer(TEXT("PlaceholderFeatures"));
+	GridOverlay = MakeTileLayer(TEXT("GridOverlay"));
 	Water = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderWater"));
 	Water->SetupAttachment(Root);
 	Water->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -104,30 +105,69 @@ void ADwBoard::OnConstruction(const FTransform& Transform)
 	}
 }
 
-void ADwBoard::SetGrid(const FDwGridModel& InGrid, float InTileSize)
+void ADwBoard::SetGrid(const FDwGridModel& InGrid, float InTileSize, int32 InSeamColumn, float InSeamGap)
 {
 	Grid = InGrid;
 	TileSize = FMath::Max(InTileSize, 1.f);
+	SeamColumn = InSeamColumn > 0 && InSeamColumn < Grid.Size.X ? InSeamColumn : INDEX_NONE;
+	SeamGap = SeamColumn != INDEX_NONE ? FMath::Max(InSeamGap, 0.f) : 0.f;
 	ClearAllHighlights();
 	ApplyLayerMaterials();
+	PlayerDeck->ClearInstances();
+	EnemyDeck->ClearInstances();
+	Features->ClearInstances();
+	Water->SetVisibility(false);
+	GridOverlay->ClearInstances();
 	if (bDrawPlaceholderDecks)
 	{
 		DrawPlaceholderDecks();
 	}
+	if (bDrawGrid)
+	{
+		DrawGrid();
+	}
+}
+
+float ADwBoard::ColumnToLocalX(int32 Column) const
+{
+	return Column * TileSize + (SeamColumn != INDEX_NONE && Column >= SeamColumn ? SeamGap : 0.f);
+}
+
+bool ADwBoard::LocalXToColumn(float LocalX, int32& OutColumn) const
+{
+	if (SeamColumn != INDEX_NONE && LocalX >= SeamColumn * TileSize)
+	{
+		if (LocalX < SeamColumn * TileSize + SeamGap)
+		{
+			return false; // between the two decks
+		}
+		LocalX -= SeamGap;
+	}
+	OutColumn = FMath::FloorToInt(LocalX / TileSize);
+	return true;
+}
+
+FVector ADwBoard::TileCentreLocal(FIntPoint Tile) const
+{
+	const FDwTile* T = Grid.GetTile(Tile);
+	return FVector(ColumnToLocalX(Tile.X) + 0.5f * TileSize, (Tile.Y + 0.5f) * TileSize, T ? T->Elevation * ElevationHeight : 0.f);
+}
+
+FBox2D ADwBoard::GetLocalBounds() const
+{
+	return FBox2D(FVector2D::ZeroVector, FVector2D(ColumnToLocalX(FMath::Max(Grid.Size.X - 1, 0)) + TileSize, Grid.Size.Y * TileSize));
 }
 
 FVector ADwBoard::TileToWorld(FIntPoint Tile) const
 {
-	const FDwTile* T = Grid.GetTile(Tile);
-	const float Z = T ? T->Elevation * ElevationHeight : 0.f;
-	return GetActorTransform().TransformPosition(FVector((Tile.X + 0.5f) * TileSize, (Tile.Y + 0.5f) * TileSize, Z));
+	return GetActorTransform().TransformPosition(TileCentreLocal(Tile));
 }
 
 bool ADwBoard::WorldToTile(const FVector& WorldPoint, FIntPoint& OutTile) const
 {
 	const FVector Local = GetActorTransform().InverseTransformPosition(WorldPoint);
-	const FIntPoint Tile(FMath::FloorToInt(Local.X / TileSize), FMath::FloorToInt(Local.Y / TileSize));
-	if (!Grid.IsInBounds(Tile))
+	FIntPoint Tile(0, FMath::FloorToInt(Local.Y / TileSize));
+	if (!LocalXToColumn(Local.X, Tile.X) || !Grid.IsInBounds(Tile))
 	{
 		return false;
 	}
@@ -153,8 +193,8 @@ bool ADwBoard::RayToTile(const FVector& RayOrigin, const FVector& RayDirection, 
 			continue;
 		}
 		const FVector Hit = LocalOrigin + LocalDir * T;
-		const FIntPoint Tile(FMath::FloorToInt(Hit.X / TileSize), FMath::FloorToInt(Hit.Y / TileSize));
-		const FDwTile* Data = Grid.GetTile(Tile);
+		FIntPoint Tile(0, FMath::FloorToInt(Hit.Y / TileSize));
+		const FDwTile* Data = LocalXToColumn(Hit.X, Tile.X) ? Grid.GetTile(Tile) : nullptr;
 		if (Data && Data->Elevation == Elevation && Data->Kind != EDwTileKind::None)
 		{
 			OutTile = Tile;
@@ -215,10 +255,8 @@ UInstancedStaticMeshComponent* ADwBoard::GetLayer(EDwHighlightLayer Layer) const
 FTransform ADwBoard::MakeInstanceTransform(FIntPoint Tile, EDwHighlightLayer Layer) const
 {
 	// Instances are in component space = board space. Each layer sits a little higher so overlaps stay readable.
-	const FDwTile* T = Grid.GetTile(Tile);
-	const float Z = (T ? T->Elevation * ElevationHeight : 0.f) + HighlightLift * (1 + static_cast<int32>(Layer));
 	const float Scale = TileSize * HighlightFill / DwBoardPresentation::PlaneSize;
-	return FTransform(FQuat::Identity, FVector((Tile.X + 0.5f) * TileSize, (Tile.Y + 0.5f) * TileSize, Z), FVector(Scale, Scale, 1.f));
+	return FTransform(FQuat::Identity, TileCentreLocal(Tile) + FVector(0.f, 0.f, HighlightLift * (1 + static_cast<int32>(Layer))), FVector(Scale, Scale, 1.f));
 }
 
 void ADwBoard::ApplyLayerMaterials()
@@ -234,28 +272,45 @@ void ADwBoard::ApplyLayerMaterials()
 			}
 			else if (const FLinearColor* Color = LayerColors.Find(static_cast<EDwHighlightLayer>(Index)))
 			{
-				HighlightLayers[Index]->SetMaterial(0, MakeTint(*Color));
+				HighlightLayers[Index]->SetMaterial(0, MakeTint(*Color, HighlightEdgeOpacity));
 			}
 		}
 	}
 }
 
-UMaterialInterface* ADwBoard::MakeTint(const FLinearColor& Color)
+UMaterialInterface* ADwBoard::MakeTint(const FLinearColor& Color, float EdgeOpacity)
 {
-	if (!TintBase)
+	if (!HighlightBaseMaterial)
 	{
 		return nullptr;
 	}
-	UMaterialInstanceDynamic* Tint = UMaterialInstanceDynamic::Create(TintBase, this);
+	UMaterialInstanceDynamic* Tint = UMaterialInstanceDynamic::Create(HighlightBaseMaterial, this);
 	Tint->SetVectorParameterValue(TEXT("Color"), Color);
+	if (EdgeOpacity >= 0.f)
+	{
+		Tint->SetScalarParameterValue(TEXT("EdgeOpacity"), EdgeOpacity); // ignored by parents without the parameter
+	}
 	return Tint;
+}
+
+void ADwBoard::DrawGrid()
+{
+	GridOverlay->SetMaterial(0, MakeTint(GridColor, GridEdgeOpacity));
+	const float Scale = TileSize * HighlightFill / DwBoardPresentation::PlaneSize;
+	TArray<FTransform> Transforms;
+	for (int32 Index = 0; Index < Grid.Tiles.Num(); ++Index)
+	{
+		const FIntPoint Tile = Grid.ToTile(Index);
+		if (Grid.IsStandable(Tile))
+		{
+			Transforms.Add(FTransform(FQuat::Identity, TileCentreLocal(Tile) + FVector(0.f, 0.f, HighlightLift * 0.5f), FVector(Scale, Scale, 1.f)));
+		}
+	}
+	GridOverlay->AddInstances(Transforms, /*bShouldReturnIndices*/ false);
 }
 
 void ADwBoard::DrawPlaceholderDecks()
 {
-	PlayerDeck->ClearInstances();
-	EnemyDeck->ClearInstances();
-	Features->ClearInstances();
 	PlayerDeck->SetMaterial(0, MakeTint(PlayerDeckColor));
 	EnemyDeck->SetMaterial(0, MakeTint(EnemyDeckColor));
 	Features->SetMaterial(0, MakeTint(FeatureColor));
@@ -270,7 +325,7 @@ void ADwBoard::DrawPlaceholderDecks()
 			continue;
 		}
 		const FIntPoint Coord = Grid.ToTile(Index);
-		const FVector Centre((Coord.X + 0.5f) * TileSize, (Coord.Y + 0.5f) * TileSize, Tile.Elevation * ElevationHeight + 0.5f);
+		const FVector Centre = TileCentreLocal(Coord) + FVector(0.f, 0.f, 0.5f);
 		(Tile.Owner == EDwSide::Enemy ? EnemyDeck : PlayerDeck)->AddInstance(FTransform(FQuat::Identity, Centre, FVector(DeckScale, DeckScale, 1.f)));
 		const bool bFeature = Tile.Kind == EDwTileKind::Ladder || Tile.Kind == EDwTileKind::Obstacle || Tile.BlockerHeight > 0
 			|| Tile.Tags.HasTagExact(DwTags::Tile_Cannon);
@@ -281,7 +336,7 @@ void ADwBoard::DrawPlaceholderDecks()
 	}
 
 	// A sea under both ships, wide enough to fill the framed view.
-	const FVector2D Size(Grid.Size.X * TileSize, Grid.Size.Y * TileSize);
+	const FVector2D Size = GetLocalBounds().GetSize();
 	Water->SetRelativeLocation(FVector(Size.X * 0.5f, Size.Y * 0.5f, -20.f));
 	Water->SetRelativeScale3D(FVector(Size.X * 4.f / DwBoardPresentation::PlaneSize, Size.Y * 10.f / DwBoardPresentation::PlaneSize, 1.f));
 	Water->SetMaterial(0, MakeTint(WaterColor));

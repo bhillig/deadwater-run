@@ -36,6 +36,7 @@ public class DeadwaterRunEditor : ModuleRules
 			"InputCore",
 			"GameplayAbilities",
 			"GameplayTags",
+			"Niagara",
 			"Json",
 			"JsonUtilities"
 		});

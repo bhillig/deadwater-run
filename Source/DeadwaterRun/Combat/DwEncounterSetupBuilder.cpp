@@ -5,6 +5,8 @@
 #include "AI/DwAiProfile.h"
 #include "Board/DwBoardBuilder.h"
 #include "Board/DwDeckLayout.h"
+#include "Board/DwBoard.h"
+#include "Combat/DwCombatUnit.h"
 #include "Combat/DwShip.h"
 #include "Core/DwGameData.h"
 #include "Data/DwAbilityDefinition.h"
@@ -53,6 +55,8 @@ bool FDwEncounterSetupBuilder::BuildShipBattle(const UDwGameData& GameData, cons
 	{
 		Out.Grid = FDwBoardBuilder::BuildShipBattle(*GameData.DefaultPlayerDeck, *Encounter.ShipDeck);
 	}
+	Out.DeckGap = GameData.DeckGap;
+	Out.BoardClass = GameData.BoardClass.LoadSynchronous();
 
 	const FDwCombatTuningRow* Combat = GameData.TuningTables.Combat
 		? GameData.TuningTables.Combat->FindRow<FDwCombatTuningRow>(GameData.CombatTuningRow, TEXT("FDwEncounterSetupBuilder")) : nullptr;
@@ -70,6 +74,9 @@ bool FDwEncounterSetupBuilder::BuildShipBattle(const UDwGameData& GameData, cons
 	ReadShip(GameData.PlayerShipTuning, GameData.PlayerShipClass, Out.PlayerShip, TEXT("Player ship"), OutErrors);
 	Out.bHasEnemyShip = true;
 	ReadShip(Encounter.ShipTuning, Encounter.ShipClass, Out.EnemyShip, *Encounter.GetName(), OutErrors);
+	// Each deck layout knows where its ship's hull sits under the grid.
+	Out.PlayerShip.MeshAlignment = GameData.DefaultPlayerDeck ? GameData.DefaultPlayerDeck->MeshAlignment : FTransform::Identity;
+	Out.EnemyShip.MeshAlignment = Encounter.ShipDeck ? Encounter.ShipDeck->MeshAlignment : FTransform::Identity;
 
 	for (const FDwEnemySlot& Slot : Encounter.Units)
 	{
@@ -81,6 +88,7 @@ bool FDwEncounterSetupBuilder::BuildShipBattle(const UDwGameData& GameData, cons
 		FDwCombatantSetup& Enemy = Out.Enemies.AddDefaulted_GetRef();
 		Enemy.Definition = Slot.UnitDefinition;
 		Enemy.Level = Slot.Level;
+		Enemy.UnitClassOverride = Slot.UnitClassOverride.LoadSynchronous();
 		Enemy.AiProfile = Slot.AiProfileOverride ? Slot.AiProfileOverride.Get() : Encounter.AiProfile.Get();
 	}
 

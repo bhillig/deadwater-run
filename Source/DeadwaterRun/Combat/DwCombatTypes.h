@@ -10,6 +10,7 @@
 #include "Data/DwDataTypes.h"
 #include "DwCombatTypes.generated.h"
 
+class ADwBoard;
 class ADwCombatUnit;
 class ADwShip;
 class UDwAbilityDefinition;
@@ -210,6 +211,8 @@ struct DEADWATERRUN_API FDwShipSetup
 	/** Ship upgrades (DW-204). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") TArray<TSubclassOf<UGameplayEffect>> UpgradeEffects;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") TSubclassOf<ADwShip> ShipClass;
+	/** UDwDeckLayout::MeshAlignment of this ship's deck: the hull relative to the deck centre. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") FTransform MeshAlignment;
 };
 
 /** Items of one kind carried into a fight. */
@@ -237,6 +240,10 @@ struct DEADWATERRUN_API FDwEncounterSetup
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") FDwGridModel Grid;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") FDwGridRules GridRules;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") float TileSize = 100.f;
+	/** World gap drawn between the two decks (hull walls and rails); 0 without ship art. Presentation only. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") float DeckGap = 0.f;
+	/** BP_Board (tile overlay, no grey-box decks); null = ADwBoard. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") TSubclassOf<ADwBoard> BoardClass;
 
 	/** Player crew in roster order; the captain is the one with bIsCaptain. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") TArray<FDwCombatantSetup> Crew;

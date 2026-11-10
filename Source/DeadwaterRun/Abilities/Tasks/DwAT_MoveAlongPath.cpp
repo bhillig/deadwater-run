@@ -2,6 +2,7 @@
 
 #include "Abilities/Tasks/DwAT_MoveAlongPath.h"
 
+#include "Combat/DwCombatUnit.h"
 #include "GameFramework/Actor.h"
 #include "Presentation/DwPresentationSubsystem.h"
 
@@ -25,7 +26,22 @@ void UDwAT_MoveAlongPath::Activate()
 	if (!Avatar || Points.IsEmpty() || UDwPresentationSubsystem::IsInstant(this))
 	{
 		Finish();
+		return;
 	}
+	if (ADwCombatUnit* Unit = Cast<ADwCombatUnit>(Avatar))
+	{
+		Unit->SetMoving(true);
+	}
+}
+
+void UDwAT_MoveAlongPath::OnDestroy(bool bInOwnerFinished)
+{
+	// Also covers a cancelled ability: the pirate never keeps running on the spot.
+	if (ADwCombatUnit* Unit = Cast<ADwCombatUnit>(GetAvatarActor()))
+	{
+		Unit->SetMoving(false);
+	}
+	Super::OnDestroy(bInOwnerFinished);
 }
 
 void UDwAT_MoveAlongPath::TickTask(float DeltaTime)

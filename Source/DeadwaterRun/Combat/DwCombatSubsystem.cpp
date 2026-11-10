@@ -222,8 +222,20 @@ bool UDwCombatSubsystem::SpawnFight()
 	UWorld* World = GetWorld();
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	Board = World->SpawnActor<ADwBoard>(Params);
-	Board->SetGrid(Grid, Setup.TileSize > 0.f ? Setup.TileSize : 100.f);
+	Board = World->SpawnActor<ADwBoard>(Setup.BoardClass ? Setup.BoardClass.Get() : ADwBoard::StaticClass(), FTransform::Identity, Params);
+	// The seam between the two decks: the first column of the enemy ship.
+	int32 SeamColumn = INDEX_NONE;
+	if (Setup.bHasEnemyShip && Setup.DeckGap > 0.f)
+	{
+		for (int32 Index = 0; Index < Grid.Tiles.Num(); ++Index)
+		{
+			if (Grid.Tiles[Index].Owner == EDwSide::Enemy)
+			{
+				SeamColumn = SeamColumn == INDEX_NONE ? Grid.ToTile(Index).X : FMath::Min(SeamColumn, Grid.ToTile(Index).X);
+			}
+		}
+	}
+	Board->SetGrid(Grid, Setup.TileSize > 0.f ? Setup.TileSize : 100.f, SeamColumn, Setup.DeckGap);
 
 	PlayerShip = SpawnShip(EDwSide::Player, Setup.PlayerShip);
 	if (Setup.bHasEnemyShip)
@@ -264,25 +276,30 @@ ADwShip* UDwCombatSubsystem::SpawnShip(EDwSide Side, const FDwShipSetup& ShipSet
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	UClass* Class = ShipSetup.ShipClass ? ShipSetup.ShipClass.Get() : ADwShip::StaticClass();
-	// The ship actor stands at the centre of its own deck (the Synty mesh aligns from there, DW-307).
-	FVector Centre = FVector::ZeroVector;
-	int32 DeckTiles = 0;
+	// The ship actor stands at the centre of its deck rectangle, on the deck plane, in deck space: +X towards the
+	// boarding edge. The enemy deck is its layout mirrored, so the enemy ship is mirrored the same way (X scale -1).
+	const FTransform BoardTransform = Board->GetActorTransform();
+	FBox2D Deck(ForceInit);
 	for (int32 Index = 0; Index < Grid.Tiles.Num(); ++Index)
 	{
-		if (Grid.Tiles[Index].Owner == Side && Grid.Tiles[Index].Elevation == 0 && Grid.IsStandable(Grid.ToTile(Index)))
+		if (Grid.Tiles[Index].Owner == Side)
 		{
-			Centre += Board->TileToWorld(Grid.ToTile(Index));
-			++DeckTiles;
+			Deck += FVector2D(BoardTransform.InverseTransformPosition(Board->TileToWorld(Grid.ToTile(Index))));
 		}
 	}
-	FTransform Transform = Board->GetActorTransform();
-	if (DeckTiles > 0)
+	FTransform Transform = BoardTransform;
+	if (Deck.bIsValid)
 	{
-		Transform.SetLocation(Centre / DeckTiles);
+		Transform.SetLocation(BoardTransform.TransformPosition(FVector(Deck.GetCenter(), 0.f)));
+	}
+	if (Side == EDwSide::Enemy)
+	{
+		Transform.SetScale3D(Transform.GetScale3D() * FVector(-1.f, 1.f, 1.f));
 	}
 	ADwShip* Ship = GetWorld()->SpawnActor<ADwShip>(Class, Transform, Params);
 	Ship->GetDwAbilitySystem()->bSuppressGameplayCues = UDwPresentationSubsystem::IsInstant(this);
 	Ship->InitializeFromSetup(Side, ShipSetup, CannonTiles);
+	Ship->BuildVisuals(*Board, ShipSetup.MeshAlignment);
 	BindShip(*Ship);
 	return Ship;
 }

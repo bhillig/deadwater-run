@@ -234,7 +234,8 @@ void FDwInteractionSpec::Define()
 			ADwCameraRig* Rig = F.World->SpawnActor<ADwCameraRig>();
 			Rig->FrameBoard(F.Combat->GetBoard());
 			const ADwBoard* Board = F.Combat->GetBoard();
-			const FVector Centre = (Board->TileToWorld(FIntPoint(0, 0)) + Board->TileToWorld(FIntPoint(9, 2))) * 0.5f;
+			// The framed view looks FramingOffset past the board's centre, so the board clears the HUD's unit cards.
+			const FVector Centre = (Board->TileToWorld(FIntPoint(0, 0)) + Board->TileToWorld(FIntPoint(9, 2))) * 0.5f + FVector(Rig->FramingOffset, 0.f);
 			TestTrue(TEXT("Focus on the board centre"), Rig->GetFocus().Equals(Centre, 1.f));
 			TestTrue(TEXT("Looks down at the board from the +Y side"), Rig->GetActorLocation().Z > Centre.Z && Rig->GetActorLocation().Y > Centre.Y);
 			Rig->Pan(FVector2D(100.f, 100.f), 10.f);

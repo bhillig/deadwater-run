@@ -83,7 +83,8 @@ Targeting rules from the board:
 `UDwDeckLayout : UDwDefinitionBase` (Board/)
 - `FIntPoint Size`, `TArray<FDwTile> Tiles` (painted with the layout editor, see `Editor-Tools.md`).
 - `int32 BoardingRowOffset` - aligns this deck's boarding edge with the other ship's.
-- `FTransform MeshAlignment` - grid origin relative to the ship mesh pivot, so tiles sit on the Synty deck.
+- `FTransform MeshAlignment` - the ship hull's pivot relative to the centre of the deck rectangle at deck height, in deck space (+X = boarding edge); scale enlarges the hull. Places the Synty deck under the tiles (DW-307: `ADwShip::BuildVisuals`, values written by `UDwArtContentLibrary`).
+- DW-307: the two decks are drawn `UDwGameData::DeckGap` apart (room for both hull walls) through `ADwBoard`'s seam; the grid and all rules still see adjacent columns. Feature tiles (cannon, crate, mast, ladder, nest) are dressed from `ADwShip::Dressing`, so a new layout needs no hand-placed props.
 - `float TileSize` (default from `UDwGameData`, overridable).
 - `IsDataValid`: at least N spawn tiles for its side, every walkable tile connected, nest reachable via a ladder, cannon tiles walkable or adjacent to walkable tiles, boarding edge present (ship decks only).
 

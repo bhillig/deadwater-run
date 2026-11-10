@@ -11,10 +11,15 @@ ADwCameraRig::ADwCameraRig()
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(GetRootComponent());
-	Camera->SetFieldOfView(60.f);
-	// Placeholder art is mostly dark wood and sea; stop auto exposure from washing it out.
-	Camera->PostProcessSettings.bOverride_AutoExposureBias = true;
-	Camera->PostProcessSettings.AutoExposureBias = -1.f;
+	Camera->SetFieldOfView(FieldOfView);
+	// Exposure belongs to the sea mood (ADwSeaEnvironment), not the camera.
+}
+
+void ADwCameraRig::SnapTo(const FVector& Focus, float InZoom)
+{
+	TargetFocus = CurrentFocus = Focus;
+	TargetZoom = CurrentZoom = FMath::Max(InZoom, 0.05f);
+	ApplyView(CurrentFocus, CurrentZoom);
 }
 
 void ADwCameraRig::FrameBoard(const ADwBoard* Board)
@@ -23,15 +28,13 @@ void ADwCameraRig::FrameBoard(const ADwBoard* Board)
 	{
 		return;
 	}
-	const FDwGridModel& Grid = Board->GetGrid();
-	// Board corners in world space: tile centres of the two extreme tiles, padded by half a tile.
-	const FVector Min = Board->TileToWorld(FIntPoint(0, 0));
-	const FVector Max = Board->TileToWorld(FIntPoint(FMath::Max(Grid.Size.X - 1, 0), FMath::Max(Grid.Size.Y - 1, 0)));
-	const float TileSize = Grid.Size.X > 1 ? (Max.X - Min.X) / (Grid.Size.X - 1) : 100.f;
-	const FVector2D Size(FMath::Abs(Max.X - Min.X) + TileSize, FMath::Abs(Max.Y - Min.Y) + TileSize);
-	BoardCentre = (Min + Max) * 0.5f;
+	// The whole board on the deck plane, including the gap between the two ships.
+	const FBox2D Bounds = Board->GetLocalBounds();
+	const FVector2D Size = Bounds.GetSize();
+	BoardCentre = Board->GetActorTransform().TransformPosition(FVector(Bounds.GetCenter() + FramingOffset, 0.f));
 	PanLimit = Size * 0.5f;
 
+	Camera->SetFieldOfView(FieldOfView); // Blueprint subclasses may change the default
 	// Fit the width (the camera looks along -Y, so board X is screen width).
 	const float HalfFov = FMath::DegreesToRadians(Camera->FieldOfView * 0.5f);
 	const float WidthDistance = Size.X * 0.5f * FramingMargin / FMath::Tan(HalfFov);

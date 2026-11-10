@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "DwGameMode.generated.h"
 
+class UDwSeaMood;
+
 /**
  * Game mode for L_Sea, the level that hosts the whole run (map, combat, shop, events are phases inside it).
  * DW-201 binds UDwRun::OnPhaseChanged here and starts/ends encounters. Until then it starts DA_GameData's dev fight
@@ -24,6 +26,12 @@ public:
 	/** Starts DA_GameData's dev fight with a fresh seed. False (logged) if the data is missing. */
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Dev")
 	bool StartDevFight(int32 Seed = -1);
+
+	/**
+	 * Restyles the level's ADwSeaEnvironment for a fight: a weighted roll over DA_GameData.SeaMoods that depends only on
+	 * Seed, or the mood named by -DwMood= (dev). Returns the mood applied, or null without moods.
+	 */
+	const UDwSeaMood* ApplySeaMood(int32 Seed);
 
 	/** Off in the run flow (DW-201) and for levels that host no fight. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Dev")

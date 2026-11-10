@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "Core/DwDefinitionBase.h"
+#include "Presentation/DwSeaEnvironment.h"
 #include "DwGameData.generated.h"
 
+class ADwBoard;
 class ADwShip;
 class UDwAbilityDefinition;
 class UDwCaptainDefinition;
@@ -139,6 +141,18 @@ public:
 	/** World units per tile; layouts may override. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board", meta = (ClampMin = "1"))
 	float TileSize = 100.f;
+
+	/** World gap drawn between the player's and the enemy's deck: room for both hull walls (DW-307). Presentation only. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board", meta = (ClampMin = "0"))
+	float DeckGap = 0.f;
+
+	/** BP_Board: tile overlay materials and colours. Empty = ADwBoard with grey-box decks. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board")
+	TSoftClassPtr<ADwBoard> BoardClass;
+
+	/** Looks of the sea a fight can roll (ADwSeaEnvironment::PickMood). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
+	TArray<FDwSeaMoodChance> SeaMoods;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	FDwInputConfig Input;

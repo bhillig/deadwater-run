@@ -8,6 +8,7 @@
 #include "Data/DwDataTypes.h"
 #include "DwEncounterDefinition.generated.h"
 
+class ADwCombatUnit;
 class ADwShip;
 class UDwAiProfile;
 class UDwDeckLayout;
@@ -25,6 +26,10 @@ struct DEADWATERRUN_API FDwEnemySlot
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy", meta = (ClampMin = "1"))
 	int32 Level = 1;
+
+	/** Overrides the unit definition's UnitClass, so an enemy crew looks different from yours (BP_Unit_*). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
+	TSoftClassPtr<ADwCombatUnit> UnitClassOverride;
 
 	/** Overrides the encounter's AiProfile for this enemy. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")

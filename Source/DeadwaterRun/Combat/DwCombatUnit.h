@@ -6,8 +6,11 @@
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Actor.h"
 #include "Core/DwTypes.h"
+#include "Presentation/DwMeshPiece.h"
 #include "DwCombatUnit.generated.h"
 
+class UAnimationAsset;
+class USkeletalMeshComponent;
 class UDwAbilityDefinition;
 class UDwAbilitySystemComponent;
 class UDwUnitAttributeSet;
@@ -33,7 +36,7 @@ struct DEADWATERRUN_API FDwUnitSpawnParams
  * A combatant on the board (crew, enemy pirate, Kraken body, tentacle). Owns its ASC and unit attribute set
  * (Docs/Architecture/02 D1: the ASC lives on the per-fight actor; the run is pure data).
  * Identity (handle, side, tile, roster id) is set by UDwCombatSubsystem; the subsystem's grid is the truth for tiles,
- * this actor mirrors it. BP_Unit_* subclasses add mesh, animation and montages.
+ * this actor mirrors it. BP_Unit_* set the pirate mesh, attachments and looping animations as class defaults.
  */
 UCLASS(Blueprintable)
 class DEADWATERRUN_API ADwCombatUnit : public AActor, public IAbilitySystemInterface
@@ -70,22 +73,63 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Deadwater|Unit")
 	void OnDied();
 
-	/** Placeholder body until BP_Unit_* meshes exist (DW-307). Tinted by side when its material has a "Color" parameter. */
+	virtual void OnConstruction(const FTransform& Transform) override;
+
+	/** Walking along a path (UDwAT_MoveAlongPath): swaps the looping idle for the looping move animation. */
+	UFUNCTION(BlueprintCallable, Category = "Deadwater|Unit")
+	void SetMoving(bool bInMoving);
+
+	UFUNCTION(BlueprintPure, Category = "Deadwater|Unit") bool IsMoving() const { return bMoving; }
+
+	/** Grey-box body: shown only while Character has no mesh. Tinted by side when its material has a "Color" parameter. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Deadwater")
 	TObjectPtr<UStaticMeshComponent> Body;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Placeholder")
+	/** The pirate (DW-307). BP_Unit_* set the mesh; +X of the actor is forward. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Deadwater")
+	TObjectPtr<USkeletalMeshComponent> Character;
+
+	/** Flat ring under the unit in its side's colour: both crews use the same pirate models. Hidden without RingMaterial. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Deadwater")
+	TObjectPtr<UStaticMeshComponent> SideRing;
+
+	/** Hats, hair, weapons: static meshes on Character's bones or sockets (FDwMeshPiece::Socket). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Visuals")
+	TArray<FDwMeshPiece> Attachments;
+
+	/** Looping animations played directly on Character (no anim Blueprint until attack animations exist, open question O2). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Visuals")
+	TObjectPtr<UAnimationAsset> IdleAnimation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Visuals")
+	TObjectPtr<UAnimationAsset> MoveAnimation;
+
+	/** Needs a "Color" vector parameter (M_UnitRing). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Visuals")
+	TObjectPtr<UMaterialInterface> RingMaterial;
+
+	/** How solid the disc inside the ring is (the outline itself uses the material's EdgeOpacity). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Visuals", meta = (ClampMin = "0", ClampMax = "1"))
+	float RingFillOpacity = 0.15f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Side Colours")
 	FLinearColor PlayerColor = FLinearColor(0.1f, 0.35f, 0.9f);
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Placeholder")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Side Colours")
 	FLinearColor EnemyColor = FLinearColor(0.85f, 0.15f, 0.1f);
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Placeholder")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Side Colours")
 	FLinearColor CaptainColor = FLinearColor(0.95f, 0.75f, 0.1f);
 
+protected:
+	virtual void BeginPlay() override;
+
 private:
-	void ApplyPlaceholderTint();
+	void ApplySideColour();
+	void PlayLoop(UAnimationAsset* Animation, bool bRandomStart);
 	UPROPERTY() TObjectPtr<UMaterialInterface> TintBase;
+	UPROPERTY(Transient) TArray<TObjectPtr<UStaticMeshComponent>> AttachmentComponents;
+	bool bMoving = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Deadwater")
 	TObjectPtr<UDwAbilitySystemComponent> AbilitySystem;

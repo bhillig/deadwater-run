@@ -4,7 +4,9 @@
 
 #include "Abilities/DwAbilitySystemComponent.h"
 #include "Abilities/DwGameplayAbility.h"
+#include "Board/DwBoard.h"
 #include "Board/DwGridQueries.h"
+#include "Presentation/DwCameraRig.h"
 #include "Core/DwGameData.h"
 #include "GameplayEffect.h"
 #include "Combat/DwCombatInteraction.h"
@@ -57,6 +59,20 @@ void UDwDevCaptureSubsystem::StageDemo()
 	const ADwPlayerController* PC = World ? Cast<ADwPlayerController>(World->GetFirstPlayerController()) : nullptr;
 	UDwCombatInteraction* Interaction = PC ? PC->GetInteraction() : nullptr;
 	UDwCombatSubsystem* Combat = World ? World->GetSubsystem<UDwCombatSubsystem>() : nullptr;
+
+	// Close-ups for art review: -DwCaptureZoom=0.3 (fraction of the framed distance) -DwCaptureTile=2,1 (focus tile).
+	float Zoom = 0.f;
+	if (PC && PC->GetCameraRig() && Combat && Combat->GetBoard() && FParse::Value(FCommandLine::Get(), TEXT("DwCaptureZoom="), Zoom) && Zoom > 0.f)
+	{
+		FVector Focus = PC->GetCameraRig()->GetFocus();
+		FString TileText, X, Y;
+		if (FParse::Value(FCommandLine::Get(), TEXT("DwCaptureTile="), TileText, /*bShouldStopOnSeparator*/ false) && TileText.Split(TEXT(","), &X, &Y))
+		{
+			Focus = Combat->GetBoard()->TileToWorld(FIntPoint(FCString::Atoi(*X), FCString::Atoi(*Y)));
+		}
+		PC->GetCameraRig()->SnapTo(Focus, Zoom);
+	}
+
 	if (Interaction && Combat && Combat->IsActive())
 	{
 		const FDwCombatSnapshot Snapshot = Combat->GetSnapshot();

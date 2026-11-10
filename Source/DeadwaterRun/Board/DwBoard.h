@@ -41,8 +41,19 @@ class DEADWATERRUN_API ADwBoard : public AActor
 public:
 	ADwBoard();
 
+	/**
+	 * SeamColumn / SeamGap: columns from SeamColumn on are drawn SeamGap world units further along X. A ship battle puts
+	 * the seam between the two decks, so each grid sits inside its own hull instead of the hulls overlapping. Presentation
+	 * only: the grid and every rule still see adjacent columns.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Board")
-	void SetGrid(const FDwGridModel& InGrid, float InTileSize);
+	void SetGrid(const FDwGridModel& InGrid, float InTileSize, int32 InSeamColumn = -1, float InSeamGap = 0.f);
+
+	UFUNCTION(BlueprintPure, Category = "Deadwater|Board")
+	float GetTileSize() const { return TileSize; }
+
+	/** Board-space rectangle on the deck plane covering every tile, seam included. */
+	FBox2D GetLocalBounds() const;
 
 	const FDwGridModel& GetGrid() const { return Grid; }
 
@@ -90,11 +101,32 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board")
 	TMap<EDwHighlightLayer, TObjectPtr<UMaterialInterface>> LayerMaterials;
 
-	/** Colour of a layer that has no material in LayerMaterials (tinted BasicShapeMaterial). */
+	/**
+	 * Colour of a layer that has no material in LayerMaterials: HighlightBaseMaterial tinted through its "Color" vector
+	 * parameter. With M_TileOverlay (BP_Board) alpha is the fill opacity and the tile gets a solid outline.
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board")
 	TMap<EDwHighlightLayer, FLinearColor> LayerColors;
 
-	/** Placeholder ship decks until the Synty ships are aligned (DW-307): every board tile drawn, coloured by owner. */
+	/** Parent of every tinted tile material. Needs a "Color" vector parameter; "EdgeOpacity" is set when it exists. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board")
+	TObjectPtr<UMaterialInterface> HighlightBaseMaterial;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board", meta = (ClampMin = "0", ClampMax = "1"))
+	float HighlightEdgeOpacity = 0.95f;
+
+	/** A faint outline on every standable tile, so the grid reads on real ship decks. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Grid")
+	bool bDrawGrid = false;
+
+	/** Alpha = fill opacity of a grid tile (usually 0). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Grid")
+	FLinearColor GridColor = FLinearColor(1.f, 0.95f, 0.8f, 0.f);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Grid", meta = (ClampMin = "0", ClampMax = "1"))
+	float GridEdgeOpacity = 0.35f;
+
+	/** Grey-box decks for fights without ship art (tests, new layouts): every board tile drawn, coloured by owner. BP_Board turns it off. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Board|Placeholder")
 	bool bDrawPlaceholderDecks = true;
 
@@ -121,7 +153,12 @@ protected:
 private:
 	UInstancedStaticMeshComponent* GetLayer(EDwHighlightLayer Layer) const;
 	void DrawPlaceholderDecks();
-	UMaterialInterface* MakeTint(const FLinearColor& Color);
+	void DrawGrid();
+	UMaterialInterface* MakeTint(const FLinearColor& Color, float EdgeOpacity = -1.f);
+	/** Board-space X of a column's low edge, and the column under a board-space X (false in the seam). */
+	float ColumnToLocalX(int32 Column) const;
+	bool LocalXToColumn(float LocalX, int32& OutColumn) const;
+	FVector TileCentreLocal(FIntPoint Tile) const;
 	FTransform MakeInstanceTransform(FIntPoint Tile, EDwHighlightLayer Layer) const;
 	void ApplyLayerMaterials();
 
@@ -135,11 +172,17 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Board|Placeholder") TObjectPtr<UInstancedStaticMeshComponent> EnemyDeck;
 	UPROPERTY(VisibleAnywhere, Category = "Board|Placeholder") TObjectPtr<UInstancedStaticMeshComponent> Features;
 	UPROPERTY(VisibleAnywhere, Category = "Board|Placeholder") TObjectPtr<UStaticMeshComponent> Water;
-	UPROPERTY(Transient) TObjectPtr<UMaterialInterface> TintBase;
+	UPROPERTY(VisibleAnywhere, Category = "Board|Grid") TObjectPtr<UInstancedStaticMeshComponent> GridOverlay;
 
 	UPROPERTY(Transient)
 	FDwGridModel Grid;
 
 	UPROPERTY(Transient)
 	float TileSize = 100.f;
+
+	UPROPERTY(Transient)
+	int32 SeamColumn = INDEX_NONE;
+
+	UPROPERTY(Transient)
+	float SeamGap = 0.f;
 };

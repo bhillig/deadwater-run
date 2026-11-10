@@ -26,6 +26,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Camera")
 	void FrameBoard(const ADwBoard* Board);
 
+	/** Jumps to a focus point and zoom without easing or the player's limits (dev captures, cinematics). */
+	void SnapTo(const FVector& Focus, float Zoom);
+
 	/** Pans by Input (-1..1 per axis, board X/Y) scaled by PanSpeed and DeltaTime; clamped to the board. */
 	void Pan(const FVector2D& Input, float DeltaTime);
 
@@ -40,13 +43,27 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraComponent> Camera;
 
-	/** Degrees below the horizon. */
+	/**
+	 * Degrees below the horizon. Steep, with a long lens (FieldOfView), so the hulls, forecastles and masts around the
+	 * decks neither hide tiles nor loom over them (DW-307).
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera", meta = (ClampMin = "20", ClampMax = "85"))
-	float Pitch = 55.f;
+	float Pitch = 62.f;
+
+	/** Horizontal field of view in degrees. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera", meta = (ClampMin = "10", ClampMax = "90"))
+	float FieldOfView = 35.f;
 
 	/** Extra space around the board when framing (1 = edge to edge). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera", meta = (ClampMin = "1"))
-	float FramingMargin = 1.25f;
+	float FramingMargin = 1.4f;
+
+	/**
+	 * Where the framed view looks, relative to the board's centre (board units; -Y is away from the camera). Looking a
+	 * little past the board drops it on screen, clear of the unit cards along the top of the HUD.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
+	FVector2D FramingOffset = FVector2D(0.f, -70.f);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera") float PanSpeed = 900.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera") float ZoomStep = 0.1f;
