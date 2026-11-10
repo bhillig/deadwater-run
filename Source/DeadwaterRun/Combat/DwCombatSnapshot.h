@@ -36,6 +36,8 @@ struct DEADWATERRUN_API FDwUnitSnapshot
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float MaxFear = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float ActionPoints = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float MovePoints = 0.f;
+	/** MovePoints at the start of the unit's next turn (the AI reads it to judge next-turn threat, DW-106). */
+	UPROPERTY(BlueprintReadOnly, Category = "Stats") float MoveRange = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float AttackDamage = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float DamageBonus = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float DamageReduction = 0.f;

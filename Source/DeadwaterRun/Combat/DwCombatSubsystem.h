@@ -15,6 +15,7 @@ class ADwCombatUnit;
 class ADwShip;
 class IDwCombatSideController;
 class UDwAbilitySystemComponent;
+class UDwAiSideController;
 class UDwPassiveSideController;
 class UDwTurnManager;
 struct FOnAttributeChangeData;
@@ -167,6 +168,8 @@ private:
 	UPROPERTY() TScriptInterface<IDwCombatSideController> PlayerController;
 	UPROPERTY() TScriptInterface<IDwCombatSideController> EnemyController;
 	UPROPERTY() TObjectPtr<UDwPassiveSideController> DefaultEnemyController;
+	/** Created per encounter when an enemy has an AI profile; used unless SetSideController(Enemy) overrides it. */
+	UPROPERTY() TObjectPtr<UDwAiSideController> AiEnemyController;
 
 	/** Holds definition pointers: a UPROPERTY so they stay referenced for the whole fight. */
 	UPROPERTY() FDwEncounterSetup Setup;

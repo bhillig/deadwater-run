@@ -2,6 +2,7 @@
 
 #include "Combat/DwEncounterSetupBuilder.h"
 
+#include "AI/DwAiProfile.h"
 #include "Board/DwBoardBuilder.h"
 #include "Board/DwDeckLayout.h"
 #include "Combat/DwShip.h"
@@ -80,6 +81,7 @@ bool FDwEncounterSetupBuilder::BuildShipBattle(const UDwGameData& GameData, cons
 		FDwCombatantSetup& Enemy = Out.Enemies.AddDefaulted_GetRef();
 		Enemy.Definition = Slot.UnitDefinition;
 		Enemy.Level = Slot.Level;
+		Enemy.AiProfile = Slot.AiProfileOverride ? Slot.AiProfileOverride.Get() : Encounter.AiProfile.Get();
 	}
 
 	for (const UDwAbilityDefinition* Ability : GameData.CommonAbilities)

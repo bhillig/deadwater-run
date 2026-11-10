@@ -9,7 +9,8 @@
 
 /**
  * A side that never acts: every unit ends at once and the player side ends its turn at once.
- * The enemy default until UDwAiSideController lands (DW-106); also useful in tests that only exercise one side.
+ * The enemy default when no enemy has an AI profile (otherwise UDwAiSideController, DW-106); also useful in tests that
+ * only exercise one side.
  */
 UCLASS()
 class DEADWATERRUN_API UDwPassiveSideController : public UObject, public IDwCombatSideController

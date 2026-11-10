@@ -13,6 +13,7 @@
 class ADwCombatUnit;
 class ADwShip;
 class UDwAbilityDefinition;
+class UDwAiProfile;
 class UDwEncounterDefinition;
 class UDwItemDefinition;
 class UDwUnitDefinition;
@@ -192,6 +193,8 @@ struct DEADWATERRUN_API FDwCombatantSetup
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") float StartingFear = 0.f;
 	/** Overrides the definition's UnitClass (tests, placeholder visuals). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") TSubclassOf<ADwCombatUnit> UnitClassOverride;
+	/** Enemies: the crew AI profile (slot override, else the encounter's). Any enemy with one puts the side under UDwAiSideController (DW-106). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") TObjectPtr<const UDwAiProfile> AiProfile;
 };
 
 /** A ship to spawn. MaxHealth and CannonDamage are tuning (+ upgrades); Health is run state. */

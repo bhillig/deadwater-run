@@ -18,7 +18,7 @@ class UDwCombatSideController : public UInterface
 /**
  * Drives one side of a fight by submitting FDwCombatCommand to UDwCombatSubsystem (Docs/Architecture/03 D1).
  * Implementations: ADwPlayerController (DW-105), UDwAiSideController (DW-106), UDwSimPlayerSideController (DW-212),
- * and UDwPassiveSideController (ends every unit; the enemy default until DW-106).
+ * and UDwPassiveSideController (ends every unit; the enemy default when no enemy has an AI profile).
  *
  * Calls arrive from the turn manager's step loop, never from inside SubmitCommand, so a controller may submit
  * commands synchronously. The "loop until latent" pattern: keep submitting while !Combat.IsResolving(); when an ability

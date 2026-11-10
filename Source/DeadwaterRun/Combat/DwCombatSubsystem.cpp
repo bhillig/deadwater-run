@@ -3,6 +3,7 @@
 #include "Combat/DwCombatSubsystem.h"
 
 #include "AbilitySystemGlobals.h"
+#include "AI/DwAiSideController.h"
 #include "Abilities/DwAbilitySystemComponent.h"
 #include "Abilities/DwAttributeSets.h"
 #include "Abilities/DwGameplayAbility.h"
@@ -108,6 +109,8 @@ bool UDwCombatSubsystem::StartEncounter(const FDwEncounterSetup& InSetup)
 			EnemyOrder.Add(Unit->GetHandle()); // spawn order = encounter order (C14)
 		}
 	}
+	// Enemies with an AI profile are driven by the crew AI (DW-106); without one the side stays passive.
+	AiEnemyController = UDwAiSideController::CreateForEncounter(this, Setup, EnemyOrder);
 	TurnManager = NewObject<UDwTurnManager>(this);
 	TurnManager->Init(*this, MoveTemp(EnemyOrder));
 	if (!DefaultEnemyController)
@@ -175,6 +178,10 @@ IDwCombatSideController* UDwCombatSubsystem::GetSideController(EDwSide Side) con
 	if (IDwCombatSideController* Controller = EnemyController.GetInterface())
 	{
 		return Controller;
+	}
+	if (AiEnemyController)
+	{
+		return AiEnemyController.Get();
 	}
 	return DefaultEnemyController ? static_cast<IDwCombatSideController*>(DefaultEnemyController.Get()) : nullptr;
 }
@@ -878,6 +885,7 @@ FDwCombatSnapshot UDwCombatSubsystem::GetSnapshot() const
 		S.MaxFear = A->GetMaxFear();
 		S.ActionPoints = A->GetActionPoints();
 		S.MovePoints = A->GetMovePoints();
+		S.MoveRange = A->GetMoveRange();
 		S.AttackDamage = A->GetAttackDamage();
 		S.DamageBonus = A->GetDamageBonus();
 		S.DamageReduction = A->GetDamageReduction();
