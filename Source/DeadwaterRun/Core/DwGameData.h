@@ -17,6 +17,7 @@ class UDwShopDefinition;
 class UGameplayEffect;
 class UDwItemDefinition;
 class UDwUnitDefinition;
+class UDwUIScreenSet;
 class UInputAction;
 class UInputMappingContext;
 class UWorld;
@@ -141,6 +142,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	FDwInputConfig Input;
+
+	/** DA_UIScreenSet: the widget class of every screen (Docs/Architecture/14-UI.md, DW-107). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UDwUIScreenSet> UIScreenSet;
 
 	/**
 	 * Dev fight started by ADwGameMode when L_Sea opens, until the run owns encounters (DW-201) and the quick launch

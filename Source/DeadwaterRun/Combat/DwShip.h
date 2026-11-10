@@ -10,8 +10,6 @@
 
 class UDwAbilitySystemComponent;
 class UDwShipAttributeSet;
-class UTextRenderComponent;
-struct FOnAttributeChangeData;
 struct FDwShipSetup;
 
 /**
@@ -46,19 +44,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Deadwater|Ship")
 	void OnSunk();
 
-	/** Placeholder hull health above the deck until the HUD's ship bars exist (DW-107). */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Deadwater")
-	TObjectPtr<UTextRenderComponent> Label;
-
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Deadwater")
 	TObjectPtr<UDwAbilitySystemComponent> AbilitySystem;
 
 	UPROPERTY()
 	TObjectPtr<UDwShipAttributeSet> Attributes;
-
-	void UpdateLabel();
-	void HandleHealthChanged(const FOnAttributeChangeData& Data);
 
 	UPROPERTY(VisibleInstanceOnly, Category = "Deadwater|Ship") EDwSide Side = EDwSide::Player;
 	UPROPERTY(VisibleInstanceOnly, Category = "Deadwater|Ship") TArray<FIntPoint> CannonTiles;

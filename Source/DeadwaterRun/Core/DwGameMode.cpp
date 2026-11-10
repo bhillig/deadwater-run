@@ -7,7 +7,7 @@
 #include "Core/DwAssetManager.h"
 #include "Core/DwGameData.h"
 #include "Core/DwLog.h"
-#include "Core/DwPlaceholderHUD.h"
+#include "GameFramework/HUD.h"
 #include "Core/DwPlayerController.h"
 #include "Data/DwEncounterDefinition.h"
 #include "Data/DwItemDefinition.h"
@@ -19,7 +19,8 @@
 ADwGameMode::ADwGameMode()
 {
 	PlayerControllerClass = ADwPlayerController::StaticClass();
-	HUDClass = ADwPlaceholderHUD::StaticClass(); // DW-107 swaps in the CommonUI HUD
+	// Plain AHUD (draws nothing): the combat HUD is CommonUI (WBP_CombatHud), pushed by UDwUIManagerSubsystem (DW-107).
+	HUDClass = AHUD::StaticClass();
 
 	// Units are board actors driven by commands, not possessed pawns; ADwCameraRig is the view target.
 	DefaultPawnClass = nullptr;

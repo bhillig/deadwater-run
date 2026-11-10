@@ -2,7 +2,11 @@
 
 #include "Dev/DwDevCaptureSubsystem.h"
 
+#include "Abilities/DwAbilitySystemComponent.h"
+#include "Abilities/DwGameplayAbility.h"
 #include "Board/DwGridQueries.h"
+#include "Core/DwGameData.h"
+#include "GameplayEffect.h"
 #include "Combat/DwCombatInteraction.h"
 #include "Combat/DwCombatRules.h"
 #include "Combat/DwCombatSubsystem.h"
@@ -120,6 +124,43 @@ void UDwDevCaptureSubsystem::StageDemo()
 			{
 				Interaction->HoverTile(Combat->FindUnit(FirstOf(EDwSide::Enemy, FGameplayTag()))->GetTile());
 			}
+		}
+		else if (Demo == TEXT("hit"))
+		{
+			// The sniper shoots the first enemy it can: floating damage text, HP bars and the spent action (DW-107 HUD).
+			// The enemy sniper is also frozen (shared GE_Frozen), so a status chip with turns left and "Frozen!" show.
+			if (const ADwCombatUnit* Frozen = Combat->FindUnit(FirstOf(EDwSide::Enemy, DwTags::Unit_Archetype_Sniper)))
+			{
+				UDwAbilitySystemComponent* Asc = Frozen->GetDwAbilitySystem();
+				Asc->ApplyGameplayEffectToSelf(DwGas::GetSharedEffects().Frozen->GetDefaultObject<UGameplayEffect>(), 1.f, Asc->MakeEffectContext());
+			}
+			const FDwUnitHandle Sniper = FirstOf(EDwSide::Player, DwTags::Unit_Archetype_Sniper);
+			for (int32 Index = 0; Index < Snapshot.Grid.Tiles.Num(); ++Index)
+			{
+				const FDwTile& Tile = Snapshot.Grid.Tiles[Index];
+				if (Tile.Kind == EDwTileKind::Nest && Tile.Owner == EDwSide::Player && !Snapshot.Grid.IsOccupied(Snapshot.Grid.ToTile(Index)))
+				{
+					Combat->MoveUnit(Sniper, Snapshot.Grid.ToTile(Index), /*bSnapActor*/ true); // the nest sees over the crates
+					break;
+				}
+			}
+			Interaction->SelectUnit(Sniper);
+			const FDwCombatSnapshot InNest = Combat->GetSnapshot();
+			const FDwUnitSnapshot* Unit = InNest.FindUnit(Sniper);
+			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Attack_Ranged)) && !Interaction->GetValidTargets().IsEmpty())
+			{
+				Interaction->ClickTile(Interaction->GetValidTargets()[0].Tile);
+			}
+			// Capture while the label is still up (the shot resolves after the 0.5 s placeholder beat).
+			World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::Capture), 0.8f, false);
+			return;
+		}
+		else if (Demo == TEXT("endturn"))
+		{
+			// End the player's turn: the passive enemy side passes, so the banner for the next side is up (DW-107 HUD).
+			Interaction->RequestEndTurn();
+			World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::Capture), 0.4f, false);
+			return;
 		}
 	}
 	World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::Capture), 1.f, false);

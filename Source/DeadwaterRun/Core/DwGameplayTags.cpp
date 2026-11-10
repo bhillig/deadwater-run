@@ -94,4 +94,11 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(UI_Layer_GameMenu, "UI.Layer.GameMenu");
 	UE_DEFINE_GAMEPLAY_TAG(UI_Layer_Menu, "UI.Layer.Menu");
 	UE_DEFINE_GAMEPLAY_TAG(UI_Layer_Modal, "UI.Layer.Modal");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Sound_Hover, "UI.Sound.Hover");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Sound_Click, "UI.Sound.Click");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Sound_Confirm, "UI.Sound.Confirm");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Sound_Cancel, "UI.Sound.Cancel");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Sound_Purchase, "UI.Sound.Purchase");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Sound_Error, "UI.Sound.Error");
+	UE_DEFINE_GAMEPLAY_TAG(UI_Sound_TurnStart, "UI.Sound.TurnStart");
 }

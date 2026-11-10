@@ -2,17 +2,23 @@
 .SYNOPSIS
   Plays L_Sea in a game window, stages the combat interaction, saves a screenshot and quits (UDwDevCaptureSubsystem).
   First output line is "CAPTURE PASS <file>" or "CAPTURE FAIL ...". Exit code 0 only on PASS.
+  The window cannot be larger than the desktop; capture 2560x1440 on a 1440p (or larger) display.
 .EXAMPLE
   ./Tools/Capture.ps1                       # plain fight
   ./Tools/Capture.ps1 -Demo move -Seed 7    # captain selected, path to the farthest reachable tile
   ./Tools/Capture.ps1 -Demo aim             # sniper aiming: targets and damage preview
   ./Tools/Capture.ps1 -Demo cannon          # gunner at a cannon: enemy ship targeted
+  ./Tools/Capture.ps1 -Demo hit             # sniper shot just landed: floating text, HP bars, spent action greyed
+  ./Tools/Capture.ps1 -Demo endturn         # turn ended: the turn banner for the next side
   ./Tools/Capture.ps1 -Demo enemy           # player passes twice; the crew AI plays two enemy turns (frames <file>-01.png, ...)
+  ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p
 #>
 param(
-    [ValidateSet('none', 'move', 'aim', 'cannon', 'enemy')] [string] $Demo = 'none',
+    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy')] [string] $Demo = 'none',
     [int] $Seed = 7,
     [float] $Delay = 6,
+    [int] $ResX = 1600,
+    [int] $ResY = 900,
     [string] $Out = ''
 )
 $ErrorActionPreference = 'Stop'
@@ -26,7 +32,7 @@ try {
 }
 $editor = Join-Path (Split-Path $editorCmd) 'UnrealEditor.exe'
 $root = Get-DwRepoRoot
-if (-not $Out) { $Out = Join-Path $root "Saved\Captures\combat-$Demo.png" }
+if (-not $Out) { $Out = Join-Path $root "Saved\Captures\combat-$Demo-${ResX}x${ResY}.png" }
 $Out = [IO.Path]::GetFullPath($Out)
 New-Item -ItemType Directory -Force (Split-Path $Out) | Out-Null
 if (Test-Path $Out) { Remove-Item $Out -Force }
@@ -36,7 +42,7 @@ New-Item -ItemType Directory -Force $logDir | Out-Null
 $log = Join-Path $logDir 'Capture.log'
 
 $gameArgs = @(
-    (Get-DwProject), '/Game/DeadwaterRun/Maps/L_Sea', '-game', '-windowed', '-ResX=1600', '-ResY=900',
+    (Get-DwProject), '/Game/DeadwaterRun/Maps/L_Sea', '-game', '-windowed', "-ResX=$ResX", "-ResY=$ResY", '-ForceRes',
     "-DwCapture=$Out", "-DwCaptureDelay=$Delay", "-DwCaptureDemo=$Demo", "-DwSeed=$Seed",
     '-nosound', '-nosplash', '-unattended', "-abslog=$log"
 )

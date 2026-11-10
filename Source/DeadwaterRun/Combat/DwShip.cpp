@@ -8,7 +8,6 @@
 #include "Abilities/DwGameplayEffects.h"
 #include "Combat/DwCombatTypes.h"
 #include "Core/DwGameData.h"
-#include "Components/TextRenderComponent.h"
 
 ADwShip::ADwShip()
 {
@@ -17,15 +16,6 @@ ADwShip::ADwShip()
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 	AbilitySystem = CreateDefaultSubobject<UDwAbilitySystemComponent>(TEXT("AbilitySystem"));
 	Attributes = CreateDefaultSubobject<UDwShipAttributeSet>(TEXT("Attributes"));
-
-	Label = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Label"));
-	Label->SetupAttachment(GetRootComponent());
-	Label->SetRelativeLocation(FVector(0.f, 280.f, 120.f)); // over the near rail (the camera is on the +Y side)
-	Label->SetUsingAbsoluteRotation(true);
-	Label->SetWorldRotation(FRotator(30.f, 90.f, 0.f));
-	Label->SetHorizontalAlignment(EHTA_Center);
-	Label->SetWorldSize(34.f);
-	Label->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 UAbilitySystemComponent* ADwShip::GetAbilitySystemComponent() const
@@ -51,9 +41,6 @@ void ADwShip::InitializeFromSetup(EDwSide InSide, const FDwShipSetup& Setup, con
 		UDwGE_InitShipStats::SetValues(*Spec.Data, Setup.MaxHealth, Health, Setup.CannonDamage);
 		AbilitySystem->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 	}
-	UpdateLabel();
-	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UDwShipAttributeSet::GetHealthAttribute()).AddUObject(this, &ThisClass::HandleHealthChanged);
-	AbilitySystem->GetGameplayAttributeValueChangeDelegate(UDwShipAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::HandleHealthChanged);
 	for (const TSubclassOf<UGameplayEffect>& Upgrade : Setup.UpgradeEffects)
 	{
 		if (Upgrade)
@@ -80,19 +67,4 @@ float ADwShip::GetCannonDamage() const
 
 void ADwShip::OnSunk_Implementation()
 {
-}
-
-void ADwShip::HandleHealthChanged(const FOnAttributeChangeData& /*Data*/)
-{
-	UpdateLabel();
-}
-
-void ADwShip::UpdateLabel()
-{
-	if (Label && Attributes)
-	{
-		Label->SetText(FText::FromString(FString::Printf(TEXT("%s  %d / %d"), Side == EDwSide::Player ? TEXT("YOUR SHIP") : TEXT("ENEMY SHIP"),
-			FMath::RoundToInt(Attributes->GetHealth()), FMath::RoundToInt(Attributes->GetMaxHealth()))));
-		Label->SetTextRenderColor(Side == EDwSide::Player ? FColor(120, 180, 255) : FColor(255, 120, 100));
-	}
 }
