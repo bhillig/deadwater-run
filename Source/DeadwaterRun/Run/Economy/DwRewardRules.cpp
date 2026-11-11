@@ -45,7 +45,9 @@ FDwRewardBundle FDwRewardRules::ComputeRewards(const FDwRewardContext& Context, 
 		const int32 Pick = Random.RandHelper(Context.PlunderItems.Num());
 		if (Roll < Economy.PlunderItemChance && Context.PlunderItems[Pick])
 		{
-			FDwItemStack& Stack = Bundle.Items.AddDefaulted_GetRef();
+			// A full inventory (P10) leaves the item behind; the rewards screen still shows what was found.
+			const bool bRoom = !Context.State || Context.State->GetItemRoom(Economy.MaxInventory) > 0;
+			FDwItemStack& Stack = (bRoom ? Bundle.Items : Bundle.ItemsNoRoom).AddDefaulted_GetRef();
 			Stack.Item = Context.PlunderItems[Pick];
 			Stack.Count = 1;
 		}
@@ -62,15 +64,9 @@ FDwRewardBundle FDwRewardRules::ComputeRewards(const FDwRewardContext& Context, 
 
 bool FDwRewardRules::CanLearn(const FDwRunState& State, const FDwCrewMemberState& Member, const UDwAbilityDefinition& Ability)
 {
-	if (!Member.bAlive || !Member.Unit)
+	if (!Member.bAlive || !Member.Unit || Knows(Member, Ability))
 	{
 		return false;
-	}
-	const UDwUnitDefinition& Unit = *Member.Unit;
-	auto Is = [&Ability](const UDwAbilityDefinition* Known) { return Known == &Ability; };
-	if (Member.Abilities.ContainsByPredicate(Is) || Unit.BasicAttack.Get() == &Ability || Unit.DefaultAbilities.ContainsByPredicate(Is))
-	{
-		return false; // already known
 	}
 	if (Member.bIsCaptain && State.Captain)
 	{
@@ -81,6 +77,33 @@ bool FDwRewardRules::CanLearn(const FDwRunState& State, const FDwCrewMemberState
 		}
 	}
 	return true;
+}
+
+bool FDwRewardRules::Knows(const FDwCrewMemberState& Member, const UDwAbilityDefinition& Ability)
+{
+	auto Is = [&Ability](const UDwAbilityDefinition* Known) { return Known == &Ability; };
+	const UDwUnitDefinition* Unit = Member.Unit;
+	return Member.Abilities.ContainsByPredicate(Is) || (Unit && (Unit->BasicAttack.Get() == &Ability || Unit->DefaultAbilities.ContainsByPredicate(Is)));
+}
+
+bool FDwRewardRules::IsInPool(const FDwCrewMemberState& Member, const UDwAbilityDefinition& Ability)
+{
+	const UDwAbilityPool* Pool = Member.Unit ? Member.Unit->LearnablePool.Get() : nullptr;
+	return Pool && Pool->Abilities.ContainsByPredicate([&Ability](const FDwWeightedAbility& Entry)
+		{ return Entry.Ability.Get() == &Ability && Entry.Weight > 0.f; });
+}
+
+TArray<FGuid> FDwRewardRules::GetEligibleCrew(const FDwRunState& State, const UDwAbilityDefinition& Ability)
+{
+	TArray<FGuid> Eligible;
+	for (const FDwCrewMemberState& Member : State.Crew)
+	{
+		if (IsInPool(Member, Ability) && CanLearn(State, Member, Ability))
+		{
+			Eligible.Add(Member.Id);
+		}
+	}
+	return Eligible;
 }
 
 TArray<FDwAbilityOffer> FDwRewardRules::RollAbilityChoices(const FDwRunState& State, int32 Count, FRandomStream& Random)

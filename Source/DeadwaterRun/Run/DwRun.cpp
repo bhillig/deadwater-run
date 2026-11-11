@@ -2,6 +2,7 @@
 
 #include "Run/DwRun.h"
 
+#include "Board/DwBoardBuilder.h"
 #include "Combat/DwEncounterSetupBuilder.h"
 #include "Core/DwGameData.h"
 #include "Core/DwGameplayTags.h"
@@ -12,10 +13,12 @@
 #include "Data/DwItemDefinition.h"
 #include "Data/DwMapRules.h"
 #include "Data/DwPerkDefinition.h"
+#include "Data/DwShipUpgradeDefinition.h"
 #include "Data/DwShopDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 #include "Run/DwCaptainRules.h"
+#include "Run/DwCrewFactory.h"
 #include "Run/DwProgressionRules.h"
 #include "Run/DwRunRandom.h"
 #include "Run/Economy/DwRewardRules.h"
@@ -45,13 +48,13 @@ bool UDwRun::Initialize(const UDwGameData& InGameData, const UDwCaptainDefinitio
 	}
 	else
 	{
-		AddCrewMember(*Captain.CaptainUnit, /*bIsCaptain*/ true);
+		FDwCrewFactory::Create(State, *Captain.CaptainUnit, /*Level*/ 1, /*bIsCaptain*/ true);
 	}
 	for (const UDwUnitDefinition* Unit : Captain.StartingCrew)
 	{
 		if (Unit)
 		{
-			AddCrewMember(*Unit, /*bIsCaptain*/ false);
+			FDwCrewFactory::Create(State, *Unit, /*Level*/ 1, /*bIsCaptain*/ false);
 		}
 	}
 	for (const FDwCrewMemberState& Member : State.Crew)
@@ -109,21 +112,6 @@ bool UDwRun::Initialize(const UDwGameData& InGameData, const UDwCaptainDefinitio
 	return Errors.IsEmpty();
 }
 
-FGuid UDwRun::MakeCrewId()
-{
-	return FGuid(static_cast<uint32>(FDwRunRandom::ForCrew(State.Seed)), 0x44575255u /* "DWRU" */, 0u, static_cast<uint32>(++State.LastCrewSerial));
-}
-
-void UDwRun::AddCrewMember(const UDwUnitDefinition& Unit, bool bIsCaptain)
-{
-	FDwCrewMemberState& Member = State.Crew.AddDefaulted_GetRef();
-	Member.Id = MakeCrewId();
-	Member.Unit = &Unit;
-	Member.bIsCaptain = bIsCaptain;
-	Member.Level = 1;
-	Member.Health = Member.GetMaxHealth();
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Map
 
@@ -161,8 +149,86 @@ bool UDwRun::ChooseNode(int32 NodeIndex)
 	}
 	UE_LOG(LogDwRun, Log, TEXT("Sailed to node %d (layer %d, lane %d, %s, %s)."), NodeIndex, Node.Layer, Node.Lane,
 		*StaticEnum<EDwNodeType>()->GetNameStringByValue(static_cast<int64>(Node.Type)), *GetNameSafe(Node.Encounter));
+	if (State.Phase == EDwRunPhase::Shop)
+	{
+		OpenShop(NodeIndex);
+	}
 	Changed(Old);
 	return true;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Shop
+
+void UDwRun::OpenShop(int32 NodeIndex)
+{
+	const UDwShopDefinition* Shop = GameData ? GameData->DefaultShop.Get() : nullptr;
+	const FDwShopContext Context = GetShopContext();
+	FRandomStream Random(FDwRunRandom::ForNode(State.Seed, NodeIndex));
+	State.Shop = Shop ? FDwShopRules::GenerateInventory(State, *Shop, Context, Random) : FDwShopInventory();
+	State.Shop.Node = NodeIndex;
+	UE_CLOG(!Shop || !Context.Economy, LogDwRun, Error, TEXT("Shop at node %d has nothing to sell: DA_GameData.DefaultShop or DT_EconomyTuning 'Default' is missing."),
+		NodeIndex);
+	UE_LOG(LogDwRun, Log, TEXT("Shop at node %d: %d offer(s), %d gold to spend."), NodeIndex, State.Shop.Offers.Num(), State.Gold);
+}
+
+EDwPurchaseResult UDwRun::CanPurchase(int32 OfferId, FGuid CrewId, int32 ReplaceSlot) const
+{
+	return State.Phase == EDwRunPhase::Shop ? FDwShopRules::CanPurchase(State, OfferId, CrewId, ReplaceSlot, GetShopContext()) : EDwPurchaseResult::NoOffer;
+}
+
+EDwPurchaseResult UDwRun::TryPurchase(int32 OfferId, FGuid CrewId, int32 ReplaceSlot)
+{
+	if (!RequirePhase(EDwRunPhase::Shop, TEXT("TryPurchase")))
+	{
+		return EDwPurchaseResult::NoOffer;
+	}
+	// A copy: buying can append offers (a recruit's disband offer). Names are read before buying: a disband removes the
+	// crew member and an ability replace overwrites the slot.
+	const FDwShopOffer* Found = State.Shop.Find(OfferId);
+	const FDwShopOffer Bought = Found ? *Found : FDwShopOffer();
+	const FDwShopOffer* Offer = &Bought;
+	const FString What = Found ? FString::Printf(TEXT("%s offer %d (%d gold)"), *DwRun::OfferTypeName(Offer->Type), OfferId, Offer->Price)
+		: FString::Printf(TEXT("offer %d"), OfferId);
+	const FDwCrewMemberState* Target = Offer->Type == EDwShopOfferType::Disband ? State.FindCrew(Offer->CrewId) : State.FindCrew(CrewId);
+	const FString Who = Target ? Target->GetDisplayName().ToString() : FString();
+	const FString Forgets = Target && Target->Abilities.IsValidIndex(ReplaceSlot) ? GetNameSafe(Target->Abilities[ReplaceSlot]) : FString();
+
+	const EDwPurchaseResult Result = FDwShopRules::ApplyPurchase(State, OfferId, CrewId, ReplaceSlot, GetShopContext());
+	if (Result != EDwPurchaseResult::Ok)
+	{
+		UE_LOG(LogDwRun, Warning, TEXT("TryPurchase refused: %s - %s."), *What, *DwRun::PurchaseResultName(Result));
+		return Result;
+	}
+	FString Detail;
+	switch (Offer->Type)
+	{
+	case EDwShopOfferType::Repair:      Detail = FString::Printf(TEXT("hull %.0f / %.0f"), State.Ship.Health, State.Ship.MaxHealth); break;
+	case EDwShopOfferType::Item:        Detail = FString::Printf(TEXT("%s, %d of %d carried"), *GetNameSafe(Offer->Item), State.CountItems(), GetMaxInventory()); break;
+	case EDwShopOfferType::Ability:     Detail = FString::Printf(TEXT("%s learns %s%s"), *Who, *GetNameSafe(Offer->Ability),
+		Forgets.IsEmpty() ? TEXT("") : *FString::Printf(TEXT(", forgets %s"), *Forgets)); break;
+	case EDwShopOfferType::Recruit:     Detail = FString::Printf(TEXT("%s joins at level %d"), *GetNameSafe(Offer->Unit), State.Crew.Last().Level); break;
+	case EDwShopOfferType::ShipUpgrade: Detail = FString::Printf(TEXT("%s: hull %.0f / %.0f, cannons %.0f"), *GetNameSafe(Offer->Upgrade), State.Ship.Health,
+		State.Ship.MaxHealth, State.Ship.CannonDamage); break;
+	case EDwShopOfferType::Disband:     Detail = FString::Printf(TEXT("%s leaves the crew"), *Who); break;
+	}
+	UE_LOG(LogDwRun, Log, TEXT("Bought %s: %s; %d gold left."), *What, *Detail, State.Gold);
+	Changed(State.Phase);
+	return Result;
+}
+
+int32 UDwRun::GetMaxInventory() const
+{
+	const FDwEconomyTuningRow* Economy = GetEconomyTuning();
+	return Economy ? FMath::Max(0, Economy->MaxInventory) : 0;
+}
+
+FDwShopContext UDwRun::GetShopContext() const
+{
+	FDwShopContext Context;
+	Context.Economy = GetEconomyTuning();
+	Context.MaxAbilitySlots = GetMaxAbilitySlots();
+	return Context;
 }
 
 bool UDwRun::LeaveShop()
@@ -171,6 +237,7 @@ bool UDwRun::LeaveShop()
 	{
 		return false;
 	}
+	State.Shop = FDwShopInventory();
 	CompleteNode();
 	return true;
 }
@@ -252,9 +319,19 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 	{
 		return false;
 	}
+	// Ship upgrades (06): the stat bonuses are already in the run's numbers; extra GEs go to the spawned ship, granted tags
+	// unlock the deck tiles that need them (the third cannon).
 	Out.PlayerShip.MaxHealth = State.Ship.MaxHealth;
 	Out.PlayerShip.Health = State.Ship.Health;
 	Out.PlayerShip.CannonDamage = State.Ship.CannonDamage;
+	for (const UDwShipUpgradeDefinition* Upgrade : State.Ship.Upgrades)
+	{
+		if (Upgrade && Upgrade->Effect)
+		{
+			Out.PlayerShip.UpgradeEffects.Add(Upgrade->Effect);
+		}
+	}
+	FDwBoardBuilder::ApplyShipUpgrades(Out.Grid, EDwSide::Player, State.Ship.GetUpgradeTags());
 	for (const FDwItemStack& Stack : State.Inventory)
 	{
 		if (Stack.Item && Stack.Count > 0)
@@ -478,9 +555,16 @@ bool UDwRun::ClaimRewards(int32 AbilityChoice, FGuid CrewId, int32 ReplaceSlot)
 	const EDwRunPhase Old = State.Phase;
 	State.Gold += Bundle.Gold;
 	State.Stats.GoldEarned += Bundle.Gold;
+	const int32 MaxInventory = GetMaxInventory();
 	for (const FDwItemStack& Stack : Bundle.Items)
 	{
-		State.AddItem(Stack.Item, Stack.Count);
+		const int32 Added = State.AddItem(Stack.Item, Stack.Count, MaxInventory);
+		State.Stats.ItemsLeftBehind += Stack.Count - Added; // 0: the bundle only holds what fit when it was rolled
+	}
+	for (const FDwItemStack& Stack : Bundle.ItemsNoRoom)
+	{
+		State.Stats.ItemsLeftBehind += Stack.Count;
+		UE_LOG(LogDwRun, Log, TEXT("Inventory full (%d of %d): %d x %s left behind."), State.CountItems(), MaxInventory, Stack.Count, *GetNameSafe(Stack.Item));
 	}
 	if (Learner && Ability)
 	{

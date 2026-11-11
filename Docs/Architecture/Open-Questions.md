@@ -3,7 +3,7 @@
 - Every creative or design call the architecture needs. Agents never pick; they build the recommended default behind a data flag, clearly marked as a placeholder, until you answer.
 - **Where it lives** = the data field that holds your answer. Almost all answers are data, not code. Questions marked **(code)** change behaviour that data can't express.
 - **Needed by** follows the critical path in `Roadmap.md`.
-- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-10 (K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
+- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-11 (P4, P7-P10, C9a and the DW-204 price questions answered; P12-P18 raised by DW-204. 2026-11-10: K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
 
 ## Top 5 (they shape the most work)
 1. **C8a** - Explosive barrels: new in your C8 answer, not in the design doc or Scope. In v1 or post-launch?
@@ -19,7 +19,6 @@
 | C5a | C5 | Your answer listed "ladder tile, climb cost 2, 1 unit, melee can't target the nest" but left out option a's "+2 range from it". Is there a range bonus from the nest? And can a unit in the nest use melee on the deck? | a) +2 range from the nest; melee blocked both ways (can't hit into or out of the nest) b) No range bonus (nest = LOS over crates + melee protection); melee blocked both ways c) +2 range; a nest unit can melee the ladder tile | a) - the nest is the sniper's spot; built as placeholder now | `DT_CombatTuning.RangeBonusPerElevation`, melee `bCanTargetElevated` | Oct 27 |
 | C6a | C6 | Do units block line of sight? | a) No, only masts/cabins and crates/rails b) Enemy units block c) All units block | a) - easiest to read; placeholder now | `FDwLineOfSight` **(code)** | Oct 27 |
 | C8a | C8 | Explosive barrels are new: not in `DeadwaterRun.md` and not in Scope (Scope rule: new ideas go on the post-launch list). In v1? | a) Post-launch; v1 ship damage = cannons + ship-targeting abilities only b) v1: barrels are 1-HP neutral prop units placed in deck layouts; destroying one deals X to that ship and Y to adjacent units (needs numbers, how many per ship, whether either side can shoot them, whether it counts as a kill, VFX/SFX, AI awareness - about 3-4 agent-days across gameplay, AI, art) c) v1, ship damage only, no splash | a) - protects Dec 3; b) fits the architecture cleanly if you want it (no new systems, just a unit definition + a death effect) | Scope; if b: `DA_Unit_ExplosiveBarrel`, deck layout slots, `DT_UnitTuning` | Nov 2 |
-| C9a | C9 | MP now refills every fight, so the mana restore item only matters mid-fight. Can items be used outside combat? | a) Combat only (one item path, through GAS) b) Health restore also usable from the map/shop screens | a) | `UDwItemDefinition` usage flag **(code if b)** | Nov 2 |
 | C10a | C10 | Can event outcomes kill? With captain death = defeat, a bad event could end the run off-screen | a) Event Health loss floors at 1 for everyone; ship Health floors at 1 b) Can kill crew, captain floors at 1 c) Can kill anyone; captain death = defeat | a) - deaths happen in fights the player can play | `UDwEventOutcome_CrewHealth`, `_ShipHealth` | Nov 2 |
 | C10b | C10 | Should enemies hunt the captain? | a) Every crew has a moderate captain-pressure weight b) Only some crews (e.g. an "assassin" crew) hunt the captain; others ignore him c) No captain preference | b) - a personality you can see; ties to N2 | `UDwAiProfile` captain-pressure weight | Nov 8 |
 | C13a | C13 | With no undo, how is a move confirmed? | a) Hover shows the path, one click on a highlighted tile moves b) First click previews, second click confirms c) a) with a setting for b) | a) - keeps the pace; the hover path is the preview | `UDwCombatInteraction` | Oct 27 |
@@ -30,7 +29,7 @@
 
 ## Combat and board (needed by Oct 27)
 
-All answered - see Resolved. Follow-ups C5a, C6a, C8a, C9a, C10a, C10b, C13a above.
+All answered - see Resolved. Follow-ups C5a, C6a, C8a, C10a, C10b, C13a above.
 
 ## Captains (needed by Nov 2; K1 by Oct 27)
 
@@ -55,12 +54,15 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 | P1 | XP: kill XP, clear XP, curve, max level (and kill XP for a Kraken tentacle) | Balance Designer proposes; target ~1 level per encounter | Tuning | `DT_ProgressionTuning`, `XpOnKill`, `ClearXp`, `MaxLevel` |
 | P2 | Level-up stat gains per archetype; perk pools; 2 or 3 perk choices | a) Shared pool + a few archetype perks, 3 choices b) Per-archetype pools, 2 choices c) One shared pool, 3 choices | a) | `UDwPerkPool`, `PerkChoices`, unit rows |
 | P3 | Level-ups mid-fight or after? | a) After the fight b) Immediately on the kill | a) | Flow (code is the same) |
-| P4 | Ability slots per crew member; can abilities be replaced? | a) 3 slots + basic attack, replace when full b) Unlimited c) 2 slots | a) | `MaxAbilitySlots` |
 | P5 | "A new move" on victory: how? | a) Choose 1 of 3 abilities and who learns it b) Random ability to a random crew member c) Skip allowed for gold | a) | `RewardAbilityChoices` |
-| P7 | Repair: 100 gold for how much hull? | a) +100 HP b) Full repair c) +50% max | a) - keeps the heal-or-upgrade tension | `RepairAmount` |
+| P12 | Repair when less than `RepairAmount` hull is missing (DW-204) | a) Full price, hull fills to max b) Pay only for what is fixed (rounded up) c) Refused until a full `RepairAmount` is missing | a) - built as the placeholder; simplest to read | `FDwShopRules::ApplyPurchase` **(code if b or c)** |
+| P13 | How often can a shop repair / sell items in one visit? (DW-204) | a) Any number of times, until the hull is full / the hold is full (`MaxInventory`) b) Once each per visit c) A per-shop stock (e.g. 1 repair, 2 of each item) | a) - built as the placeholder | `FDwShopRules::SellsOnce` **(code if b)**; stock counts in `DT_EconomyTuning` if c |
+| P14 | Does "+50 max hull" also add 50 to the current hull? (DW-204) | a) Yes, the new planks arrive intact b) Max only; repair to fill it | a) - built as the placeholder | `FDwShopRules::ApplyPurchase` **(code if b)** |
+| P15 | Plunder with a full hold (6 items, DW-204) | a) Left behind; the rewards screen shows it (`FDwRewardBundle::ItemsNoRoom`) b) Swap: drop a carried item to take it c) Sold on the spot for gold | a) - built as the placeholder; b) needs a rewards-screen choice | `FDwRewardRules`, `UDwRun::ClaimRewards` **(code if b or c)** |
+| P16 | "Can't disband the last crew member": may the captain sail alone? (DW-204) | a) No: the captain plus at least one crew member always stay b) Yes: everyone but the captain can be disbanded | a) - built as the placeholder (safest) | `FDwShopRules::CanPurchase` (`CantDisband`) **(code if b)** |
+| P17 | Recruit level "crew average - 1": does the captain count in the average? (DW-204) | a) Yes, every living crew member, captain included b) Crew only | a) - built as the placeholder | `FDwShopRules::GetRecruitLevel` **(code if b)** |
+| P18 | Ship upgrades: price, how many times, names and the third cannon's spot (DW-204) | a) 150 gold each, once per run; placeholder names Reinforced Hull / Heavy Shot / Third Cannon; slot at row 0 beside the first cannon b) Tiered prices (e.g. 100 / 150 / 200) c) Hull and cannon damage stack (buyable again), third cannon once | a) - built as the placeholder; names and the deck spot are yours (art pass) | `Tuning/ShipUpgradeTuning.json`, `DA_ShipUpgrade_*`, `DA_Deck_PlayerShip` |
 | P8 | Recruit/disband: cost, which archetypes, recruit level, refund | a) Swordsman/Sniper (+ any new archetypes), cost ~80, level = crew average - 1, no refund b) Random archetype | Tuning + N5 | `DT_UnitTuning.RecruitCost`, shop recruit pool |
-| P9 | Ship upgrades list and prices | a) +50 max HP, +20 cannon damage, third cannon b) a) + armour (-X% ship damage) c) Only HP and cannon damage | a) | `UDwShipUpgradeDefinition` assets |
-| P10 | Items: restore amounts, who can be targeted, inventory shared or per crew, cap | a) Shared ship inventory, cap 6, self or adjacent ally, +40 HP / +10 MP b) Per crew inventory | a) | `UDwItemDefinition`, `DT_ItemTuning` |
 
 ## Content (needed by Nov 8 - week 3 is content week)
 
@@ -180,3 +182,17 @@ U1-U5 answered - see Resolved. Follow-up U3a above.
 | M4 | Event nodes on the map | a) "?" only | `14` (map screen) |
 | M5 | Shop before the boss | a) The middle node of the last layer is always a shop, offered from every node before it | `09`, `DA_MapRules.bShopOptionBeforeBoss` |
 | M6 | Fight info on the map | a) Icon only | `14` (map screen) |
+
+### Answered 2026-11-11 (DW-204 shop)
+| ID | Question | Decision | Now in |
+|---|---|---|---|
+| P4 | Ability slots per crew member; can abilities be replaced? | a) 3 slots + basic attack; when full, buying (or claiming) an ability replaces one (`MaxAbilitySlots` 3) | `10`, `12`, `Tuning/RunTuning.json`, `FDwShopRules` (`NoSlot`) |
+| P7 | Repair: 100 gold for how much hull? | a) +100 hull (`RepairCost` 100, `RepairAmount` 100), clamped at max | `06`, `10`, `Tuning/EconomyTuning.json` |
+| P8 | Recruit/disband: cost, archetypes, level, refund | a) Swordsman / Sniper (+ any new archetypes) for 80 (`DT_UnitTuning.RecruitCost`); level = max(1, floor(crew average) + `RecruitLevelOffset` -1); disband gives no refund (`DisbandRefund` 0) | `10`, `Tuning/UnitTuning.json`, `Tuning/EconomyTuning.json`, `DA_Shop_Default.RecruitPool` |
+| P9 | Ship upgrades list and prices | a) +50 max hull, +20 cannon damage, third cannon; numbers in the new `DT_ShipUpgradeTuning` (`Price`, `MaxHealthBonus`, `CannonDamageBonus`) | `06`, `10`, `13`, `Tuning/ShipUpgradeTuning.json`, `DA_ShipUpgrade_*` |
+| P10 | Items: amounts, targets, inventory, cap | a) Shared ship inventory, 6 items in total (`DT_EconomyTuning.MaxInventory`, shop and plunder both respect it), self or an adjacent ally, +40 HP / +10 MP | `10`, `Tuning/ItemTuning.json`, `Tuning/EconomyTuning.json` |
+| C9a | Can items be used outside combat? | a) Combat only | `10` |
+| DW-204 a | Where does a price live? (economy row vs. each thing's row) | Per row only: `DT_AbilityTuning.ShopPrice` (50), `DT_ItemTuning.Price` (30), `DT_UnitTuning.RecruitCost` (80). `AbilityUnlockCost`, `ItemCost`, `RecruitCostDefault` deleted from the economy row. Repair keeps `DT_EconomyTuning.RepairCost` (no row of its own) | `10`, `13` |
+| DW-204 b | Where does a ship upgrade's price live? | A new `DT_ShipUpgradeTuning` (`FDwShipUpgradeTuningRow`: `Price` and the effect amounts), synced from `Tuning/ShipUpgradeTuning.json` by the content script; `UDwShipUpgradeDefinition` links its row | `06`, `13` |
+| DW-204 c | Inventory cap: total or per stack? | 6 items in total in the shared inventory, `DT_EconomyTuning.MaxInventory`. A full hold leaves plunder behind (P15 placeholder) | `10` |
+| DW-204 d | Recruit level formula | `max(1, floor(crew average level) + RecruitLevelOffset)`, `RecruitLevelOffset` -1 in `DT_EconomyTuning`; `DisbandRefund` stays 0 | `10` |

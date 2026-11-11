@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "Run/DwRunTypes.h"
+#include "Run/Economy/DwShopRules.h"
 #include "DwRun.generated.h"
 
 class UDwCaptainDefinition;
@@ -23,7 +24,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDwOnRunStateChanged);
  * Calls in the wrong phase are refused (false, logged as a warning) and change nothing.
  *
  * Flow: Map -> ChooseNode(fight) -> Combat -> ApplyCombatResult -> Rewards -> ClaimRewards -> [LevelUp -> ChoosePerk]
- * x levels gained -> Map ... -> ChooseNode(boss) -> Combat -> Victory. Any defeat -> Defeat. Abandon -> Defeat (Abandoned).
+ * x levels gained -> Map ... -> ChooseNode(shop) -> Shop -> [TryPurchase]* -> LeaveShop -> Map ... -> ChooseNode(boss) ->
+ * Combat -> Victory. Any defeat -> Defeat. Abandon -> Defeat (Abandoned).
  */
 UCLASS(BlueprintType)
 class DEADWATERRUN_API UDwRun : public UObject
@@ -99,7 +101,31 @@ public:
 	/** DT_RunTuning.MaxAbilitySlots (P4): learned abilities per crew member before a new one must replace one. 0 = no limit. */
 	int32 GetMaxAbilitySlots() const;
 
-	/** Shop phase only: back to the map. DW-204 adds purchases before it. */
+	/**
+	 * The shop at the current node (Shop phase; rolled on arrival from FDwRunRandom::ForNode, so a seed always gives the
+	 * same shop). Not open (Node INDEX_NONE) in any other phase. The shop screen shows one card per offer.
+	 */
+	const FDwShopInventory& GetShop() const { return State.Shop; }
+
+	/**
+	 * Whether TryPurchase(OfferId, CrewId, ReplaceSlot) would go through, without logging: the shop screen's enabled state
+	 * and disabled reason. CrewId is the learner of an ability offer; ReplaceSlot (index into their Abilities) is required
+	 * once they know MaxAbilitySlots. Other offers ignore both. NoOffer outside the Shop phase.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Deadwater|Run")
+	EDwPurchaseResult CanPurchase(int32 OfferId, FGuid CrewId, int32 ReplaceSlot = -1) const;
+
+	/**
+	 * Shop phase only. Buys offer OfferId (FDwShopRules::ApplyPurchase): gold, crew, inventory and ship change, one-time
+	 * offers sell out, OnStateChanged fires. Anything but Ok is refused (logged as a warning) and changes nothing.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
+	EDwPurchaseResult TryPurchase(int32 OfferId, FGuid CrewId, int32 ReplaceSlot = -1);
+
+	/** DT_EconomyTuning.MaxInventory (P10): items the shared inventory holds, all kinds together. 0 = no cap. */
+	int32 GetMaxInventory() const;
+
+	/** Shop phase only: closes the shop and goes back to the map. */
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
 	bool LeaveShop();
 
@@ -122,8 +148,9 @@ public:
 
 private:
 	bool RequirePhase(EDwRunPhase Expected, const TCHAR* What) const;
-	FGuid MakeCrewId();
-	void AddCrewMember(const UDwUnitDefinition& Unit, bool bIsCaptain);
+	/** Rolls the shop of the node just entered into State.Shop. */
+	void OpenShop(int32 NodeIndex);
+	FDwShopContext GetShopContext() const;
 	/** Back to the map after a completed node (counts it as cleared). */
 	void CompleteNode();
 	/** XP, level-ups and the reward bundle after a won (non-boss) fight. */

@@ -39,7 +39,9 @@ classDiagram
         +ApplyCombatResult(Result)
         +ClaimRewards(AbilityChoice, CrewId, ReplaceSlot)
         +ChoosePerk(ChoiceIndex)
-        +TryPurchase(OfferId, TargetCrewId) EDwPurchaseResult
+        +GetShop() FDwShopInventory
+        +CanPurchase(OfferId, TargetCrewId, ReplaceSlot) EDwPurchaseResult
+        +TryPurchase(OfferId, TargetCrewId, ReplaceSlot) EDwPurchaseResult
         +LeaveShop()
         +ChooseEventOption(ChoiceIndex)
         +Abandon()
@@ -107,7 +109,7 @@ classDiagram
 - Definitions in run state are object pointers (`TObjectPtr<const UDwUnitDefinition>` etc.), not `FPrimaryAssetId`s, matching `FDwCombatantSetup`: transient test content works, `UDwRun` keeps them referenced, and every definition is resident anyway (`UDwAssetManager`).
 - Roster ids are seeded (`FDwRunRandom::ForCrew` + a serial in `FDwRunState::LastCrewSerial`), so a seed reproduces the same ids.
 - `UDwRun::Initialize` builds the chart with `FDwMapGenerator::Build` (generate + validate, retried with `ForMap(Seed, Attempt)`) from `DA_GameData.MapRules` (class defaults when unset) and `UDwRunSubsystem::GatherEncounterPool` (sorted by name). Validator problems after `MaxAttempts` are run setup errors.
-- After a won fight (not the boss) the run enters `Rewards` (DW-203): `ClaimRewards` banks gold and items and teaches the chosen move, then `LevelUp` once per level gained (`ChoosePerk` on the front of `PendingLevelUps`), then `Map`. The node counts as cleared only when the last level-up is confirmed. `LeaveShop()` / `LeaveEvent()` return a shop or event node to the map; DW-204/DW-205 add the purchases and outcomes before them.
+- After a won fight (not the boss) the run enters `Rewards` (DW-203): `ClaimRewards` banks gold and items and teaches the chosen move, then `LevelUp` once per level gained (`ChoosePerk` on the front of `PendingLevelUps`), then `Map`. The node counts as cleared only when the last level-up is confirmed. `LeaveShop()` / `LeaveEvent()` return a shop or event node to the map. A shop node rolls its `FDwShopInventory` on arrival (DW-204, `10` "Shop"); `TryPurchase` buys from it any number of times before `LeaveShop` closes it. DW-205 adds the event outcomes.
 - The boss node's encounter is `DA_GameData.KrakenEncounter`; until DW-209 sets it, `BuildEncounterSetup` reports why the boss fight can't start.
 - `ADwGameMode` is the phase bridge: `Combat` -> `BuildEncounterSetup` -> `StartEncounter`; `OnCombatEnded` -> `PostCombatSeconds` beat (next tick in instant mode) -> `EndEncounter` -> `ApplyCombatResult`.
 - `ApplyCombatResult` writes survivor Health and permadeath back; there is no Mana in run state (C9: MP refills at every fight start). Any `Defeat*` outcome, including `DefeatCaptainDead` (C10), moves the run to `Defeat`.

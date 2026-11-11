@@ -9,6 +9,12 @@
 #include "Presentation/DwCameraRig.h"
 #include "Core/DwGameData.h"
 #include "Data/DwCaptainDefinition.h"
+#include "Data/DwItemDefinition.h"
+#include "Data/DwShipUpgradeDefinition.h"
+#include "Data/DwShopDefinition.h"
+#include "Data/DwUnitDefinition.h"
+#include "Data/Tuning/DwTuningRows.h"
+#include "HAL/IConsoleManager.h"
 #include "GameplayEffect.h"
 #include "Combat/DwCombatInteraction.h"
 #include "Combat/DwCombatRules.h"
@@ -82,6 +88,15 @@ void UDwDevCaptureSubsystem::StageDemo()
 	if (Demo == TEXT("shell"))
 	{
 		ShellDemoStep();
+		return;
+	}
+	if (Demo == TEXT("shop"))
+	{
+		if (IConsoleVariable* Readout = IConsoleManager::Get().FindConsoleVariable(TEXT("dw.Run.Readout")))
+		{
+			Readout->Set(true, ECVF_SetByCode);
+		}
+		ShopDemoStep();
 		return;
 	}
 
@@ -587,6 +602,181 @@ void UDwDevCaptureSubsystem::VoyageDemoStep()
 	}
 	UE_CLOG(!bOk, LogDw, Error, TEXT("Dev capture '%s': could not act in phase %s."), *Demo, *DwRun::PhaseName(Phase));
 	Next(0.6f);
+}
+
+void UDwDevCaptureSubsystem::ShopDemoStep()
+{
+	UWorld* World = GetWorld();
+	const UDwRunSubsystem* Runs = UDwRunSubsystem::Get(World);
+	UDwRun* Run = Runs ? Runs->GetRun() : nullptr;
+	UDwCombatSubsystem* Combat = World->GetSubsystem<UDwCombatSubsystem>();
+	auto Next = [this, World](float Seconds)
+	{
+		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::ShopDemoStep), Seconds, false);
+	};
+	if (!Run || !Combat || Run->IsOver())
+	{
+		UE_LOG(LogDw, Error, TEXT("Dev capture 'shop': %s."), Run ? *FString::Printf(TEXT("the run ended (%s)"), *DwRun::EndReasonName(Run->GetState().Stats.EndReason))
+			: TEXT("no run (start the game with -DwCaptain=<name>)"));
+		Capture();
+		return;
+	}
+	const FDwRunState& S = Run->GetState();
+	auto Frame = [this](const TCHAR* What)
+	{
+		CaptureFrame(++VoyageFrame);
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'shop': frame %02d = %s"), VoyageFrame, What);
+	};
+	auto LogState = [&S](const TCHAR* When)
+	{
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'shop': %s: %d gold, hull %.0f / %.0f, cannons %.0f, %d upgrade(s), %d crew alive, %d item(s)."), When, S.Gold,
+			S.Ship.Health, S.Ship.MaxHealth, S.Ship.CannonDamage, S.Ship.Upgrades.Num(), S.CountLivingCrew(), S.CountItems());
+	};
+
+	switch (Run->GetPhase())
+	{
+	case EDwRunPhase::Combat:
+		if (!bShopFightStaged)
+		{
+			bShopFightStaged = true;
+			Next(2.5f); // spawn and settle
+			return;
+		}
+		bShopFightStaged = false;
+		if (ShopStage >= 4)
+		{
+			const ADwShip* Ship = Combat->GetShip(EDwSide::Player);
+			UE_LOG(LogDw, Log, TEXT("Dev capture 'shop': the next fight with %d crew and %d player cannon(s)."), S.CountLivingCrew(),
+				Ship ? Ship->GetCannonTiles().Num() : 0);
+			Capture(); // final frame
+			return;
+		}
+		if (ADwShip* Ship = Combat->GetShip(EDwSide::Player))
+		{
+			// Knock the hull down so the shop's repair has something to fix (the result writes it back to the run).
+			Ship->GetAbilitySystemComponent()->SetNumericAttributeBase(UDwShipAttributeSet::GetHealthAttribute(), FMath::RoundToFloat(Ship->GetMaxHealth() * 0.6f));
+		}
+		WinFightByCaptain();
+		Next(1.0f + 2.5f); // ADwGameMode::PostCombatSeconds, then the rewards
+		return;
+	case EDwRunPhase::Rewards:
+		UE_CLOG(!Run->ClaimRewards(INDEX_NONE, FGuid()), LogDw, Error, TEXT("Dev capture 'shop': could not claim the rewards."));
+		Next(0.6f);
+		return;
+	case EDwRunPhase::LevelUp:
+		Run->ChoosePerk(Run->GetCurrentLevelUp() && !Run->GetCurrentLevelUp()->PerkChoices.IsEmpty() ? 0 : INDEX_NONE);
+		Next(0.6f);
+		return;
+	case EDwRunPhase::Map:
+	{
+		if (ShopStage == 4)
+		{
+			LogState(TEXT("back on the map"));
+			Frame(TEXT("map after the shop"));
+			ShopStage = 5;
+			Next(0.5f);
+			return;
+		}
+		// Gold for the shopping list: a repair, the dearest recruit, the dearest upgrade and the first item.
+		const UDwShopDefinition* Shop = Run->GetGameData() ? Run->GetGameData()->DefaultShop.Get() : nullptr;
+		const FDwEconomyTuningRow* Economy = Run->GetGameData() && Run->GetGameData()->TuningTables.Economy
+			? Run->GetGameData()->TuningTables.Economy->FindRow<FDwEconomyTuningRow>(UDwRun::DefaultTuningRow, TEXT("Capture")) : nullptr;
+		int32 Needed = Economy ? Economy->RepairCost : 0;
+		if (Shop)
+		{
+			int32 Recruit = 0, Upgrade = 0;
+			for (const UDwUnitDefinition* Unit : Shop->RecruitPool)
+			{
+				const FDwUnitTuningRow* Row = Unit ? Unit->GetTuningRow<FDwUnitTuningRow>() : nullptr;
+				Recruit = FMath::Max(Recruit, Row ? Row->RecruitCost : 0);
+			}
+			for (const UDwShipUpgradeDefinition* Up : Shop->UpgradePool)
+			{
+				const FDwShipUpgradeTuningRow* Row = Up ? Up->GetTuningRow<FDwShipUpgradeTuningRow>() : nullptr;
+				Upgrade = FMath::Max(Upgrade, Row ? Row->Price : 0);
+			}
+			const FDwItemTuningRow* ItemRow = !Shop->Items.IsEmpty() && Shop->Items[0] ? Shop->Items[0]->GetTuningRow<FDwItemTuningRow>() : nullptr;
+			Needed += Recruit + Upgrade + (ItemRow ? ItemRow->Price : 0);
+		}
+		const TArray<int32> Choices = Run->GetChoices();
+		auto Of = [&S, &Choices](EDwNodeType Type) { return Choices.FindByPredicate([&S, Type](int32 Index) { return S.Map.Nodes[Index].Type == Type; }); };
+		const bool bShopping = ShopStage == 0 && S.Gold >= Needed;
+		const int32* Pick = bShopping && Of(EDwNodeType::Shop) ? Of(EDwNodeType::Shop) : (Of(EDwNodeType::Fight) ? Of(EDwNodeType::Fight) : Of(EDwNodeType::Event));
+		if (!Pick && !Choices.IsEmpty())
+		{
+			Pick = &Choices[0];
+		}
+		UE_CLOG(!Pick || !Run->ChooseNode(*Pick), LogDw, Error, TEXT("Dev capture 'shop': could not sail on."));
+		Next(0.6f);
+		return;
+	}
+	case EDwRunPhase::Event:
+		Run->LeaveEvent();
+		Next(0.6f);
+		return;
+	case EDwRunPhase::Shop:
+		if (ShopStage >= 4)
+		{
+			Run->LeaveShop(); // a later shop on the way to the next fight
+			Next(0.6f);
+			return;
+		}
+		if (ShopStage == 0)
+		{
+			LogState(TEXT("arrived at the shop"));
+			Frame(TEXT("shop on arrival"));
+			ShopStage = 1;
+			Next(0.5f);
+			return;
+		}
+		if (ShopStage == 1)
+		{
+			// One purchase per step, in this order: repair, a recruit, an upgrade (the third cannon if it's offered), an item.
+			const FDwShopInventory& Inventory = Run->GetShop();
+			auto Buyable = [Run](const FDwShopOffer& Offer) { return Run->CanPurchase(Offer.OfferId, FGuid()) == EDwPurchaseResult::Ok; };
+			auto Bought = [&S](EDwShopOfferType Type) { const int32* Count = S.Stats.Purchases.Find(Type); return Count && *Count > 0; };
+			const FDwShopOffer* Buy = nullptr;
+			for (EDwShopOfferType Type : { EDwShopOfferType::Repair, EDwShopOfferType::Recruit, EDwShopOfferType::ShipUpgrade, EDwShopOfferType::Item })
+			{
+				if (Buy || Bought(Type))
+				{
+					continue;
+				}
+				for (const FDwShopOffer& Offer : Inventory.Offers)
+				{
+					const bool bPreferred = Type != EDwShopOfferType::ShipUpgrade || (Offer.Upgrade && Offer.Upgrade->GrantedShipTags.HasTagExact(DwTags::Ship_Upgrade_ExtraCannon));
+					if (Offer.Type == Type && bPreferred && Buyable(Offer))
+					{
+						Buy = &Offer;
+						break;
+					}
+				}
+				if (!Buy && Type == EDwShopOfferType::ShipUpgrade)
+				{
+					Buy = Inventory.Offers.FindByPredicate([&Buyable](const FDwShopOffer& Offer) { return Offer.Type == EDwShopOfferType::ShipUpgrade && Buyable(Offer); });
+				}
+			}
+			if (Buy)
+			{
+				const EDwPurchaseResult Result = Run->TryPurchase(Buy->OfferId, FGuid());
+				UE_CLOG(Result != EDwPurchaseResult::Ok, LogDw, Error, TEXT("Dev capture 'shop': purchase refused (%s)."), *DwRun::PurchaseResultName(Result));
+				Next(0.4f);
+				return;
+			}
+			LogState(TEXT("after shopping"));
+			Frame(TEXT("shop after buying"));
+			ShopStage = 3;
+			Next(0.5f);
+			return;
+		}
+		UE_CLOG(!Run->LeaveShop(), LogDw, Error, TEXT("Dev capture 'shop': could not leave the shop."));
+		ShopStage = 4;
+		Next(0.6f);
+		return;
+	default:
+		Next(0.5f);
+		return;
+	}
 }
 
 void UDwDevCaptureSubsystem::BossFightStep()

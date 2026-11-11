@@ -7,15 +7,14 @@
 		"SurrenderLootMultiplier": 1.5,
 		"PlunderItemChance": 1.0,
 		"RepairCost": 100,
-		"RepairAmount": 0,
-		"AbilityUnlockCost": 50,
-		"ItemCost": 30,
-		"RecruitCostDefault": 0,
+		"RepairAmount": 100,
 		"DisbandRefund": 0,
 		"MaxCrew": 4,
-		"ShopAbilityOffers": 0,
-		"ShopRecruitOffers": 0,
-		"ShopUpgradeOffers": 0,
+		"RecruitLevelOffset": -1,
+		"MaxInventory": 6,
+		"ShopAbilityOffers": 3,
+		"ShopRecruitOffers": 2,
+		"ShopUpgradeOffers": 3,
 		"RewardAbilityChoices": 3
 	}
 ]

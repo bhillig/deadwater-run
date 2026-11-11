@@ -22,6 +22,7 @@ struct FDwDeckSource
  * is the rightmost column; the builder mirrors the enemy deck. Used by tests, the DW-110 import/export and placeholders.
  *
  *   .  deck              S  deck + spawn          C  deck + cannon       E  deck + boarding edge
+ *   U  deck + cannon slot that needs Ship.Upgrade.ExtraCannon (a cannon only once the ship has that upgrade, DW-204)
  *   L  ladder (deck)     N  nest (elevation 1)    c  crate (low blocker) M  mast/cabin (high blocker)
  *   ~  water             -  not on the board      B  Kraken body anchor (walkable water + spawn, Kraken arenas only)
  * Tentacle slots ('T' in Docs/Architecture/04) come with the tentacles in DW-301.
@@ -56,4 +57,14 @@ struct DEADWATERRUN_API FDwBoardBuilder
 
 	/** One deck on its own, owned by Side. Layout validation and single-deck tests use this. */
 	static FDwGridModel BuildSingleDeck(const FDwDeckSource& Deck, EDwSide Side);
+
+	/**
+	 * Ship upgrades on the board (Docs/Architecture/06 "Repair and upgrades"): every deck tile of Side that carries one of
+	 * ShipTags (an upgrade's GrantedShipTags, e.g. Ship.Upgrade.ExtraCannon) becomes a cannon (Tile.Cannon). Tiles whose
+	 * upgrade the ship lacks stay plain deck. Returns how many tiles were unlocked.
+	 */
+	static int32 ApplyShipUpgrades(FDwGridModel& Grid, EDwSide Side, const FGameplayTagContainer& ShipTags);
+
+	/** Whether a layout tile is a cannon slot waiting for a ship upgrade (any Ship.Upgrade.* tag). */
+	static bool IsUpgradeCannonSlot(const FDwTile& Tile);
 };

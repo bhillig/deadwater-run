@@ -16,6 +16,7 @@
 #include "Data/DwItemDefinition.h"
 #include "Data/DwPerkDefinition.h"
 #include "Data/DwPools.h"
+#include "Data/DwShipUpgradeDefinition.h"
 #include "Data/DwShopDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
@@ -58,8 +59,20 @@ namespace DwRunTest
 		UDwPerkDefinition* Lamplighter = nullptr;
 		UDwPerkPool* Perks = nullptr;
 
+		/** Grog 30 gold, Tonic 20 gold (DT_ItemTuning-style rows). */
 		UDwItemDefinition* Grog = nullptr;
 		UDwItemDefinition* Tonic = nullptr;
+		UDataTable* Items = nullptr;
+		/** ShopPrice 50 on every learnable ability (Parry, Musket, Rigging, Lantern). */
+		UDataTable* Abilities = nullptr;
+
+		/** DW-204: Hull +50 max HP, Shot +20 cannon damage, Cannon grants Ship.Upgrade.ExtraCannon; 150 gold each. */
+		UDwShipUpgradeDefinition* Hull = nullptr;
+		UDwShipUpgradeDefinition* Shot = nullptr;
+		UDwShipUpgradeDefinition* Cannon = nullptr;
+		UDataTable* Upgrades = nullptr;
+		/** Every offer type: both items, the deckhand as a recruit (80 gold), the three upgrades. */
+		UDwShopDefinition* Shop = nullptr;
 
 		template <typename T>
 		T* Make(const TCHAR* Name)
@@ -122,14 +135,24 @@ namespace DwRunTest
 			FDwUnitTuningRow Row;
 			Row.MaxHealth = 100; Row.MaxMana = 20; Row.HealthPerLevel = 10; Row.ManaPerLevel = 2;
 			Units->AddRow(TEXT("Cap"), Row);
-			Row.MaxHealth = 80; Row.XpOnKill = 25;
+			Row.MaxHealth = 80; Row.XpOnKill = 25; Row.RecruitCost = 80;
 			Units->AddRow(TEXT("Hand"), Row);
 
+			Abilities = Make<UDataTable>(TEXT("DT_TestAbilities"));
+			Abilities->RowStruct = FDwAbilityTuningRow::StaticStruct();
+			FDwAbilityTuningRow Priced;
+			Priced.ShopPrice = 50;
+			Abilities->AddRow(TEXT("Priced"), Priced);
 			Cutlass = Ability(TEXT("Cutlass"));
 			Parry = Ability(TEXT("Parry"));
 			Musket = Ability(TEXT("Musket"), /*bFirearm*/ true);
 			Rigging = Ability(TEXT("Rigging"));
 			Lantern = Ability(TEXT("Lantern"));
+			for (UDwAbilityDefinition* Learnable : { Parry, Musket, Rigging, Lantern })
+			{
+				Learnable->Tuning.DataTable = Abilities;
+				Learnable->Tuning.RowName = TEXT("Priced");
+			}
 			HandPool = Make<UDwAbilityPool>(TEXT("DA_AbilityPool_TestHand"));
 			HandPool->Abilities = { { Parry, 1.f }, { Musket, 1.f }, { Rigging, 1.f } };
 			CaptainPool = Make<UDwAbilityPool>(TEXT("DA_AbilityPool_TestCaptain"));
@@ -176,6 +199,14 @@ namespace DwRunTest
 			EconomyTuning.SurrenderLootMultiplier = 1.5f;
 			EconomyTuning.PlunderItemChance = 1.f;
 			EconomyTuning.RewardAbilityChoices = 3;
+			EconomyTuning.RepairCost = 100;
+			EconomyTuning.RepairAmount = 100;
+			EconomyTuning.MaxCrew = 4;
+			EconomyTuning.RecruitLevelOffset = -1;
+			EconomyTuning.MaxInventory = 6;
+			EconomyTuning.ShopAbilityOffers = 3;
+			EconomyTuning.ShopRecruitOffers = 2;
+			EconomyTuning.ShopUpgradeOffers = 3;
 			Economy = Table(TEXT("Default"), EconomyTuning);
 			FDwRunTuningRow RunTuning;
 			RunTuning.PerkChoices = 3;
@@ -192,10 +223,48 @@ namespace DwRunTest
 			FDwShipTuningRow ShipRow;
 			ShipRow.MaxHealth = 250; ShipRow.CannonDamage = 70;
 
+			Items = Make<UDataTable>(TEXT("DT_TestItems"));
+			Items->RowStruct = FDwItemTuningRow::StaticStruct();
+			FDwItemTuningRow ItemRow;
+			ItemRow.Price = 30; ItemRow.Amount = 40; ItemRow.Range = 1;
+			Items->AddRow(TEXT("Grog"), ItemRow);
+			ItemRow.Price = 20; ItemRow.Amount = 10;
+			Items->AddRow(TEXT("Tonic"), ItemRow);
 			Grog = Make<UDwItemDefinition>(TEXT("DA_Item_TestGrog"));
+			Grog->Tuning.DataTable = Items;
+			Grog->Tuning.RowName = TEXT("Grog");
 			Tonic = Make<UDwItemDefinition>(TEXT("DA_Item_TestTonic"));
-			UDwShopDefinition* Shop = Make<UDwShopDefinition>(TEXT("DA_Shop_Test"));
+			Tonic->Tuning.DataTable = Items;
+			Tonic->Tuning.RowName = TEXT("Tonic");
+
+			Upgrades = Make<UDataTable>(TEXT("DT_TestUpgrades"));
+			Upgrades->RowStruct = FDwShipUpgradeTuningRow::StaticStruct();
+			FDwShipUpgradeTuningRow UpgradeRow;
+			UpgradeRow.Price = 150;
+			UpgradeRow.MaxHealthBonus = 50;
+			Upgrades->AddRow(TEXT("Hull"), UpgradeRow);
+			UpgradeRow.MaxHealthBonus = 0;
+			UpgradeRow.CannonDamageBonus = 20;
+			Upgrades->AddRow(TEXT("Shot"), UpgradeRow);
+			UpgradeRow.CannonDamageBonus = 0;
+			Upgrades->AddRow(TEXT("Cannon"), UpgradeRow);
+			auto MakeUpgrade = [this](const TCHAR* Name)
+			{
+				UDwShipUpgradeDefinition* Upgrade = Make<UDwShipUpgradeDefinition>(*FString::Printf(TEXT("DA_ShipUpgrade_Test%s"), Name));
+				Upgrade->DisplayName = FText::FromString(Name);
+				Upgrade->Tuning.DataTable = Upgrades;
+				Upgrade->Tuning.RowName = Name;
+				return Upgrade;
+			};
+			Hull = MakeUpgrade(TEXT("Hull"));
+			Shot = MakeUpgrade(TEXT("Shot"));
+			Cannon = MakeUpgrade(TEXT("Cannon"));
+			Cannon->GrantedShipTags.AddTag(DwTags::Ship_Upgrade_ExtraCannon);
+
+			Shop = Make<UDwShopDefinition>(TEXT("DA_Shop_Test"));
 			Shop->Items = { Grog, Tonic };
+			Shop->UpgradePool = { Hull, Shot, Cannon };
+			Shop->RecruitPool = { Deckhand };
 
 			GameData = Make<UDwGameData>(TEXT("DA_GameData_Test"));
 			GameData->TuningTables.Economy = Economy;

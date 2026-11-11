@@ -30,6 +30,7 @@ struct DEADWATERRUN_API FDwUnitTuningRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level") int32 AttackDamagePerLevel = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Run") int32 XpOnKill = 0;
+	/** Shop recruit price (P8); the only place it lives. Units in DA_Shop_Default's recruit pool need one above 0. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Run") int32 RecruitCost = 0;
 
 	/** Gains apply per level above 1. Combat spawn and run state both use these, so they always agree. */
@@ -54,6 +55,7 @@ struct DEADWATERRUN_API FDwAbilityTuningRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability") int32 MinHits = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability") int32 MaxHits = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability") int32 DurationTurns = 0;
+	/** Shop price; the only place it lives. Abilities in a learnable pool need one above 0. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability") int32 ShopPrice = 0;
 };
 
@@ -63,6 +65,7 @@ struct DEADWATERRUN_API FDwItemTuningRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
+	/** Shop price; the only place it lives. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item") int32 Price = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item") int32 Amount = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item") int32 Range = 0;
@@ -107,6 +110,18 @@ struct DEADWATERRUN_API FDwShipTuningRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") int32 CannonDamage = 0;
 };
 
+/** DT_ShipUpgradeTuning, keyed by upgrade id (P9). The bonuses add to the player ship's DT_ShipTuning numbers. */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwShipUpgradeTuningRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Upgrade") int32 Price = 0;
+	/** Added to max hull and, when bought, to current hull. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Upgrade") int32 MaxHealthBonus = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Upgrade") int32 CannonDamageBonus = 0;
+};
+
 /** DT_EncounterTuning, keyed by encounter id. */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwEncounterTuningRow : public FTableRowBase
@@ -130,13 +145,18 @@ struct DEADWATERRUN_API FDwEconomyTuningRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loot") float PlunderLootMultiplier = 1.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loot") float SurrenderLootMultiplier = 1.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Loot") float PlunderItemChance = 0.f;
+	/** Repair is the one shop price kept here: it has no row of its own. Other prices live on their own rows (one home each). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 RepairCost = 0;
+	/** Hull HP one repair restores, clamped at max (P7). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 RepairAmount = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 AbilityUnlockCost = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 ItemCost = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 RecruitCostDefault = 0;
+	/** Gold back when a crew member is disbanded (P8: none). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 DisbandRefund = 0;
+	/** Living roster size including the captain. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crew") int32 MaxCrew = 0;
+	/** Recruit level = max(1, floor(average level of the living crew) + RecruitLevelOffset) (P8). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crew") int32 RecruitLevelOffset = 0;
+	/** Items in the shared ship inventory, all kinds together (P10). 0 = no cap. Shop buys and plunder both respect it. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Items") int32 MaxInventory = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 ShopAbilityOffers = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 ShopRecruitOffers = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shop") int32 ShopUpgradeOffers = 0;

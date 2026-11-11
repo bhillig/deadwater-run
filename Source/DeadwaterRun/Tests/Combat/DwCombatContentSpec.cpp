@@ -183,7 +183,7 @@ void FDwCombatContentSpec::Define()
 		if (!StartPlaceholderFight()) { return; }
 		F.Asc(F.CrewHandle(0))->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), 50.f);
 		TestEqual(TEXT("Grog on self"), F.UseItem(F.CrewHandle(0), Grog, F.CrewHandle(0)), EDwCommandResult::Accepted);
-		TestEqual(TEXT("50 + 30"), F.Health(F.CrewHandle(0)), 80.f);
+		TestEqual(TEXT("50 + 40 (P10)"), F.Health(F.CrewHandle(0)), 90.f);
 	});
 }
 

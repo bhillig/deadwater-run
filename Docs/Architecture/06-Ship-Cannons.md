@@ -25,9 +25,11 @@
 - `InitializeFromState(const FDwShipState&, const FDwShipTuningRow&)` applies `GE_InitShipStats` and upgrade GEs.
 - No tick; sinking presentation is a cue (`GameplayCue.Ship.Sink`).
 
-`FDwShipState` (Run/, persists): `Health`, `TArray<FPrimaryAssetId> Upgrades`. `MaxHealth` and `CannonDamage` are base tuning plus upgrade GEs.
+`FDwShipState` (Run/, persists): `Health`, `MaxHealth`, `CannonDamage`, `TArray<const UDwShipUpgradeDefinition*> Upgrades` (each at most once). `MaxHealth` and `CannonDamage` are the `DT_ShipTuning` numbers plus the bought upgrades' `DT_ShipUpgradeTuning` bonuses, added by `FDwShopRules` when bought; combat initializes the ship's attributes from them through `GE_InitShipStats`, so GAS stays the truth inside a fight and the run state between fights. (Changed in DW-204 from "base tuning plus upgrade GEs": Brandon put the bonus amounts in the tuning row, P9, and one computation keeps the run screens and the fight in agreement.)
 
-`UDwShipUpgradeDefinition : UDwDefinitionBase` (Data/): name, icon, description, `TSubclassOf<UGameplayEffect> Effect` (infinite; e.g. +MaxHealth, +CannonDamage), `FGameplayTagContainer GrantedShipTags` (e.g. `Ship.Upgrade.ExtraCannon` unlocks layout cannon tiles tagged as requiring it), tuning row (price). The list of upgrades is Open-Questions P9.
+`UDwShipUpgradeDefinition : UDwDefinitionBase` (Data/, `Data/Ship/`): name, icon, description (`{MaxHealthBonus}`, `{CannonDamageBonus}`, `{Price}` filled from the row), `FGameplayTagContainer GrantedShipTags` (`Ship.Upgrade.ExtraCannon` unlocks the layout's cannon slots, below), tuning row `DT_ShipUpgradeTuning` (`Price`, `MaxHealthBonus`, `CannonDamageBonus`). An optional `TSubclassOf<UGameplayEffect> Effect` is applied at every fight spawn for effects that are not one of the row's stat bonuses (empty for all three v1 upgrades). P9 (Brandon, 2026-11-11): `DA_ShipUpgrade_ReinforcedHull` (+50 max hull), `DA_ShipUpgrade_HeavyShot` (+20 cannon damage), `DA_ShipUpgrade_ExtraCannon` (third cannon).
+
+Cannon slots: a deck layout tile carrying a `Ship.Upgrade.*` tag (ASCII `U`, `04`) is plain deck until the ship has that tag; `UDwRun::BuildEncounterSetup` calls `FDwBoardBuilder::ApplyShipUpgrades(Grid, Player, Ship.GetUpgradeTags())`, which adds `Tile.Cannon` to it. Everything downstream (cannon rules, `ADwShip::CannonTiles`, dressing, AI) reads `Tile.Cannon` as before. `DA_Deck_PlayerShip` has one slot (placeholder spot, row 0 next to the first cannon).
 
 `DT_ShipTuning` rows: `PlayerShip` (MaxHealth 250, CannonDamage 70), one row per enemy ship.
 
@@ -61,8 +63,8 @@ sequenceDiagram
 ```
 
 ## Repair and upgrades
-- Shop repair (100 gold): `FDwShopRules` changes `FDwShipState.Health` by the repair amount from `DT_EconomyTuning` (amount is Open-Questions P7). No GAS involved outside combat - run state is the truth between fights.
-- Upgrades: bought at the shop, appended to `FDwShipState.Upgrades`, applied as GEs at every fight spawn.
+- Shop repair (`DT_EconomyTuning.RepairCost` 100 gold): `FDwShopRules` adds `RepairAmount` (100, P7) to `FDwShipState.Health`, clamped at max; refused (`ShipFull`) at full hull. No GAS involved outside combat - run state is the truth between fights.
+- Upgrades: bought at the shop (once each), appended to `FDwShipState.Upgrades`; their row bonuses go into `MaxHealth` (current hull rises by the same amount) and `CannonDamage` at once, their tags unlock cannon slots at every fight spawn, any extra `Effect` GE is applied at spawn.
 - Events may damage or repair the ship through `UDwEventOutcome_ShipHealth`.
 
 ## Connections
@@ -84,7 +86,7 @@ sequenceDiagram
 ## How it's tested
 - Pure: `FDwCannonRules::FindUsableCannon` - on the tile, next to it (4-way), diagonal (rejected), enemy cannon (rejected), used cannon (rejected), two in reach (own tile wins).
 - Test world: firing from or next to an own cannon tile damages the enemy ship by `CannonDamage` and spends the action; firing from the enemy's cannon tile is rejected; melee and ranged attacks can't target the ship; the same cannon can't fire twice in one side turn; sinking kills enemy-side units and player boarders standing on enemy tiles and gives no kill XP; player ship at 0 -> `DefeatShipSunk`.
-- Pure: repair never exceeds max; upgrade GE stacking.
+- Pure: repair never exceeds max; upgrade bonuses add once each; `ApplyShipUpgrades` unlocks only the side's slots with a granted tag (`DeadwaterRun.Rules.Shop`). Content: after buying the third cannon the next fight has three player cannons (`DeadwaterRun.Run.Content`).
 
 ## What the player sees
 - Two ships with big, readable health bars. A pirate walks up to a cannon (each cannon fires once a turn, so two gunners matter), fires, the shot booms across, the enemy hull splinters and the bar drops 70. When the enemy ship goes down, anyone still aboard goes down with it - so boarding is a gamble.

@@ -12,6 +12,9 @@
 #include "Data/DwKrakenDefinition.h"
 #include "Data/DwMapRules.h"
 #include "Data/DwPerkDefinition.h"
+#include "Data/DwPools.h"
+#include "Data/DwShipUpgradeDefinition.h"
+#include "Data/DwShopDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 
@@ -28,6 +31,7 @@ const UScriptStruct* UDwItemDefinition::GetTuningRowStruct() const      { return
 const UScriptStruct* UDwPerkDefinition::GetTuningRowStruct() const      { return FDwPerkTuningRow::StaticStruct(); }
 const UScriptStruct* UDwEncounterDefinition::GetTuningRowStruct() const { return FDwEncounterTuningRow::StaticStruct(); }
 const UScriptStruct* UDwKrakenDefinition::GetTuningRowStruct() const    { return FDwKrakenTuningRow::StaticStruct(); }
+const UScriptStruct* UDwShipUpgradeDefinition::GetTuningRowStruct() const { return FDwShipUpgradeTuningRow::StaticStruct(); }
 
 #if WITH_EDITOR
 
@@ -46,6 +50,55 @@ namespace DwValidation
 			Error(Context, Result, FText::Format(LOCTEXT("Layers", "MinLayer ({0}) is greater than MaxLayer ({1})."), MinLayer, MaxLayer));
 		}
 	}
+
+	/** Something the shop sells: set, with a price above 0 on its own tuning row (the price's only home). */
+	template <typename TRow, typename TDefinition>
+	static void CheckPrice(FDataValidationContext& Context, EDataValidationResult& Result, const TCHAR* List, int32 Index,
+		const TDefinition* Definition, int32 TRow::* Price, const TCHAR* Field)
+	{
+		if (!Definition)
+		{
+			Error(Context, Result, FText::Format(LOCTEXT("NullOffer", "{0}[{1}] is empty."), FText::FromString(List), Index));
+			return;
+		}
+		const TRow* Row = Definition->template GetTuningRow<TRow>();
+		if (!Row || Row->*Price <= 0)
+		{
+			Error(Context, Result, FText::Format(LOCTEXT("NoPrice", "{0}[{1}] ({2}) needs {3} above 0 on its tuning row."),
+				FText::FromString(List), Index, FText::FromString(Definition->GetName()), FText::FromString(Field)));
+		}
+	}
+}
+
+EDataValidationResult UDwShopDefinition::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+	for (int32 Index = 0; Index < Items.Num(); ++Index)
+	{
+		DwValidation::CheckPrice(Context, Result, TEXT("Items"), Index, Items[Index].Get(), &FDwItemTuningRow::Price, TEXT("DT_ItemTuning.Price"));
+	}
+	for (int32 Index = 0; Index < RecruitPool.Num(); ++Index)
+	{
+		DwValidation::CheckPrice(Context, Result, TEXT("RecruitPool"), Index, RecruitPool[Index].Get(), &FDwUnitTuningRow::RecruitCost,
+			TEXT("DT_UnitTuning.RecruitCost"));
+	}
+	for (int32 Index = 0; Index < UpgradePool.Num(); ++Index)
+	{
+		DwValidation::CheckPrice(Context, Result, TEXT("UpgradePool"), Index, UpgradePool[Index].Get(), &FDwShipUpgradeTuningRow::Price,
+			TEXT("DT_ShipUpgradeTuning.Price"));
+	}
+	return Result;
+}
+
+EDataValidationResult UDwAbilityPool::IsDataValid(FDataValidationContext& Context) const
+{
+	EDataValidationResult Result = Super::IsDataValid(Context);
+	for (int32 Index = 0; Index < Abilities.Num(); ++Index)
+	{
+		DwValidation::CheckPrice(Context, Result, TEXT("Abilities"), Index, Abilities[Index].Ability.Get(), &FDwAbilityTuningRow::ShopPrice,
+			TEXT("DT_AbilityTuning.ShopPrice"));
+	}
+	return Result;
 }
 
 EDataValidationResult UDwAbilityDefinition::IsDataValid(FDataValidationContext& Context) const
@@ -201,6 +254,16 @@ EDataValidationResult UDwMapRules::IsDataValid(FDataValidationContext& Context) 
 #endif // WITH_EDITOR
 
 #undef LOCTEXT_NAMESPACE
+
+FText UDwShipUpgradeDefinition::GetFormattedDescription() const
+{
+	const FDwShipUpgradeTuningRow* Row = GetTuningRow<FDwShipUpgradeTuningRow>();
+	FFormatNamedArguments Args;
+	Args.Add(TEXT("MaxHealthBonus"), FText::AsNumber(Row ? Row->MaxHealthBonus : 0));
+	Args.Add(TEXT("CannonDamageBonus"), FText::AsNumber(Row ? Row->CannonDamageBonus : 0));
+	Args.Add(TEXT("Price"), FText::AsNumber(Row ? Row->Price : 0));
+	return FText::Format(Description, Args);
+}
 
 FText UDwPerkDefinition::GetFormattedDescription() const
 {

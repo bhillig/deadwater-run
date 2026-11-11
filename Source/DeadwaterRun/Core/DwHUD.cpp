@@ -7,6 +7,8 @@
 #include "Data/DwEncounterDefinition.h"
 #include "Data/DwItemDefinition.h"
 #include "Data/DwPerkDefinition.h"
+#include "Data/DwShipUpgradeDefinition.h"
+#include "Data/DwUnitDefinition.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/Font.h"
@@ -63,7 +65,13 @@ void ADwHUD::DrawRunReadout()
 	{
 		Items += FString::Printf(TEXT("%s%s x%d"), Items.IsEmpty() ? TEXT("") : TEXT(", "), Stack.Item ? *Stack.Item->DisplayName.ToString() : TEXT("?"), Stack.Count);
 	}
-	Lines.Add(FString::Printf(TEXT("Gold %d   Ship %.0f / %.0f   Items: %s"), S.Gold, S.Ship.Health, S.Ship.MaxHealth, Items.IsEmpty() ? TEXT("none") : *Items));
+	FString Upgrades;
+	for (const UDwShipUpgradeDefinition* Upgrade : S.Ship.Upgrades)
+	{
+		Upgrades += FString::Printf(TEXT("%s%s"), Upgrades.IsEmpty() ? TEXT("") : TEXT(", "), Upgrade ? *Upgrade->DisplayName.ToString() : TEXT("?"));
+	}
+	Lines.Add(FString::Printf(TEXT("Gold %d   Ship %.0f / %.0f, cannons %.0f%s   Items: %s"), S.Gold, S.Ship.Health, S.Ship.MaxHealth, S.Ship.CannonDamage,
+		Upgrades.IsEmpty() ? TEXT("") : *FString::Printf(TEXT(" (%s)"), *Upgrades), Items.IsEmpty() ? TEXT("none") : *Items));
 	for (int32 Index = 0; Index < S.Crew.Num(); ++Index)
 	{
 		const FDwCrewMemberState& Member = S.Crew[Index];
@@ -133,6 +141,29 @@ void ADwHUD::DrawRunReadout()
 		{
 			Lines.Add(TEXT("  [Dw.Run.Perk]  continue (no perks left to offer)"));
 		}
+	}
+	else if (S.Phase == EDwRunPhase::Shop)
+	{
+		Lines.Add(FString::Printf(TEXT("SHOP: %d gold   items %d / %d   crew %d   (shop screen: ui-engineer)"), S.Gold, S.CountItems(), Run->GetMaxInventory(),
+			S.CountLivingCrew()));
+		for (const FDwShopOffer& Offer : Run->GetShop().Offers)
+		{
+			FString What;
+			switch (Offer.Type)
+			{
+			case EDwShopOfferType::Repair:      What = FString::Printf(TEXT("repair +%d hull"), Offer.Amount); break;
+			case EDwShopOfferType::Item:        What = Offer.Item ? Offer.Item->DisplayName.ToString() : TEXT("?"); break;
+			case EDwShopOfferType::Ability:     What = FString::Printf(TEXT("teach %s"), Offer.Ability ? *Offer.Ability->DisplayName.ToString() : TEXT("?")); break;
+			case EDwShopOfferType::Recruit:     What = FString::Printf(TEXT("recruit %s (level %d)"), Offer.Unit ? *Offer.Unit->DisplayName.ToString() : TEXT("?"), Offer.Level); break;
+			case EDwShopOfferType::ShipUpgrade: What = Offer.Upgrade ? Offer.Upgrade->DisplayName.ToString() : TEXT("?"); break;
+			case EDwShopOfferType::Disband:     What = FString::Printf(TEXT("disband %s"), *CrewName(Offer.CrewId)); break;
+			}
+			const FGuid Learner = Offer.EligibleCrew.IsEmpty() ? FGuid() : Offer.EligibleCrew[0];
+			const EDwPurchaseResult Can = Run->CanPurchase(Offer.OfferId, Learner);
+			Lines.Add(FString::Printf(TEXT("  [Dw.Run.Buy %d]  %s   %d gold%s"), Offer.OfferId + 1, *What, Offer.Price,
+				Can == EDwPurchaseResult::Ok ? TEXT("") : *FString::Printf(TEXT("   (%s)"), *DwRun::PurchaseResultName(Can))));
+		}
+		Lines.Add(TEXT("  [Dw.Run.Leave]  back to the map"));
 	}
 	if (S.IsOver())
 	{

@@ -100,6 +100,7 @@ Ship battle (4-way, decks touch)               Kraken arena
   P C P P P P|E C E E E E                      P C P P P P T ~ ~ ~
 P/E deck  N nest  L ladder  C cannon  | boarding edge (step cost 1)   ~ water  T tentacle slot  B Kraken body
 ```
+- DW-204: ASCII `U` is a cannon slot - a deck tile tagged `Ship.Upgrade.ExtraCannon` that becomes a cannon only when the ship has that upgrade (`FDwBoardBuilder::ApplyShipUpgrades`, `06`).
 
 ## Presentation: `ADwBoard : AActor` (Board/)
 - Spawned by `UDwCombatSubsystem::StartEncounter`; places both `ADwShip` actors using each layout's `MeshAlignment`.

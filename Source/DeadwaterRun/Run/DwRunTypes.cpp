@@ -3,6 +3,7 @@
 #include "Run/DwRunTypes.h"
 
 #include "Data/DwItemDefinition.h"
+#include "Data/DwShipUpgradeDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 
@@ -75,20 +76,50 @@ int32 FDwRunState::CountItem(FName ItemId) const
 	return Count;
 }
 
-void FDwRunState::AddItem(const UDwItemDefinition* Item, int32 Count)
+int32 FDwRunState::CountItems() const
 {
-	if (!Item || Count <= 0)
+	int32 Count = 0;
+	for (const FDwItemStack& Stack : Inventory)
 	{
-		return;
+		Count += Stack.Item ? FMath::Max(0, Stack.Count) : 0;
+	}
+	return Count;
+}
+
+int32 FDwRunState::GetItemRoom(int32 MaxInventory) const
+{
+	return MaxInventory > 0 ? FMath::Max(0, MaxInventory - CountItems()) : MAX_int32;
+}
+
+int32 FDwRunState::AddItem(const UDwItemDefinition* Item, int32 Count, int32 MaxInventory)
+{
+	const int32 Added = Item ? FMath::Clamp(Count, 0, GetItemRoom(MaxInventory)) : 0;
+	if (Added == 0)
+	{
+		return 0;
 	}
 	if (FDwItemStack* Stack = Inventory.FindByPredicate([Item](const FDwItemStack& S) { return S.Item == Item; }))
 	{
-		Stack->Count += Count;
-		return;
+		Stack->Count += Added;
+		return Added;
 	}
 	FDwItemStack& Stack = Inventory.AddDefaulted_GetRef();
 	Stack.Item = Item;
-	Stack.Count = Count;
+	Stack.Count = Added;
+	return Added;
+}
+
+FGameplayTagContainer FDwShipState::GetUpgradeTags() const
+{
+	FGameplayTagContainer Tags;
+	for (const UDwShipUpgradeDefinition* Upgrade : Upgrades)
+	{
+		if (Upgrade)
+		{
+			Tags.AppendTags(Upgrade->GrantedShipTags);
+		}
+	}
+	return Tags;
 }
 
 namespace DwRun
@@ -101,6 +132,16 @@ namespace DwRun
 	FString EndReasonName(EDwRunEndReason Reason)
 	{
 		return StaticEnum<EDwRunEndReason>()->GetNameStringByValue(static_cast<int64>(Reason));
+	}
+
+	FString PurchaseResultName(EDwPurchaseResult Result)
+	{
+		return StaticEnum<EDwPurchaseResult>()->GetNameStringByValue(static_cast<int64>(Result));
+	}
+
+	FString OfferTypeName(EDwShopOfferType Type)
+	{
+		return StaticEnum<EDwShopOfferType>()->GetNameStringByValue(static_cast<int64>(Type));
 	}
 
 	EDwRunEndReason EndReasonFor(EDwCombatOutcome Outcome)

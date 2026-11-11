@@ -5,6 +5,8 @@
 #include "Abilities/DwAttributeSets.h"
 #include "Abilities/DwGA_EffectPayload.h"
 #include "Abilities/DwGameplayEffects.h"
+#include "Board/DwBoardBuilder.h"
+#include "Board/DwDeckLayout.h"
 #include "Core/DwGameData.h"
 #include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
@@ -13,7 +15,9 @@
 #include "Data/DwMapRules.h"
 #include "Data/DwPerkDefinition.h"
 #include "Data/DwPools.h"
+#include "Data/DwShipUpgradeDefinition.h"
 #include "Data/DwShopDefinition.h"
+#include "Data/Tuning/DwTuningRows.h"
 #include "Data/DwUnitDefinition.h"
 #include "DwCombatContentLibrary.h"
 #include "DwContentAssetUtils.h"
@@ -103,6 +107,30 @@ namespace DwRunContent
 				TEXT("Takes {ValuePct}% less damage."), UDwUnitAttributeSet::GetDamageReductionAttribute(), 2 },
 			{ TEXT("DA_Perk_Cutthroat"), TEXT("GE_Perk_Cutthroat"), TEXT("Cutthroat"), TEXT("Cutthroat"),
 				TEXT("Deals {ValuePct}% more damage."), UDwUnitAttributeSet::GetDamageBonusAttribute(), 2 },
+		};
+	}
+
+	const FString ShipData = TEXT("/Game/DeadwaterRun/Data/Ship");
+
+	struct FUpgradeSpec
+	{
+		const TCHAR* Asset;
+		const TCHAR* Name;
+		const TCHAR* TuningRow;
+		const TCHAR* Description;
+		FGameplayTag GrantedTag;
+	};
+
+	/** P9 a) (Brandon, 2026-11-11). Names and text are placeholders; numbers live in Tuning/ShipUpgradeTuning.json. */
+	TArray<FUpgradeSpec> ShipUpgrades()
+	{
+		return {
+			{ TEXT("DA_ShipUpgrade_ReinforcedHull"), TEXT("Reinforced Hull"), TEXT("ReinforcedHull"),
+				TEXT("+{MaxHealthBonus} max hull. (Placeholder name and text.)"), FGameplayTag() },
+			{ TEXT("DA_ShipUpgrade_HeavyShot"), TEXT("Heavy Shot"), TEXT("HeavyShot"),
+				TEXT("+{CannonDamageBonus} cannon damage. (Placeholder name and text.)"), FGameplayTag() },
+			{ TEXT("DA_ShipUpgrade_ExtraCannon"), TEXT("Third Cannon"), TEXT("ExtraCannon"),
+				TEXT("Mounts a third cannon on your deck. (Placeholder name and text.)"), DwTags::Ship_Upgrade_ExtraCannon },
 		};
 	}
 
@@ -246,9 +274,60 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 		bOk &= Save(Unit, Log);
 	}
 
-	// 8. DA_Shop_Default: only the item list for now (plunder drops one of them, P6); DW-204 fills in the rest.
+	// 8. DW-204 ship upgrades (P9): DT_ShipUpgradeTuning from Tuning/ShipUpgradeTuning.json (price and bonuses), one
+	//    definition per row. Names and text are placeholders until the content pass (DW-304).
+	UDataTable* UpgradeTable = FindOrCreate<UDataTable>(Tuning, TEXT("DT_ShipUpgradeTuning"), Log);
+	if (UpgradeTable->RowStruct != FDwShipUpgradeTuningRow::StaticStruct())
+	{
+		UpgradeTable->RowStruct = FDwShipUpgradeTuningRow::StaticStruct();
+		bOk &= Save(UpgradeTable, Log);
+	}
+	bOk &= UDwCombatContentLibrary::SyncTuningTable(TEXT("ShipUpgrade"), Log);
+	GameData->TuningTables.ShipUpgrade = UpgradeTable;
+	TArray<TObjectPtr<UDwShipUpgradeDefinition>> Upgrades;
+	for (const FUpgradeSpec& Spec : ShipUpgrades())
+	{
+		UDwShipUpgradeDefinition* Upgrade = FindOrCreate<UDwShipUpgradeDefinition>(ShipData, Spec.Asset, Log);
+		Upgrade->DisplayName = FText::FromString(Spec.Name);
+		Upgrade->Description = FText::FromString(Spec.Description);
+		Upgrade->Effect = nullptr; // the stat bonuses are the tuning row's
+		Upgrade->GrantedShipTags = Spec.GrantedTag.IsValid() ? FGameplayTagContainer(Spec.GrantedTag) : FGameplayTagContainer();
+		Upgrade->Tuning = Row(UpgradeTable, Spec.TuningRow, Log, bOk);
+		bOk &= Save(Upgrade, Log);
+		Upgrades.Add(Upgrade);
+	}
+
+	// 9. The third cannon's slot on the player deck (P9): a 'U' tile, a cannon only once Ship.Upgrade.ExtraCannon is
+	//    bought. Placeholder spot (layout art pass decides): row 0, next to the first cannon's column.
+	if (UDwDeckLayout* PlayerDeck = GameData->DefaultPlayerDeck)
+	{
+		const bool bHasSlot = PlayerDeck->Tiles.ContainsByPredicate([](const FDwTile& Tile) { return FDwBoardBuilder::IsUpgradeCannonSlot(Tile); });
+		const FIntPoint Slot(1, 0);
+		const int32 Index = Slot.Y * PlayerDeck->Size.X + Slot.X;
+		if (!bHasSlot && PlayerDeck->Tiles.IsValidIndex(Index) && PlayerDeck->Tiles[Index].Kind == EDwTileKind::Deck)
+		{
+			PlayerDeck->Tiles[Index] = FDwDeckAscii::Parse({ TEXT("U") }).Tiles[0];
+			bOk &= Save(PlayerDeck, Log);
+			Log.Add(FString::Printf(TEXT("%s: third cannon slot at (%d, %d)"), *PlayerDeck->GetName(), Slot.X, Slot.Y));
+		}
+		for (const FString& Problem : PlayerDeck->Validate())
+		{
+			Log.Add(FString::Printf(TEXT("ERROR %s: %s"), *PlayerDeck->GetName(), *Problem));
+			bOk = false;
+		}
+	}
+	else
+	{
+		Log.Add(TEXT("ERROR DA_GameData.DefaultPlayerDeck is not set"));
+		bOk = false;
+	}
+
+	// 10. DA_Shop_Default (10 "Shop"): every item (plunder drops one of them, P6), the P8 recruits, the P9 upgrades.
 	UDwShopDefinition* Shop = FindOrCreate<UDwShopDefinition>(RulesData, TEXT("DA_Shop_Default"), Log);
 	Shop->DisplayName = FText::FromString(TEXT("Shop"));
+	Shop->OfferTypes = GetDefault<UDwShopDefinition>()->OfferTypes;
+	Shop->RecruitPool = { Swordsman, Sniper };
+	Shop->UpgradePool = Upgrades;
 	Shop->Items.Reset();
 	for (const TCHAR* ItemName : { TEXT("DA_Item_HealthRestore"), TEXT("DA_Item_ManaRestore") })
 	{
@@ -265,7 +344,7 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 	bOk &= Save(Shop, Log);
 	GameData->DefaultShop = Shop;
 
-	// 9. DW-202 DA_MapRules: the design numbers (UDwMapRules defaults: 8-9 nodes, 5 fights, 3 lanes, M1-M5 recommended
+	// 11. DW-202 DA_MapRules: the design numbers (UDwMapRules defaults: 8-9 nodes, 5 fights, 3 lanes, M1-M5 recommended
 	//    defaults) plus placeholder type weights for the free slots - two fights for each shop or event.
 	UDwMapRules* MapRules = FindOrCreate<UDwMapRules>(RulesData, TEXT("DA_MapRules"), Log);
 	MapRules->DisplayName = FText::FromString(TEXT("Sea chart rules"));
@@ -275,7 +354,7 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 	bOk &= Save(MapRules, Log);
 	GameData->MapRules = MapRules;
 
-	// 10. DW-210 shell travel: Set Sail opens L_Sea, Main Menu opens L_MainMenu (16-Shell D1).
+	// 12. DW-210 shell travel: Set Sail opens L_Sea, Main Menu opens L_MainMenu (16-Shell D1).
 	GameData->MainMenuLevel = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/DeadwaterRun/Maps/L_MainMenu.L_MainMenu")));
 	GameData->SeaLevel = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/DeadwaterRun/Maps/L_Sea.L_Sea")));
 	bOk &= Save(GameData, Log);

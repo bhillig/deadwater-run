@@ -45,4 +45,13 @@ struct DEADWATERRUN_API FDwRewardRules
 
 	/** Whether Member may learn Ability (the eligibility rule above, without the pool check). */
 	static bool CanLearn(const FDwRunState& State, const FDwCrewMemberState& Member, const UDwAbilityDefinition& Ability);
+
+	/** Whether Ability is Member's basic attack, one of the unit's defaults or already learned. */
+	static bool Knows(const FDwCrewMemberState& Member, const UDwAbilityDefinition& Ability);
+
+	/** Whether Ability is in Member's learnable pool with a weight above 0. */
+	static bool IsInPool(const FDwCrewMemberState& Member, const UDwAbilityDefinition& Ability);
+
+	/** Roster order: every crew member Ability may be offered to (in their pool and CanLearn). Shop offers use it too. */
+	static TArray<FGuid> GetEligibleCrew(const FDwRunState& State, const UDwAbilityDefinition& Ability);
 };

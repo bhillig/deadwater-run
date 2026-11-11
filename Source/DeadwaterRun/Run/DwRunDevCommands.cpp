@@ -1,6 +1,6 @@
 // Copyright Brandon Hillig 2026
 
-// Development console commands that drive the run until the captain select and map screens exist (DW-210, DW-211).
+// Development console commands that drive the run headless (captain select, map, rewards, level-up, shop: DW-201..204).
 // Not compiled into Shipping. Fight cheats (Dw.Win, Dw.Kill, ...) are the cheat manager's (DW-111).
 
 #if !UE_BUILD_SHIPPING
@@ -89,6 +89,43 @@ namespace DwRunDevCommands
 		Run->ChoosePerk(LevelUp->PerkChoices.IsEmpty() ? INDEX_NONE : Pick);
 	}
 
+	/**
+	 * Dw.Run.Buy <Offer> [Crew] [Replace] - buy the readout's 1-based shop offer; Crew is the 1-based roster number of an
+	 * ability's learner (default: the first eligible), Replace the 1-based ability slot to forget when they are full.
+	 */
+	static void Buy(const TArray<FString>& Args, UWorld* World)
+	{
+		UDwRun* Run = GetRun(World);
+		if (!Run)
+		{
+			return;
+		}
+		const FDwRunState& S = Run->GetState();
+		const int32 OfferId = Args.Num() > 0 ? FCString::Atoi(*Args[0]) - 1 : INDEX_NONE;
+		const FDwShopOffer* Offer = Run->GetShop().Find(OfferId);
+		FGuid CrewId;
+		const int32 Member = Args.Num() > 1 ? FCString::Atoi(*Args[1]) - 1 : INDEX_NONE;
+		if (S.Crew.IsValidIndex(Member))
+		{
+			CrewId = S.Crew[Member].Id;
+		}
+		else if (Offer && Offer->Type == EDwShopOfferType::Ability && !Offer->EligibleCrew.IsEmpty())
+		{
+			CrewId = Offer->EligibleCrew[0];
+		}
+		const int32 Replace = Args.Num() > 2 ? FCString::Atoi(*Args[2]) - 1 : INDEX_NONE;
+		Run->TryPurchase(OfferId, CrewId, Replace < 0 ? INDEX_NONE : Replace);
+	}
+
+	/** Dw.Run.Leave - leave the shop (or the event shell) for the map. */
+	static void Leave(const TArray<FString>& /*Args*/, UWorld* World)
+	{
+		if (UDwRun* Run = GetRun(World))
+		{
+			Run->GetPhase() == EDwRunPhase::Event ? Run->LeaveEvent() : Run->LeaveShop();
+		}
+	}
+
 	static void Abandon(const TArray<FString>& /*Args*/, UWorld* World)
 	{
 		if (UDwRunSubsystem* Runs = UDwRunSubsystem::Get(World))
@@ -109,6 +146,12 @@ namespace DwRunDevCommands
 	static FAutoConsoleCommandWithWorldAndArgs PerkCommand(TEXT("Dw.Run.Perk"),
 		TEXT("Dw.Run.Perk [n]: take the n-th perk of the level-up on the readout (default 1)."),
 		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&Perk));
+	static FAutoConsoleCommandWithWorldAndArgs BuyCommand(TEXT("Dw.Run.Buy"),
+		TEXT("Dw.Run.Buy <Offer> [Crew] [ReplaceSlot]: buy the n-th shop offer on the run readout (1-based)."),
+		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&Buy));
+	static FAutoConsoleCommandWithWorldAndArgs LeaveCommand(TEXT("Dw.Run.Leave"),
+		TEXT("Dw.Run.Leave: leave the shop (or the event) and return to the map."),
+		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&Leave));
 	static FAutoConsoleCommandWithWorldAndArgs AbandonCommand(TEXT("Dw.Run.Abandon"),
 		TEXT("Dw.Run.Abandon: end the run as abandoned."),
 		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&Abandon));

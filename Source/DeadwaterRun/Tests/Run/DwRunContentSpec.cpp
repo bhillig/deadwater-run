@@ -7,7 +7,15 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Algo/Count.h"
+#include "Abilities/DwAttributeSets.h"
+#include "Data/DwEncounterDefinition.h"
 #include "Abilities/DwGameplayAbility.h"
+#include "AbilitySystemComponent.h"
+#include "Board/DwBoardBuilder.h"
+#include "Board/DwDeckLayout.h"
+#include "Combat/DwShip.h"
+#include "Data/DwShipUpgradeDefinition.h"
 #include "Abilities/DwGameplayEffects.h"
 #include "Core/DwAssetManager.h"
 #include "Core/DwGameData.h"
@@ -321,6 +329,83 @@ void FDwRunContentSpec::Define()
 		TestEqual(TEXT("325 gold"), S.Gold, 325);
 		TestEqual(TEXT("The item is aboard"), S.Inventory.Num(), 1);
 		TestEqual(TEXT("A perk per level"), S.Crew[0].Perks.Num() + S.Crew[1].Perks.Num() + S.Crew[2].Perks.Num(), 4);
+	});
+
+#if WITH_EDITOR
+	It("sells from a valid DA_Shop_Default: repair 100 for +100, items 30, Swordsman/Sniper 80, the three P9 upgrades", [this]()
+	{
+		const UDwShopDefinition* Shop = GameData ? GameData->DefaultShop.Get() : nullptr;
+		if (!TestNotNull(TEXT("DA_Shop_Default"), Shop)) { return; }
+		FDataValidationContext Context;
+		TestEqual(TEXT("Valid (every price set)"), Shop->IsDataValid(Context), EDataValidationResult::Valid);
+		TestEqual(TEXT("Recruit pool"), Shop->RecruitPool.Num(), 2);
+		TestEqual(TEXT("Upgrade pool"), Shop->UpgradePool.Num(), 3);
+		for (const UDwShipUpgradeDefinition* Upgrade : Shop->UpgradePool)
+		{
+			FDataValidationContext UpgradeContext;
+			TestEqual(*FString::Printf(TEXT("%s valid"), *GetNameSafe(Upgrade)), Upgrade ? Upgrade->IsDataValid(UpgradeContext) : EDataValidationResult::Invalid,
+				EDataValidationResult::Valid);
+			TestFalse(TEXT("Description tokens filled"), Upgrade && Upgrade->GetFormattedDescription().ToString().Contains(TEXT("{")));
+		}
+		const UDwDeckLayout* Deck = GameData->DefaultPlayerDeck;
+		TestTrue(TEXT("The player deck has the third cannon's slot"), Deck && Deck->Tiles.ContainsByPredicate([](const FDwTile& T) { return FDwBoardBuilder::IsUpgradeCannonSlot(T); }));
+		TestTrue(TEXT("...and still validates"), Deck && Deck->Validate().IsEmpty());
+	});
+#endif
+
+	It("shops for real: the recruit and the third cannon are in the next fight, the hull repaired", [this]()
+	{
+		if (!StartRun(Captain(TEXT("TeamLeader")))) { return; }
+		const FDwRunState& S = Run->GetState();
+		// Win two fights (the hull knocked down to 150 each time) for the gold, then take the next shop offered.
+		for (int32 Wins = 0; Wins < 12 && Run->GetPhase() != EDwRunPhase::Shop; ++Wins)
+		{
+			const TArray<int32> Choices = Run->GetChoices();
+			const int32* Shop = Choices.FindByPredicate([&S](int32 Index) { return S.Map.Nodes[Index].Type == EDwNodeType::Shop; });
+			if (Shop && Wins >= 2)
+			{
+				Run->ChooseNode(*Shop);
+				break;
+			}
+			if (!StartNextFight()) { return; }
+			F.Combat->GetShip(EDwSide::Player)->GetAbilitySystemComponent()->SetNumericAttributeBase(UDwShipAttributeSet::GetHealthAttribute(), 150.f);
+			if (!WinBy(S.Crew[0].Id) || !FinishRewards()) { return; }
+		}
+		if (!TestEqual(TEXT("At a shop"), Run->GetPhase(), EDwRunPhase::Shop)) { return; }
+		TestEqual(TEXT("Hull 150 from the fight"), S.Ship.Health, 150.f);
+
+		auto Offer = [this](EDwShopOfferType Type, TFunction<bool(const FDwShopOffer&)> Where = nullptr)
+		{
+			const FDwShopOffer* Found = Run->GetShop().Offers.FindByPredicate([Type, &Where](const FDwShopOffer& O) { return O.Type == Type && (!Where || Where(O)); });
+			return Found ? Found->OfferId : INDEX_NONE;
+		};
+		const int32 Repair = Offer(EDwShopOfferType::Repair);
+		const int32 Cannon = Offer(EDwShopOfferType::ShipUpgrade, [](const FDwShopOffer& O) { return O.Upgrade && O.Upgrade->GrantedShipTags.HasTagExact(DwTags::Ship_Upgrade_ExtraCannon); });
+		const int32 Recruit = Offer(EDwShopOfferType::Recruit);
+		if (!TestTrue(TEXT("Repair, third cannon and a recruit on sale"), Repair != INDEX_NONE && Cannon != INDEX_NONE && Recruit != INDEX_NONE)) { return; }
+		TestEqual(TEXT("Repair 100 gold"), Run->GetShop().Find(Repair)->Price, 100);
+		TestEqual(TEXT("Recruit 80 gold"), Run->GetShop().Find(Recruit)->Price, 80);
+		const int32 Gold = S.Gold;
+		if (!TestTrue(TEXT("Enough gold for all three"), Gold >= 100 + 80 + Run->GetShop().Find(Cannon)->Price)) { return; }
+		TestEqual(TEXT("Repair"), Run->TryPurchase(Repair, FGuid()), EDwPurchaseResult::Ok);
+		TestEqual(TEXT("Third cannon"), Run->TryPurchase(Cannon, FGuid()), EDwPurchaseResult::Ok);
+		TestEqual(TEXT("Recruit"), Run->TryPurchase(Recruit, FGuid()), EDwPurchaseResult::Ok);
+		TestEqual(TEXT("Hull +100"), S.Ship.Health, 250.f);
+		TestEqual(TEXT("Four crew"), S.CountLivingCrew(), 4);
+		const FGuid RecruitId = S.Crew.Last().Id;
+		TestTrue(TEXT("Left"), Run->LeaveShop());
+
+		FDwEncounterSetup Setup;
+		if (!StartNextFight(&Setup)) { return; }
+		TestTrue(TEXT("The recruit is in the fight"), FindCrewUnit(RecruitId).IsValid());
+		const ADwShip* Ship = F.Combat->GetShip(EDwSide::Player);
+		TestEqual(TEXT("Three player cannons"), Ship ? Ship->GetCannonTiles().Num() : 0, 3);
+		TestEqual(TEXT("Ship spawned with the repaired hull"), Ship ? Ship->GetHealth() : 0.f, 250.f);
+		// The upgrade is the player's: the enemy ship keeps exactly its own layout's cannons.
+		const ADwShip* Enemy = F.Combat->GetShip(EDwSide::Enemy);
+		const UDwDeckLayout* EnemyDeck = Run->GetCurrentNode() && Run->GetCurrentNode()->Encounter ? Run->GetCurrentNode()->Encounter->ShipDeck.Get() : nullptr;
+		const int32 EnemyCannons = EnemyDeck ? static_cast<int32>(Algo::CountIf(EnemyDeck->Tiles, [](const FDwTile& T) { return T.Tags.HasTagExact(DwTags::Tile_Cannon); })) : -1;
+		TestEqual(TEXT("The enemy ship keeps its own cannons"), Enemy ? Enemy->GetCannonTiles().Num() : 0, EnemyCannons);
 	});
 
 	It("gives the Conqueror's crew plain XP (no Veteran Crew)", [this]()

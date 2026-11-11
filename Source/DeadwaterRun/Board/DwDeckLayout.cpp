@@ -69,7 +69,7 @@ TArray<FString> UDwDeckLayout::Validate() const
 				Errors.Add(FString::Printf(TEXT("Nest (%d, %d) has no adjacent ladder."), P.X, P.Y));
 			}
 		}
-		if (T.Tags.HasTagExact(DwTags::Tile_Cannon))
+		if (T.Tags.HasTagExact(DwTags::Tile_Cannon) || FDwBoardBuilder::IsUpgradeCannonSlot(T))
 		{
 			const bool bReachable = Grid.IsStandable(P) || Algo::AnyOf(FDwGridModel::Directions, [&](const FIntPoint& Dir)
 				{ return Grid.IsStandable(P + Dir); });
