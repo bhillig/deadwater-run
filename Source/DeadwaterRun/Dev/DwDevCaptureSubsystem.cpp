@@ -231,7 +231,22 @@ void UDwDevCaptureSubsystem::RunDemoStep()
 	{
 		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::RunDemoStep), Seconds, false);
 	};
-	auto Sail = [Run]() { const TArray<int32> Choices = Run->GetChoices(); return !Choices.IsEmpty() && Run->ChooseNode(Choices[0]); };
+	auto Sail = [Run]()
+	{
+		// The next fight: a fight route if offered, shops and events on the way left at once.
+		for (int32 Step = 0; Step < 20 && Run->GetPhase() == EDwRunPhase::Map; ++Step)
+		{
+			const TArray<int32> Choices = Run->GetChoices();
+			const int32* Fight = Choices.FindByPredicate([Run](int32 Index) { return Run->GetState().Map.Nodes[Index].Type == EDwNodeType::Fight; });
+			if (Choices.IsEmpty() || !Run->ChooseNode(Fight ? *Fight : Choices[0]))
+			{
+				return false;
+			}
+			if (Run->GetPhase() == EDwRunPhase::Shop) { Run->LeaveShop(); }
+			if (Run->GetPhase() == EDwRunPhase::Event) { Run->LeaveEvent(); }
+		}
+		return Run->GetPhase() == EDwRunPhase::Combat;
+	};
 	if (!Run || !Combat)
 	{
 		UE_LOG(LogDw, Error, TEXT("Dev capture 'run': no run (start the game with -DwCaptain=<name>)."));

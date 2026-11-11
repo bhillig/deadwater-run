@@ -15,7 +15,8 @@
 #include "Engine/DataTable.h"
 #include "Run/DwRun.h"
 #include "Run/DwRunRandom.h"
-#include "Run/Map/DwPlaceholderMap.h"
+#include "Data/DwMapRules.h"
+#include "Run/Map/DwMapGenerator.h"
 #include "Tests/Run/DwRunTestContent.h"
 #include "Tests/Run/DwRunTestListener.h"
 
@@ -40,11 +41,40 @@ BEGIN_DEFINE_SPEC(FDwRunSpec, "DeadwaterRun.Rules.Run",
 		AddExpectedError(TEXT("refused"), EAutomationExpectedErrorFlags::Contains, Count);
 	}
 
-	/** Sails to the first choice; true if the run is now in Combat. */
-	bool SailOn()
+	/**
+	 * Sails on to the next fight: a fight route when one is offered, else the first route (a shop or event, left at
+	 * once). True if the run is now in Combat. NodesPassed counts the shops and events sailed through.
+	 */
+	bool SailOn(int32* NodesPassed = nullptr)
 	{
-		const TArray<int32> Choices = Run->GetChoices();
-		return TestTrue(TEXT("Has a route"), !Choices.IsEmpty()) && TestTrue(TEXT("Chosen"), Run->ChooseNode(Choices[0]));
+		for (int32 Step = 0; Step < 20; ++Step)
+		{
+			const TArray<int32> Choices = Run->GetChoices();
+			if (!TestTrue(TEXT("Has a route"), !Choices.IsEmpty()))
+			{
+				return false;
+			}
+			const int32* Fight = Choices.FindByPredicate([this](int32 Index)
+				{ return Run->GetState().Map.Nodes[Index].Type == EDwNodeType::Fight; });
+			if (!TestTrue(TEXT("Chosen"), Run->ChooseNode(Fight ? *Fight : Choices[0])))
+			{
+				return false;
+			}
+			if (Run->GetPhase() == EDwRunPhase::Combat)
+			{
+				return true;
+			}
+			const bool bLeft = Run->GetPhase() == EDwRunPhase::Shop ? Run->LeaveShop() : Run->LeaveEvent();
+			if (!TestTrue(TEXT("Left the shop or event"), bLeft))
+			{
+				return false;
+			}
+			if (NodesPassed)
+			{
+				++*NodesPassed;
+			}
+		}
+		return false;
 	}
 
 	/** After a won fight: claim the rewards (no new move) and take the first perk of every level-up, back to the map. */
@@ -148,45 +178,17 @@ void FDwRunSpec::Define()
 		});
 	});
 
-	Describe("Placeholder map", [this]()
+	Describe("Map (DW-202)", [this]()
 	{
-		It("has 8 layers of 3 lanes, all fights, then the boss", [this]()
+		It("is a valid generated chart: 8-9 layers of 3 lanes, then the boss with DA_GameData.KrakenEncounter", [this]()
 		{
 			const FDwMapGraph& Map = Run->GetState().Map;
-			TestEqual(TEXT("Layers"), Map.LayerCount, 8);
-			TestEqual(TEXT("24 fights + boss"), Map.Nodes.Num(), 25);
+			TestTrue(TEXT("8 or 9 layers"), Map.LayerCount == 8 || Map.LayerCount == 9);
+			TestEqual(TEXT("3 lanes + boss"), Map.Nodes.Num(), Map.LayerCount * 3 + 1);
 			if (!TestTrue(TEXT("Boss node"), Map.IsValidNode(Map.BossNode))) { return; }
-			TestEqual(TEXT("Boss type"), Map.Nodes[Map.BossNode].Type, EDwNodeType::Boss);
-			TestEqual(TEXT("Boss encounter = DA_GameData.KrakenEncounter"), Map.Nodes[Map.BossNode].Encounter.Get(),
-				static_cast<const UDwEncounterDefinition*>(C.Kraken));
-			for (int32 Index = 0; Index < Map.Nodes.Num(); ++Index)
-			{
-				const FDwMapNode& Node = Map.Nodes[Index];
-				if (Index == Map.BossNode)
-				{
-					TestTrue(TEXT("Boss is the end"), Node.Next.IsEmpty());
-					continue;
-				}
-				TestEqual(TEXT("Fight"), Node.Type, EDwNodeType::Fight);
-				TestTrue(TEXT("Has a ship battle"), Node.Encounter && Node.Encounter->Kind == EDwEncounterKind::ShipBattle);
-				if (Node.Layer < 4)
-				{
-					TestTrue(TEXT("Tiered: no late crew before layer 4"), Node.Encounter == C.Early);
-				}
-				if (Node.Layer == Map.LayerCount - 1)
-				{
-					TestTrue(TEXT("Last layer -> boss"), Node.Next.Num() == 1 && Node.Next[0] == Map.BossNode);
-				}
-				else
-				{
-					TestEqual(TEXT("2 choices on the edges, 3 in the middle"), Node.Next.Num(), Node.Lane == 1 ? 3 : 2);
-					for (const int32 To : Node.Next)
-					{
-						TestEqual(TEXT("Forward one layer"), Map.Nodes[To].Layer, Node.Layer + 1);
-						TestTrue(TEXT("Same or neighbouring lane"), FMath::Abs(Map.Nodes[To].Lane - Node.Lane) <= 1);
-					}
-				}
-			}
+			TestTrue(TEXT("Boss encounter"), Map.Nodes[Map.BossNode].Encounter == C.Kraken);
+			const TArray<FString> Problems = FDwMapValidator::Validate(Map, *GetDefault<UDwMapRules>());
+			TestTrue(*FString::Join(Problems, TEXT(" | ")), Problems.IsEmpty());
 		});
 
 		It("offers every first-layer node from the start", [this]()
@@ -199,12 +201,37 @@ void FDwRunSpec::Define()
 			}
 		});
 
-		It("leaves a fight empty when no ship battle is allowed on its layer", [this]()
+		It("enters shops and events and leaves them back to the map", [this]()
 		{
-			FRandomStream Random(1);
-			const TArray<const UDwEncounterDefinition*> OnlyLate = { C.Late };
-			TestNull(TEXT("Layer 2 has none"), FDwPlaceholderMap::PickEncounter(OnlyLate, 2, Random));
-			TestEqual(TEXT("Layer 5 has it"), FDwPlaceholderMap::PickEncounter(OnlyLate, 5, Random), static_cast<const UDwEncounterDefinition*>(C.Late));
+			bool bShop = false, bEvent = false;
+			for (int32 Seed = 0; Seed < 20 && !(bShop && bEvent); ++Seed)
+			{
+				Run = NewRun(Seed);
+				while (!Run->IsOver() && !(bShop && bEvent))
+				{
+					const TArray<int32> Choices = Run->GetChoices();
+					const int32* Other = Choices.FindByPredicate([this](int32 Index)
+						{ const EDwNodeType Type = Run->GetState().Map.Nodes[Index].Type; return Type == EDwNodeType::Shop || Type == EDwNodeType::Event; });
+					if (!Other)
+					{
+						if (Choices.Num() == 1 && Choices[0] == Run->GetState().Map.BossNode) { break; }
+						if (!SailOn()) { return; }
+						Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+						if (!FinishNode()) { return; }
+						continue;
+					}
+					const bool bIsShop = Run->GetState().Map.Nodes[*Other].Type == EDwNodeType::Shop;
+					const int32 Cleared = Run->GetState().Stats.NodesCleared;
+					Run->ChooseNode(*Other);
+					TestEqual(TEXT("Phase"), Run->GetPhase(), bIsShop ? EDwRunPhase::Shop : EDwRunPhase::Event);
+					TestTrue(TEXT("No routes inside"), Run->GetChoices().IsEmpty());
+					TestTrue(TEXT("Left"), bIsShop ? Run->LeaveShop() : Run->LeaveEvent());
+					TestEqual(TEXT("Back on the map"), Run->GetPhase(), EDwRunPhase::Map);
+					TestEqual(TEXT("Counted as cleared"), Run->GetState().Stats.NodesCleared, Cleared + 1);
+					(bIsShop ? bShop : bEvent) = true;
+				}
+			}
+			TestTrue(TEXT("Visited a shop and an event"), bShop && bEvent);
 		});
 	});
 
@@ -304,7 +331,7 @@ void FDwRunSpec::Define()
 
 			if (!FinishNode()) { return; }
 			// A later result that claims the dead one lived (a bug elsewhere) never revives them.
-			Run->ChooseNode(Run->GetChoices()[0]);
+			if (!SailOn()) { return; }
 			FDwCombatResult Lie = Won(Run->GetState(), 40.f);
 			FDwCrewResult& Ghost = Lie.Crew.AddDefaulted_GetRef();
 			Ghost.RosterId = S.Crew[2].Id;
@@ -350,12 +377,26 @@ void FDwRunSpec::Define()
 
 		It("wins the run by beating the boss", [this]()
 		{
-			for (int32 Layer = 0; Layer < Run->GetState().Map.LayerCount; ++Layer)
+			// Every route: fights won (alternately sunk and plundered), shops and events left at once.
+			int32 Fights = 0, Others = 0;
+			const int32 Boss = Run->GetState().Map.BossNode;
+			while (!(Run->GetChoices().Num() == 1 && Run->GetChoices()[0] == Boss))
 			{
-				if (!SailOn()) { return; }
-				Run->ApplyCombatResult(Won(Run->GetState(), 70.f, Layer % 2 ? EDwCombatOutcome::VictorySunk : EDwCombatOutcome::VictoryCrewDefeated));
-				if (!FinishNode()) { return; }
+				const int32 Next = Run->GetChoices()[0];
+				if (!TestTrue(TEXT("Sailed"), Run->ChooseNode(Next))) { return; }
+				switch (Run->GetPhase())
+				{
+				case EDwRunPhase::Combat:
+					Run->ApplyCombatResult(Won(Run->GetState(), 70.f, Fights++ % 2 ? EDwCombatOutcome::VictorySunk : EDwCombatOutcome::VictoryCrewDefeated));
+					if (!FinishNode()) { return; }
+					break;
+				case EDwRunPhase::Shop:  ++Others; Run->LeaveShop(); break;
+				case EDwRunPhase::Event: ++Others; Run->LeaveEvent(); break;
+				default: AddError(TEXT("Unexpected phase")); return;
+				}
 			}
+			TestEqual(TEXT("One node per layer"), Fights + Others, Run->GetState().Map.LayerCount);
+			TestTrue(TEXT("At least 5 fights (M2)"), Fights >= 5);
 			const TArray<int32> Last = Run->GetChoices();
 			if (!TestTrue(TEXT("Only the boss is left"), Last.Num() == 1 && Last[0] == Run->GetState().Map.BossNode)) { return; }
 			TestTrue(TEXT("To the boss"), Run->ChooseNode(Last[0]));
@@ -364,9 +405,9 @@ void FDwRunSpec::Define()
 			const FDwRunState& S = Run->GetState();
 			TestEqual(TEXT("Victory"), S.Phase, EDwRunPhase::Victory);
 			TestEqual(TEXT("Reason"), S.Stats.EndReason, EDwRunEndReason::Victory);
-			TestEqual(TEXT("8 fights + boss cleared"), S.Stats.NodesCleared, 9);
-			TestEqual(TEXT("Sunk 4"), S.Stats.FightsSunk, 4);
-			TestEqual(TEXT("Plundered 4"), S.Stats.FightsPlundered, 4);
+			TestEqual(TEXT("Every node + the boss cleared"), S.Stats.NodesCleared, S.Map.LayerCount + 1);
+			TestEqual(TEXT("Sunk"), S.Stats.FightsSunk, Fights / 2);
+			TestEqual(TEXT("Plundered"), S.Stats.FightsPlundered, Fights - Fights / 2);
 		});
 
 		It("refuses a result without an outcome, or outside combat", [this]()

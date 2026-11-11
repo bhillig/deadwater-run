@@ -10,6 +10,7 @@
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwCaptainDefinition.h"
 #include "Data/DwItemDefinition.h"
+#include "Data/DwMapRules.h"
 #include "Data/DwPerkDefinition.h"
 #include "Data/DwPools.h"
 #include "Data/DwShopDefinition.h"
@@ -263,6 +264,16 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 	}
 	bOk &= Save(Shop, Log);
 	GameData->DefaultShop = Shop;
+
+	// 9. DW-202 DA_MapRules: the design numbers (UDwMapRules defaults: 8-9 nodes, 5 fights, 3 lanes, M1-M5 recommended
+	//    defaults) plus placeholder type weights for the free slots - two fights for each shop or event.
+	UDwMapRules* MapRules = FindOrCreate<UDwMapRules>(RulesData, TEXT("DA_MapRules"), Log);
+	MapRules->DisplayName = FText::FromString(TEXT("Sea chart rules"));
+	MapRules->TypeWeights.Fight = 2.f;
+	MapRules->TypeWeights.Shop = 1.f;
+	MapRules->TypeWeights.Event = 1.f;
+	bOk &= Save(MapRules, Log);
+	GameData->MapRules = MapRules;
 	bOk &= Save(GameData, Log);
 
 	Log.Add(bOk ? TEXT("CONTENT PASS") : TEXT("CONTENT FAIL"));

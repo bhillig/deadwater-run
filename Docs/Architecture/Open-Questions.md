@@ -3,13 +3,13 @@
 - Every creative or design call the architecture needs. Agents never pick; they build the recommended default behind a data flag, clearly marked as a placeholder, until you answer.
 - **Where it lives** = the data field that holds your answer. Almost all answers are data, not code. Questions marked **(code)** change behaviour that data can't express.
 - **Needed by** follows the critical path in `Roadmap.md`.
-- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-10 (K7, P6, P11 answered during DW-201/DW-203; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
+- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-10 (K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
 
 ## Top 5 (they shape the most work)
 1. **C8a** - Explosive barrels: new in your C8 answer, not in the design doc or Scope. In v1 or post-launch?
 2. **K5** - Defend: now that captain death = defeat, should the captain still take hits for allies?
 3. **B1-B3** - Kraken tentacles: how many, how much HP, what destroying one does, does it hurt the Kraken.
-4. **M2 + P2** - "5 fights guaranteed" exact or minimum per path; the perk pools (shared or per archetype, 2 or 3 choices).
+4. **P2** - the perk pools (shared or per archetype, 2 or 3 choices). (M2 answered: at least 5 fights per path.)
 5. **K1a + K4a** - Conqueror's two actions (can they repeat?) and what the Team Leader's synergy bonus applies to.
 
 ## Follow-ups from the 2026-10-25 answers
@@ -75,14 +75,7 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 
 ## Map (needed by Nov 2)
 
-| ID | Question | Options | Recommendation | Where it lives |
-|---|---|---|---|---|
-| M1 | 8 or 9 nodes: random per run? | a) Random per seed b) Always 9 | a) | `MinPathNodes`/`MaxPathNodes` |
-| M2 | "5 fights guaranteed" | a) At least 5 on every path b) Exactly 5 on every path c) At least 5 somewhere on the map | a) | `MinFightsPerPath` (+ an exact flag if b) |
-| M3 | First node type; map width | a) First node is a fight, 3 lanes b) First node random, 3 lanes c) 4 lanes | a) | `FirstLayerType`, `LaneCount` |
-| M4 | Event nodes: show "?" or good/bad? | a) "?" only b) Show valence | a) | UI only |
-| M5 | "Guaranteed shop option before the boss" | a) The last node before the boss always offers a shop choice b) Every path has a shop in the last 3 nodes | a) | `bShopOptionBeforeBoss` |
-| M6 | Does the map show which crew a fight is? | a) Icon only b) Crew name and difficulty | a) | UI only |
+M1-M6 answered 2026-11-10 (recommended defaults) - see Resolved.
 
 ## Kraken (needed by Nov 8)
 
@@ -175,9 +168,15 @@ U1-U5 answered - see Resolved. Follow-up U3a above.
 | U4 | Run summary | Captain, seed, nodes, fights by outcome, gold, crew lost, kills, time | `16`, `09` (`FDwRunStats`, end reason) |
 | U5 | Abandon goes to summary | a) Yes | `16` |
 
-### Answered 2026-11-10 (DW-201, DW-203)
+### Answered 2026-11-10 (DW-201, DW-203, DW-202)
 | ID | Question | Decision | Now in |
 |---|---|---|---|
 | K7 | Veteran Crew: "+50% XP and levels up twice as fast" | a) Only +50% XP (`XpMultiplier` 1.5, `LevelThresholdMultiplier` 1.0). The threshold multiplier still works if set, for balance passes | `12`, `Tuning/CaptainTuning.json`, `FDwCaptainRules` |
 | P6 | Plunder: 1.5x gold plus an item always, or a chance? | b) 1.5x gold + always 1 random item from `DA_Shop_Default`'s item list (`PlunderItemChance` 1.0); surrender pays the same | `10`, `Tuning/EconomyTuning.json` |
 | P11 | Starting gold | 100 | `Tuning/EconomyTuning.json`, `Docs/Balance/Placeholders.md` |
+| M1 | 8 or 9 nodes | a) Picked per seed (`MinPathNodes` 8, `MaxPathNodes` 9) | `09`, `DA_MapRules` |
+| M2 | "5 fights guaranteed" | a) At least 5 on every path (`MinFightsPerPath`; the generator forces fights, the validator proves it) | `09`, `DA_MapRules` |
+| M3 | First node; map width | a) First layer fights, 3 lanes | `09`, `DA_MapRules` |
+| M4 | Event nodes on the map | a) "?" only | `14` (map screen) |
+| M5 | Shop before the boss | a) The middle node of the last layer is always a shop, offered from every node before it | `09`, `DA_MapRules.bShopOptionBeforeBoss` |
+| M6 | Fight info on the map | a) Icon only | `14` (map screen) |

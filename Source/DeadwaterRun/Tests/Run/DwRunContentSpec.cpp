@@ -50,10 +50,17 @@ BEGIN_DEFINE_SPEC(FDwRunContentSpec, "DeadwaterRun.Run.Content",
 	/** Sails to the first route and starts its fight in the fixture world. */
 	bool StartNextFight(FDwEncounterSetup* OutSetup = nullptr)
 	{
-		const TArray<int32> Choices = Run->GetChoices();
-		if (!TestTrue(TEXT("A route"), !Choices.IsEmpty()) || !TestTrue(TEXT("Sailed"), Run->ChooseNode(Choices[0])))
+		// A fight route if one is offered; shops and events on the way are left at once (DW-204/205 fill them).
+		while (Run->GetPhase() != EDwRunPhase::Combat)
 		{
-			return false;
+			const TArray<int32> Choices = Run->GetChoices();
+			const int32* Fight = Choices.FindByPredicate([this](int32 Index) { return Run->GetState().Map.Nodes[Index].Type == EDwNodeType::Fight; });
+			if (!TestTrue(TEXT("A route"), !Choices.IsEmpty()) || !TestTrue(TEXT("Sailed"), Run->ChooseNode(Fight ? *Fight : Choices[0])))
+			{
+				return false;
+			}
+			if (Run->GetPhase() == EDwRunPhase::Shop) { Run->LeaveShop(); }
+			if (Run->GetPhase() == EDwRunPhase::Event) { Run->LeaveEvent(); }
 		}
 		FDwEncounterSetup Setup;
 		TArray<FString> Errors;

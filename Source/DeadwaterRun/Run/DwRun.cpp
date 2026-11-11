@@ -10,6 +10,7 @@
 #include "Data/DwCaptainDefinition.h"
 #include "Data/DwEncounterDefinition.h"
 #include "Data/DwItemDefinition.h"
+#include "Data/DwMapRules.h"
 #include "Data/DwPerkDefinition.h"
 #include "Data/DwShopDefinition.h"
 #include "Data/DwUnitDefinition.h"
@@ -18,7 +19,7 @@
 #include "Run/DwProgressionRules.h"
 #include "Run/DwRunRandom.h"
 #include "Run/Economy/DwRewardRules.h"
-#include "Run/Map/DwPlaceholderMap.h"
+#include "Run/Map/DwMapGenerator.h"
 
 const FName UDwRun::DefaultTuningRow(TEXT("Default"));
 
@@ -83,8 +84,16 @@ bool UDwRun::Initialize(const UDwGameData& InGameData, const UDwCaptainDefinitio
 		Errors.Add(TEXT("DT_EconomyTuning has no 'Default' row."));
 	}
 
-	// Map (DW-202 swaps this for FDwMapGenerator + FDwMapValidator with ForMap(Seed, Attempt) retries).
-	State.Map = FDwPlaceholderMap::Build(FDwRunRandom::ForMap(Seed, 0), InGameData.MapRules, EncounterPool, InGameData.KrakenEncounter);
+	// Map: generate + validate, retried with ForMap(Seed, Attempt) (09 "Map generation").
+	const UDwMapRules& Rules = InGameData.MapRules ? *InGameData.MapRules : *GetDefault<UDwMapRules>();
+	TArray<FString> MapProblems;
+	int32 MapAttempts = 0;
+	State.Map = FDwMapGenerator::Build(Seed, Rules, EncounterPool, InGameData.KrakenEncounter, &MapProblems, &MapAttempts);
+	for (const FString& Problem : MapProblems)
+	{
+		Errors.Add(FString::Printf(TEXT("Map after %d attempts: %s"), MapAttempts, *Problem));
+	}
+	UE_CLOG(MapAttempts > 1 && MapProblems.IsEmpty(), LogDwRun, Log, TEXT("Map valid on attempt %d."), MapAttempts);
 
 	for (const FString& Error : Errors)
 	{

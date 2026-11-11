@@ -14,7 +14,8 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'DwCommon.ps1')
 
 try {
-    Assert-DwEditorClosed
+    # Only the editor running this configuration has these modules loaded.
+    if ($Target -like '*Editor') { Assert-DwEditorClosed -Name $(if ($Config -eq 'Development') { 'UnrealEditor' } else { "UnrealEditor-Win64-$Config" }) }
     $engine = Get-DwEngineDir
 } catch {
     Write-Output "BUILD FAIL ($($_.Exception.Message))"

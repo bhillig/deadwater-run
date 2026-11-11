@@ -154,7 +154,7 @@ struct DEADWATERRUN_API FDwMapNode
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Map") bool bVisited = false;
 };
 
-/** Layered lanes plus one boss node (09 D2). Built by FDwMapGenerator (DW-202); FDwPlaceholderMap until then. */
+/** Layered lanes plus one boss node (09 D2). Built by FDwMapGenerator, checked by FDwMapValidator (DW-202). */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwMapGraph
 {

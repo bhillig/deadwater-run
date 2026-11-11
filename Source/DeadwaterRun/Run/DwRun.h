@@ -36,7 +36,7 @@ public:
 
 	/**
 	 * Sets up a new run for Captain: the roster (captain, then the starting crew, full Health, level 1), the ship at full
-	 * Health, starting gold, and the map (FDwPlaceholderMap until DW-202) from the encounter pool. Phase = Map.
+	 * Health, starting gold, and the map (FDwMapGenerator + FDwMapValidator) from the encounter pool. Phase = Map.
 	 * False (with a message per problem) if content is missing; the run is unusable then.
 	 */
 	bool Initialize(const UDwGameData& InGameData, const UDwCaptainDefinition& Captain, int32 Seed,

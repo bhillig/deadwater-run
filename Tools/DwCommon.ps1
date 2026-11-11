@@ -45,6 +45,12 @@ function Get-DwEditorCmd {
 
 # Fails with a clear message if an editor has the project's DLLs loaded (the build would fail or hot-reload).
 function Assert-DwEditorClosed {
-    $running = Get-Process -Name 'UnrealEditor' -ErrorAction SilentlyContinue
-    if ($running) { throw "UnrealEditor.exe is running (pid $($running.Id -join ', ')). Close it first." }
+    # Content and test runs: any editor locks the assets (UnrealEditor, UnrealEditor-Win64-DebugGame, UnrealEditor-Cmd).
+    # Builds pass -Name for the one editor binary that loads the modules being built.
+    param([string] $Name = 'UnrealEditor*')
+    $running = @(Get-Process -Name $Name -ErrorAction SilentlyContinue)
+    if ($running) {
+        $names = ($running | ForEach-Object { "$($_.ProcessName) (pid $($_.Id))" }) -join ', '
+        throw "An Unreal Editor is running: $names. Close it first."
+    }
 }

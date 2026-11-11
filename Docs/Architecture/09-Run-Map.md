@@ -106,7 +106,7 @@ classDiagram
 ### As built in DW-201 (2026-11-10)
 - Definitions in run state are object pointers (`TObjectPtr<const UDwUnitDefinition>` etc.), not `FPrimaryAssetId`s, matching `FDwCombatantSetup`: transient test content works, `UDwRun` keeps them referenced, and every definition is resident anyway (`UDwAssetManager`).
 - Roster ids are seeded (`FDwRunRandom::ForCrew` + a serial in `FDwRunState::LastCrewSerial`), so a seed reproduces the same ids.
-- Until DW-202, `UDwRun::Initialize` builds `FDwPlaceholderMap` (`Run/Map/`): the D2 lane shape with every node a fight, encounters picked by weight and layer tier from `UDwRunSubsystem::GatherEncounterPool` (sorted by name). DW-202 swaps that one call for generate + validate.
+- `UDwRun::Initialize` builds the chart with `FDwMapGenerator::Build` (generate + validate, retried with `ForMap(Seed, Attempt)`) from `DA_GameData.MapRules` (class defaults when unset) and `UDwRunSubsystem::GatherEncounterPool` (sorted by name). Validator problems after `MaxAttempts` are run setup errors.
 - After a won fight (not the boss) the run enters `Rewards` (DW-203): `ClaimRewards` banks gold and items and teaches the chosen move, then `LevelUp` once per level gained (`ChoosePerk` on the front of `PendingLevelUps`), then `Map`. The node counts as cleared only when the last level-up is confirmed. `LeaveShop()` / `LeaveEvent()` return a shop or event node to the map; DW-204/DW-205 add the purchases and outcomes before them.
 - The boss node's encounter is `DA_GameData.KrakenEncounter`; until DW-209 sets it, `BuildEncounterSetup` reports why the boss fight can't start.
 - `ADwGameMode` is the phase bridge: `Combat` -> `BuildEncounterSetup` -> `StartEncounter`; `OnCombatEnded` -> `PostCombatSeconds` beat (next tick in instant mode) -> `EndEncounter` -> `ApplyCombatResult`.
@@ -154,6 +154,11 @@ classDiagram
 - Every fight has an encounter; the boss exists and is reachable from every node.
 
 `UDwRun::Initialize` calls generate + validate up to `MaxAttempts` with `ForMap(Seed, Attempt)`; the seed sweep test guarantees this never runs out.
+
+Built in DW-202 (`Source/DeadwaterRun/Run/Map/DwMapGenerator.h`, `FDwMapGenerator::Build`):
+- M1-M6 answered with the recommended defaults (Open-Questions, Resolved). `DA_MapRules` (`Data/Rules/`) carries placeholder `TypeWeights` Fight 2 / Shop 1 / Event 1.
+- The 5-fight rule holds by construction: while filling a node, the generator tracks the fewest fights on any path that reaches it. The node is forced to be a fight if a shop or event there could leave a path short, counting the later layers minus the forced shop as the most fights still to come. Fights never break the no-consecutive rules, so forcing never conflicts. The validator then proves it, and the sweep (`DeadwaterRun.Rules.Map`, 10,000 seeds, plus 2,000 with weights that barely want fights) finds no chart that needs a retry.
+- Encounters: weighted, tiered by layer, avoiding every parent node's crew when the tier has another; shops and events have none.
 
 ## Connections
 - `03-Combat-Turns.md`: `BuildEncounterSetup` / `ApplyCombatResult`.
