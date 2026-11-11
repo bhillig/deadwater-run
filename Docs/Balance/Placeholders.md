@@ -66,3 +66,15 @@ Captain abilities (`AbilityTuning.json` `Captain_*`) still have `ManaCost` 0 (K1
 | `ProgressionTuning.json` | `1`..`9` | `XpToNext` | 100, 110, ... 180 | Flat curve: about 1 level per fight early, a bit slower later; max level 10 |
 | `RunTuning.json` | `Default` | `PerkChoices` / `MaxLevel` / `MaxAbilitySlots` | 3 / 10 / 3 | P2 a), P1, P4 a) recommendations |
 | `PerkTuning.json` | `SeaLegs` / `Hardened` / `Cutthroat` | `Value` | 1 / 0.1 / 0.1 | +1 move tile, 10% less damage taken, 10% more damage dealt |
+
+## Set by DW-209 (placeholder Kraken), 2026-11-11
+
+The placeholder boss (`DA_Encounter_KrakenPlaceholder`, Docs/Architecture/08 "Placeholder boss"): the body only, no tentacles, one phase with Tentacle Slam. DW-301/302 replace it with the real Kraken.
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `UnitTuning.json` | `KrakenBody` | `MaxHealth` | 500 | The design doc's number, used unchanged; listed here because the fight it sits in is a placeholder (no tentacles, one move), so 500 has not been balanced against anything yet |
+| `UnitTuning.json` | `KrakenBody` | `MaxActionPoints` | 1 (was 0) | One Tentacle Slam per Kraken turn until `UDwKrakenAiBrain` sets actions from `KrakenTuning.json` `BaseActionsPerTurn` (DW-302) |
+| `AbilityTuning.json` | `Kraken_TentacleSlam` | `Damage` | 50 | Design doc number, unchanged (one crew member or the ship) |
+| `KrakenTuning.json` | `Kraken` | all | 0 / empty | Unchanged: no tentacles in the placeholder; any `TentacleCount` above 0 is refused until DW-301 |
+| `DA_Deck_KrakenArena` (layout, not JSON) | - | body anchor | next to the rail | So cutlasses can reach the body while there are no tentacles; what may hit the body is Open-Questions B4 |

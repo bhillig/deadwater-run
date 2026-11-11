@@ -3,6 +3,7 @@
 // Tuning-row bindings and data validation for every definition class in Data/.
 // Kept in one translation unit so the rules are reviewable side by side; behaviour arrives with each system's ticket.
 
+#include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwCaptainDefinition.h"
 #include "Data/DwEncounterDefinition.h"
@@ -148,9 +149,19 @@ EDataValidationResult UDwEventDefinition::IsDataValid(FDataValidationContext& Co
 EDataValidationResult UDwKrakenDefinition::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
-	if (!Body || !Tentacle || !Arena)
+	if (!Body || !Arena)
 	{
-		DwValidation::Error(Context, Result, LOCTEXT("KrakenParts", "Body, Tentacle and Arena must all be set."));
+		DwValidation::Error(Context, Result, LOCTEXT("KrakenParts", "Body and Arena must both be set."));
+	}
+	// The DW-209 placeholder has no tentacles; a Kraken that has some (DW-301) needs their unit.
+	const FDwKrakenTuningRow* KrakenTuning = GetTuningRow<FDwKrakenTuningRow>();
+	if (KrakenTuning && KrakenTuning->TentacleCount > 0 && !Tentacle)
+	{
+		DwValidation::Error(Context, Result, LOCTEXT("KrakenTentacle", "DT_KrakenTuning asks for tentacles, so Tentacle must be set."));
+	}
+	if (Body && !Body->UnitTags.HasTagExact(DwTags::Unit_Kraken_Body))
+	{
+		DwValidation::Error(Context, Result, LOCTEXT("KrakenBodyTag", "Body must carry Unit.Kraken.Body (killing it wins the boss fight)."));
 	}
 	if (Phases.IsEmpty())
 	{

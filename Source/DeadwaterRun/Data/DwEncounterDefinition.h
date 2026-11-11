@@ -69,7 +69,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ship Battle", meta = (EditCondition = "Kind == EDwEncounterKind::ShipBattle"))
 	TArray<FDwEnemySlot> Units;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ship Battle", meta = (EditCondition = "Kind == EDwEncounterKind::ShipBattle"))
+	/** Ship battle: the crew's AI (slots may override). Kraken: drives the body until UDwKrakenAiBrain exists (DW-302). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Encounter")
 	TObjectPtr<UDwAiProfile> AiProfile;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Kraken", meta = (EditCondition = "Kind == EDwEncounterKind::Kraken"))

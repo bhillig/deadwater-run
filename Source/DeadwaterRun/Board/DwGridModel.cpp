@@ -38,7 +38,9 @@ FDwTile* FDwGridModel::GetTileMutable(FIntPoint Tile)
 bool FDwGridModel::IsStandable(FIntPoint Tile) const
 {
 	const FDwTile* T = GetTile(Tile);
-	return T && T->bWalkable && (T->Kind == EDwTileKind::Deck || T->Kind == EDwTileKind::Nest || T->Kind == EDwTileKind::Ladder);
+	// Water is only standable where a layout marks it walkable: the Kraken's anchor in its arena.
+	return T && T->bWalkable && (T->Kind == EDwTileKind::Deck || T->Kind == EDwTileKind::Nest || T->Kind == EDwTileKind::Ladder
+		|| T->Kind == EDwTileKind::Water);
 }
 
 FDwOccupant FDwGridModel::GetOccupant(FIntPoint Tile) const

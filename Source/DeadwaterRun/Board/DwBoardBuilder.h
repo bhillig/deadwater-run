@@ -23,7 +23,8 @@ struct FDwDeckSource
  *
  *   .  deck              S  deck + spawn          C  deck + cannon       E  deck + boarding edge
  *   L  ladder (deck)     N  nest (elevation 1)    c  crate (low blocker) M  mast/cabin (high blocker)
- *   ~  water             -  not on the board
+ *   ~  water             -  not on the board      B  Kraken body anchor (walkable water + spawn, Kraken arenas only)
+ * Tentacle slots ('T' in Docs/Architecture/04) come with the tentacles in DW-301.
  */
 struct DEADWATERRUN_API FDwDeckAscii
 {
@@ -44,6 +45,14 @@ struct DEADWATERRUN_API FDwBoardBuilder
 	 */
 	static FDwGridModel BuildShipBattle(const FDwDeckSource& PlayerDeck, const FDwDeckSource& EnemyDeck);
 	static FDwGridModel BuildShipBattle(const UDwDeckLayout& PlayerDeck, const UDwDeckLayout& EnemyDeck);
+
+	/**
+	 * The Kraken fight: the player deck placed as in a ship battle, the arena mirrored on the right in the enemy deck's
+	 * place. Arena tiles are Neutral (nobody's deck, nothing to board); its spawn tiles (the body anchor) become
+	 * Tile.Spawn.Enemy.
+	 */
+	static FDwGridModel BuildKrakenArena(const FDwDeckSource& PlayerDeck, const FDwDeckSource& Arena);
+	static FDwGridModel BuildKrakenArena(const UDwDeckLayout& PlayerDeck, const UDwDeckLayout& Arena);
 
 	/** One deck on its own, owned by Side. Layout validation and single-deck tests use this. */
 	static FDwGridModel BuildSingleDeck(const FDwDeckSource& Deck, EDwSide Side);

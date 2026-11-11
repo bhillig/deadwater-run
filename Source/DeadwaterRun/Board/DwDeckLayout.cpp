@@ -88,6 +88,18 @@ TArray<FString> UDwDeckLayout::Validate() const
 	{
 		Errors.Add(TEXT("Ship decks need at least one boarding edge tile (E)."));
 	}
+	if (bArena)
+	{
+		const int32 Anchors = Tiles.FilterByPredicate([](const FDwTile& T) { return T.Tags.HasTagExact(DwTags::Tile_Kraken_Body); }).Num();
+		if (Anchors != 1)
+		{
+			Errors.Add(FString::Printf(TEXT("A Kraken arena needs exactly one body anchor (B), has %d."), Anchors));
+		}
+		if (Edges > 0)
+		{
+			Errors.Add(TEXT("A Kraken arena has nothing to board: no boarding edge tiles (E)."));
+		}
+	}
 
 	// Every walkable tile reachable from the first one (the nest only through its ladder).
 	if (Standable.Num() > 0)
