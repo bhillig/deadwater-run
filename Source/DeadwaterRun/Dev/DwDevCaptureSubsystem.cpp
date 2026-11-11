@@ -74,7 +74,7 @@ void UDwDevCaptureSubsystem::StageDemo()
 		RunDemoStep();
 		return;
 	}
-	if (Demo == TEXT("voyage"))
+	if (Demo == TEXT("voyage") || Demo == TEXT("boss"))
 	{
 		VoyageDemoStep();
 		return;
@@ -506,13 +506,18 @@ void UDwDevCaptureSubsystem::VoyageDemoStep()
 	};
 	if (!Run)
 	{
-		UE_LOG(LogDw, Error, TEXT("Dev capture 'voyage': no run (start the game with -DwCaptain=<name>)."));
+		UE_LOG(LogDw, Error, TEXT("Dev capture '%s': no run (start the game with -DwCaptain=<name>)."), *Demo);
 		Capture();
 		return;
 	}
 	const EDwRunPhase Phase = Run->GetPhase();
 	if (Phase == EDwRunPhase::Combat)
 	{
+		if (Run->GetState().CurrentNode == Run->GetState().Map.BossNode)
+		{
+			BossFightStep();
+			return;
+		}
 		if (!bVoyageFightStaged)
 		{
 			bVoyageFightStaged = true;
@@ -526,27 +531,30 @@ void UDwDevCaptureSubsystem::VoyageDemoStep()
 	}
 	if (Run->IsOver())
 	{
-		UE_LOG(LogDw, Error, TEXT("Dev capture 'voyage': the run ended (%s)."), *DwRun::EndReasonName(Run->GetState().Stats.EndReason));
-		Capture();
+		const bool bVictory = Run->GetPhase() == EDwRunPhase::Victory;
+		UE_CLOG(!bVictory, LogDw, Error, TEXT("Dev capture '%s': the run ended (%s)."), *Demo, *DwRun::EndReasonName(Run->GetState().Stats.EndReason));
+		UE_CLOG(bVictory, LogDw, Log, TEXT("Dev capture '%s': Victory after %d stops; %d of %d crew alive, %d nodes cleared."), *Demo, VoyageStops,
+			Run->GetState().CountLivingCrew(), Run->GetState().Crew.Num(), Run->GetState().Stats.NodesCleared);
+		Capture(); // final frame: the run summary
 		return;
 	}
 
 	// Capture the screen first; act on it on the next step (screenshots are taken at the end of the frame).
+	// Demo "boss" only captures from the last stop of the chart on.
+	const bool bBossOnly = Demo == TEXT("boss");
 	const TArray<int32> Choices = Run->GetChoices();
 	const bool bAtBoss = Phase == EDwRunPhase::Map && Choices.Num() == 1 && Choices[0] == Run->GetState().Map.BossNode;
-	const bool bWanted = Phase == EDwRunPhase::Map || !VoyageScreensSeen.Contains(static_cast<uint8>(Phase));
+	const bool bWanted = bAtBoss || (!bBossOnly && (Phase == EDwRunPhase::Map || !VoyageScreensSeen.Contains(static_cast<uint8>(Phase))));
 	if (!bVoyageCaptured && bWanted)
 	{
 		if (bAtBoss)
 		{
-			UE_LOG(LogDw, Log, TEXT("Dev capture 'voyage': the Kraken is the only route left after %d stops (%d layers); %d gold, %d crew alive."),
-				VoyageStops, Run->GetState().Map.LayerCount, Run->GetState().Gold, Run->GetState().CountLivingCrew());
-			Capture(); // final frame: the chart with only the boss ahead (DW-209 makes the fight)
-			return;
+			UE_LOG(LogDw, Log, TEXT("Dev capture '%s': the Kraken is the only route left after %d stops (%d layers); %d gold, %d crew alive."),
+				*Demo, VoyageStops, Run->GetState().Map.LayerCount, Run->GetState().Gold, Run->GetState().CountLivingCrew());
 		}
 		VoyageScreensSeen.Add(static_cast<uint8>(Phase));
 		CaptureFrame(++VoyageFrame);
-		UE_LOG(LogDw, Log, TEXT("Dev capture 'voyage': frame %02d = %s"), VoyageFrame, *DwRun::PhaseName(Phase));
+		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = %s"), *Demo, VoyageFrame, *DwRun::PhaseName(Phase));
 		bVoyageCaptured = true;
 		Next(0.5f);
 		return;
@@ -577,8 +585,82 @@ void UDwDevCaptureSubsystem::VoyageDemoStep()
 	case EDwRunPhase::Event: bOk = Run->LeaveEvent(); break;
 	default: break;
 	}
-	UE_CLOG(!bOk, LogDw, Error, TEXT("Dev capture 'voyage': could not act in phase %s."), *DwRun::PhaseName(Phase));
+	UE_CLOG(!bOk, LogDw, Error, TEXT("Dev capture '%s': could not act in phase %s."), *Demo, *DwRun::PhaseName(Phase));
 	Next(0.6f);
+}
+
+void UDwDevCaptureSubsystem::BossFightStep()
+{
+	UWorld* World = GetWorld();
+	const ADwPlayerController* PC = Cast<ADwPlayerController>(World->GetFirstPlayerController());
+	UDwCombatInteraction* Interaction = PC ? PC->GetInteraction() : nullptr;
+	UDwCombatSubsystem* Combat = World->GetSubsystem<UDwCombatSubsystem>();
+	auto Next = [this, World](float Seconds)
+	{
+		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::VoyageDemoStep), Seconds, false);
+	};
+	if (!Combat || !Combat->IsActive())
+	{
+		Next(0.5f); // between the fight's end and the Victory/Defeat phase
+		return;
+	}
+	const FDwCombatSnapshot Snapshot = Combat->GetSnapshot();
+	FDwUnitHandle Sniper;
+	FDwUnitHandle Kraken;
+	for (const FDwUnitSnapshot& Unit : Snapshot.Units)
+	{
+		Sniper = !Sniper.IsValid() && Unit.bAlive && Unit.Side == EDwSide::Player && Unit.Tags.HasTag(DwTags::Unit_Archetype_Sniper) ? Unit.Handle : Sniper;
+		Kraken = Unit.Tags.HasTagExact(DwTags::Unit_Kraken_Body) ? Unit.Handle : Kraken;
+	}
+	const FDwUnitSnapshot* KrakenUnit = Snapshot.FindUnit(Kraken);
+
+	switch (BossStep++)
+	{
+	case 0:
+		Next(2.5f); // spawn and settle
+		return;
+	case 1: // the sniper on the rail aiming at the Kraken: target highlight and damage preview
+		if (Interaction && Sniper.IsValid() && KrakenUnit)
+		{
+			Combat->MoveUnit(Sniper, KrakenUnit->Tile - FIntPoint(1, 1), /*bSnapActor*/ true);
+			Interaction->SelectUnit(Sniper);
+			const FDwUnitSnapshot* Unit = Combat->GetSnapshot().FindUnit(Sniper);
+			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Attack_Ranged)))
+			{
+				Interaction->HoverTile(KrakenUnit->Tile);
+			}
+		}
+		UE_CLOG(!KrakenUnit, LogDw, Error, TEXT("Dev capture '%s': the boss fight has no Kraken body."), *Demo);
+		CaptureFrame(++VoyageFrame);
+		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = Kraken fight, sniper aiming (%s)"), *Demo, VoyageFrame,
+			KrakenUnit ? *FString::Printf(TEXT("%.0f HP"), KrakenUnit->Health) : TEXT("no body"));
+		Next(0.5f);
+		return;
+	case 2: // fire, then end the turn: the Kraken answers with Tentacle Slam
+		if (Interaction && KrakenUnit)
+		{
+			Interaction->ClickTile(KrakenUnit->Tile);
+		}
+		Next(1.2f);
+		return;
+	case 3:
+		if (Interaction)
+		{
+			Interaction->RequestEndTurn();
+		}
+		Next(3.0f);
+		return;
+	case 4: // after the slam: HP bars and floating text on both sides
+		CaptureFrame(++VoyageFrame);
+		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = after the Kraken's turn (%s, round %d)"), *Demo, VoyageFrame,
+			KrakenUnit ? *FString::Printf(TEXT("%.0f HP"), KrakenUnit->Health) : TEXT("no body"), Snapshot.Round);
+		Next(0.5f);
+		return;
+	default:
+		WinFightByCaptain();
+		Next(1.0f + 2.5f); // ADwGameMode::PostCombatSeconds, then the Victory phase and its summary
+		return;
+	}
 }
 
 void UDwDevCaptureSubsystem::Capture()

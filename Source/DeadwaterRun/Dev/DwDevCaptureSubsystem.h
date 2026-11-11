@@ -8,7 +8,7 @@
 
 /**
  * Dev-only proof capture (never created in Shipping): with -DwCapture=<file.png> on the command line, the game waits
- * -DwCaptureDelay seconds (default 4), optionally stages the interaction (-DwCaptureDemo=move | aim | cannon | enemy | run ...), writes a
+ * -DwCaptureDelay seconds (default 4), optionally stages the interaction (-DwCaptureDemo=move | aim | cannon | enemy | run | voyage | boss ...), writes a
  * screenshot with the HUD, and quits. Lets agents produce reviewable screenshots headless (Tools/Capture.ps1) when the
  * editor MCP is unavailable. DW-111's cheat manager may absorb it.
  */
@@ -36,9 +36,17 @@ private:
 	/**
 	 * Demo "voyage" (needs -DwCaptain=; DW-202/211): plays a whole generated chart through the run screens. A frame of the
 	 * map at every stop and of the first rewards, level-up, shop and event screens; fights are won by the captain;
-	 * routes rotate between the choices. Ends with the map showing only the Kraken (the boss fight is DW-209).
+	 * routes rotate between the choices. At the end of the chart: the map with only the Kraken ahead, then the boss fight
+	 * (BossFightStep); the final frame is the Victory run summary.
+	 * Demo "boss" (DW-209) plays the same voyage but only captures from the last stop on: -01 the map with only the Kraken,
+	 * -02 the Kraken fight with the sniper aiming, -03 after the Kraken's Tentacle Slam; final frame the Victory summary.
 	 */
 	void VoyageDemoStep();
+	/**
+	 * The boss fight inside the voyage: settle; the sniper on the rail aims its musket at the Kraken (frame); it fires and
+	 * the player ends the turn, so the Kraken slams back (frame); then the captain kills the body (VictoryBoss).
+	 */
+	void BossFightStep();
 	/**
 	 * Demo "shell" (DW-210; start in L_MainMenu with -Map MainMenu): presses the real screens' buttons. L_MainMenu: -01 main
 	 * menu, -02 settings, -03 captain select, -04 a captain picked, Set Sail. L_Sea: -05 the map, -06 pause, -07 the abandon
@@ -59,6 +67,7 @@ private:
 	/** The current screen is captured; act on it next step. */
 	bool bVoyageCaptured = false;
 	bool bVoyageFightStaged = false;
+	int32 BossStep = 0;
 	TSet<uint8> VoyageScreensSeen;
 	int32 EnemyFrame = 0;
 	int32 EnemyTurnsPlayed = 0;

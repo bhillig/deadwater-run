@@ -221,7 +221,7 @@ bool ADwGameMode::StartDevFight(int32 Seed)
 	}
 	FDwEncounterSetup Setup;
 	TArray<FString> Errors;
-	if (!FDwEncounterSetupBuilder::BuildShipBattle(*GameData, *GameData->DevEncounter, Crew, Seed, Setup, Errors))
+	if (!FDwEncounterSetupBuilder::Build(*GameData, *GameData->DevEncounter, Crew, Seed, Setup, Errors))
 	{
 		UE_LOG(LogDwCombat, Error, TEXT("Dev fight setup failed: %s"), *FString::Join(Errors, TEXT("; ")));
 		return false;

@@ -213,7 +213,7 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 	if (!Node->Encounter)
 	{
 		OutErrors.Add(Node->Type == EDwNodeType::Boss
-			? FString(TEXT("The boss node has no encounter: DA_GameData.KrakenEncounter is not set (DW-209)."))
+			? FString(TEXT("The boss node has no encounter: DA_GameData.KrakenEncounter is not set."))
 			: FString::Printf(TEXT("Node %d has no encounter (no ship battle allowed on layer %d)."), State.CurrentNode, Node->Layer));
 		return false;
 	}
@@ -248,7 +248,7 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 		Combatant.ExtraAbilities.Remove(nullptr);
 	}
 
-	if (!FDwEncounterSetupBuilder::BuildShipBattle(*GameData, *Node->Encounter, Crew, FDwRunRandom::ForNode(State.Seed, State.CurrentNode), Out, OutErrors))
+	if (!FDwEncounterSetupBuilder::Build(*GameData, *Node->Encounter, Crew, FDwRunRandom::ForNode(State.Seed, State.CurrentNode), Out, OutErrors))
 	{
 		return false;
 	}
@@ -264,7 +264,8 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 	}
 	Out.CaptainRuleTags = Captain->RuleTags;
 	Out.OutcomeConfig.bSurrenderEnabled = Captain->RuleTags.HasTagExact(DwTags::Rule_Captain_Surrender);
-	Out.OutcomeConfig.bIsBossFight = Node->Type == EDwNodeType::Boss;
+	// The Kraken encounter is a boss fight wherever it is played (BuildKraken); the boss node is one by definition.
+	Out.OutcomeConfig.bIsBossFight |= Node->Type == EDwNodeType::Boss;
 	return true;
 }
 

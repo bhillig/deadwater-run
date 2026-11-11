@@ -224,13 +224,15 @@ bool UDwCombatSubsystem::SpawnFight()
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Board = World->SpawnActor<ADwBoard>(Setup.BoardClass ? Setup.BoardClass.Get() : ADwBoard::StaticClass(), FTransform::Identity, Params);
-	// The seam between the two decks: the first column of the enemy ship.
+	// The seam between the two decks: the first column of the enemy ship (or of the Kraken's neutral arena, so the
+	// player's hull wall has the same room in the boss fight).
 	int32 SeamColumn = INDEX_NONE;
-	if (Setup.bHasEnemyShip && Setup.DeckGap > 0.f)
+	if (Setup.DeckGap > 0.f)
 	{
 		for (int32 Index = 0; Index < Grid.Tiles.Num(); ++Index)
 		{
-			if (Grid.Tiles[Index].Owner == EDwSide::Enemy)
+			const FDwTile& Tile = Grid.Tiles[Index];
+			if (Tile.Kind != EDwTileKind::None && Tile.Owner != EDwSide::Player)
 			{
 				SeamColumn = SeamColumn == INDEX_NONE ? Grid.ToTile(Index).X : FMath::Min(SeamColumn, Grid.ToTile(Index).X);
 			}
