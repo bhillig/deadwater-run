@@ -68,6 +68,11 @@ void UDwDevCaptureSubsystem::StageDemo()
 		RunDemoStep();
 		return;
 	}
+	if (Demo == TEXT("voyage"))
+	{
+		VoyageDemoStep();
+		return;
+	}
 
 	// Close-ups for art review: -DwCaptureZoom=0.3 (fraction of the framed distance) -DwCaptureTile=2,1 (focus tile).
 	float Zoom = 0.f;
@@ -336,6 +341,118 @@ void UDwDevCaptureSubsystem::RunDemoStep()
 		Capture();
 		return;
 	}
+}
+
+void UDwDevCaptureSubsystem::WinFightByCaptain() const
+{
+	UWorld* World = GetWorld();
+	const UDwRunSubsystem* Runs = UDwRunSubsystem::Get(World);
+	const UDwRun* Run = Runs ? Runs->GetRun() : nullptr;
+	UDwCombatSubsystem* Combat = World ? World->GetSubsystem<UDwCombatSubsystem>() : nullptr;
+	const TSubclassOf<UGameplayEffect> Kill = DwGas::GetSharedEffects().Kill;
+	if (!Run || !Combat || !Kill)
+	{
+		return;
+	}
+	UDwAbilitySystemComponent* CaptainAsc = nullptr;
+	for (const ADwCombatUnit* Unit : Combat->GetUnits())
+	{
+		CaptainAsc = Unit->GetRosterId() == Run->GetState().Crew[0].Id ? Unit->GetDwAbilitySystem() : CaptainAsc;
+	}
+	for (const ADwCombatUnit* Unit : Combat->GetUnits())
+	{
+		if (Unit->GetSide() == EDwSide::Enemy && Unit->IsAlive() && CaptainAsc)
+		{
+			CaptainAsc->ApplyGameplayEffectToTarget(Kill->GetDefaultObject<UGameplayEffect>(), Unit->GetDwAbilitySystem(), 1.f, CaptainAsc->MakeEffectContext());
+		}
+	}
+	Combat->SubmitCommand(FDwCombatCommand::MakeEndTurn(EDwSide::Player)); // deaths outside a command count at the turn boundary
+}
+
+void UDwDevCaptureSubsystem::VoyageDemoStep()
+{
+	UWorld* World = GetWorld();
+	const UDwRunSubsystem* Runs = UDwRunSubsystem::Get(World);
+	UDwRun* Run = Runs ? Runs->GetRun() : nullptr;
+	auto Next = [this, World](float Seconds)
+	{
+		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::VoyageDemoStep), Seconds, false);
+	};
+	if (!Run)
+	{
+		UE_LOG(LogDw, Error, TEXT("Dev capture 'voyage': no run (start the game with -DwCaptain=<name>)."));
+		Capture();
+		return;
+	}
+	const EDwRunPhase Phase = Run->GetPhase();
+	if (Phase == EDwRunPhase::Combat)
+	{
+		if (!bVoyageFightStaged)
+		{
+			bVoyageFightStaged = true;
+			Next(2.5f); // spawn and settle
+			return;
+		}
+		bVoyageFightStaged = false;
+		WinFightByCaptain();
+		Next(1.0f + 2.5f); // ADwGameMode::PostCombatSeconds, then the rewards
+		return;
+	}
+	if (Run->IsOver())
+	{
+		UE_LOG(LogDw, Error, TEXT("Dev capture 'voyage': the run ended (%s)."), *DwRun::EndReasonName(Run->GetState().Stats.EndReason));
+		Capture();
+		return;
+	}
+
+	// Capture the screen first; act on it on the next step (screenshots are taken at the end of the frame).
+	const TArray<int32> Choices = Run->GetChoices();
+	const bool bAtBoss = Phase == EDwRunPhase::Map && Choices.Num() == 1 && Choices[0] == Run->GetState().Map.BossNode;
+	const bool bWanted = Phase == EDwRunPhase::Map || !VoyageScreensSeen.Contains(static_cast<uint8>(Phase));
+	if (!bVoyageCaptured && bWanted)
+	{
+		if (bAtBoss)
+		{
+			UE_LOG(LogDw, Log, TEXT("Dev capture 'voyage': the Kraken is the only route left after %d stops (%d layers); %d gold, %d crew alive."),
+				VoyageStops, Run->GetState().Map.LayerCount, Run->GetState().Gold, Run->GetState().CountLivingCrew());
+			Capture(); // final frame: the chart with only the boss ahead (DW-209 makes the fight)
+			return;
+		}
+		VoyageScreensSeen.Add(static_cast<uint8>(Phase));
+		CaptureFrame(++VoyageFrame);
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'voyage': frame %02d = %s"), VoyageFrame, *DwRun::PhaseName(Phase));
+		bVoyageCaptured = true;
+		Next(0.5f);
+		return;
+	}
+	bVoyageCaptured = false;
+	bool bOk = true;
+	switch (Phase)
+	{
+	case EDwRunPhase::Map:
+	{
+		// A kind of stop not shown yet (shop, event) if one is offered, else rotate between the routes.
+		const int32* Unseen = Choices.FindByPredicate([this, Run](int32 Index)
+		{
+			const EDwNodeType Type = Run->GetState().Map.Nodes[Index].Type;
+			return (Type == EDwNodeType::Shop && !VoyageScreensSeen.Contains(static_cast<uint8>(EDwRunPhase::Shop)))
+				|| (Type == EDwNodeType::Event && !VoyageScreensSeen.Contains(static_cast<uint8>(EDwRunPhase::Event)));
+		});
+		const int32 Pick = Unseen ? *Unseen : (Choices.IsEmpty() ? INDEX_NONE : Choices[VoyageStops % Choices.Num()]);
+		++VoyageStops;
+		bOk = Pick != INDEX_NONE && Run->ChooseNode(Pick);
+		break;
+	}
+	case EDwRunPhase::Rewards: bOk = Run->ClaimRewards(INDEX_NONE, FGuid()); break;
+	case EDwRunPhase::LevelUp:
+		bOk = Run->ChoosePerk(Run->GetCurrentLevelUp() && !Run->GetCurrentLevelUp()->PerkChoices.IsEmpty() ? 0 : INDEX_NONE);
+		break;
+	case EDwRunPhase::Shop:  bOk = Run->LeaveShop(); break;
+	case EDwRunPhase::Event: bOk = Run->LeaveEvent(); break;
+	default: break;
+	}
+	UE_CLOG(!bOk, LogDw, Error, TEXT("Dev capture 'voyage': could not act in phase %s."), *DwRun::PhaseName(Phase));
+	Next(0.6f);
 }
 
 void UDwDevCaptureSubsystem::Capture()

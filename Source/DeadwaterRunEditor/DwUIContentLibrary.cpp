@@ -31,6 +31,7 @@
 #include "UI/DwCombatHudWidgets.h"
 #include "UI/DwFloatingText.h"
 #include "UI/DwPrimaryLayoutWidget.h"
+#include "UI/DwRunScreens.h"
 #include "UI/DwUIScreenSet.h"
 #include "UI/DwUISoundMap.h"
 #include "UObject/Package.h"
@@ -371,6 +372,139 @@ namespace DwUIContent
 		return Box;
 	}
 
+	// -----------------------------------------------------------------------------------------------------------------
+	// Run screens (DW-211)
+
+	bool BuildChoiceButton(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
+		Root->SetWidthOverride(280.f);
+		Root->SetMinDesiredHeight(64.f);
+		UButton* Button = B.Make<UButton>(TEXT("ChoiceButton"));
+		Root->SetContent(Button);
+		UVerticalBox* Rows = B.Make<UVerticalBox>();
+		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Rows)))
+		{
+			Slot->SetPadding(FMargin(10.f, 8.f));
+			Slot->SetHorizontalAlignment(HAlign_Fill);
+			Slot->SetVerticalAlignment(VAlign_Top);
+		}
+		AddRow(*Rows, B.Text(TEXT("TitleText"), TEXT("Sea Legs"), 20, Light), FMargin(0.f, 0.f, 0.f, 3.f));
+		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("Moves 1 more tile each turn."), 15, Dim, /*bBold*/ false);
+		Body->SetAutoWrapText(true);
+		AddRow(*Rows, Body);
+		UTextBlock* Reason = B.Text(TEXT("ReasonText"), TEXT("Pick who learns it."), 15, Bad, /*bBold*/ false);
+		Reason->SetAutoWrapText(true);
+		AddRow(*Rows, Reason, FMargin(0.f, 3.f, 0.f, 0.f));
+		return B.Finish(Root);
+	}
+
+	bool BuildMapNode(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UButton* Button = B.Make<UButton>(TEXT("NodeButton"));
+		UTextBlock* Label = B.Text(TEXT("LabelText"), TEXT("Fight"), 19, Light);
+		Label->SetJustification(ETextJustify::Center);
+		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Label)))
+		{
+			Slot->SetHorizontalAlignment(HAlign_Center);
+			Slot->SetVerticalAlignment(VAlign_Center);
+		}
+		return B.Finish(Button);
+	}
+
+	/** A full-screen dark backdrop around a centred column: the run screens are menus over the sea. */
+	UVerticalBox* ScreenColumn(FTreeBuilder& B, UWidget*& OutRoot, float Width)
+	{
+		UBorder* Backdrop = B.Make<UBorder>(TEXT("Backdrop"));
+		Backdrop->SetBrushColor(FLinearColor(0.01f, 0.02f, 0.04f, 0.88f));
+		Backdrop->SetPadding(FMargin(48.f, 40.f));
+		Backdrop->SetHorizontalAlignment(HAlign_Center);
+		Backdrop->SetVerticalAlignment(VAlign_Center);
+		USizeBox* Box = B.Make<USizeBox>();
+		Box->SetWidthOverride(Width);
+		Backdrop->SetContent(Box);
+		UVerticalBox* Column = B.Make<UVerticalBox>(TEXT("Column"));
+		Box->SetContent(Column);
+		OutRoot = Backdrop;
+		return Column;
+	}
+
+	UWrapBox* ChoiceRow(FTreeBuilder& B, const TCHAR* Name)
+	{
+		UWrapBox* Row = B.Make<UWrapBox>(Name);
+		Row->SetInnerSlotPadding(FVector2D(12.f, 12.f));
+		return Row;
+	}
+
+	bool BuildMapScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UWidget* Root = nullptr;
+		UVerticalBox* Column = ScreenColumn(B, Root, 1500.f);
+		UHorizontalBox* Header = B.Make<UHorizontalBox>();
+		AddColumn(*Header, B.Text(TEXT("TitleText"), TEXT("Sea chart - choose your first heading"), 28, Gold), FMargin(0.f), /*bFill*/ true);
+		AddColumn(*Header, B.Text(TEXT("GoldText"), TEXT("100 gold"), 22, Gold), FMargin(24.f, 0.f));
+		AddColumn(*Header, B.Text(TEXT("ShipText"), TEXT("Hull 250 / 250"), 22, Light));
+		AddRow(*Column, Header, FMargin(0.f, 0.f, 0.f, 10.f));
+		UWrapBox* Crew = B.Make<UWrapBox>(TEXT("CrewList"));
+		Crew->SetInnerSlotPadding(FVector2D(36.f, 4.f));
+		AddRow(*Column, Crew, FMargin(0.f, 0.f, 0.f, 28.f));
+		USizeBox* ChartBox = B.Make<USizeBox>();
+		ChartBox->SetWidthOverride(1420.f);
+		ChartBox->SetHeightOverride(300.f);
+		ChartBox->SetContent(B.Make<UCanvasPanel>(TEXT("Chart")));
+		AddRow(*Column, ChartBox, FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("HintText"), TEXT(""), 18, Bad), FMargin(0.f, 0.f, 0.f, 6.f), HAlign_Center);
+		AddRow(*Column, B.Text(nullptr, TEXT("Gold: routes you can take     Blue: where you are     ?: an event, good or bad"), 15, Dim, false),
+			FMargin(0.f), HAlign_Center);
+		return B.Finish(Root);
+	}
+
+	bool BuildRewardsScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UWidget* Root = nullptr;
+		UVerticalBox* Column = ScreenColumn(B, Root, 1000.f);
+		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Their crew is beaten - plunder!"), 36, Gold), FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
+		UVerticalBox* Loot = B.Make<UVerticalBox>(TEXT("LootList"));
+		AddRow(*Column, Loot, FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("OfferHintText"), TEXT("Learn a new move? (optional)"), 20, Light), FMargin(0.f, 0.f, 0.f, 10.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("OfferList")), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("LearnerList")), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("ForgetList")), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
+		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ClaimSlot")), FMargin(0.f, 16.f, 0.f, 0.f), HAlign_Center);
+		return B.Finish(Root);
+	}
+
+	bool BuildLevelUpScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UWidget* Root = nullptr;
+		UVerticalBox* Column = ScreenColumn(B, Root, 1000.f);
+		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Swordsman reaches level 2!"), 36, Gold), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("StatText"), TEXT("+10 max HP"), 22, Light), FMargin(0.f, 0.f, 0.f, 6.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("QueueText"), TEXT("1 more level-up after this one"), 16, Dim, false), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
+		AddRow(*Column, B.Text(nullptr, TEXT("Choose a perk"), 20, Light), FMargin(0.f, 0.f, 0.f, 10.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("CardList")), FMargin(0.f), HAlign_Center);
+		return B.Finish(Root);
+	}
+
+	bool BuildNodeShellScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UWidget* Root = nullptr;
+		UVerticalBox* Column = ScreenColumn(B, Root, 800.f);
+		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Shop"), 36, Gold), FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
+		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("You have 100 gold."), 20, Light, false);
+		Body->SetAutoWrapText(true);
+		Body->SetJustification(ETextJustify::Center);
+		AddRow(*Column, Body, FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
+		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ActionSlot")), FMargin(0.f), HAlign_Center);
+		return B.Finish(Root);
+	}
+
 	bool BuildCombatHud(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
@@ -529,7 +663,13 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		{ TEXT("WBP_ActionButton"), UDwActionButtonWidget::StaticClass(), &BuildActionButton },
 		{ TEXT("WBP_FloatingText"), UDwFloatingTextWidget::StaticClass(), &BuildFloatingText },
 		{ TEXT("WBP_PrimaryLayout"), UDwPrimaryLayoutWidget::StaticClass(), &BuildPrimaryLayout },
-		{ TEXT("WBP_CombatHud"), UDwCombatHudScreen::StaticClass(), &BuildCombatHud } };
+		{ TEXT("WBP_CombatHud"), UDwCombatHudScreen::StaticClass(), &BuildCombatHud },
+		{ TEXT("WBP_ChoiceButton"), UDwChoiceButtonWidget::StaticClass(), &BuildChoiceButton },
+		{ TEXT("WBP_MapNode"), UDwMapNodeWidget::StaticClass(), &BuildMapNode },
+		{ TEXT("WBP_Map"), UDwMapScreen::StaticClass(), &BuildMapScreen },
+		{ TEXT("WBP_Rewards"), UDwRewardsScreen::StaticClass(), &BuildRewardsScreen },
+		{ TEXT("WBP_LevelUp"), UDwLevelUpScreen::StaticClass(), &BuildLevelUpScreen },
+		{ TEXT("WBP_NodeShell"), UDwNodeShellScreen::StaticClass(), &BuildNodeShellScreen } };
 	TMap<FString, UWidgetBlueprint*> Built;
 	for (const FWidgetSpec& Spec : Specs)
 	{
@@ -556,6 +696,17 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		Hud->UnitCardClass = ClassOf(TEXT("WBP_UnitCard"));
 		Hud->ActionButtonClass = ClassOf(TEXT("WBP_ActionButton"));
 	}
+	for (const TCHAR* Name : { TEXT("WBP_Map"), TEXT("WBP_Rewards"), TEXT("WBP_LevelUp"), TEXT("WBP_NodeShell") })
+	{
+		if (UDwRunScreen* Screen = Built[Name]->GeneratedClass->GetDefaultObject<UDwRunScreen>())
+		{
+			Screen->ChoiceButtonClass = ClassOf(TEXT("WBP_ChoiceButton"));
+		}
+	}
+	if (UDwMapScreen* Map = Built[TEXT("WBP_Map")]->GeneratedClass->GetDefaultObject<UDwMapScreen>())
+	{
+		Map->NodeWidgetClass = ClassOf(TEXT("WBP_MapNode"));
+	}
 	for (const TPair<FString, UWidgetBlueprint*>& Entry : Built)
 	{
 		bOk &= Save(Entry.Value, OutLog);
@@ -567,6 +718,11 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 	Screens->PrimaryLayout = TSoftClassPtr<UDwPrimaryLayoutWidget>(ClassOf(TEXT("WBP_PrimaryLayout")));
 	Screens->CombatHud = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_CombatHud")));
 	Screens->FloatingText = TSoftClassPtr<UDwFloatingTextWidget>(ClassOf(TEXT("WBP_FloatingText")));
+	Screens->Map = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Map")));
+	Screens->Rewards = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Rewards")));
+	Screens->LevelUp = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_LevelUp")));
+	Screens->Shop = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_NodeShell"))); // WBP_Shop: DW-204
+	Screens->Event = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_NodeShell"))); // WBP_Event: DW-205
 	bool bSoundMapCreated = false;
 	UDwUISoundMap* SoundMap = FindOrCreate<UDwUISoundMap>(UIData, TEXT("DA_UISoundMap"), OutLog, &bSoundMapCreated);
 	if (bSoundMapCreated)

@@ -17,6 +17,7 @@
 #include "UI/DwCombatViewModels.h"
 #include "UI/DwFloatingText.h"
 #include "UI/DwPrimaryLayoutWidget.h"
+#include "UI/DwRunViewModels.h"
 #include "UI/DwUIScreenSet.h"
 #include "UI/DwUISoundMap.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -95,6 +96,7 @@ void UDwUIManagerSubsystem::DestroyLayout()
 		FloatingText = nullptr;
 	}
 	CombatHudScreen = nullptr;
+	RunScreen = nullptr;
 	if (Layout)
 	{
 		Layout->RemoveFromParent();
@@ -194,6 +196,7 @@ void UDwUIManagerSubsystem::BindRun(UDwRun* Run)
 	{
 		Run->OnPhaseChanged.AddDynamic(this, &ThisClass::HandleRunPhaseChanged);
 	}
+	ShowRunScreen(Run ? Run->GetPhase() : EDwRunPhase::Defeat);
 }
 
 void UDwUIManagerSubsystem::HandleRunStarted(UDwRun* Run)
@@ -211,6 +214,46 @@ void UDwUIManagerSubsystem::HandleRunPhaseChanged(EDwRunPhase NewPhase, EDwRunPh
 	if (OldPhase == EDwRunPhase::Combat && NewPhase != EDwRunPhase::Combat)
 	{
 		HideCombatHud();
+	}
+	ShowRunScreen(NewPhase);
+}
+
+void UDwUIManagerSubsystem::ShowRunScreen(EDwRunPhase Phase)
+{
+	// Combat's screen is the HUD (OnCombatStarted); Victory/Defeat go to the summary (DW-210). Everything else: one run
+	// screen on UI.Layer.Game, replaced on every phase change, refreshed from its view model.
+	if (RunScreen)
+	{
+		PopScreen(RunScreen);
+		RunScreen = nullptr;
+	}
+	UDwRun* Run = BoundRun.Get();
+	const UDwUIScreenSet* Screens = GetScreenSet();
+	if (!Run || !Layout || !Screens || Phase == EDwRunPhase::Combat)
+	{
+		return;
+	}
+	UDwRunScreenViewModel* ViewModel = nullptr;
+	switch (Phase)
+	{
+	case EDwRunPhase::Map:     ViewModel = MapViewModel ? MapViewModel.Get() : (MapViewModel = NewObject<UDwMapViewModel>(this)).Get(); break;
+	case EDwRunPhase::Rewards: ViewModel = RewardsViewModel ? RewardsViewModel.Get() : (RewardsViewModel = NewObject<UDwRewardsViewModel>(this)).Get(); break;
+	case EDwRunPhase::LevelUp: ViewModel = LevelUpViewModel ? LevelUpViewModel.Get() : (LevelUpViewModel = NewObject<UDwLevelUpViewModel>(this)).Get(); break;
+	case EDwRunPhase::Shop:
+	case EDwRunPhase::Event:   ViewModel = ShellViewModel ? ShellViewModel.Get() : (ShellViewModel = NewObject<UDwNodeShellViewModel>(this)).Get(); break;
+	default: return;
+	}
+	const TSubclassOf<UDwActivatableScreen> ScreenClass = Screens->GetPhaseScreen(Phase).LoadSynchronous();
+	if (!ScreenClass)
+	{
+		UE_LOG(LogDwUI, Warning, TEXT("No screen for run phase %s in DA_UIScreenSet (run Tools/CreateUIContent.ps1)."), *DwRun::PhaseName(Phase));
+		return;
+	}
+	ViewModel->Bind(Run);
+	RunScreen = PushScreen(DwTags::UI_Layer_Game, ScreenClass);
+	if (RunScreen)
+	{
+		RunScreen->SetViewModel(ViewModel);
 	}
 }
 

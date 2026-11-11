@@ -28,16 +28,31 @@ private:
 	/** Demo "enemy": one frame every 0.7 s while the enemy side plays two turns (the player passes), then the final capture. */
 	void CaptureEnemyTurn();
 	/**
-	 * Demo "run" (needs -DwCaptain=): -01 the readout at Set Sail; sail to the first route, -02 fight 1; the captain is
-	 * hurt to 60 HP, the sniper and every enemy die; -03 the readout back on the map; sail on, final frame fight 2.
+	 * Demo "run" (needs -DwCaptain=): -01 the map at Set Sail; sail to the first route, -02 fight 1; the captain is hurt
+	 * to 60 HP, the sniper dies and the captain kills every enemy; -03 rewards, -04 level-up, -05 back on the map; sail
+	 * on, final frame fight 2.
 	 */
 	void RunDemoStep();
+	/**
+	 * Demo "voyage" (needs -DwCaptain=; DW-202/211): plays a whole generated chart through the run screens. A frame of the
+	 * map at every stop and of the first rewards, level-up, shop and event screens; fights are won by the captain;
+	 * routes rotate between the choices. Ends with the map showing only the Kraken (the boss fight is DW-209).
+	 */
+	void VoyageDemoStep();
+	/** Kills every living enemy with the player captain as the instigator (kill XP), then ends the player turn. */
+	void WinFightByCaptain() const;
 	void CaptureFrame(int32 Frame) const;
 
 	FString Path;
 	FString Demo;
 	FTimerHandle Timer;
 	int32 RunStep = 0;
+	int32 VoyageFrame = 0;
+	int32 VoyageStops = 0;
+	/** The current screen is captured; act on it next step. */
+	bool bVoyageCaptured = false;
+	bool bVoyageFightStaged = false;
+	TSet<uint8> VoyageScreensSeen;
 	int32 EnemyFrame = 0;
 	int32 EnemyTurnsPlayed = 0;
 	static constexpr int32 EnemyTurns = 2;

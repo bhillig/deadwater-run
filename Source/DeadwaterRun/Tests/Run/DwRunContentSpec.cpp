@@ -363,6 +363,19 @@ void FDwRunContentSpec::Define()
 		TestEqual(TEXT("Captain has none"), F.Attr(CaptainUnit, UDwUnitAttributeSet::GetDamageReductionAttribute()), 0.f);
 	});
 
+	It("survives garbage collection mid-run: a forced GC in a run fight and on the map leaves everything usable", [this]()
+	{
+		if (!StartRun(Captain(TEXT("TeamLeader"))) || !StartNextFight()) { return; }
+		CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, /*bPerformFullPurge*/ true);
+		const FDwCombatSnapshot Snap = F.Combat->GetSnapshot();
+		TestEqual(TEXT("Six units still there"), Snap.Units.Num(), 6);
+		if (!WinBy(Run->GetState().Crew[0].Id)) { return; }
+		CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+		if (!FinishRewards()) { return; }
+		CollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+		TestTrue(TEXT("Next fight starts"), StartNextFight());
+	});
+
 	It("ends the run when the captain dies (C10)", [this]()
 	{
 		if (!StartRun(Captain(TEXT("Conqueror"))) || !StartNextFight()) { return; }

@@ -17,8 +17,8 @@
 #if !UE_BUILD_SHIPPING
 namespace DwHUD
 {
-	static TAutoConsoleVariable<bool> CVarRunReadout(TEXT("dw.Run.Readout"), true,
-		TEXT("Development builds: draw the run readout (phase, crew, routes) outside combat until the map screen exists (DW-211)."));
+	static TAutoConsoleVariable<bool> CVarRunReadout(TEXT("dw.Run.Readout"), false,
+		TEXT("Development builds: draw the run readout (phase, crew, routes, pending rewards) over the run screens. Off by default since DW-211."));
 
 	static FString NodeLabel(const FDwRunState& State, int32 Index)
 	{

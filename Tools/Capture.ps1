@@ -12,12 +12,13 @@
   ./Tools/Capture.ps1 -Demo endturn         # turn ended: the turn banner for the next side
   ./Tools/Capture.ps1 -Demo enemy           # player passes twice; the crew AI plays two enemy turns (frames <file>-01.png, ...)
   ./Tools/Capture.ps1 -Demo run             # a run (DW-201/203): map readout, fight 1, rewards, level-up, back on the map, fight 2 (frames -01..-05)
+  ./Tools/Capture.ps1 -Demo voyage          # a whole chart through the run screens (DW-202/211): map at every stop, first rewards/level-up/shop/event; ends at the Kraken
   ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p
   ./Tools/Capture.ps1 -Mood Storm           # the storm look (default Day; Random rolls from the seed)
   ./Tools/Capture.ps1 -Zoom 0.3 -Tile "0,1" # close-up of a tile for art review
 #>
 param(
-    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run')] [string] $Demo = 'none',
+    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage')] [string] $Demo = 'none',
     # Start a run with this captain (TeamLeader, Fearmongerer, Conqueror) instead of the dev fight. -Demo run defaults to TeamLeader.
     [string] $Captain = '',
     [int] $Seed = 7,
@@ -29,7 +30,9 @@ param(
     [string] $Mood = 'Day',
     # Close-up for art review: fraction of the framed camera distance (0 = normal framing), focused on -Tile "x,y".
     [float] $Zoom = 0,
-    [string] $Tile = ''
+    [string] $Tile = '',
+    # Extra engine arguments, e.g. '-ExecCmds="gc.TimeBetweenPurgingPendingKillObjects 3"' to shake out GC bugs.
+    [string[]] $ExtraArgs = @()
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'DwCommon.ps1')
@@ -57,10 +60,11 @@ $gameArgs = @(
     '-nosound', '-nosplash', '-unattended', "-abslog=$log"
 )
 if ($Mood -and $Mood -ne 'Random') { $gameArgs += "-DwMood=$Mood" }
-if ($Demo -eq 'run' -and -not $Captain) { $Captain = 'TeamLeader' }
+if ($Demo -in @('run', 'voyage') -and -not $Captain) { $Captain = 'TeamLeader' }
 if ($Captain) { $gameArgs += "-DwCaptain=$Captain" }
 if ($Zoom -gt 0) { $gameArgs += "-DwCaptureZoom=$Zoom" }
 if ($Tile) { $gameArgs += "-DwCaptureTile=$Tile" }
+if ($ExtraArgs) { $gameArgs += $ExtraArgs }
 $process = Start-Process -FilePath $editor -ArgumentList $gameArgs -PassThru -Wait
 if (-not (Test-Path $Out)) {
     Write-Output "CAPTURE FAIL (no screenshot, exit $($process.ExitCode))"

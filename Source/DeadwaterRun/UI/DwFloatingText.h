@@ -112,7 +112,8 @@ private:
 
 	TWeakObjectPtr<UDwCombatSubsystem> Combat;
 	TWeakObjectPtr<APlayerController> Owner;
-	TSubclassOf<UDwFloatingTextWidget> WidgetClass;
+	/** Reflected: the class is soft-loaded per fight and nothing else holds it until the first label exists (GC). */
+	UPROPERTY(Transient) TSubclassOf<UDwFloatingTextWidget> WidgetClass;
 	UPROPERTY(Transient) TArray<TObjectPtr<UDwFloatingTextWidget>> Pool;
 	int32 NextRecycle = 0;
 	int32 ShownTotal = 0;

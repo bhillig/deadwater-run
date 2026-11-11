@@ -9,7 +9,8 @@
 /**
  * Creates or updates the DW-107 UI content headless, so it is reproducible and reviewable instead of hand-clicked
  * (Docs/Architecture/14-UI.md): CommonUI input data (DT_UIInputActions, B_UIInputData), the widget blueprints
- * (WBP_PrimaryLayout, WBP_CombatHud, WBP_UnitCard, WBP_ActionButton, WBP_FloatingText), DA_UIScreenSet, an empty
+ * (WBP_PrimaryLayout, WBP_CombatHud, WBP_UnitCard, WBP_ActionButton, WBP_FloatingText; DW-211: WBP_Map, WBP_MapNode,
+ * WBP_Rewards, WBP_LevelUp, WBP_NodeShell, WBP_ChoiceButton), DA_UIScreenSet, an empty
  * DA_UISoundMap (created once, then owned by ui-juice-engineer) and the DA_GameData.UIScreenSet slot.
  *
  * Widget trees: structure and logic are C++ (BindWidget); this library is the layout. Every run rebuilds each WBP's

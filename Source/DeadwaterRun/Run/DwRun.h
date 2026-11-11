@@ -96,6 +96,9 @@ public:
 	/** The level-up on screen (front of PendingLevelUps), or null. */
 	const FDwPendingLevelUp* GetCurrentLevelUp() const;
 
+	/** DT_RunTuning.MaxAbilitySlots (P4): learned abilities per crew member before a new one must replace one. 0 = no limit. */
+	int32 GetMaxAbilitySlots() const;
+
 	/** Shop phase only: back to the map. DW-204 adds purchases before it. */
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
 	bool LeaveShop();

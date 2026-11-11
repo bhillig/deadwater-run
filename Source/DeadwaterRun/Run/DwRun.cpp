@@ -457,8 +457,7 @@ bool UDwRun::ClaimRewards(int32 AbilityChoice, FGuid CrewId, int32 ReplaceSlot)
 				*GetNameSafe(Offer.Ability));
 			return false;
 		}
-		const FDwRunTuningRow* RunRow = GetRunTuning();
-		const int32 MaxSlots = RunRow ? RunRow->MaxAbilitySlots : 0;
+		const int32 MaxSlots = GetMaxAbilitySlots();
 		const bool bFull = MaxSlots > 0 && Learner->Abilities.Num() >= MaxSlots;
 		if (ReplaceSlot != INDEX_NONE && !Learner->Abilities.IsValidIndex(ReplaceSlot))
 		{
@@ -548,6 +547,12 @@ bool UDwRun::ChoosePerk(int32 ChoiceIndex)
 const FDwPendingLevelUp* UDwRun::GetCurrentLevelUp() const
 {
 	return State.PendingLevelUps.IsEmpty() ? nullptr : &State.PendingLevelUps[0];
+}
+
+int32 UDwRun::GetMaxAbilitySlots() const
+{
+	const FDwRunTuningRow* RunRow = GetRunTuning();
+	return RunRow ? FMath::Max(0, RunRow->MaxAbilitySlots) : 0;
 }
 
 void UDwRun::RollCurrentLevelUp()
