@@ -15,6 +15,7 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "Presentation/DwCameraRig.h"
+#include "UI/DwUIManagerSubsystem.h"
 
 ADwPlayerController::ADwPlayerController()
 {
@@ -234,10 +235,15 @@ void ADwPlayerController::OnNextUnit(const FInputActionValue& /*Value*/)
 
 void ADwPlayerController::OnPause(const FInputActionValue& /*Value*/)
 {
-	// Esc cancels targeting first; with nothing to cancel it will open the pause menu (DW-210).
-	if (!Interaction || !Interaction->Cancel())
+	// Esc cancels targeting first; with nothing to cancel it opens the pause menu (16-Shell "Pause"). While a menu is up,
+	// CommonUI takes Esc as its back action instead, so this only runs with the game in front.
+	if (Interaction && Interaction->Cancel())
 	{
-		UE_LOG(LogDwUI, Log, TEXT("Pause requested (pause menu arrives with DW-210)."));
+		return;
+	}
+	if (UDwUIManagerSubsystem* UI = UDwUIManagerSubsystem::Get(GetLocalPlayer()))
+	{
+		UI->TogglePause();
 	}
 }
 

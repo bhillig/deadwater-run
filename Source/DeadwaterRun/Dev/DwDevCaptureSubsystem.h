@@ -39,6 +39,13 @@ private:
 	 * routes rotate between the choices. Ends with the map showing only the Kraken (the boss fight is DW-209).
 	 */
 	void VoyageDemoStep();
+	/**
+	 * Demo "shell" (DW-210; start in L_MainMenu with -Map MainMenu): presses the real screens' buttons. L_MainMenu: -01 main
+	 * menu, -02 settings, -03 captain select, -04 a captain picked, Set Sail. L_Sea: -05 the map, -06 pause, -07 the abandon
+	 * confirm, -08 the summary, -09 New Run's captain select, -10 the fresh run's map; then pause, abandon, Main Menu: final frame
+	 * the main menu again (the run cleared).
+	 */
+	void ShellDemoStep();
 	/** Kills every living enemy with the player captain as the instigator (kill XP), then ends the player turn. */
 	void WinFightByCaptain() const;
 	void CaptureFrame(int32 Frame) const;

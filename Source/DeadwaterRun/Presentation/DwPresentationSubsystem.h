@@ -26,7 +26,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Presentation")
 	void SetInstant(bool bInInstant) { bInstant = bInInstant; }
 
-	/** Game-speed setting (DW-216): 1 = normal, 2 = twice as fast. */
+	/** Game-speed setting (UDwGameUserSettings, U1): 1 = normal, 2 = twice as fast. Set at world start and on Apply. */
 	UFUNCTION(BlueprintPure, Category = "Deadwater|Presentation")
 	float GetPlaybackRate() const { return PlaybackRate; }
 

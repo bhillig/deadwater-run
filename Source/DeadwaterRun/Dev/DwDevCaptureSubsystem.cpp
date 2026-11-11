@@ -8,6 +8,7 @@
 #include "Board/DwGridQueries.h"
 #include "Presentation/DwCameraRig.h"
 #include "Core/DwGameData.h"
+#include "Data/DwCaptainDefinition.h"
 #include "GameplayEffect.h"
 #include "Combat/DwCombatInteraction.h"
 #include "Combat/DwCombatRules.h"
@@ -16,15 +17,20 @@
 #include "Combat/DwShip.h"
 #include "Core/DwGameplayTags.h"
 #include "Core/DwLog.h"
+#include "Core/DwGameMode.h"
 #include "Core/DwPlayerController.h"
 #include "Abilities/DwAttributeSets.h"
 #include "Engine/World.h"
 #include "Run/DwRun.h"
 #include "Run/DwRunSubsystem.h"
+#include "UI/DwActivatableScreen.h"
+#include "UI/DwShellViewModels.h"
+#include "UI/DwUIManagerSubsystem.h"
 #include "HighResScreenshot.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Misc/Paths.h"
+#include "Containers/Ticker.h"
 #include "TimerManager.h"
 #include "UnrealClient.h"
 
@@ -71,6 +77,11 @@ void UDwDevCaptureSubsystem::StageDemo()
 	if (Demo == TEXT("voyage"))
 	{
 		VoyageDemoStep();
+		return;
+	}
+	if (Demo == TEXT("shell"))
+	{
+		ShellDemoStep();
 		return;
 	}
 
@@ -339,6 +350,121 @@ void UDwDevCaptureSubsystem::RunDemoStep()
 		return;
 	default: // fight 2: two crew aboard, the captain at level 2 with a perk
 		Capture();
+		return;
+	}
+}
+
+void UDwDevCaptureSubsystem::ShellDemoStep()
+{
+	UWorld* World = GetWorld();
+	const APlayerController* PC = World ? World->GetFirstPlayerController() : nullptr;
+	UDwUIManagerSubsystem* UI = PC ? UDwUIManagerSubsystem::Get(PC->GetLocalPlayer()) : nullptr;
+	auto Next = [this](float Seconds)
+	{
+		// The core ticker, not the world timer: world timers stop while the pause menu has the game paused.
+		TWeakObjectPtr<UDwDevCaptureSubsystem> Self = this;
+		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Self](float)
+		{
+			if (Self.IsValid())
+			{
+				Self->ShellDemoStep();
+			}
+			return false; // once
+		}), Seconds);
+	};
+	auto Top = [UI]() { return UI && UI->GetTopShellScreen() ? UI->GetTopShellScreen()->GetViewModel() : nullptr; };
+	auto Press = [&Top](const TCHAR* Button)
+	{
+		UDwMenuViewModel* Menu = Cast<UDwMenuViewModel>(Top());
+		UDwChoiceViewModel* Choice = Menu ? Menu->FindButton(Button) : nullptr;
+		const bool bOk = Choice && Choice->Select();
+		UE_CLOG(!bOk, LogDw, Error, TEXT("Dev capture 'shell': no '%s' button to press."), Button);
+		return bOk;
+	};
+	if (!UI)
+	{
+		UE_LOG(LogDw, Error, TEXT("Dev capture 'shell': no UI manager."));
+		Capture();
+		return;
+	}
+	// Frames continue across the travel: the menu level takes 01-04, the sea level 05 on.
+	const bool bMenuLevel = Cast<ADwGameMode>(World->GetAuthGameMode()) == nullptr;
+	const int32 Base = bMenuLevel ? 0 : 4;
+	const int32 Step = RunStep++;
+	UE_LOG(LogDw, Log, TEXT("Dev capture 'shell': %s step %d"), bMenuLevel ? TEXT("menu") : TEXT("sea"), Step);
+	// Each level gets a fresh subsystem; this counts main menu arrivals across the travels (the 2nd one ends the demo).
+	static int32 MenuArrivals = 0;
+	if (bMenuLevel && Step == 0 && ++MenuArrivals > 1)
+	{
+		const UDwRunSubsystem* Runs = UDwRunSubsystem::Get(World);
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'shell': back on the main menu, run %s."), Runs && Runs->GetRun() ? TEXT("still set (bug)") : TEXT("cleared"));
+		Capture(); // final frame: the main menu again
+		return;
+	}
+	if (bMenuLevel)
+	{
+		switch (Step)
+		{
+		case 0: CaptureFrame(Base + 1); Next(0.5f); return;                                // main menu
+		case 1: Press(TEXT("Settings")); Next(0.5f); return;
+		case 2: CaptureFrame(Base + 2); Next(0.5f); return;                                // settings
+		case 3:
+			if (UDwSettingsViewModel* Settings = Cast<UDwSettingsViewModel>(Top())) { Settings->HandleBack(); } // Esc
+			Press(TEXT("New Run"));
+			Next(0.5f);
+			return;
+		case 4: CaptureFrame(Base + 3); Next(0.5f); return;                                // captain select, nothing picked
+		case 5:
+			if (UDwCaptainSelectViewModel* Select = Cast<UDwCaptainSelectViewModel>(Top())) { Select->SelectCaptain(0); }
+			Next(0.5f);
+			return;
+		case 6: CaptureFrame(Base + 4); Next(0.5f); return;                                // Team Leader picked
+		default:
+			if (UDwCaptainSelectViewModel* Select = Cast<UDwCaptainSelectViewModel>(Top()))
+			{
+				UE_CLOG(!Select->GetSetSail()->Select(), LogDw, Error, TEXT("Dev capture 'shell': Set Sail refused."));
+			}
+			return; // travel to L_Sea; its own capture subsystem carries on
+		}
+	}
+	switch (Step)
+	{
+	case 0: CaptureFrame(Base + 1); Next(0.5f); return;                                    // the map
+	case 1: UE_CLOG(!UI->TogglePause(), LogDw, Error, TEXT("Dev capture 'shell': pause refused.")); Next(0.5f); return;
+	case 2: CaptureFrame(Base + 2); Next(0.5f); return;                                    // pause
+	case 3: Press(TEXT("Abandon Run")); Next(0.5f); return;
+	case 4: CaptureFrame(Base + 3); Next(0.5f); return;                                    // confirm
+	case 5: Press(TEXT("Abandon")); Next(0.8f); return;
+	case 6: CaptureFrame(Base + 4); Next(0.5f); return;                                    // summary
+	case 7: Press(TEXT("New Run")); Next(0.5f); return;
+	case 8:
+		if (UDwCaptainSelectViewModel* Select = Cast<UDwCaptainSelectViewModel>(Top())) { Select->SelectCaptain(2); }
+		Next(0.5f);
+		return;
+	case 9: CaptureFrame(Base + 5); Next(0.5f); return;                                    // New Run's captain select
+	case 10:
+		if (UDwCaptainSelectViewModel* Select = Cast<UDwCaptainSelectViewModel>(Top()))
+		{
+			UE_CLOG(!Select->GetSetSail()->Select(), LogDw, Error, TEXT("Dev capture 'shell': second Set Sail refused."));
+		}
+		Next(1.0f);
+		return;
+	case 11:
+		if (const UDwRunSubsystem* Runs = UDwRunSubsystem::Get(World); Runs && Runs->GetRun())
+		{
+			const FDwRunState& S = Runs->GetRun()->GetState();
+			UE_LOG(LogDw, Log, TEXT("Dev capture 'shell': new run with %s, phase %s, %d gold, %d crew, %d stops cleared."),
+				*GetNameSafe(S.Captain.Get()), *DwRun::PhaseName(S.Phase), S.Gold, S.Crew.Num(), S.Stats.NodesCleared);
+		}
+		CaptureFrame(Base + 6); // the fresh run's map
+		Next(0.5f);
+		return;
+	// Then out through the summary's Main Menu: pause, abandon, summary, Main Menu -> L_MainMenu (the final frame).
+	case 12: UI->TogglePause(); Next(0.5f); return;
+	case 13: Press(TEXT("Abandon Run")); Next(0.5f); return;
+	case 14: Press(TEXT("Abandon")); Next(0.8f); return;
+	default:
+		Press(TEXT("Main Menu")); // travel; the menu level's subsystem takes the final frame
 		return;
 	}
 }

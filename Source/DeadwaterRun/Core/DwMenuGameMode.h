@@ -7,8 +7,7 @@
 #include "DwMenuGameMode.generated.h"
 
 /**
- * Game mode for L_MainMenu. Stub for DW-002.
- * DW-210 shows the main menu through the UI manager; DW-201 ends any stale run here.
+ * Game mode for L_MainMenu. The UI manager shows the main menu here (DW-210); any run left over is cleared on arrival.
  * See Docs/Architecture/16-Shell.md.
  */
 UCLASS()
@@ -18,4 +17,7 @@ class DEADWATERRUN_API ADwMenuGameMode : public AGameModeBase
 
 public:
 	ADwMenuGameMode();
+
+protected:
+	virtual void BeginPlay() override;
 };

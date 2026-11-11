@@ -32,6 +32,7 @@
 #include "UI/DwFloatingText.h"
 #include "UI/DwPrimaryLayoutWidget.h"
 #include "UI/DwRunScreens.h"
+#include "UI/DwShellScreens.h"
 #include "UI/DwUIScreenSet.h"
 #include "UI/DwUISoundMap.h"
 #include "UObject/Package.h"
@@ -138,6 +139,15 @@ namespace DwUIContent
 		{
 			T* Widget = Tree->ConstructWidget<T>(T::StaticClass(), Name ? FName(Name) : NAME_None);
 			Widget->bIsVariable = Name != nullptr;
+			return Widget;
+		}
+
+		/** A child of another widget blueprint's class (e.g. WBP_StepButton inside WBP_SettingRow). */
+		template <typename T>
+		T* MakeOf(UClass* Class, const TCHAR* Name)
+		{
+			T* Widget = Tree->ConstructWidget<T>(Class, FName(Name));
+			Widget->bIsVariable = true;
 			return Widget;
 		}
 
@@ -415,10 +425,10 @@ namespace DwUIContent
 	}
 
 	/** A full-screen dark backdrop around a centred column: the run screens are menus over the sea. */
-	UVerticalBox* ScreenColumn(FTreeBuilder& B, UWidget*& OutRoot, float Width)
+	UVerticalBox* ScreenColumn(FTreeBuilder& B, UWidget*& OutRoot, float Width, float Opacity = 0.88f)
 	{
 		UBorder* Backdrop = B.Make<UBorder>(TEXT("Backdrop"));
-		Backdrop->SetBrushColor(FLinearColor(0.01f, 0.02f, 0.04f, 0.88f));
+		Backdrop->SetBrushColor(FLinearColor(0.01f, 0.02f, 0.04f, Opacity));
 		Backdrop->SetPadding(FMargin(48.f, 40.f));
 		Backdrop->SetHorizontalAlignment(HAlign_Center);
 		Backdrop->SetVerticalAlignment(VAlign_Center);
@@ -502,6 +512,102 @@ namespace DwUIContent
 		Body->SetJustification(ETextJustify::Center);
 		AddRow(*Column, Body, FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
 		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ActionSlot")), FMargin(0.f), HAlign_Center);
+		return B.Finish(Root);
+	}
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Shell screens (DW-210)
+
+	bool BuildStepButton(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
+		Root->SetWidthOverride(48.f);
+		Root->SetHeightOverride(40.f);
+		UButton* Button = B.Make<UButton>(TEXT("ChoiceButton"));
+		Root->SetContent(Button);
+		UVerticalBox* Rows = B.Make<UVerticalBox>();
+		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Rows)))
+		{
+			Slot->SetPadding(FMargin(0.f));
+			Slot->SetHorizontalAlignment(HAlign_Center);
+			Slot->SetVerticalAlignment(VAlign_Center);
+		}
+		AddRow(*Rows, B.Text(TEXT("TitleText"), TEXT("<"), 20, Light), FMargin(0.f), HAlign_Center);
+		AddRow(*Rows, B.Text(TEXT("BodyText"), TEXT(""), 12, Dim, false));
+		AddRow(*Rows, B.Text(TEXT("ReasonText"), TEXT(""), 12, Bad, false));
+		return B.Finish(Root);
+	}
+
+	bool BuildMenuScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UWidget* Root = nullptr;
+		UVerticalBox* Column = ScreenColumn(B, Root, 720.f, /*Opacity*/ 0.96f); // pause and confirm stack over other screens: nothing may show through
+		UTextBlock* Title = B.Text(TEXT("TitleText"), TEXT("DEADWATER RUN"), 40, Gold);
+		Title->SetJustification(ETextJustify::Center);
+		AddRow(*Column, Title, FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
+		AddRow(*Column, B.Make<UVerticalBox>(TEXT("LineList")), FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
+		UVerticalBox* Buttons = B.Make<UVerticalBox>(TEXT("ButtonList"));
+		AddRow(*Column, Buttons, FMargin(0.f), HAlign_Center);
+		return B.Finish(Root);
+	}
+
+	bool BuildCaptainSelectScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UWidget* Root = nullptr;
+		UVerticalBox* Column = ScreenColumn(B, Root, 1100.f);
+		AddRow(*Column, B.Text(nullptr, TEXT("Choose your captain"), 36, Gold), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("CaptainList")), FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("DetailTitleText"), TEXT("Team Leader"), 26, Light), FMargin(0.f, 0.f, 0.f, 8.f));
+		USizeBox* DetailBox = B.Make<USizeBox>();
+		DetailBox->SetMinDesiredHeight(170.f);
+		DetailBox->SetContent(B.Make<UVerticalBox>(TEXT("DetailList")));
+		AddRow(*Column, DetailBox, FMargin(0.f, 0.f, 0.f, 20.f));
+		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ButtonList")), FMargin(0.f), HAlign_Center);
+		return B.Finish(Root);
+	}
+
+	bool BuildSettingRow(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		UWidgetBlueprint* Step = Load<UWidgetBlueprint>(WidgetFolder, TEXT("WBP_StepButton"));
+		if (!Step || !Step->GeneratedClass)
+		{
+			Log.Add(TEXT("ERROR WBP_StepButton must be built before WBP_SettingRow"));
+			return false;
+		}
+		FTreeBuilder B(Blueprint, Log);
+		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
+		Root->SetWidthOverride(900.f);
+		UHorizontalBox* Row = B.Make<UHorizontalBox>();
+		Root->SetContent(Row);
+		USizeBox* LabelBox = B.Make<USizeBox>();
+		LabelBox->SetWidthOverride(240.f);
+		LabelBox->SetContent(B.Text(TEXT("LabelText"), TEXT("Game speed"), 20, Light));
+		AddColumn(*Row, LabelBox);
+		AddColumn(*Row, B.MakeOf<UDwChoiceButtonWidget>(Step->GeneratedClass, TEXT("DecreaseButton")), FMargin(0.f, 2.f, 8.f, 2.f));
+		USizeBox* ValueBox = B.Make<USizeBox>();
+		ValueBox->SetWidthOverride(220.f);
+		UTextBlock* Value = B.Text(TEXT("ValueText"), TEXT("1.5x"), 20, Gold);
+		Value->SetJustification(ETextJustify::Center);
+		ValueBox->SetContent(Value);
+		AddColumn(*Row, ValueBox);
+		AddColumn(*Row, B.MakeOf<UDwChoiceButtonWidget>(Step->GeneratedClass, TEXT("IncreaseButton")), FMargin(8.f, 2.f, 16.f, 2.f));
+		UTextBlock* Note = B.Text(TEXT("NoteText"), TEXT("Animations only."), 14, Dim, false);
+		Note->SetAutoWrapText(true);
+		AddColumn(*Row, Note, FMargin(0.f), /*bFill*/ true);
+		return B.Finish(Root);
+	}
+
+	bool BuildSettingsScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UWidget* Root = nullptr;
+		UVerticalBox* Column = ScreenColumn(B, Root, 920.f);
+		AddRow(*Column, B.Text(nullptr, TEXT("Settings"), 36, Gold), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
+		AddRow(*Column, B.Make<UVerticalBox>(TEXT("RowList")), FMargin(0.f, 0.f, 0.f, 24.f));
+		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ButtonList")), FMargin(0.f), HAlign_Center);
 		return B.Finish(Root);
 	}
 
@@ -669,7 +775,12 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		{ TEXT("WBP_Map"), UDwMapScreen::StaticClass(), &BuildMapScreen },
 		{ TEXT("WBP_Rewards"), UDwRewardsScreen::StaticClass(), &BuildRewardsScreen },
 		{ TEXT("WBP_LevelUp"), UDwLevelUpScreen::StaticClass(), &BuildLevelUpScreen },
-		{ TEXT("WBP_NodeShell"), UDwNodeShellScreen::StaticClass(), &BuildNodeShellScreen } };
+		{ TEXT("WBP_NodeShell"), UDwNodeShellScreen::StaticClass(), &BuildNodeShellScreen },
+		{ TEXT("WBP_StepButton"), UDwChoiceButtonWidget::StaticClass(), &BuildStepButton },
+		{ TEXT("WBP_SettingRow"), UDwSettingRowWidget::StaticClass(), &BuildSettingRow }, // after WBP_StepButton
+		{ TEXT("WBP_Menu"), UDwMenuScreen::StaticClass(), &BuildMenuScreen },
+		{ TEXT("WBP_CaptainSelect"), UDwCaptainSelectScreen::StaticClass(), &BuildCaptainSelectScreen },
+		{ TEXT("WBP_Settings"), UDwSettingsScreen::StaticClass(), &BuildSettingsScreen } };
 	TMap<FString, UWidgetBlueprint*> Built;
 	for (const FWidgetSpec& Spec : Specs)
 	{
@@ -696,7 +807,12 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		Hud->UnitCardClass = ClassOf(TEXT("WBP_UnitCard"));
 		Hud->ActionButtonClass = ClassOf(TEXT("WBP_ActionButton"));
 	}
-	for (const TCHAR* Name : { TEXT("WBP_Map"), TEXT("WBP_Rewards"), TEXT("WBP_LevelUp"), TEXT("WBP_NodeShell") })
+	if (UDwSettingsScreen* SettingsScreen = Built[TEXT("WBP_Settings")]->GeneratedClass->GetDefaultObject<UDwSettingsScreen>())
+	{
+		SettingsScreen->RowClass = ClassOf(TEXT("WBP_SettingRow"));
+	}
+	for (const TCHAR* Name : { TEXT("WBP_Map"), TEXT("WBP_Rewards"), TEXT("WBP_LevelUp"), TEXT("WBP_NodeShell"), TEXT("WBP_Menu"),
+		TEXT("WBP_CaptainSelect"), TEXT("WBP_Settings") })
 	{
 		if (UDwRunScreen* Screen = Built[Name]->GeneratedClass->GetDefaultObject<UDwRunScreen>())
 		{
@@ -721,6 +837,9 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 	Screens->Map = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Map")));
 	Screens->Rewards = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Rewards")));
 	Screens->LevelUp = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_LevelUp")));
+	Screens->Menu = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Menu")));
+	Screens->CaptainSelect = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_CaptainSelect")));
+	Screens->Settings = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Settings")));
 	Screens->Shop = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_NodeShell"))); // WBP_Shop: DW-204
 	Screens->Event = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_NodeShell"))); // WBP_Event: DW-205
 	bool bSoundMapCreated = false;

@@ -22,6 +22,7 @@ class UDwFloatingTextManager;
 class UDwPrimaryLayoutWidget;
 class UDwUIScreenSet;
 class UDwUISoundMap;
+class UDwViewModelBase;
 struct FDwCombatResult;
 
 /**
@@ -30,7 +31,7 @@ struct FDwCombatResult;
  * Screen selection (doc 14): the combat HUD goes up on UDwCombatSubsystem::OnCombatStarted (run fights and the dev
  * fight alike) and comes down when the active UDwRun leaves the Combat phase. Every other run phase gets its screen from
  * DA_UIScreenSet (DW-211: map, rewards, level-up, shop/event shells) with its view model bound to the run; the summary
- * after Victory/Defeat is DW-210.
+ * after Victory/Defeat and the rest of the shell (main menu, captain select, settings, pause, confirm) are DW-210.
  */
 UCLASS()
 class DEADWATERRUN_API UDwUIManagerSubsystem : public ULocalPlayerSubsystem
@@ -57,6 +58,26 @@ public:
 	const UDwUIScreenSet* GetScreenSet() const;
 	const UDwUISoundMap* GetSoundMap() const;
 
+	// Shell (Docs/Architecture/16-Shell.md, DW-210). Each pushes onto UI.Layer.Menu unless noted; Esc backs out.
+
+	/** L_MainMenu: New Run, Settings, Quit. */
+	void ShowMainMenu();
+	/** Captain cards and Set Sail (UDwRunSubsystem::StartRun, which travels to L_Sea from the menu). */
+	void OpenCaptainSelect();
+	/** UDwGameUserSettings rows, applied and saved on every change. */
+	void OpenSettings();
+	/** IA_Pause in L_Sea: opens the pause menu (UI.Layer.GameMenu, game paused) or closes it. False if nothing to pause. */
+	bool TogglePause();
+	bool IsPaused() const { return PauseScreen != nullptr; }
+	/** A yes/no question on UI.Layer.Modal; Esc and No just close it. */
+	void Confirm(const FText& Title, const FText& Body, const FText& YesLabel, TFunction<void()> OnYes);
+	/** The run summary for the bound run (Victory/Defeat, U4): New Run, Main Menu. */
+	void ShowRunSummary();
+	/** The shell screen on top (menu, captain select, settings, pause, confirm, summary), or null. Tests and demos. */
+	UDwActivatableScreen* GetTopShellScreen() const { return ShellScreens.IsEmpty() ? nullptr : ShellScreens.Last().Get(); }
+	/** Closes one shell screen (its Back / Resume / No). */
+	void CloseShellScreen(UDwActivatableScreen* Screen);
+
 	// ULocalPlayerSubsystem
 	virtual void PlayerControllerChanged(APlayerController* NewPlayerController) override;
 	virtual void Deinitialize() override;
@@ -78,11 +99,18 @@ private:
 	void HideCombatHud();
 	/** Replaces the run screen with the one for Phase (none for Combat, Victory, Defeat). */
 	void ShowRunScreen(EDwRunPhase Phase);
+	/** Pushes a shell screen class from the screen set with its view model; tracked in ShellScreens. */
+	UDwActivatableScreen* PushShellScreen(FGameplayTag LayerTag, const TSoftClassPtr<UDwActivatableScreen>& ScreenClass, UDwViewModelBase* ViewModel);
+	void CloseAllShellScreens();
+	void SetPaused(bool bPaused);
 
 	UPROPERTY(Transient) TObjectPtr<UDwPrimaryLayoutWidget> Layout;
 	UPROPERTY(Transient) TObjectPtr<UDwCombatHudViewModel> CombatHud;
 	UPROPERTY(Transient) TObjectPtr<UDwActivatableScreen> CombatHudScreen;
 	UPROPERTY(Transient) TObjectPtr<UDwActivatableScreen> RunScreen;
+	/** Shell screens open now, bottom to top. */
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwActivatableScreen>> ShellScreens;
+	UPROPERTY(Transient) TObjectPtr<UDwActivatableScreen> PauseScreen;
 	UPROPERTY(Transient) TObjectPtr<UDwMapViewModel> MapViewModel;
 	UPROPERTY(Transient) TObjectPtr<UDwRewardsViewModel> RewardsViewModel;
 	UPROPERTY(Transient) TObjectPtr<UDwLevelUpViewModel> LevelUpViewModel;

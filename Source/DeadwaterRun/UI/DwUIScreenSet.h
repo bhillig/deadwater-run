@@ -51,6 +51,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phases")
 	TSoftClassPtr<UDwActivatableScreen> Event;
 
+	/** WBP_Menu (DW-210): main menu, pause, confirm and run summary - a title, lines and buttons. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Shell")
+	TSoftClassPtr<UDwActivatableScreen> Menu;
+
+	/** WBP_CaptainSelect (DW-210). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Shell")
+	TSoftClassPtr<UDwActivatableScreen> CaptainSelect;
+
+	/** WBP_Settings (DW-210). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Shell")
+	TSoftClassPtr<UDwActivatableScreen> Settings;
+
 	/** The screen class for a run phase (Combat: the HUD); null for phases without one (Victory/Defeat: DW-210). */
 	TSoftClassPtr<UDwActivatableScreen> GetPhaseScreen(EDwRunPhase Phase) const
 	{

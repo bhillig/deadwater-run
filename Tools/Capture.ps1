@@ -13,14 +13,17 @@
   ./Tools/Capture.ps1 -Demo enemy           # player passes twice; the crew AI plays two enemy turns (frames <file>-01.png, ...)
   ./Tools/Capture.ps1 -Demo run             # a run (DW-201/203): map readout, fight 1, rewards, level-up, back on the map, fight 2 (frames -01..-05)
   ./Tools/Capture.ps1 -Demo voyage          # a whole chart through the run screens (DW-202/211): map at every stop, first rewards/level-up/shop/event; ends at the Kraken
+  ./Tools/Capture.ps1 -Demo shell           # DW-210 from the main menu: menu, settings, captain select, Set Sail, map, pause, abandon, summary, New Run
   ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p
   ./Tools/Capture.ps1 -Mood Storm           # the storm look (default Day; Random rolls from the seed)
   ./Tools/Capture.ps1 -Zoom 0.3 -Tile "0,1" # close-up of a tile for art review
 #>
 param(
-    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage')] [string] $Demo = 'none',
+    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage', 'shell')] [string] $Demo = 'none',
     # Start a run with this captain (TeamLeader, Fearmongerer, Conqueror) instead of the dev fight. -Demo run defaults to TeamLeader.
     [string] $Captain = '',
+    # Level to open: Sea (L_Sea) or MainMenu (L_MainMenu). -Demo shell defaults to MainMenu.
+    [ValidateSet('', 'Sea', 'MainMenu')] [string] $Map = '',
     [int] $Seed = 7,
     [float] $Delay = 6,
     [int] $ResX = 1600,
@@ -54,8 +57,9 @@ $logDir = Join-Path $root 'Saved\Tools'
 New-Item -ItemType Directory -Force $logDir | Out-Null
 $log = Join-Path $logDir 'Capture.log'
 
+if (-not $Map) { $Map = $(if ($Demo -eq 'shell') { 'MainMenu' } else { 'Sea' }) }
 $gameArgs = @(
-    (Get-DwProject), '/Game/DeadwaterRun/Maps/L_Sea', '-game', '-windowed', "-ResX=$ResX", "-ResY=$ResY", '-ForceRes',
+    (Get-DwProject), "/Game/DeadwaterRun/Maps/L_$Map", '-game', '-windowed', "-ResX=$ResX", "-ResY=$ResY", '-ForceRes',
     "-DwCapture=$Out", "-DwCaptureDelay=$Delay", "-DwCaptureDemo=$Demo", "-DwSeed=$Seed",
     '-nosound', '-nosplash', '-unattended', "-abslog=$log"
 )

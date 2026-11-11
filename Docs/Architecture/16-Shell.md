@@ -34,7 +34,7 @@
 
 ### Dev entry points (DW-201, not in Shipping)
 - `-DwCaptain=<TeamLeader|Fearmongerer|Conqueror> [-DwSeed=<n>]` on an L_Sea launch starts a run without the menu; without it L_Sea still starts the dev fight (`bStartDevFight`).
-- `ADwHUD` draws a text readout of the run outside combat (phase, crew, ship, gold, numbered routes); `dw.Run.Readout 0` hides it. It is a stand-in until the map and summary screens (DW-210, DW-211).
+- `ADwHUD` can draw a text readout of the run over the screens (phase, crew, ship, gold, numbered routes); off by default since DW-211, `dw.Run.Readout 1` shows it.
 - Console: `Dw.Run.Start [Captain] [Seed]`, `Dw.Run.Choose <n>`, `Dw.Run.Abandon`. Fight cheats stay with DW-111.
 - `Tools/Capture.ps1 -Demo run` plays map -> fight -> map -> fight headless and saves a frame of each.
 
@@ -45,6 +45,30 @@
 - **Abandon (U5, decided):** `UDwRun::Abandon()` -> stats finalised -> `WBP_RunSummary` (defeat style, "Abandoned").
 - **End of run:** Victory (Kraken) or Defeat (ship sunk, crew dead, or captain dead) -> run summary -> Main menu or New run. Summary fields (U4, decided): captain, seed, nodes cleared, fights by outcome (sunk/plundered/surrendered), gold, crew lost, kills, time - all from `FDwRunStats`, plus the end reason as the headline.
 - **Quit or crash mid-run:** run is gone by design; nothing to clean up because nothing was saved.
+
+## As built (DW-210, 2026-11-11)
+- **Screens:**
+  - `WBP_Menu` is one screen for the main menu, pause, confirm and run summary (`UDwMenuViewModel`: title, lines, buttons, Esc).
+  - `WBP_CaptainSelect` (`UDwCaptainSelectViewModel`) and `WBP_Settings` / `WBP_SettingRow` (`UDwSettingsViewModel`, a < value > stepper per row).
+  - They are built by `UDwUIContentLibrary` and listed in `DA_UIScreenSet` (`Menu`, `CaptainSelect`, `Settings`).
+- **Navigation:** it lives in `UDwUIManagerSubsystem` (`UI/DwUIManagerShell.cpp`), which hands each view model its button intents.
+  - The main menu shows when `ADwMenuGameMode` is the world's game mode, and that game mode clears any leftover run on `BeginPlay`.
+  - A run starting closes all shell screens; Victory or Defeat (including Abandon) opens the summary.
+  - Summary → New Run opens captain select in `L_Sea`; Main Menu clears the run and opens `L_MainMenu`.
+- **Layers:** menus go on `UI.Layer.Menu`, pause on `UI.Layer.GameMenu` (the game is paused while it's up) and confirm on `UI.Layer.Modal`.
+  - Closing everything clears those layers whole: popping two screens from one CommonUI stack in the same frame leaves the first one drawn.
+- **Esc (CommonUI back action):**
+  - Captain select and settings: back.
+  - Pause: resume.
+  - Confirm: No.
+  - Main menu and summary: ignored (Quit and leaving are explicit buttons).
+  - In `L_Sea` with the game in front: cancel targeting first, else open pause (`ADwPlayerController::OnPause` → `TogglePause`).
+- **`UDwGameUserSettings` (pulled forward from DW-216, Brandon 2026-11-11):**
+  - Every setting saves, and is applied and saved at once on each change.
+  - Takes effect now: display (resolution, window mode, vsync) and game speed (`UDwPresentationSubsystem` playback rate, also set when a rendered game world starts).
+  - Saved but no effect yet: volumes (no audio yet), screen shake (the camera doesn't shake yet), highlight palette (palette assets are DW-216). The screen says so on each row.
+  - DW-216 keeps: `ApplyAudio` with sound classes, `UDwHighlightPalette` assets, music states.
+- **Tests:** `DeadwaterRun.UI.Shell` and `DeadwaterRun.Shell.Settings`; settings tests use their own objects and never write the player's ini. `Tools/Capture.ps1 -Demo shell` plays menu → settings → captain select → Set Sail → pause → abandon → summary → New Run → abandon → Main Menu.
 
 ## Connections
 - `09-Run-Map.md`: run lifetime and phases.

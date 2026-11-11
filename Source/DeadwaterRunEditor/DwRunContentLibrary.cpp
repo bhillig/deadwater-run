@@ -274,6 +274,10 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 	MapRules->TypeWeights.Event = 1.f;
 	bOk &= Save(MapRules, Log);
 	GameData->MapRules = MapRules;
+
+	// 10. DW-210 shell travel: Set Sail opens L_Sea, Main Menu opens L_MainMenu (16-Shell D1).
+	GameData->MainMenuLevel = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/DeadwaterRun/Maps/L_MainMenu.L_MainMenu")));
+	GameData->SeaLevel = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/DeadwaterRun/Maps/L_Sea.L_Sea")));
 	bOk &= Save(GameData, Log);
 
 	Log.Add(bOk ? TEXT("CONTENT PASS") : TEXT("CONTENT FAIL"));

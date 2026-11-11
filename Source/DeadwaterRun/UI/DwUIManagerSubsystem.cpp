@@ -6,6 +6,7 @@
 #include "Core/DwAssetManager.h"
 #include "Core/DwGameData.h"
 #include "Core/DwGameplayTags.h"
+#include "Core/DwMenuGameMode.h"
 #include "Core/DwLog.h"
 #include "Core/DwPlayerController.h"
 #include "Engine/GameViewportClient.h"
@@ -56,6 +57,10 @@ void UDwUIManagerSubsystem::PlayerControllerChanged(APlayerController* NewPlayer
 		CreateLayout(*NewPlayerController);
 		BindCombat(NewPlayerController->GetWorld());
 		BindRuns(NewPlayerController->GetWorld());
+		if (Cast<ADwMenuGameMode>(NewPlayerController->GetWorld()->GetAuthGameMode()))
+		{
+			ShowMainMenu(); // L_MainMenu (16-Shell D1)
+		}
 	}
 }
 
@@ -97,6 +102,8 @@ void UDwUIManagerSubsystem::DestroyLayout()
 	}
 	CombatHudScreen = nullptr;
 	RunScreen = nullptr;
+	ShellScreens.Reset();
+	PauseScreen = nullptr;
 	if (Layout)
 	{
 		Layout->RemoveFromParent();
@@ -201,6 +208,7 @@ void UDwUIManagerSubsystem::BindRun(UDwRun* Run)
 
 void UDwUIManagerSubsystem::HandleRunStarted(UDwRun* Run)
 {
+	CloseAllShellScreens(); // Set Sail from the summary's captain select: the old run's screens go
 	BindRun(Run);
 }
 
@@ -216,6 +224,10 @@ void UDwUIManagerSubsystem::HandleRunPhaseChanged(EDwRunPhase NewPhase, EDwRunPh
 		HideCombatHud();
 	}
 	ShowRunScreen(NewPhase);
+	if (NewPhase == EDwRunPhase::Victory || NewPhase == EDwRunPhase::Defeat)
+	{
+		ShowRunSummary(); // U4, U5 (abandon lands here too)
+	}
 }
 
 void UDwUIManagerSubsystem::ShowRunScreen(EDwRunPhase Phase)
