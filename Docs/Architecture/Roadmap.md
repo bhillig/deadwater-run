@@ -1,6 +1,6 @@
 # Roadmap and Tickets
 
-- Timeline from `Docs/Scope.md`. Launch **Thu 2026-12-03**. Steam: store page submitted **~Nov 12**, live **by Nov 19**, build submitted **~Nov 25**.
+- Timeline from `Docs/Scope.md`. Launch **Thu 2026-12-10** (moved from Dec 3 on 2026-11-11; weeks 3-6 shifted one week later). Steam: store page submitted **~Nov 19**, live **by Nov 26**, build submitted **~Dec 2**.
 - Bottleneck is Brandon's review (15 h/week, approvals batched daily), so tickets are sized to review in 30 minutes or less, and every ticket's proof is a test run plus a screenshot or clip.
 - Ticket IDs: `DW-<week><nn>`. Agents are only those in the `DeadwaterRun.md` roster.
 
@@ -62,41 +62,41 @@ gantt
     Full run playable                      :milestone, m2, 2026-11-08, 0d
 
     section Week 3
-    DW-307 Synty art pass                  :crit, w307, 2026-11-09, 3d
-    DW-308 Store page assets               :crit, w308, 2026-11-11, 2d
-    Store page submitted                   :milestone, m3a, 2026-11-12, 0d
-    DW-301 Kraken gameplay                 :crit, w301, 2026-11-09, 3d
+    DW-307 Synty art pass                  :crit, w307, 2026-11-16, 3d
+    DW-308 Store page assets               :crit, w308, 2026-11-18, 2d
+    Store page submitted                   :milestone, m3a, 2026-11-19, 0d
+    DW-301 Kraken gameplay                 :crit, w301, 2026-11-16, 3d
     DW-302 Kraken AI                       :w302, after w301, 2d
     DW-303 Kraken HUD                      :w303, after w301, 2d
-    DW-304 Abilities perks items content   :w304, 2026-11-09, 4d
-    DW-305 Enemy crews content             :w305, 2026-11-09, 4d
-    DW-306 Events content                  :w306, 2026-11-10, 3d
-    DW-309 Balance dashboard               :w309, 2026-11-10, 3d
-    DW-310 QA content sweep                :w310, 2026-11-13, 3d
-    DW-311 Audio import                    :w311, 2026-11-09, 5d
-    Content complete                       :milestone, m3, 2026-11-15, 0d
+    DW-304 Abilities perks items content   :w304, 2026-11-16, 4d
+    DW-305 Enemy crews content             :w305, 2026-11-16, 4d
+    DW-306 Events content                  :w306, 2026-11-17, 3d
+    DW-309 Balance dashboard               :w309, 2026-11-17, 3d
+    DW-310 QA content sweep                :w310, 2026-11-20, 3d
+    DW-311 Audio import                    :w311, 2026-11-16, 5d
+    Content complete                       :milestone, m3, 2026-11-22, 0d
 
     section Week 4
-    DW-401 Balance pass                    :crit, w401, 2026-11-16, 5d
-    DW-402 UI juice                        :w402, 2026-11-16, 5d
-    DW-403 Mix pass                        :w403, 2026-11-17, 4d
-    DW-404 Playtests and bug bash          :w404, 2026-11-16, 6d
-    DW-405 Polish fixes                    :w405, 2026-11-17, 5d
-    DW-406 Store live and RC dry run       :w406, 2026-11-19, 3d
-    DW-407 Autoplay smoke and replays      :w407, 2026-11-16, 3d
-    Store page live                        :milestone, m4, 2026-11-19, 0d
+    DW-401 Balance pass                    :crit, w401, 2026-11-23, 5d
+    DW-402 UI juice                        :w402, 2026-11-23, 5d
+    DW-403 Mix pass                        :w403, 2026-11-24, 4d
+    DW-404 Playtests and bug bash          :w404, 2026-11-23, 6d
+    DW-405 Polish fixes                    :w405, 2026-11-24, 5d
+    DW-406 Store live and RC dry run       :w406, 2026-11-26, 3d
+    DW-407 Autoplay smoke and replays      :w407, 2026-11-23, 3d
+    Store page live                        :milestone, m4, 2026-11-26, 0d
 
     section Week 5
-    DW-501 Release candidate               :crit, w501, 2026-11-23, 3d
-    DW-502 QA RC regression                :w502, 2026-11-23, 5d
-    DW-503 Final tuning                    :w503, 2026-11-23, 2d
-    DW-504 RC fixes                        :w504, 2026-11-24, 5d
-    Build submitted                        :milestone, m5, 2026-11-25, 0d
+    DW-501 Release candidate               :crit, w501, 2026-11-30, 3d
+    DW-502 QA RC regression                :w502, 2026-11-30, 5d
+    DW-503 Final tuning                    :w503, 2026-11-30, 2d
+    DW-504 RC fixes                        :w504, 2026-12-01, 5d
+    Build submitted                        :milestone, m5, 2026-12-02, 0d
 
     section Week 6
-    DW-601 Launch checklist                :crit, w601, 2026-11-30, 4d
-    DW-602 Launch smoke                    :w602, 2026-12-02, 2d
-    Launch                                 :milestone, m6, 2026-12-03, 0d
+    DW-601 Launch checklist                :crit, w601, 2026-12-07, 4d
+    DW-602 Launch smoke                    :w602, 2026-12-09, 2d
+    Launch                                 :milestone, m6, 2026-12-10, 0d
 ```
 
 ## Critical path
@@ -118,15 +118,15 @@ flowchart LR
     Q2["Brandon answers K, M, P questions by Nov 2"] --> J
     J --> L["Full run playable Nov 8"]
     K --> L
-    L --> M["DW-307 Synty art pass by Nov 11"]
-    M --> N["DW-308 store page, submitted Nov 12"]
+    L --> M["DW-307 Synty art pass by Nov 18"]
+    M --> N["DW-308 store page, submitted Nov 19"]
     Q3["Brandon content lists N1-N4, P2, P9, B1-B9 by Nov 8"] --> O["DW-301 to DW-306 content and Kraken"]
     L --> O
-    O --> P["Content complete Nov 15"]
+    O --> P["Content complete Nov 22"]
     P --> R["DW-401 balance from simulator"]
     R --> S["DW-501 release candidate"]
-    S --> T["Build submitted Nov 25"]
-    T --> U["DW-601 launch Dec 3"]
+    S --> T["Build submitted Dec 2"]
+    T --> U["DW-601 launch Dec 10"]
 ```
 
 Decision deadlines for Brandon (from `Open-Questions.md`) are on the critical path: board/combat basics by **Oct 27**, captain/map/economy rules by **Nov 2**, content lists and Kraken details by **Nov 8**, audio source by **Nov 8**.
@@ -195,7 +195,7 @@ Out of scope: Downloading, buying or importing anything
 Agent:       release-engineer
 Goal:        DW-006 Release checklist with Steam dates and a first Shipping package of the cleaned project
 Context:     Scope.md deadlines, 18-Packaging-Release.md
-Acceptance:  - Docs/Release/Checklist.md (dates Nov 12/19/25, Dec 3, Valve review lead times) and Docs/Release/StorePage.md skeleton
+Acceptance:  - Docs/Release/Checklist.md (dates Nov 19/26, Dec 2, Dec 10, Valve review lead times) and Docs/Release/StorePage.md skeleton
              - Build/Package.ps1 produces a Win64 Shipping build into Build/Out; exe launches to L_MainMenu
              - Staged build contains no ModelContextProtocol/Terminal/AllToolsets binaries
 Proof:       Commands, exit codes, package size, screenshot of the packaged game at the menu
@@ -572,8 +572,8 @@ Out of scope: Uploading, submitting
 | DW-304 | gameplay-engineer | Content: ~12 crew abilities, final perk pools, 2 items, ship upgrades (from Brandon's lists N1, P2, P9) | 02, 12, 06 | Each ability tested; validation clean | New ability classes unless approved |
 | DW-305 | gameplay-engineer | Content: 4-5 enemy crews (decks, units, profiles, tiers) from N2/N3 | 07, 13 | Quick-launch clip of each crew | AI code |
 | DW-306 | gameplay-engineer | Content: 10-12 events from Brandon's text | 11 | Validation clean; each event quick-launched | Writing text |
-| DW-307 | gameplay-engineer (pending O1) | Synty art pass: ships, characters, animations, environment, Niagara for every cue; layouts aligned. **Done by Nov 11 for store screenshots** | 15, 04 | Screenshots of combat, map, shop | UI art |
-| DW-308 | release-engineer | Store page package for Brandon to submit Nov 12 | 18 | Checklist complete with real screenshots | Pressing submit |
+| DW-307 | gameplay-engineer (pending O1) | Synty art pass: ships, characters, animations, environment, Niagara for every cue; layouts aligned. **Done by Nov 18 for store screenshots** | 15, 04 | Screenshots of combat, map, shop | UI art |
+| DW-308 | release-engineer | Store page package for Brandon to submit Nov 19 | 18 | Checklist complete with real screenshots | Pressing submit |
 | DW-309 | tools-engineer | Balance dashboard EUW | Editor-Tools T11 | Clip of running and comparing reports | Balance values |
 | DW-310 | qa-tester | Content sweep: every ability, crew, event, Kraken phase; cross-system cases | all | Bug reports | Fixes |
 | DW-311 | sound-wrangler | Import approved audio; fill cue map and music set | 15 | Clip with sound per cue | Unapproved audio |
@@ -582,11 +582,11 @@ Out of scope: Uploading, submitting
 | DW-403 | sound-wrangler | Mix and loudness pass, concurrency tuning, settings verified | 15 | Clip with sound | New assets |
 | DW-404 | qa-tester | Playtests (with Brandon) and bug bash; calibrate SecondsPerAction for run length | 17 | Bug list, playtest times | Fixes |
 | DW-405 | gameplay-engineer / ai-engineer / ui-engineer | Polish fixes from DW-404 (one ticket per bug batch per owner) | bug reports | Regression tests per bug | New features |
-| DW-406 | release-engineer | Confirm store page live Nov 19; RC dry-run package; beta branch prep | 18 | Checklist ticks, package output | Uploading |
+| DW-406 | release-engineer | Confirm store page live Nov 26; RC dry-run package; beta branch prep | 18 | Checklist ticks, package output | Uploading |
 | DW-407 | tools-engineer | Packaged -DwAutoplay smoke and combat replays (Editor-Tools T13) | 17 | Autoplay exits 0; replay reproduces a fight | Gameplay rules |
-| DW-501 | release-engineer | Release candidate build for Brandon to submit Nov 25 | 18 | Shipping package, smoke steps 1-4 | Submitting |
+| DW-501 | release-engineer | Release candidate build for Brandon to submit Dec 2 | 18 | Shipping package, smoke steps 1-4 | Submitting |
 | DW-502 | qa-tester | RC full regression (one run per captain, all edge-case lists) | 17 | Signed-off checklist | Fixes |
 | DW-503 | balance-designer | Final tuning from RC simulator runs | 13 | Report | Rules |
 | DW-504 | gameplay-engineer / ai-engineer / ui-engineer | RC fixes only (blockers and majors) | bug reports | Regression tests | Features |
-| DW-601 | release-engineer | Launch checklist and launch-day steps for Dec 3 | 18 | Checklist | Pressing release |
+| DW-601 | release-engineer | Launch checklist and launch-day steps for Dec 10 | 18 | Checklist | Pressing release |
 | DW-602 | qa-tester | Launch smoke on the Steam build (beta branch, then default) | 18 | Smoke report | Fixes |

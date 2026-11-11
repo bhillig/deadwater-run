@@ -1,7 +1,7 @@
 # 18 - Packaging and Release
 
 ## Problem
-- Steam deadlines: store page submitted ~Nov 12, public "Coming Soon" by Nov 19, build submitted ~Nov 25, launch Dec 3 ($5).
+- Steam deadlines: store page submitted ~Nov 19, public "Coming Soon" by Nov 26, build submitted ~Dec 2, launch Dec 10 ($5; moved from Dec 3 on 2026-11-11).
 - A Shipping build must package from the command line and launch to the main menu (release-engineer "done means").
 - Editor-only plugins (MCP, Terminal, modelling tools) and dev content must not ship. No secrets in the repo.
 
@@ -34,8 +34,8 @@
 ## Steam
 - `Build/Steam/app_build.vdf.template`, `depot_build_win64.vdf.template` with `<APPID>`/`<DEPOTID>` placeholders; real IDs and credentials never in git (`.gitignore` the filled files).
 - Branches: `default` (release), `beta` (playtests, RCs).
-- Store page checklist (`Docs/Release/StorePage.md`): capsule images in every required size, at least 5 screenshots from the real game, short and long description, tags, system requirements, price $5, release date Dec 3, content survey, trailer (optional for submission). **Screenshots require the Synty art pass (DW-307) by Nov 11.**
-- Release checklist (`Docs/Release/Checklist.md`): Valve 30-day rule (fee paid), store page dates, build review lead time (~3-5 days; submit by Nov 25), launch-day steps.
+- Store page checklist (`Docs/Release/StorePage.md`): capsule images in every required size, at least 5 screenshots from the real game, short and long description, tags, system requirements, price $5, release date Dec 10, content survey, trailer (optional for submission). **Screenshots require the Synty art pass (DW-307) by Nov 18.**
+- Release checklist (`Docs/Release/Checklist.md`): Valve 30-day rule (fee paid), store page dates, build review lead time (~3-5 days; submit by Dec 2), launch-day steps.
 
 ## Smoke test per build
 1. `Build/Package.ps1 -Config Shipping` -> exit code 0.
@@ -53,12 +53,12 @@
 1. DW-006 (week 0): `Docs/Release/Checklist.md` with all dates; `Build/Package.ps1`; first Shipping package of the cleaned project.
 2. DW-116 (week 1): package the playable combat; verify plugin exclusion.
 3. DW-218 (week 2): full-run package, store page checklist, Steam vdf templates.
-4. DW-308 (week 3): store page assets assembled for Brandon to submit Nov 12.
-5. DW-406 (week 4): confirm page live Nov 19; RC dry run; beta branch upload prep.
-6. DW-501 (week 5): RC build for Brandon to submit Nov 25. DW-601 (week 6): launch checklist.
+4. DW-308 (week 3): store page assets assembled for Brandon to submit Nov 19.
+5. DW-406 (week 4): confirm page live Nov 26; RC dry run; beta branch upload prep.
+6. DW-501 (week 5): RC build for Brandon to submit Dec 2. DW-601 (week 6): launch checklist.
 
 ## How it's tested
 - Each release PR includes the exact commands, exit codes, package size, and a main-menu screenshot from the packaged build.
 
 ## What the player sees
-- A stable $5 build on Steam on Dec 3 that launches straight to the menu and runs the whole voyage without a hitch.
+- A stable $5 build on Steam on Dec 10 that launches straight to the menu and runs the whole voyage without a hitch.

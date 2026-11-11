@@ -2,7 +2,7 @@
 
 - **Status:** Proposed (2026-10-24), waiting for Brandon's approval
 - **Author:** technical-architect
-- **Scope:** every system in `DeadwaterRun.md` and every "Must ship" item in `Docs/Scope.md` (v1.0, launch 2026-12-03)
+- **Scope:** every system in `DeadwaterRun.md` and every "Must ship" item in `Docs/Scope.md` (v1.0, launch 2026-12-10)
 - **Fixed decisions (Brandon, 2026-10-24):** 2 combat abilities per captain - 8-9 map nodes plus the boss, 5 fights guaranteed - square tile grid boards (one deck grid per ship, a boarding seam, an elevated nest tile; a separate Kraken arena) - level-up = a stat increase plus a pick of 1 from 2-3 perks taken from data-driven pools
 
 ## Index
@@ -515,7 +515,7 @@ Ticket IDs are defined in `Roadmap.md`.
 | Readable combat UI (Scope) | 14 | DW-107, DW-303, DW-402 |
 | Hit and cannon VFX (Scope) | 15 | DW-114, DW-307 |
 | Audio (Scope), audio source decided Nov 8 | 15 | DW-005, DW-113, DW-311, DW-403 |
-| Steam: store page Nov 12, live Nov 19, build Nov 25, launch Dec 3 | 18 | DW-006, DW-116, DW-218, DW-308, DW-406, DW-501, DW-601 |
+| Steam: store page Nov 19, live Nov 26, build Dec 2, launch Dec 10 | 18 | DW-006, DW-116, DW-218, DW-308, DW-406, DW-501, DW-601 |
 | Editor tools so Brandon adds content without AI (this request) | Editor-Tools | DW-108, DW-109, DW-110, DW-111, DW-213, DW-309 |
 | Headless simulator and balance from simulations (Scope week 4) | 17, 13 | DW-212, DW-309, DW-401 |
 

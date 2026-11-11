@@ -1,15 +1,15 @@
 # Deadwater Run - Scope (v1.0)
 
-- **Launch:** Thursday 2026-12-03, Steam, $5
-- **Why Dec 3:** the 2026 Autumn Sale already ran (Oct 1-8); launching here gets two full-price weeks before the Winter Sale (Dec 17 - Jan 4)
+- **Launch:** Thursday 2026-12-10, Steam, $5
+- **Why Dec 10:** moved from Dec 3 on 2026-11-11 (schedule ~2 weeks behind). The 2026 Autumn Sale already ran (Oct 1-8); Dec 10 still launches before the Winter Sale (Dec 17 - Jan 4), with one full-price week instead of two
 - **Capacity:** 15 hrs/week of human time + multiple AI agents
 - **Bottleneck:** Brandon's review and approval time, not agent output
 
 ## Hard external deadlines (Steam)
 - [x] App fee paid. Valve requires 30 days between payment and release
-- [ ] Store page submitted for review: ~Nov 12
-- [ ] Store page public as "Coming Soon" (2-week minimum): by Nov 19
-- [ ] Build submitted for review: ~Nov 25
+- [ ] Store page submitted for review: ~Nov 19
+- [ ] Store page public as "Coming Soon" (2-week minimum): by Nov 26
+- [ ] Build submitted for review: ~Dec 2
 
 ## Must ship (v1.0)
 - **Combat:** turn order (player first), crew HP/MP, ship HP; attack / ability / item / cannon actions; win by sinking the ship or killing the crew; lose the same ways; plunder on crew wipe
@@ -49,10 +49,11 @@ All systems are built to work together - no system in a silo. See `Docs/Orchestr
 | 0 | Oct 23-25 | Unreal MCP connected, GAS enabled, agent definitions written, data layout agreed |
 | 1 | Oct 26 - Nov 1 | One full combat playable with placeholder art |
 | 2 | Nov 2-8 | Full run playable start to finish (placeholder boss); **audio source decided (Nov 8)** |
-| 3 | Nov 9-15 | All content in, Kraken done, Synty art pass; **store page submitted (Nov 12)** |
-| 4 | Nov 16-22 | Balance from simulations, playtests, polish, audio in; **store page live (Nov 19)** |
-| 5 | Nov 23-29 | Release candidate; **build submitted (Nov 25)** |
-| 6 | Nov 30 - Dec 3 | Fixes only; **launch Dec 3** |
+| 2b | Nov 9-15 | Catch-up (schedule moved +1 week on Nov 11): full run playable with placeholder Kraken (done Nov 11), Synty art phase 1, store page package |
+| 3 | Nov 16-22 | All content in, Kraken done, Synty art pass; **store page submitted (Nov 19)** |
+| 4 | Nov 23-29 | Balance from simulations, playtests, polish, audio in; **store page live (Nov 26)** |
+| 5 | Nov 30 - Dec 6 | Release candidate; **build submitted (Dec 2)** |
+| 6 | Dec 7-10 | Fixes only; **launch Dec 10** |
 
 ## Rules
 - Every agent delivery is a PR with tests and a clip or screenshot from the game, so it can be reviewed in minutes

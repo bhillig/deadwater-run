@@ -1,10 +1,10 @@
 # Deadwater Run - Steam Store Page Package (DW-308)
 
-Prepared 2026-11-11 by the Release Engineer for submission on **2026-11-12**. Nothing here has been submitted. Brandon presses every button in Steamworks.
+Prepared 2026-11-11 by the Release Engineer for submission by **2026-11-19** (originally Nov 12; schedule moved one week later on 2026-11-11). Nothing here has been submitted. Brandon presses every button in Steamworks.
 
 Status key: **ready** = can be pasted/uploaded as is. **needs Brandon** = a decision, a fact only he has, or an account action. **blocked** = cannot be done until something else lands.
 
-> Pixel sizes and field names below are from the Steamworks documentation as I know it. The Steamworks "Graphical Assets" and "Store Page" admin screens are the source of truth - the first thing to do on Nov 12 is compare the sizes in section 2 with what the upload slots say, and tell me if any differ. I could not log in to check (out of scope).
+> Pixel sizes and field names below are from the Steamworks documentation as I know it. The Steamworks "Graphical Assets" and "Store Page" admin screens are the source of truth - the first thing to do before submitting is compare the sizes in section 2 with what the upload slots say, and tell me if any differ. I could not log in to check (out of scope).
 
 ---
 
@@ -15,7 +15,7 @@ Status key: **ready** = can be pasted/uploaded as is. **needs Brandon** = a deci
 | Game name | Deadwater Run | ready |
 | Type | Game | ready |
 | Price | **$5.00 USD** (Steam price point exists). Regional pricing: Steamworks suggests per-region prices from the USD price; accept the suggestion or edit | needs Brandon (accept regional suggestions? launch discount yes/no) |
-| Release date | **2026-12-03** (Thursday). Set as "Coming Soon" with this date | ready (do not change; Brandon sets it) |
+| Release date | **2026-12-10** (Thursday). Set as "Coming Soon" with this date | ready (do not change; Brandon sets it) |
 | Early Access | No | ready |
 | Platforms | Windows 64-bit only. No Mac/Linux build exists | ready |
 | Developer / Publisher | Not in the repo beyond `CopyrightNotice=Brandon Hillig 2026`. Use the name on the Steamworks account (individual or studio name) | needs Brandon |
@@ -72,7 +72,7 @@ Captured 2026-11-11 with `Tools/Capture.ps1`, all **1920 x 1080 PNG**, current b
 | 12 | `12-shop-shell-NOT-RECOMMENDED.png` | Shop (shell) | **not recommended**: says "The shopkeeper is still unpacking (shop: DW-204)" |
 | 13 | `13-event-placeholder-NOT-RECOMMENDED.png` | Event (shell) | **not recommended**: says "Nothing happens... yet (events: DW-205)" |
 
-Honest read for Brandon: shots 1-6 are the store page. They are six moments of the same screen, so the gallery will look repetitive; the Synty ships and characters are the selling point. If time allows after the Nov 15 art/UI pass, recapture 7-9 and 11 (and the shop/events once built) and swap them in - screenshots can be edited after the page is approved (verify in Steamworks whether edits to an approved page need re-review). Combat HUD polish items I noticed (not mine to fix): hint bar at the bottom touches the bottom edge of the action cards; the top "Round 1 - YOUR TURN" text sits close to the top edge.
+Honest read for Brandon: shots 1-6 are the store page. They are six moments of the same screen, so the gallery will look repetitive; the Synty ships and characters are the selling point. If time allows after the Nov 22 art/UI pass, recapture 7-9 and 11 (and the shop/events once built) and swap them in - screenshots can be edited after the page is approved (verify in Steamworks whether edits to an approved page need re-review). Combat HUD polish items I noticed (not mine to fix): hint bar at the bottom touches the bottom edge of the action cards; the top "Round 1 - YOUR TURN" text sits close to the top edge.
 
 **Order of the gallery is a creative choice - options below:**
 - Lead A: `03-combat-cannon` (shows the unique ship-HP hook first)
@@ -146,7 +146,7 @@ Deadwater Run is a tense turn-based pirate roguelike with a twist: ships have he
 Battle out of the Aquadia seas.
 ```
 
-Copy claims that depend on unfinished work (do not publish unless true at launch): "three captains... own combat abilities" (the Conqueror/Fearmongerer abilities show placeholder text, DW-207/208), "shops", "events" (shells today, DW-204/205), "Kraken ... two phases / tentacles" (DW-209 in progress), "rival crews with their own tactics" (DW-106 default AI only). Brandon: copy can go in tomorrow, but re-read it against the build on Nov 25.
+Copy claims that depend on unfinished work (do not publish unless true at launch): "three captains... own combat abilities" (the Conqueror/Fearmongerer abilities show placeholder text, DW-207/208), "shops", "events" (shells today, DW-204/205), "Kraken ... two phases / tentacles" (DW-209 in progress), "rival crews with their own tactics" (DW-106 default AI only). Brandon: copy can go in tomorrow, but re-read it against the build on Dec 2.
 
 ## 5. Tags, genres, categories
 
@@ -203,24 +203,24 @@ No art exists and no AI art was generated. Effort figures are my estimates; comm
 - Capture a hero shot of the Synty ships at high res (Capture.ps1 goes up to the desktop size, 2560x1440; a 2x upscale is soft - a purpose-built hero camera in the editor would be better, which is a small gameplay/tools-engineer task and needs your approval since it touches game code).
 - Put the "DEADWATER RUN" logo over it in an open-licence display font. The Asset Scraper can bring 2-3 font options (DW-005 was meant to; UI doc U6 is still open) for your approval - do not use a font before the licence is checked.
 - Compose one 3840x2160 master in Photopea/GIMP/Affinity, crop to all ten sizes in section 2, export the logo as a transparent PNG for the library logo.
-- Pros: done by Nov 12-16, consistent with the game, uses real Synty art. Cons: looks like a screenshot with a title; no key-art polish.
+- Pros: done in 1-2 days, consistent with the game, uses real Synty art. Cons: looks like a screenshot with a title; no key-art polish.
 
 **B. Commission key art (best look, ~1-3 weeks wall-clock, my rough guess $150-$600 for a capsule set)**
 - Brief an illustrator for one key illustration (ship vs Kraken or the two ships) plus logo; they deliver layered files; crop to sizes.
-- Pros: strongest wishlist conversion, reusable for the trailer and the library hero. Cons: **cannot land by Nov 12**, and capsules are required to submit. Risks the Nov 19 Coming Soon deadline unless combined with C.
+- Pros: strongest wishlist conversion, reusable for the trailer and the library hero. Cons: **unlikely to land by Nov 19**, and capsules are required to submit. Risks the Nov 26 Coming Soon deadline unless combined with C.
 
 **C. Hybrid (recommended path to evaluate; ~2-3 hours now, art later)**
-- Tomorrow: build a minimal title-card set from option A (solid/gradient sea colour or a screenshot crop + logo) that meets every size so the page can be submitted and reviewed.
-- Commission or polish real key art during Nov 16-Dec 2 and swap it in (Valve allows replacing assets after approval; I believe it does not restart the 2-week Coming Soon clock - verify).
-- Pros: keeps the Nov 12 / Nov 19 dates safe. Cons: the Coming Soon page, where wishlists accrue, is the weak version for the first 2 weeks.
+- This week: build a minimal title-card set from option A (solid/gradient sea colour or a screenshot crop + logo) that meets every size so the page can be submitted and reviewed.
+- Commission or polish real key art during Nov 19-Dec 9 and swap it in (Valve allows replacing assets after approval; I believe it does not restart the 2-week Coming Soon clock - verify).
+- Pros: keeps the Nov 19 / Nov 26 dates safe. Cons: the Coming Soon page, where wishlists accrue, is the weak version for the first 2 weeks.
 
-## 9. Everything blocking submission tomorrow (Nov 12)
+## 9. Everything blocking submission (by Nov 19)
 
 1. **Capsule/library art** - none exists (10 sized images). Hard blocker for submit. Decide A/B/C today.
 2. **Developer/publisher name, support email/URL** - needs Brandon.
 3. **Short + long description picks, tags, genre** - needs Brandon (options above).
 4. **Content survey, IARC rating, AI-disclosure** - Brandon answers in Steamworks.
 5. **Steamworks paperwork (tax, bank, identity)** - must be complete before release; check it shows "complete" now. needs Brandon.
-6. **App fee paid date** - Scope says paid but no date is recorded. Release Dec 3 requires payment on or before **Nov 3** (30-day rule). Brandon: confirm the payment date.
+6. **App fee paid date** - Scope says paid but no date is recorded. Release Dec 10 requires payment on or before **Nov 10** (30-day rule). Brandon: confirm the payment date.
 7. System requirements are guesses; acceptable for submission, replace later.
 8. No build is needed to submit the store page, but **no Shipping package has been made yet**; see `Docs/Release/Checklist.md`.
