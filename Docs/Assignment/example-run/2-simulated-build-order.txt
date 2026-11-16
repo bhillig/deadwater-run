@@ -1,0 +1,46 @@
+--- iteration 1: DW-209 (score 39.8) Placeholder Kraken boss encounter
+
+--- iteration 2: DW-301 (score 36.37) Kraken gameplay: definition, arena, body + tentacles, 5 moves, intent storage
+
+--- iteration 3: DW-302 (score 16.97) Kraken brain: phases, action count, tentacle scaling, intents
+
+--- iteration 4: DW-303 (score 16.97) Kraken HUD: boss bar, phase banner, intents, tentacle bars, danger tiles hookup
+
+--- iteration 5: DW-205 (score 14.82) Event framework with 2 placeholder events
+
+--- iteration 6: DW-109 (score 13.26) Tuning JSON import/export commandlet and editor buttons
+
+--- iteration 7: DW-204 (score 12.63) Shop: repair, abilities, items, recruit, disband, ship upgrades
+
+--- iteration 8: DW-207 (score 11.13) Team Leader: synergy, defend, Rally Cry, Grapple Hook, Veteran Crew
+
+--- iteration 9: DW-111 (score 9.9) "Play in Deadwater" quick launch and cheat manager
+
+--- iteration 10: DW-216 (score 9.09) Game user settings and music states
+
+--- iteration 11: DW-208 (score 9.07) Conqueror: extra move, sword only, single-choice crew, Charge, Eye of the Tiger, kill bonus
+
+--- iteration 12: DW-110 (score 8.49) Deck layout painter and ship alignment dev map
+
+--- iteration 13: DW-114 (score 8.49) GameplayCue bases, audio cue map lookup, music subsystem, placeholder hit and cannon cues
+
+--- iteration 14: DW-214 (score 8.25) AI terms for captain mechanics and the simulator player profile
+
+--- iteration 15: DW-304 (score 7.5) Content: ~12 crew abilities, final perk pools, 2 items, ship upgrades (from Brandon's lists N1, P2, P9)
+
+--- iteration 16: DW-108 (score 6.93) Test harness, data validation framework, Deadwater editor menu
+
+--- iteration 17: DW-306 (score 6.93) Content: 10-12 events from Brandon's text
+
+--- iteration 18: DW-305 (score 6) Content: 4-5 enemy crews (decks, units, profiles, tiers) from N2/N3
+
+--- iteration 19: DW-212 (score 5.89) Headless run simulator v1
+
+--- iteration 20: DW-213 (score 5.14) Content wizard, map preview, description preview
+
+--- iteration 21: DW-309 (score 4.16) Balance dashboard EUW
+
+--- iteration 22: DW-407 (score 3.46) Packaged -DwAutoplay smoke and combat replays (Editor-Tools T13)
+
+=== Stopped. Build order: DW-209 -> DW-301 -> DW-302 -> DW-303 -> DW-205 -> DW-109 -> DW-204 -> DW-207 -> DW-111 -> DW-216 -> DW-208 -> DW-110 -> DW-114 -> DW-214 -> DW-304 -> DW-108 -> DW-306 -> DW-305 -> DW-212 -> DW-213 -> DW-309 -> DW-407
+All code requirements from the GDD are met.

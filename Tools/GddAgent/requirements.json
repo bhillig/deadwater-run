@@ -1,0 +1,83 @@
+{
+  "_doc": [
+    "Per-ticket requirements for gdd-agent.js. Probes are auto-extracted from each Roadmap ticket's Acceptance text;",
+    "this file adds what the text does not name, links tickets to their GDD section, and records deliberate renames.",
+    "gdd: DeadwaterRun.md heading(s) the ticket implements, or \"none\" for tooling. Unknown headings fail the run.",
+    "probes: extra {kind, name, min?, exclude?} (min/exclude: count asset globs); kinds: symbol (C++ type declared in Source/), asset (Content file name, * allowed),",
+    "file (repo path, * allowed), test (automation test name registered in Source/), text (regex over Source/).",
+    "ignore: auto-extracted names that are not requirements. rename: ticket name -> name it shipped under.",
+    "replaceProbes: true drops the auto-extracted probes. writable: override whether the loop may pick it."
+  ],
+  "tickets": {
+    "DW-003": { "gdd": "none", "ignore": ["DeadwaterRun.Rules.Placeholder"], "note": "Placeholder test removed once real tests existed" },
+    "DW-004": { "gdd": "none" },
+    "DW-101": { "gdd": "Your Crew" },
+    "DW-102": { "gdd": "Encounter Structure" },
+    "DW-103": { "gdd": "At Each Fight Node" },
+    "DW-104": { "gdd": ["At Each Fight Node", "Your Ship"] },
+    "DW-105": { "gdd": "At Each Fight Node" },
+    "DW-106": { "gdd": "At Each Fight Node" },
+    "DW-107": { "gdd": "At Each Fight Node" },
+    "DW-201": { "gdd": ["Main Game Loop", "Your Crew"], "ignore": ["FDwCrewFactory"], "note": "Crew creation shipped inside UDwRun" },
+    "DW-202": { "gdd": "Map Structure" },
+    "DW-203": { "gdd": "Progression During The Run" },
+    "DW-204": { "gdd": ["At Each Shop Node", "Your Ship"] },
+    "DW-205": {
+      "gdd": "At Each Event Node",
+      "probes": [
+        { "kind": "symbol", "name": "FDwEventChoice" },
+        { "kind": "symbol", "name": "UDwEventRequirement" },
+        { "kind": "symbol", "name": "UDwEventOutcome" },
+        { "kind": "symbol", "name": "UDwEventOutcome_Gold" },
+        { "kind": "symbol", "name": "UDwEventOutcome_CrewHealth" },
+        { "kind": "symbol", "name": "UDwEventOutcome_ShipHealth" },
+        { "kind": "asset", "name": "DA_Event_*", "min": 2 }
+      ]
+    },
+    "DW-206": { "gdd": "Fearmongerer" },
+    "DW-207": { "gdd": "Team Leader" },
+    "DW-208": { "gdd": "The Conqueror" },
+    "DW-209": {
+      "gdd": "At The Final Boss Node",
+      "note": "Ticket acceptance names no identifiers; probes come from 08-Kraken-Boss.md (placeholder section)",
+      "probes": [
+        { "kind": "text", "name": "BuildKrakenArena\\s*\\(" },
+        { "kind": "text", "name": "EDwCombatOutcome::VictoryBoss" },
+        { "kind": "asset", "name": "DA_Deck_KrakenArena" },
+        { "kind": "asset", "name": "DA_Unit_KrakenBody" },
+        { "kind": "asset", "name": "DA_Encounter_KrakenPlaceholder" },
+        { "kind": "asset", "name": "GA_Kraken_TentacleSlam" },
+        { "kind": "test", "name": "DeadwaterRun.Run.Kraken" }
+      ]
+    },
+    "DW-210": { "gdd": "Main Game Loop" },
+    "DW-211": { "gdd": ["Map Structure", "At Each Shop Node", "At Each Event Node"] },
+    "DW-212": { "gdd": "none" },
+    "DW-213": { "gdd": "none" },
+    "DW-214": { "gdd": "Captain Choices" },
+    "DW-216": { "gdd": "none" },
+    "DW-301": {
+      "gdd": "At The Final Boss Node",
+      "probes": [
+        { "kind": "symbol", "name": "FDwKrakenTentacleRules" },
+        { "kind": "symbol", "name": "FDwKrakenPhase" },
+        { "kind": "asset", "name": "GA_Kraken_KrankySwipe" },
+        { "kind": "asset", "name": "GA_Kraken_TentacleGrab" },
+        { "kind": "asset", "name": "GA_Kraken_ArmsOfFury" },
+        { "kind": "asset", "name": "GA_Kraken_EyesOfTheSea" }
+      ]
+    },
+    "DW-302": { "gdd": "At The Final Boss Node", "probes": [{ "kind": "symbol", "name": "UDwKrakenAiBrain" }] },
+    "DW-303": { "gdd": "At The Final Boss Node", "probes": [{ "kind": "asset", "name": "WBP_BossBar" }] },
+    "DW-304": { "gdd": "Your Crew", "probes": [{ "kind": "asset", "name": "DA_Ability_*", "exclude": "Kraken|Captain|Move|UseItem|FireCannon|Attack", "min": 12 }, { "kind": "asset", "name": "DA_Item_*", "min": 2 }],
+      "note": "Content counts are checked by the validator, not by name" },
+    "DW-305": { "gdd": "Encounter Structure", "probes": [{ "kind": "asset", "name": "DA_Encounter_*", "exclude": "Kraken|Dev", "min": 4 }, { "kind": "asset", "name": "DA_AiProfile_*", "exclude": "Kraken|SimPlayer", "min": 4 }] },
+    "DW-306": { "gdd": "At Each Event Node", "probes": [{ "kind": "asset", "name": "DA_Event_*", "min": 10 }] },
+    "DW-307": { "gdd": "none", "writable": false, "note": "Art pass needs Brandon's visual approval - not a code gap" },
+    "DW-309": { "gdd": "none", "probes": [{ "kind": "asset", "name": "EUW_Balance*" }] },
+    "DW-402": { "gdd": "none", "writable": false, "note": "Juice is judged by eye; route by hand" },
+    "DW-405": { "writable": false, "note": "Bug-driven, no fixed requirements" },
+    "DW-407": { "gdd": "none", "probes": [{ "kind": "text", "name": "DwAutoplay" }] },
+    "DW-504": { "writable": false, "note": "Bug-driven, no fixed requirements" }
+  }
+}

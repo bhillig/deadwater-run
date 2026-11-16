@@ -1,0 +1,58 @@
+
+=== GDD agent plan - 2026-11-11 ===
+Scanned 377 files, 297 C++ types, 103 assets.
+Tickets: 63 (38 code). Code requirements met: 16/38.
+Current milestone: week 2 - "Full run playable start to finish (placeholder boss); audio source decided (Nov 8)" (open: DW-209)
+
+Gaps (code tickets not done):
+  DW-108  missing        0%  Test harness, data validation framework, Deadwat  missing: FDwTestWorld, UDwContentValidator, FDwEditorMenus, Tools/Validate.ps1 +1
+  DW-109  partial       50%  Tuning JSON import/export commandlet and editor   missing: Tools/ImportTuning.ps1
+  DW-110  missing        0%  Deck layout painter and ship alignment dev map    missing: FDwDeckLayoutDetails, L_Dev_ShipAlign, BP_ShipPreview
+  DW-111  partial       33%  "Play in Deadwater" quick launch and cheat manag  missing: UDwDevSettings, UDwCheatManager
+  DW-114  missing        0%  GameplayCue bases, audio cue map lookup, music s  missing: UDwGameplayCueNotify_Burst, ADwGameplayCueNotify_Looping, UDwAudioCueMap, UDwMusicSet +5
+  DW-204  partial       50%  Shop: repair, abilities, items, recruit, disband  missing: FDwShopRules, EDwPurchaseResult
+  DW-205  partial       44%  Event framework with 2 placeholder events         missing: FDwEventResolver, UDwEventOutcome_Gold, UDwEventOutcome_CrewHealth, UDwEventOutcome_ShipHealth +1
+  DW-207  partial       25%  Team Leader: synergy, defend, Rally Cry, Grapple  missing: FDwSynergyRules, UDwGA_Grapple, GA_Defend
+  DW-208  missing        0%  Conqueror: extra move, sword only, single-choice  missing: UDwGA_Charge, GE_ConquerorExtraMove
+  DW-209  partial       14%  Placeholder Kraken boss encounter                 missing: BuildKrakenArena\s*\(, DA_Deck_KrakenArena, DA_Unit_KrakenBody, DA_Encounter_KrakenPlaceholder +2
+  DW-212  missing        0%  Headless run simulator v1                         missing: UDwRunDriver, UDwSimPlayerSideController, UDwSimPolicy, FDwSimRunReport +2
+  DW-213  missing        0%  Content wizard, map preview, description preview  missing: EUW_MapPreview
+  DW-214  missing        0%  AI terms for captain mechanics and the simulator  missing: DA_AiProfile_SimPlayer
+  DW-216  partial       50%  Game user settings and music states               missing: UDwHighlightPalette, DA_HighlightPalette_Default
+  DW-301  partial       33%  Kraken gameplay: definition, arena, body + tenta  missing: GA_Kraken_KrankySwipe, GA_Kraken_TentacleGrab, GA_Kraken_ArmsOfFury, GA_Kraken_EyesOfTheSea
+  DW-302  missing        0%  Kraken brain: phases, action count, tentacle sca  missing: UDwKrakenAiBrain
+  DW-303  missing        0%  Kraken HUD: boss bar, phase banner, intents, ten  missing: WBP_BossBar
+  DW-304  partial       50%  Content: ~12 crew abilities, final perk pools, 2  missing: DA_Ability_*
+  DW-305  missing        0%  Content: 4-5 enemy crews (decks, units, profiles  missing: DA_Encounter_*, DA_AiProfile_*
+  DW-306  missing        0%  Content: 10-12 events from Brandon's text         missing: DA_Event_*
+  DW-309  missing        0%  Balance dashboard EUW                             missing: EUW_Balance*
+  DW-407  missing        0%  Packaged -DwAutoplay smoke and combat replays (E  missing: DwAutoplay
+
+Priority queue (top 10):
+  rank id      score  value crit mile  unbl  urg   mom  cost  goal
+     1 DW-209    39.8  1.0  1.0  2.0  1.00 1.86 1.07    1d  Placeholder Kraken boss encounter
+     2 DW-301   18.19  1.0  1.5  1.0  1.50 1.20 1.17    3d  Kraken gameplay: definition, arena, body + tentacl
+     3 DW-205   14.82  1.0  1.0  1.0  1.00 1.71 1.22    2d  Event framework with 2 placeholder events
+     4 DW-109   13.26  0.6  1.0  1.0  1.25 2.00 1.25    2d  Tuning JSON import/export commandlet and editor bu
+     5 DW-204   12.63  1.0  1.0  1.0  1.00 1.43 1.25    2d  Shop: repair, abilities, items, recruit, disband, 
+     6 DW-207   11.13  1.0  1.0  1.0  1.00 1.71 1.13    3d  Team Leader: synergy, defend, Rally Cry, Grapple H
+     7 DW-111     9.9  0.6  1.0  1.0  1.00 2.00 1.17    2d  "Play in Deadwater" quick launch and cheat manager
+     8 DW-216    9.09  0.6  1.0  1.0  1.00 1.71 1.25    2d  Game user settings and music states
+     9 DW-208    9.07  1.0  1.0  1.0  1.00 1.57 1.00    3d  Conqueror: extra move, sword only, single-choice c
+    10 DW-110    8.49  0.6  1.0  1.0  1.00 2.00 1.00    2d  Deck layout painter and ship alignment dev map
+
+Blocked: DW-302 (DW-301); DW-303 (DW-301)
+
+=== DW-209 Placeholder Kraken boss encounter ===
+Owner gameplay-engineer; week 2; planned 2026-11-04 -> 2026-11-05 (1d); deps DW-201; critical false
+GDD: Game Mechanics > At The Final Boss Node
+Status partial, coverage 14%
+  [ ] text   BuildKrakenArena\s*\(
+  [x] text   EDwCombatOutcome::VictoryBoss  <- Source/**
+  [ ] asset  DA_Deck_KrakenArena
+  [ ] asset  DA_Unit_KrakenBody
+  [ ] asset  DA_Encounter_KrakenPlaceholder
+  [ ] asset  GA_Kraken_TentacleSlam
+  [ ] test   DeadwaterRun.Run.Kraken
+priority_score = 39.8  {"value":1,"critical":1,"milestone":2,"unblocks":1,"urgency":1.8571428571428572,"momentum":1.0714285714285714,"cost":1}
+Queue position 1 of 20
