@@ -47,7 +47,10 @@ struct DEADWATERRUN_API FDwTile
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tile")
 	int32 MoveCost = 1;
 
-	/** Tile.Cannon, Tile.BoardingEdge, Tile.Spawn.Player, ... */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tile", meta = (Categories = "Tile"))
+	/**
+	 * Tile.Cannon, Tile.BoardingEdge, Tile.Spawn.Player, ... A Ship.Upgrade.* tag makes a deck tile a cannon slot that is a
+	 * cannon only when the ship has that upgrade (FDwBoardBuilder::ApplyShipUpgrades).
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tile", meta = (Categories = "Tile,Ship.Upgrade"))
 	FGameplayTagContainer Tags;
 };

@@ -8,7 +8,7 @@
 
 /**
  * Dev-only proof capture (never created in Shipping): with -DwCapture=<file.png> on the command line, the game waits
- * -DwCaptureDelay seconds (default 4), optionally stages the interaction (-DwCaptureDemo=move | aim | cannon | enemy | run | voyage | boss ...), writes a
+ * -DwCaptureDelay seconds (default 4), optionally stages the interaction (-DwCaptureDemo=move | aim | cannon | enemy | run | voyage | boss | shop ...), writes a
  * screenshot with the HUD, and quits. Lets agents produce reviewable screenshots headless (Tools/Capture.ps1) when the
  * editor MCP is unavailable. DW-111's cheat manager may absorb it.
  */
@@ -54,6 +54,14 @@ private:
 	 * the main menu again (the run cleared).
 	 */
 	void ShellDemoStep();
+	/**
+	 * Demo "shop" (needs -DwCaptain=; DW-204), with the dev run readout on so gold, hull, crew, items and every offer show:
+	 * fights are won by the captain (the hull is knocked to 60% each time, so repair matters) until there is gold for a
+	 * repair, a recruit, an upgrade (the third cannon if offered) and an item; then the next shop. -01 the shop on arrival,
+	 * -02 after buying them (one purchase per step), -03 the map after leaving; final frame the next fight, with the
+	 * recruit on deck and the third cannon.
+	 */
+	void ShopDemoStep();
 	/** Kills every living enemy with the player captain as the instigator (kill XP), then ends the player turn. */
 	void WinFightByCaptain() const;
 	void CaptureFrame(int32 Frame) const;
@@ -68,6 +76,9 @@ private:
 	bool bVoyageCaptured = false;
 	bool bVoyageFightStaged = false;
 	int32 BossStep = 0;
+	/** Demo "shop": 0 sailing to the shop, 1 arrival captured (buying), 3 after captured, 4 left (map), 5 map captured. */
+	int32 ShopStage = 0;
+	bool bShopFightStaged = false;
 	TSet<uint8> VoyageScreensSeen;
 	int32 EnemyFrame = 0;
 	int32 EnemyTurnsPlayed = 0;

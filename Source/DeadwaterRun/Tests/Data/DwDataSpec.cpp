@@ -85,6 +85,7 @@ void FDwDataSpec::Define()
 				{ T.Run, FDwRunTuningRow::StaticStruct() },
 				{ T.Combat, FDwCombatTuningRow::StaticStruct() },
 				{ T.Kraken, FDwKrakenTuningRow::StaticStruct() },
+				{ T.ShipUpgrade, FDwShipUpgradeTuningRow::StaticStruct() },
 			};
 			for (const TPair<const UDataTable*, const UScriptStruct*>& Pair : Tables)
 			{
@@ -185,9 +186,33 @@ void FDwDataSpec::Define()
 			TestEqual(TEXT("Plunder 1.5x loot"), Eco->PlunderLootMultiplier, 1.5f);
 			TestEqual(TEXT("Surrender 1.5x loot"), Eco->SurrenderLootMultiplier, 1.5f);
 			TestEqual(TEXT("Repair 100 gold"), Eco->RepairCost, 100);
-			TestEqual(TEXT("Abilities 50 gold"), Eco->AbilityUnlockCost, 50);
-			TestEqual(TEXT("Items 30 gold"), Eco->ItemCost, 30);
+			TestEqual(TEXT("Repair +100 hull (P7)"), Eco->RepairAmount, 100);
 			TestEqual(TEXT("Max crew 4"), Eco->MaxCrew, 4);
+			TestEqual(TEXT("Inventory cap 6 items in total (P10)"), Eco->MaxInventory, 6);
+			TestEqual(TEXT("Recruit level = crew average - 1 (P8)"), Eco->RecruitLevelOffset, -1);
+			TestEqual(TEXT("Disband gives no refund (P8)"), Eco->DisbandRefund, 0);
+			for (const TCHAR* Item : { TEXT("HealthRestore"), TEXT("ManaRestore") })
+			{
+				const FDwItemTuningRow* ItemRow = DwDataSpec::Row<FDwItemTuningRow>(T.Item, Item);
+				TestTrue(FString::Printf(TEXT("Items 30 gold: %s"), Item), ItemRow && ItemRow->Price == 30);
+			}
+			const FDwItemTuningRow* Heal = DwDataSpec::Row<FDwItemTuningRow>(T.Item, TEXT("HealthRestore"));
+			const FDwItemTuningRow* Mana = DwDataSpec::Row<FDwItemTuningRow>(T.Item, TEXT("ManaRestore"));
+			TestTrue(TEXT("+40 HP / +10 MP (P10)"), Heal && Mana && Heal->Amount == 40 && Mana->Amount == 10);
+			for (const TCHAR* Unit : { TEXT("Swordsman"), TEXT("Sniper") })
+			{
+				const FDwUnitTuningRow* UnitRow = DwDataSpec::Row<FDwUnitTuningRow>(T.Unit, Unit);
+				TestTrue(FString::Printf(TEXT("Recruit 80 gold: %s (P8)"), Unit), UnitRow && UnitRow->RecruitCost == 80);
+			}
+			const FDwShipUpgradeTuningRow* Hull = DwDataSpec::Row<FDwShipUpgradeTuningRow>(T.ShipUpgrade, TEXT("ReinforcedHull"));
+			const FDwShipUpgradeTuningRow* Shot = DwDataSpec::Row<FDwShipUpgradeTuningRow>(T.ShipUpgrade, TEXT("HeavyShot"));
+			const FDwShipUpgradeTuningRow* Cannon = DwDataSpec::Row<FDwShipUpgradeTuningRow>(T.ShipUpgrade, TEXT("ExtraCannon"));
+			if (TestTrue(TEXT("DT_ShipUpgradeTuning has the three P9 upgrades"), Hull && Shot && Cannon))
+			{
+				TestEqual(TEXT("+50 max hull"), Hull->MaxHealthBonus, 50);
+				TestEqual(TEXT("+20 cannon damage"), Shot->CannonDamageBonus, 20);
+				TestTrue(TEXT("Every upgrade has a price"), Hull->Price > 0 && Shot->Price > 0 && Cannon->Price > 0);
+			}
 			TestEqual(TEXT("Example fight 150 gold"), Fight->BaseGold, 150);
 
 			TestEqual(TEXT("Events 60% good"), Run->GoodEventChance, 0.6f);

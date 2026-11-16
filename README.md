@@ -165,8 +165,6 @@ flowchart TD
 Full details: [Docs/Orchestration.md](Docs/Orchestration.md) · Agent definitions: [.claude/agents/](.claude/agents/)
 
 **Architecture gaps for the Technical Architect**
-- **Prices are defined twice.** Doc 10 puts `AbilityUnlockCost`, `ItemCost` and `RecruitCostDefault` in `DT_EconomyTuning`. Doc 13 also puts `ShopPrice`, `Price` and `RecruitCost` on each row. That breaks rule 1 (one source of truth). For now the design numbers (50/30) live only in the economy table, and the per-row fields are 0
-- **Ship upgrade price has no home.** Doc 06 says upgrades have a "tuning row (price)", but doc 13 lists no ship-upgrade table
 - **AI ownership overlaps.** DW-004 says "all tuning rows and definitions", but doc 00 gives `FDwAiTuningRow` and `UDwAiProfile` to ai-engineer (DW-106). I only stubbed the profile class so encounters can reference it
 - **`FDwUnitHandle` was never specified.** I made it an `int32` id, where `INDEX_NONE` means invalid
 - **Enemy ship stats aren't in the design doc.** Only the player ship (250 HP, 70 cannon) has numbers. Enemy ships arrive with DW-305

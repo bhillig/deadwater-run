@@ -20,6 +20,11 @@ public:
 	TArray<FDwWeightedAbility> Abilities;
 
 	virtual FPrimaryAssetType GetDwAssetType() const override { return FTypes::AbilityPool; }
+
+#if WITH_EDITOR
+	/** No empty entries; every ability has a DT_AbilityTuning.ShopPrice above 0 (pools are what the shop sells, DW-204). */
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
+#endif
 };
 
 /** Level-up perk choices; shared or per archetype is Open-Questions P2 (Docs/Architecture/12). */

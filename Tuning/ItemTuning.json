@@ -1,4 +1,4 @@
 [
-	{ "Name": "HealthRestore", "Price": 0, "Amount": 30, "Range": 1 },
-	{ "Name": "ManaRestore",   "Price": 0, "Amount": 10, "Range": 1 }
+	{ "Name": "HealthRestore", "Price": 30, "Amount": 40, "Range": 1 },
+	{ "Name": "ManaRestore",   "Price": 30, "Amount": 10, "Range": 1 }
 ]

@@ -78,3 +78,23 @@ The placeholder boss (`DA_Encounter_KrakenPlaceholder`, Docs/Architecture/08 "Pl
 | `AbilityTuning.json` | `Kraken_TentacleSlam` | `Damage` | 50 | Design doc number, unchanged (one crew member or the ship) |
 | `KrakenTuning.json` | `Kraken` | all | 0 / empty | Unchanged: no tentacles in the placeholder; any `TentacleCount` above 0 is refused until DW-301 |
 | `DA_Deck_KrakenArena` (layout, not JSON) | - | body anchor | next to the rail | So cutlasses can reach the body while there are no tentacles; what may hit the body is Open-Questions B4 |
+
+## Set by DW-204 (shop), 2026-11-11
+
+Brandon's P4 / P7-P10 answers (2026-11-11, "recommended defaults, all placeholders") plus the shop numbers they need. Prices now live only on each offered thing's row (Open-Questions "DW-204 a"); `AbilityUnlockCost`, `ItemCost` and `RecruitCostDefault` are gone from `EconomyTuning.json`.
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `EconomyTuning.json` | `Default` | `RepairAmount` | 100 | P7 a): 100 gold = +100 hull (`RepairCost` stays 100, the design number) |
+| `EconomyTuning.json` | `Default` | `RecruitLevelOffset` | -1 | P8 a): recruits join at the crew's average level - 1 (at least 1) |
+| `EconomyTuning.json` | `Default` | `DisbandRefund` | 0 | P8 a): no refund |
+| `EconomyTuning.json` | `Default` | `MaxInventory` | 6 | P10 a): 6 items in the shared hold, all kinds together |
+| `EconomyTuning.json` | `Default` | `ShopAbilityOffers` / `ShopRecruitOffers` / `ShopUpgradeOffers` | 3 / 2 / 3 | Abilities like the rewards' pick of 3; both recruit archetypes; all three upgrades (each sells once per run, so later shops show fewer). Alternatives: 2 / 1 / 2 for scarcer shops, or 3 / 2 / 1 so upgrades feel rare |
+| `ItemTuning.json` | `HealthRestore`, `ManaRestore` | `Price` | 30 | Design number (was `EconomyTuning.ItemCost`) |
+| `ItemTuning.json` | `HealthRestore` | `Amount` | 40 (was 30) | P10 a): +40 HP |
+| `UnitTuning.json` | `Swordsman`, `Sniper` | `RecruitCost` | 80 | P8 a): "~80" |
+| `AbilityTuning.json` | every ability in a learnable pool | `ShopPrice` | 50 (none yet) | Design number (was `EconomyTuning.AbilityUnlockCost`). No ability is in a learnable pool until DW-304, so every row is still 0; data validation fails for a pool ability without a price, so DW-304 must set 50 on each one |
+| `ShipUpgradeTuning.json` (new) | `ReinforcedHull` / `HeavyShot` / `ExtraCannon` | `Price` | 150 each | No design number (Open-Questions P18). A bit under a fight's plunder (225), so an upgrade competes with a repair plus a recruit. Alternatives: 100 / 150 / 200 tiered, or 120 flat |
+| `ShipUpgradeTuning.json` (new) | `ReinforcedHull` | `MaxHealthBonus` | 50 | P9 a): +50 max hull (current hull rises too, P14) |
+| `ShipUpgradeTuning.json` (new) | `HeavyShot` | `CannonDamageBonus` | 20 | P9 a): +20 cannon damage (70 -> 90) |
+| `DA_Deck_PlayerShip` (layout, not JSON) | - | third cannon slot | row 0, column 1 | Next to the first cannon, reachable from the spawn column; the art pass decides (P18) |

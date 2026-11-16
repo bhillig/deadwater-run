@@ -1,0 +1,5 @@
+[
+	{ "Name": "ReinforcedHull", "Price": 150, "MaxHealthBonus": 50, "CannonDamageBonus": 0 },
+	{ "Name": "HeavyShot",      "Price": 150, "MaxHealthBonus": 0,  "CannonDamageBonus": 20 },
+	{ "Name": "ExtraCannon",    "Price": 150, "MaxHealthBonus": 0,  "CannonDamageBonus": 0 }
+]

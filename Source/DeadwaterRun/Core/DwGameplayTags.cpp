@@ -61,6 +61,7 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(Tile_Spawn_Enemy, "Tile.Spawn.Enemy");
 	UE_DEFINE_GAMEPLAY_TAG(Tile_Kraken_Body, "Tile.Kraken.Body");
 	UE_DEFINE_GAMEPLAY_TAG(Tile_Kraken_Tentacle, "Tile.Kraken.Tentacle");
+	UE_DEFINE_GAMEPLAY_TAG(Ship_Upgrade, "Ship.Upgrade");
 	UE_DEFINE_GAMEPLAY_TAG(Ship_Upgrade_ExtraCannon, "Ship.Upgrade.ExtraCannon");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Ability_Activate, "Event.Ability.Activate");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Presentation_Impact, "Event.Presentation.Impact");

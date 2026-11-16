@@ -7,6 +7,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Algo/Count.h"
 #include "Core/DwGameData.h"
 #include "Data/DwCaptainDefinition.h"
 #include "Data/DwEncounterDefinition.h"
@@ -95,6 +96,62 @@ BEGIN_DEFINE_SPEC(FDwRunSpec, "DeadwaterRun.Rules.Run",
 	}
 
 	FDwCrewMemberState& CrewAt(int32 Index) { return const_cast<FDwCrewMemberState&>(Run->GetState().Crew[Index]); }
+
+	/**
+	 * DW-204: wins fights (plunder; the hull comes back at ShipHealth when >= 0) until a shop is offered, then enters it.
+	 * Every chart has one: a shop is offered before the boss (M5). True if the run is now in the Shop phase.
+	 */
+	bool SailToShop(float ShipHealth = -1.f)
+	{
+		for (int32 Step = 0; Step < 30 && !Run->IsOver(); ++Step)
+		{
+			const TArray<int32> Choices = Run->GetChoices();
+			const int32* Shop = Choices.FindByPredicate([this](int32 Index) { return Run->GetState().Map.Nodes[Index].Type == EDwNodeType::Shop; });
+			if (Shop)
+			{
+				return TestTrue(TEXT("Entered the shop"), Run->ChooseNode(*Shop)) && TestEqual(TEXT("Shop phase"), Run->GetPhase(), EDwRunPhase::Shop);
+			}
+			const int32* Fight = Choices.FindByPredicate([this](int32 Index) { return Run->GetState().Map.Nodes[Index].Type == EDwNodeType::Fight; });
+			if (!TestTrue(TEXT("A route"), !Choices.IsEmpty()) || !Run->ChooseNode(Fight ? *Fight : Choices[0]))
+			{
+				return false;
+			}
+			if (Run->GetPhase() == EDwRunPhase::Event)
+			{
+				Run->LeaveEvent();
+				continue;
+			}
+			FDwCombatResult Result = DwRunTest::Won(Run->GetState(), 70.f);
+			Result.PlayerShipHealth = ShipHealth >= 0.f ? ShipHealth : Result.PlayerShipHealth;
+			if (!Run->ApplyCombatResult(Result) || !FinishNode())
+			{
+				return false;
+			}
+		}
+		return TestTrue(TEXT("Found a shop"), false);
+	}
+
+	/** The first offer of Type at the open shop, or INDEX_NONE. */
+	int32 OfferOf(EDwShopOfferType Type, const UObject* What = nullptr) const
+	{
+		const FDwShopOffer* Offer = Run->GetShop().Offers.FindByPredicate([Type, What](const FDwShopOffer& O)
+		{
+			return O.Type == Type && (!What || O.Item == What || O.Ability == What || O.Unit == What || O.Upgrade == What);
+		});
+		return Offer ? Offer->OfferId : INDEX_NONE;
+	}
+
+	/** Offer types and contents, in order: equal for equal shops. */
+	static FString ShopSignature(const FDwShopInventory& Shop)
+	{
+		FString Out = FString::Printf(TEXT("node %d: "), Shop.Node);
+		for (const FDwShopOffer& Offer : Shop.Offers)
+		{
+			Out += FString::Printf(TEXT("%s %d %s%s%s%s L%d; "), *DwRun::OfferTypeName(Offer.Type), Offer.Price, *GetNameSafe(Offer.Item), *GetNameSafe(Offer.Ability),
+				*GetNameSafe(Offer.Unit), *GetNameSafe(Offer.Upgrade), Offer.Level);
+		}
+		return Out;
+	}
 END_DEFINE_SPEC(FDwRunSpec)
 
 void FDwRunSpec::Define()
@@ -459,6 +516,161 @@ void FDwRunSpec::Define()
 			ExpectRefusals(2);
 			TestFalse(TEXT("LeaveShop on the map"), Run->LeaveShop());
 			TestFalse(TEXT("LeaveEvent on the map"), Run->LeaveEvent());
+		});
+	});
+
+	Describe("Shop (DW-204)", [this]()
+	{
+		It("opens the node's shop on arrival and closes it on leaving, back to the map", [this]()
+		{
+			TestFalse(TEXT("No shop on the map"), Run->GetShop().IsOpen());
+			if (!SailToShop()) { return; }
+			const FDwShopInventory& Shop = Run->GetShop();
+			TestEqual(TEXT("This node's shop"), Shop.Node, Run->GetState().CurrentNode);
+			TestTrue(TEXT("Repair"), OfferOf(EDwShopOfferType::Repair) != INDEX_NONE);
+			TestTrue(TEXT("Items"), OfferOf(EDwShopOfferType::Item, C.Grog) != INDEX_NONE && OfferOf(EDwShopOfferType::Item, C.Tonic) != INDEX_NONE);
+			TestTrue(TEXT("A recruit"), OfferOf(EDwShopOfferType::Recruit, C.Deckhand) != INDEX_NONE);
+			TestTrue(TEXT("Upgrades"), OfferOf(EDwShopOfferType::ShipUpgrade) != INDEX_NONE);
+			TestTrue(TEXT("Abilities"), OfferOf(EDwShopOfferType::Ability) != INDEX_NONE);
+			TestTrue(TEXT("Disbands"), OfferOf(EDwShopOfferType::Disband) != INDEX_NONE);
+			const int32 Cleared = Run->GetState().Stats.NodesCleared;
+
+			TestTrue(TEXT("Left"), Run->LeaveShop());
+			TestEqual(TEXT("Map"), Run->GetPhase(), EDwRunPhase::Map);
+			TestFalse(TEXT("Closed"), Run->GetShop().IsOpen());
+			TestTrue(TEXT("Offers cleared"), Run->GetShop().Offers.IsEmpty());
+			TestEqual(TEXT("Counted as cleared"), Run->GetState().Stats.NodesCleared, Cleared + 1);
+			TestFalse(TEXT("Routes ahead"), Run->GetChoices().IsEmpty());
+		});
+
+		It("buys through TryPurchase: gold, hull, crew, ship and inventory change, one broadcast per purchase", [this]()
+		{
+			C.EconomyRow().StartingGold = 1000; // the shop may come after a single fight
+			Run = NewRun();
+			if (!SailToShop(/*ShipHealth*/ 120.f)) { return; }
+			const FDwRunState& S = Run->GetState();
+			Run->OnStateChanged.AddDynamic(Listener, &UDwRunTestListener::HandleStateChanged);
+			Listener->StateChanges = 0;
+			const int32 Gold = S.Gold;
+			const int32 Crew = S.Crew.Num();
+
+			TestEqual(TEXT("Repair"), Run->TryPurchase(OfferOf(EDwShopOfferType::Repair), FGuid()), EDwPurchaseResult::Ok);
+			TestEqual(TEXT("Hull 120 + 100"), S.Ship.Health, 220.f);
+			TestEqual(TEXT("Recruit"), Run->TryPurchase(OfferOf(EDwShopOfferType::Recruit), FGuid()), EDwPurchaseResult::Ok);
+			TestEqual(TEXT("A new crew member"), S.Crew.Num(), Crew + 1);
+			TestEqual(TEXT("Third cannon"), Run->TryPurchase(OfferOf(EDwShopOfferType::ShipUpgrade, C.Cannon), FGuid()), EDwPurchaseResult::Ok);
+			TestTrue(TEXT("Installed"), S.Ship.HasUpgrade(C.Cannon));
+			TestEqual(TEXT("Grog"), Run->TryPurchase(OfferOf(EDwShopOfferType::Item, C.Grog), FGuid()), EDwPurchaseResult::Ok);
+			TestEqual(TEXT("100 + 80 + 150 + 30 spent"), S.Gold, Gold - 360);
+			TestEqual(TEXT("GoldSpent"), S.Stats.GoldSpent, 360);
+			TestEqual(TEXT("One broadcast each"), Listener->StateChanges, 4);
+			TestEqual(TEXT("Still in the shop"), Run->GetPhase(), EDwRunPhase::Shop);
+
+			// Refused: logged, nothing changes, no broadcast. CanPurchase answers the same without logging.
+			ExpectRefusals(1);
+			TestEqual(TEXT("Can: sold out"), Run->CanPurchase(OfferOf(EDwShopOfferType::Recruit), FGuid()), EDwPurchaseResult::SoldOut);
+			TestEqual(TEXT("Try: sold out"), Run->TryPurchase(OfferOf(EDwShopOfferType::Recruit), FGuid()), EDwPurchaseResult::SoldOut);
+			TestEqual(TEXT("Gold unchanged"), S.Gold, Gold - 360);
+			TestEqual(TEXT("No broadcast"), Listener->StateChanges, 4);
+		});
+
+		It("only sells in the Shop phase", [this]()
+		{
+			ExpectRefusals(1);
+			TestEqual(TEXT("Can on the map"), Run->CanPurchase(0, FGuid()), EDwPurchaseResult::NoOffer);
+			TestEqual(TEXT("Try on the map"), Run->TryPurchase(0, FGuid()), EDwPurchaseResult::NoOffer);
+		});
+
+		It("rolls the same shop for the same seed and node", [this]()
+		{
+			if (!SailToShop()) { return; }
+			const FString First = ShopSignature(Run->GetShop());
+			Run = NewRun();
+			if (!SailToShop()) { return; }
+			TestEqual(TEXT("Same shop"), ShopSignature(Run->GetShop()), First);
+		});
+
+		It("carries the upgrades out of the shop: +50 max hull and +50 hull, +20 cannon damage", [this]()
+		{
+			C.EconomyRow().StartingGold = 1000;
+			Run = NewRun();
+			if (!SailToShop(/*ShipHealth*/ 200.f)) { return; }
+			const FDwRunState& S = Run->GetState();
+			TestEqual(TEXT("Hull"), Run->TryPurchase(OfferOf(EDwShopOfferType::ShipUpgrade, C.Hull), FGuid()), EDwPurchaseResult::Ok);
+			TestEqual(TEXT("Shot"), Run->TryPurchase(OfferOf(EDwShopOfferType::ShipUpgrade, C.Shot), FGuid()), EDwPurchaseResult::Ok);
+			TestTrue(TEXT("Left"), Run->LeaveShop());
+			TestEqual(TEXT("Max 300"), S.Ship.MaxHealth, 300.f);
+			TestEqual(TEXT("Hull 250"), S.Ship.Health, 250.f);
+			TestEqual(TEXT("Cannons 90"), S.Ship.CannonDamage, 90.f);
+			TestEqual(TEXT("Both kept"), S.Ship.Upgrades.Num(), 2);
+		});
+
+		It("leaves plunder behind when the inventory is full (P10), and says so", [this]()
+		{
+			C.EconomyRow().MaxInventory = 1;
+			if (!SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			TestEqual(TEXT("First plunder fits"), Run->GetState().PendingRewards.Items.Num(), 1);
+			if (!FinishNode() || !SailOn()) { return; }
+			Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+			const FDwRewardBundle& Bundle = Run->GetState().PendingRewards;
+			TestTrue(TEXT("Second: rolled but no room"), Bundle.Items.IsEmpty() && Bundle.ItemsNoRoom.Num() == 1);
+			if (!FinishNode()) { return; }
+			TestEqual(TEXT("Still one carried"), Run->GetState().CountItems(), 1);
+			TestEqual(TEXT("Counted as left behind"), Run->GetState().Stats.ItemsLeftBehind, 1);
+		});
+
+		It("opens a valid, seeded shop at every shop node of 100 charts (and every chart has one)", [this]()
+		{
+			for (int32 Seed = 0; Seed < 100; ++Seed)
+			{
+				TArray<FString> Shops[2];
+				for (int32 Pass = 0; Pass < 2; ++Pass)
+				{
+					Run = NewRun(Seed);
+					while (!Run->IsOver())
+					{
+						const TArray<int32> Choices = Run->GetChoices();
+						if (Choices.Num() == 1 && Choices[0] == Run->GetState().Map.BossNode)
+						{
+							break;
+						}
+						// Shops first, then fights, then events: every shop the walk passes is checked.
+						auto Of = [this, &Choices](EDwNodeType Type) { return Choices.FindByPredicate([this, Type](int32 Index) { return Run->GetState().Map.Nodes[Index].Type == Type; }); };
+						const int32* Pick = Of(EDwNodeType::Shop) ? Of(EDwNodeType::Shop) : Of(EDwNodeType::Fight) ? Of(EDwNodeType::Fight) : Of(EDwNodeType::Event);
+						if (!TestTrue(TEXT("A route"), Pick != nullptr) || !Run->ChooseNode(*Pick))
+						{
+							return;
+						}
+						if (Run->GetPhase() == EDwRunPhase::Event)
+						{
+							Run->LeaveEvent();
+							continue;
+						}
+						if (Run->GetPhase() == EDwRunPhase::Combat)
+						{
+							Run->ApplyCombatResult(Won(Run->GetState(), 70.f));
+							if (!FinishNode()) { return; }
+							continue;
+						}
+						const FDwShopInventory& Inventory = Run->GetShop();
+						const int32 Repairs = static_cast<int32>(Algo::CountIf(Inventory.Offers, [](const FDwShopOffer& O) { return O.Type == EDwShopOfferType::Repair; }));
+						const int32 Disbands = static_cast<int32>(Algo::CountIf(Inventory.Offers, [](const FDwShopOffer& O) { return O.Type == EDwShopOfferType::Disband; }));
+						if (!TestTrue(FString::Printf(TEXT("Seed %d: open, one repair, a disband per crew member beside the captain"), Seed),
+							Inventory.Node == Run->GetState().CurrentNode && Repairs == 1 && Disbands == Run->GetState().CountLivingCrew() - 1))
+						{
+							return;
+						}
+						Shops[Pass].Add(ShopSignature(Inventory));
+						Run->LeaveShop();
+					}
+				}
+				if (!TestTrue(FString::Printf(TEXT("Seed %d: a shop before the boss"), Seed), !Shops[0].IsEmpty())
+					|| !TestTrue(FString::Printf(TEXT("Seed %d: same shops on a replay"), Seed), Shops[0] == Shops[1]))
+				{
+					return;
+				}
+			}
 		});
 	});
 

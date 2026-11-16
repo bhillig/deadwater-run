@@ -82,6 +82,8 @@ namespace DwTags
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tile_Kraken_Tentacle);
 
 	// Ship
+	/** Parent of the tags ship upgrades grant (UDwShipUpgradeDefinition::GrantedShipTags). */
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ship_Upgrade);
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ship_Upgrade_ExtraCannon);
 
 	// Gameplay events

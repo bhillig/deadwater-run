@@ -129,6 +129,7 @@ FDwDeckSource FDwDeckAscii::Parse(const TArray<FString>& Rows, TArray<FString>* 
 			case TEXT('S'): Tile = DwBoard::DeckTile(DwTags::Tile_Spawn_Player); break;
 			case TEXT('C'): Tile = DwBoard::DeckTile(DwTags::Tile_Cannon); break;
 			case TEXT('E'): Tile = DwBoard::DeckTile(DwTags::Tile_BoardingEdge); break;
+			case TEXT('U'): Tile = DwBoard::DeckTile(DwTags::Ship_Upgrade_ExtraCannon); break;
 			case TEXT('L'):
 				Tile = DwBoard::MakeTile(EDwTileKind::Ladder, true);
 				Tile.Tags.AddTag(DwTags::Tile_Ladder);
@@ -186,6 +187,7 @@ TArray<FString> FDwDeckAscii::Export(const FDwDeckSource& Deck)
 			case EDwTileKind::Deck:
 				Ch = DwBoard::IsSpawn(T) ? TEXT('S')
 					: T.Tags.HasTagExact(DwTags::Tile_Cannon) ? TEXT('C')
+					: T.Tags.HasTagExact(DwTags::Ship_Upgrade_ExtraCannon) ? TEXT('U')
 					: T.Tags.HasTagExact(DwTags::Tile_BoardingEdge) ? TEXT('E')
 					: TEXT('.');
 				break;
@@ -221,6 +223,29 @@ FDwGridModel FDwBoardBuilder::BuildKrakenArena(const FDwDeckSource& PlayerDeck, 
 FDwGridModel FDwBoardBuilder::BuildKrakenArena(const UDwDeckLayout& PlayerDeck, const UDwDeckLayout& Arena)
 {
 	return BuildKrakenArena(FDwDeckSource::FromLayout(PlayerDeck), FDwDeckSource::FromLayout(Arena));
+}
+
+int32 FDwBoardBuilder::ApplyShipUpgrades(FDwGridModel& Grid, EDwSide Side, const FGameplayTagContainer& ShipTags)
+{
+	int32 Unlocked = 0;
+	if (ShipTags.IsEmpty())
+	{
+		return Unlocked;
+	}
+	for (FDwTile& Tile : Grid.Tiles)
+	{
+		if (Tile.Owner == Side && Tile.Kind == EDwTileKind::Deck && !Tile.Tags.HasTagExact(DwTags::Tile_Cannon) && Tile.Tags.HasAnyExact(ShipTags))
+		{
+			Tile.Tags.AddTag(DwTags::Tile_Cannon);
+			++Unlocked;
+		}
+	}
+	return Unlocked;
+}
+
+bool FDwBoardBuilder::IsUpgradeCannonSlot(const FDwTile& Tile)
+{
+	return Tile.Kind == EDwTileKind::Deck && Tile.Tags.HasTag(DwTags::Ship_Upgrade);
 }
 
 FDwGridModel FDwBoardBuilder::BuildSingleDeck(const FDwDeckSource& Deck, EDwSide Side)
