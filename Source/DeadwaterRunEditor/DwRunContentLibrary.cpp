@@ -4,6 +4,7 @@
 
 #include "Abilities/DwAttributeSets.h"
 #include "Abilities/DwGA_EffectPayload.h"
+#include "Abilities/DwGA_Grapple.h"
 #include "Abilities/DwGameplayEffects.h"
 #include "Board/DwBoardBuilder.h"
 #include "Board/DwDeckLayout.h"
@@ -52,6 +53,8 @@ namespace DwRunContent
 		TArray<FGameplayTag> RuleTags;
 		TArray<FGameplayTag> BlockedAbilityTags;
 		TArray<FGameplayTag> KillBonusIgnoredUnitTags;
+		/** Abilities a rule gives him besides his two (UDwCaptainDefinition::RuleAbilities). */
+		TArray<FAbilitySpec> RuleAbilities;
 	};
 
 	/** Text from DeadwaterRun.md "Captains"; rules and numbers in Docs/Architecture/05 and DT_*Tuning. */
@@ -63,8 +66,11 @@ namespace DwRunContent
 				{ { TEXT("DA_Ability_Captain_RallyCry"), TEXT("Rally Cry"), DwTags::Ability_Captain_RallyCry, TEXT("Captain_RallyCry"),
 					TEXT("Heals all crew by 15 and removes all negative status effects."), TEXT("DW-207") },
 				  { TEXT("DA_Ability_Captain_GrappleHook"), TEXT("Grapple Hook"), DwTags::Ability_Captain_GrappleHook, TEXT("Captain_GrappleHook"),
-					TEXT("Pull a unit in sight (range 10) next to the captain, or pull the captain next to it."), TEXT("DW-207") } },
-				{ DwTags::Rule_Captain_Synergy, DwTags::Rule_Captain_Defend, DwTags::Rule_Captain_VeteranCrew }, {}, {} },
+					TEXT("Pull a unit in sight (range 10), friend or foe, to the free tile beside the captain. Works across ships and out of the nest."), TEXT("DW-207") } },
+				{ DwTags::Rule_Captain_Synergy, DwTags::Rule_Captain_Defend, DwTags::Rule_Captain_VeteranCrew }, {}, {},
+				{ { TEXT("DA_Ability_Captain_Defend"), TEXT("Defend"), DwTags::Ability_Captain_Defend, TEXT("Captain_Defend"),
+					TEXT("Guard an adjacent crewmate until your next turn: single-target attacks on them hit the captain instead, for half damage."),
+					TEXT("DW-207") } } },
 			{ TEXT("DA_Captain_Fearmongerer"), TEXT("DA_Unit_Captain_Fearmongerer"), TEXT("Fearmongerer"), TEXT("Fearmongerer"),
 				TEXT("Known across the seas for his ruthlessness. Enemies gather Fear; at 3 they cower, and if every enemy is at 3 the crew surrenders.\nDread Reputation: every surrender win adds starting Fear to later fights."),
 				{ { TEXT("DA_Ability_Captain_SmokeAndFire"), TEXT("Smoke and Fire"), DwTags::Ability_Captain_SmokeAndFire, TEXT("Captain_SmokeAndFire"),
@@ -132,6 +138,48 @@ namespace DwRunContent
 				Shot.Effect = Effects.Damage;
 				Payload.Applications = { Shot };
 				Payload.PlaceholderSeconds = 0.8f;
+			} });
+		// DW-207 Rally Cry (05): every ally heals, then loses its negative statuses.
+		Out.Add(TEXT("DA_Ability_Captain_RallyCry"), { TEXT("GA_Captain_RallyCry"), UDwGA_EffectPayload::StaticClass(),
+			[](UDwGameplayAbility& Ability)
+			{
+				UDwGA_EffectPayload& Payload = static_cast<UDwGA_EffectPayload&>(Ability);
+				const FDwSharedEffects& Effects = DwGas::GetSharedEffects();
+				Payload.Targeting = FDwTargetingRules();
+				Payload.Targeting.Pattern = EDwTargetPattern::AllAllies;
+				Payload.Targeting.Side = EDwTargetSide::Ally;
+				Payload.Targeting.bIgnoreRange = true;
+				FDwEffectApplication Heal;
+				Heal.Effect = Effects.Heal;
+				FDwEffectApplication Cleanse;
+				Cleanse.Effect = Effects.Cleanse;
+				Payload.Applications = { Heal, Cleanse };
+				Payload.PlaceholderSeconds = 0.6f;
+			} });
+
+		// DW-207 Grapple Hook (05, K6 a): UDwGA_Grapple sets its own targeting; range from DT_AbilityTuning.
+		Out.Add(TEXT("DA_Ability_Captain_GrappleHook"), { TEXT("GA_Captain_GrappleHook"), UDwGA_Grapple::StaticClass(),
+			[](UDwGameplayAbility& Ability)
+			{
+				UDwGA_Grapple& Grapple = static_cast<UDwGA_Grapple&>(Ability);
+				Grapple.Targeting = GetDefault<UDwGA_Grapple>()->Targeting;
+				Grapple.Applications.Reset();
+			} });
+
+		// DW-207 Defend (05, K5): guard an adjacent crewmate until your next turn (GE_Guarded, instigator = the captain);
+		// single-target hits on it go to the captain at GuardDamageMultiplier. Given by Rule.Captain.Defend.
+		Out.Add(TEXT("DA_Ability_Captain_Defend"), { TEXT("GA_Captain_Defend"), UDwGA_EffectPayload::StaticClass(),
+			[](UDwGameplayAbility& Ability)
+			{
+				UDwGA_EffectPayload& Payload = static_cast<UDwGA_EffectPayload&>(Ability);
+				Payload.Targeting = FDwTargetingRules();
+				Payload.Targeting.Pattern = EDwTargetPattern::SingleUnit;
+				Payload.Targeting.Side = EDwTargetSide::Ally;
+				Payload.Targeting.BlockedTargetTags.AddTag(DwTags::Unit_Role_Captain); // not himself
+				FDwEffectApplication Guard;
+				Guard.Effect = DwGas::GetSharedEffects().Guarded;
+				Payload.Applications = { Guard };
+				Payload.PlaceholderSeconds = 0.4f;
 			} });
 		return Out;
 	}
@@ -253,10 +301,10 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 		Unit->Tuning = Row(UnitTable, *FString::Printf(TEXT("Captain_%s"), Spec.TuningRow), Log, bOk);
 		bOk &= Save(Unit, Log);
 
-		// 4. Its two combat abilities: the real GA_Captain_* class once its ticket has built it, else the placeholder.
-		TArray<TObjectPtr<UDwAbilityDefinition>> CaptainAbilities;
+		// 4. Its two combat abilities (and any a rule gives him): the real GA_Captain_* class once its ticket has built
+		//    it, else the placeholder.
 		const TMap<FString, FCaptainAbilityClass> RealClasses = CaptainAbilityClasses();
-		for (const FAbilitySpec& AbilitySpec : Spec.Abilities)
+		auto MakeAbility = [&](const FAbilitySpec& AbilitySpec) -> UDwAbilityDefinition*
 		{
 			UDwAbilityDefinition* Ability = FindOrCreate<UDwAbilityDefinition>(AbilityData, AbilitySpec.Asset, Log);
 			Ability->DisplayName = FText::FromString(AbilitySpec.Name);
@@ -267,7 +315,7 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 				UDwGameplayAbility* Defaults = Bp ? Cast<UDwGameplayAbility>(Bp->GeneratedClass->GetDefaultObject()) : nullptr;
 				if (!Defaults)
 				{
-					return Fail();
+					return nullptr;
 				}
 				Real->Configure(*Defaults);
 				bOk &= Save(Bp, Log);
@@ -283,7 +331,27 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 			Ability->AbilityTags = FGameplayTagContainer();
 			Ability->Tuning = Row(AbilityTable, AbilitySpec.TuningRow, Log, bOk);
 			bOk &= Save(Ability, Log);
+			return Ability;
+		};
+		TArray<TObjectPtr<UDwAbilityDefinition>> CaptainAbilities;
+		for (const FAbilitySpec& AbilitySpec : Spec.Abilities)
+		{
+			UDwAbilityDefinition* Ability = MakeAbility(AbilitySpec);
+			if (!Ability)
+			{
+				return Fail();
+			}
 			CaptainAbilities.Add(Ability);
+		}
+		TArray<TObjectPtr<UDwAbilityDefinition>> RuleAbilities;
+		for (const FAbilitySpec& AbilitySpec : Spec.RuleAbilities)
+		{
+			UDwAbilityDefinition* Ability = MakeAbility(AbilitySpec);
+			if (!Ability)
+			{
+				return Fail();
+			}
+			RuleAbilities.Add(Ability);
 		}
 
 		// 5. The captain.
@@ -293,6 +361,7 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 		Captain->CaptainUnit = Unit;
 		Captain->StartingCrew = { Swordsman, Sniper }; // K14 placeholder: the same crew for every captain
 		Captain->CaptainAbilities = CaptainAbilities;
+		Captain->RuleAbilities = RuleAbilities;
 		Captain->RuleTags = Container(Spec.RuleTags);
 		Captain->BlockedAbilityTags = Container(Spec.BlockedAbilityTags);
 		Captain->KillBonusIgnoredUnitTags = Container(Spec.KillBonusIgnoredUnitTags);

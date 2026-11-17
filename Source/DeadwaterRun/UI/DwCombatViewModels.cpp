@@ -48,7 +48,8 @@ namespace DwCombatHud
 			{ DwTags::Status_Incapacitated_Cowering, LOCTEXT("Cowering", "Cowering") },
 			{ DwTags::Status_Rooted, LOCTEXT("Rooted", "Rooted") },
 			{ DwTags::Status_Afraid, LOCTEXT("Afraid", "Afraid") },
-			{ DwTags::Status_Guarded, LOCTEXT("Guarded", "Guarded") } };
+			{ DwTags::Status_Guarded, LOCTEXT("Guarded", "Guarded") },
+			{ DwTags::State_Synergy_Adjacent, LOCTEXT("Synergy", "Synergy") } };
 		return Statuses;
 	}
 

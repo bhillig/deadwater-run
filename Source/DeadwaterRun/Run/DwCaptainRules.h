@@ -28,4 +28,10 @@ struct DEADWATERRUN_API FDwCaptainRules
 
 	/** After a won fight: SurrenderWins + 1 on VictorySurrender (Dread Reputation's count). */
 	static void OnCombatWon(FDwCaptainCounters& Counters, EDwCombatOutcome Outcome);
+
+	/**
+	 * The captain's rules for a fight: rule tags; SynergyDamageMultiplier only with Rule.Captain.Synergy and
+	 * GuardDamageMultiplier only with Rule.Captain.Defend (else 1).
+	 */
+	static FDwCaptainCombatRules GetCombatRules(const UDwCaptainDefinition* Captain);
 };

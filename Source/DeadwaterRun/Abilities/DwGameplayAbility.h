@@ -96,6 +96,13 @@ protected:
 	/** Tiles of reach from tuning (or unlimited with bIgnoreRange). Items read their own tuning row. */
 	virtual int32 GetRange(const FDwTargetingContext& Context) const;
 
+	/**
+	 * The situational damage multiplier of one hit (FDwDamageInput::SituationalMultiplier): the caller's
+	 * Context.DamageMultiplier x Team Leader synergy (FDwSynergyRules) x the guard multiplier when the hit was redirected
+	 * onto a guarding captain. Previews and the payload both use it, so the preview is the result.
+	 */
+	float GetHitDamageMultiplier(const FDwTargetingContext& Context, const FDwAbilityTarget& Hit) const;
+
 	/** MovePoints this activation spends when ActionCost is Move (UDwGA_Move returns the path cost). */
 	virtual float GetMoveCost(const FGameplayAbilityActorInfo* ActorInfo) const { return 0.f; }
 

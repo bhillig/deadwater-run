@@ -80,6 +80,8 @@ struct DEADWATERRUN_API FDwCombatSnapshot
 	/** Enemy side: the unit whose turn it is in the fixed sequence (C14). Invalid on the player side. */
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") FDwUnitHandle ActingUnit;
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") FDwOutcomeConfig OutcomeConfig;
+	/** The player captain's rules (synergy, defend, kill bonus), from the setup. */
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") FDwCaptainCombatRules CaptainRules;
 	/** Cannon tiles already fired this side turn (each cannon fires once per side turn, C7). */
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") TArray<FIntPoint> CannonsUsed;
 	/** Run inventory view: item id -> count left. */

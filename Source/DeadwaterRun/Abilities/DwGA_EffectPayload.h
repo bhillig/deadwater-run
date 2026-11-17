@@ -79,12 +79,14 @@ protected:
 	/** Last-moment spec changes per target (FireCannon: damage = the ship's CannonDamage). */
 	virtual void CustomizeSpec(FGameplayEffectSpec& Spec, AActor* Target) const {}
 
-	/** Applies EffectClass, tuned from this ability's row, to Target's ASC. */
-	void ApplyTunedEffect(TSubclassOf<UGameplayEffect> EffectClass, UAbilitySystemComponent& Target, AActor* TargetActor);
+	/** Applies EffectClass, tuned from this ability's row, to Target's ASC; Multiplier goes in as Data.DamageMultiplier. */
+	void ApplyTunedEffect(TSubclassOf<UGameplayEffect> EffectClass, UAbilitySystemComponent& Target, AActor* TargetActor, float Multiplier);
 
 	/** Targets resolved at activation, in hit order (repeats allowed for random patterns). */
 	TArray<FDwAbilityTarget> ResolvedTargets;
-	/** Situational damage multiplier passed by the combat subsystem (synergy, DW-207); 1 = none. */
+	/** Per resolved target: GetHitDamageMultiplier at activation (synergy, guard), same order as ResolvedTargets. */
+	TArray<float> HitMultipliers;
+	/** Situational damage multiplier passed in with the activation event; 1 = none. Part of every HitMultipliers entry. */
 	float DamageMultiplier = 1.f;
 
 private:

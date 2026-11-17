@@ -65,7 +65,9 @@ private:
 	/**
 	 * Demo "captain" (needs -DwCaptain=; DW-206..208): the captain's own showcase in the first fight, one frame per turn
 	 * after the captain acts, final frame the rewards screen. Fearmongerer: Smoke and Fire every turn until the enemy
-	 * crew surrenders (frames show the Fear pips rising; the final frame is "They surrendered").
+	 * crew surrenders (frames show the Fear pips rising; the final frame is "They surrendered"). Team Leader: -01 Defend
+	 * on the crewmate beside him (Guarded, Synergy), -02 a step forward and the Grapple Hook pull; final frame after the
+	 * enemy turn.
 	 */
 	void CaptainDemoStep();
 	/** Kills every living enemy with the player captain as the instigator (kill XP), then ends the player turn. */
@@ -91,6 +93,8 @@ private:
 	/** Demo "captain": 0 sailing; then act / capture / end turn per player turn; 100+ the fight is over. */
 	int32 CaptainStage = 0;
 	int32 CaptainFrame = 0;
+	/** Demo "captain", Team Leader turn 2: the step toward the enemy is done (the hook comes next). */
+	bool bCaptainDemoMoved = false;
 	int32 EnemyFrame = 0;
 	int32 EnemyTurnsPlayed = 0;
 	static constexpr int32 EnemyTurns = 2;

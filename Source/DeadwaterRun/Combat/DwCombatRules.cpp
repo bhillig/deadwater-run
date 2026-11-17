@@ -105,6 +105,41 @@ bool FDwFearRules::AllEnemiesSurrender(const FDwCombatSnapshot& Snapshot)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Synergy
+
+bool FDwSynergyRules::HasAdjacentAlly(const FDwCombatSnapshot& Snapshot, const FDwUnitSnapshot& Unit)
+{
+	if (!Unit.bAlive)
+	{
+		return false;
+	}
+	for (const FDwUnitSnapshot& Other : Snapshot.Units)
+	{
+		if (Other.bAlive && Other.Side == Unit.Side && Other.Handle != Unit.Handle
+			&& FMath::Abs(Other.Tile.X - Unit.Tile.X) + FMath::Abs(Other.Tile.Y - Unit.Tile.Y) == 1)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool FDwSynergyRules::IsActive(const FDwCombatSnapshot& Snapshot, FDwUnitHandle Source, const UDwAbilityDefinition* Ability)
+{
+	if (!Snapshot.CaptainRules.Has(DwTags::Rule_Captain_Synergy) || !Ability || Ability->AbilityTag.MatchesTag(DwTags::Ability_Cannon))
+	{
+		return false;
+	}
+	const FDwUnitSnapshot* Unit = Snapshot.FindUnit(Source);
+	return Unit && Unit->Side == EDwSide::Player && HasAdjacentAlly(Snapshot, *Unit);
+}
+
+float FDwSynergyRules::GetMultiplier(const FDwCombatSnapshot& Snapshot, FDwUnitHandle Source, const UDwAbilityDefinition* Ability)
+{
+	return IsActive(Snapshot, Source, Ability) ? Snapshot.CaptainRules.SynergyDamageMultiplier : 1.f;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Queries
 
 const UDwGameplayAbility* FDwCombatQueries::GetAbilityCDO(const UDwAbilityDefinition* Definition)

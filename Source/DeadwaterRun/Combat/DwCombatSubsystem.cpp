@@ -824,7 +824,18 @@ void UDwCombatSubsystem::RefreshDerivedState()
 		UDwAbilitySystemComponent* Asc = Unit->GetDwAbilitySystem();
 		Asc->SetLooseGameplayTagCount(DwTags::State_OnEnemyDeck, bOnEnemyDeck ? 1 : 0);
 		Asc->SetLooseGameplayTagCount(DwTags::State_InNest, bInNest ? 1 : 0);
-		// State.Synergy.Adjacent (UI indicator) joins here with the Team Leader, DW-207.
+
+		// Team Leader synergy indicator (UI only; damage reads FDwSynergyRules from the snapshot).
+		bool bSynergy = false;
+		if (Setup.CaptainRules.Has(DwTags::Rule_Captain_Synergy) && Unit->GetSide() == EDwSide::Player)
+		{
+			for (const ADwCombatUnit* Other : Units)
+			{
+				const FIntPoint Delta = Other->GetTile() - Unit->GetTile();
+				bSynergy |= Other != Unit && Other->IsAlive() && Other->GetSide() == Unit->GetSide() && FMath::Abs(Delta.X) + FMath::Abs(Delta.Y) == 1;
+			}
+		}
+		Asc->SetLooseGameplayTagCount(DwTags::State_Synergy_Adjacent, bSynergy ? 1 : 0);
 	}
 }
 
@@ -896,6 +907,7 @@ FDwCombatSnapshot UDwCombatSubsystem::GetSnapshot() const
 	Snapshot.ActiveSide = GetActiveSide();
 	Snapshot.ActingUnit = TurnManager ? TurnManager->GetActingUnit() : FDwUnitHandle();
 	Snapshot.OutcomeConfig = Setup.OutcomeConfig;
+	Snapshot.CaptainRules = Setup.CaptainRules;
 	Snapshot.CannonsUsed = CannonsUsed;
 	Snapshot.Items = Items;
 	Snapshot.ItemDefinitions = ItemDefinitions;

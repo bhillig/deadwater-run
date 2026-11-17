@@ -463,6 +463,10 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 			{
 				Combatant.ExtraAbilities.Add(Ability);
 			}
+			for (const UDwAbilityDefinition* Ability : Captain->RuleAbilities)
+			{
+				Combatant.ExtraAbilities.AddUnique(Ability);
+			}
 			Combatant.SpawnEffects = Captain->CaptainCombatEffects;
 		}
 		else
@@ -503,7 +507,7 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 		const bool bImmune = Enemy.Definition && Enemy.Definition->UnitTags.HasTagExact(DwTags::Unit_Immune_Fear);
 		Enemy.StartingFear = bImmune ? 0.f : FMath::Max(Enemy.StartingFear, StartingFear);
 	}
-	Out.CaptainRuleTags = Captain->RuleTags;
+	Out.CaptainRules = FDwCaptainRules::GetCombatRules(Captain);
 	Out.OutcomeConfig.bSurrenderEnabled = Captain->RuleTags.HasTagExact(DwTags::Rule_Captain_Surrender);
 	// The Kraken encounter is a boss fight wherever it is played (BuildKraken); the boss node is one by definition.
 	Out.OutcomeConfig.bIsBossFight |= Node->Type == EDwNodeType::Boss;

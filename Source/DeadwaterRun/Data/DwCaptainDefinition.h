@@ -40,6 +40,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Rules", meta = (Categories = "Rule"))
 	FGameplayTagContainer RuleTags;
 
+	/** Abilities a rule gives the captain on top of his two (Team Leader: Defend for Rule.Captain.Defend). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Rules")
+	TArray<TObjectPtr<UDwAbilityDefinition>> RuleAbilities;
+
 	/** Applied to the captain at spawn (e.g. GE_ConquerorExtraMove). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Rules")
 	TArray<TSubclassOf<UGameplayEffect>> CaptainCombatEffects;

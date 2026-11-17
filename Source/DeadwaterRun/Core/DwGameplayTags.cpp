@@ -44,6 +44,7 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Kraken_Body, "Unit.Kraken.Body");
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Kraken_Tentacle, "Unit.Kraken.Tentacle");
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Immune_Fear, "Unit.Immune.Fear");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Immune_Grapple, "Unit.Immune.Grapple");
 	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Synergy, "Rule.Captain.Synergy");
 	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Defend, "Rule.Captain.Defend");
 	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Surrender, "Rule.Captain.Surrender");

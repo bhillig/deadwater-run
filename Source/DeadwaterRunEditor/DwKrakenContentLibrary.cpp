@@ -118,10 +118,12 @@ TArray<FString> UDwKrakenContentLibrary::CreateKrakenContent()
 	bOk &= Validate(SlamDef, Log) && Save(SlamDef, Log);
 
 	// 4. The body: 500 HP (DT_UnitTuning KrakenBody), Tentacle Slam as its one move. Placeholder look: the plain unit
-	//    actor (Kraken visuals are DW-307). Immunities wait for Open-Questions B9/K10.
+	//    actor (Kraken visuals are DW-307). Immunities: K10 a) (Brandon 2026-11-17) - no Fear, no grapple.
 	UDwUnitDefinition* Body = FindOrCreate<UDwUnitDefinition>(UnitData, TEXT("DA_Unit_KrakenBody"), Log);
 	Body->DisplayName = FText::FromString(TEXT("Kraken"));
 	Body->UnitTags = FGameplayTagContainer(DwTags::Unit_Kraken_Body);
+	Body->UnitTags.AddTag(DwTags::Unit_Immune_Fear);
+	Body->UnitTags.AddTag(DwTags::Unit_Immune_Grapple);
 	Body->BasicAttack = SlamDef;
 	Body->DefaultAbilities.Reset();
 	Body->Tuning = Row(UnitTable, TEXT("KrakenBody"), Log, bOk);

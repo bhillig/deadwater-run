@@ -20,6 +20,8 @@ struct DEADWATERRUN_API FDwAbilityTarget
 	UPROPERTY(BlueprintReadOnly, Category = "Target") FIntPoint Tile = FIntPoint::ZeroValue;
 	UPROPERTY(BlueprintReadOnly, Category = "Target") bool bShip = false;
 	UPROPERTY(BlueprintReadOnly, Category = "Target") EDwSide ShipSide = EDwSide::Neutral;
+	/** A single-target hit redirected onto the guarding captain (defend, K5): it deals GuardDamageMultiplier. */
+	UPROPERTY(BlueprintReadOnly, Category = "Target") bool bGuarded = false;
 
 	static FDwAbilityTarget MakeUnit(FDwUnitHandle InUnit, FIntPoint InTile) { FDwAbilityTarget T; T.Unit = InUnit; T.Tile = InTile; return T; }
 	static FDwAbilityTarget MakeShip(EDwSide Side) { FDwAbilityTarget T; T.bShip = true; T.ShipSide = Side; return T; }

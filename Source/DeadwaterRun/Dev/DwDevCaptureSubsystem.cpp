@@ -508,11 +508,70 @@ void UDwDevCaptureSubsystem::CaptainDemoStep()
 		const TArray<ADwCombatUnit*> Enemies = LivingUnits(*Combat, EDwSide::Enemy, Captain->GetTile());
 		EDwCommandResult Result = EDwCommandResult::Accepted;
 		FString What;
+		const int32 Turn = CaptainStage / 3; // 0-based player turn of the demo
 		if (CaptainName.Contains(TEXT("Fearmongerer")))
 		{
 			// DW-206: Smoke and Fire every turn until every enemy is at 3 Fear and the crew surrenders.
 			What = TEXT("Smoke and Fire");
 			Result = UseCaptainAbility(*Combat, *Captain, DwTags::Ability_Captain_SmokeAndFire, Enemies.IsEmpty() ? nullptr : Enemies[0]);
+		}
+		else if (CaptainName.Contains(TEXT("TeamLeader")) && Turn == 0)
+		{
+			// DW-207 turn 1: Defend the crewmate beside him (Guarded and Synergy show on the HUD).
+			What = TEXT("Defend");
+			Result = EDwCommandResult::InvalidTarget;
+			for (const ADwCombatUnit* Ally : LivingUnits(*Combat, EDwSide::Player, Captain->GetTile()))
+			{
+				if (Ally != Captain && Result != EDwCommandResult::Accepted)
+				{
+					Result = UseCaptainAbility(*Combat, *Captain, DwTags::Ability_Captain_Defend, Ally);
+				}
+			}
+		}
+		else if (CaptainName.Contains(TEXT("TeamLeader")) && Turn == 1)
+		{
+			// DW-207 turn 2: step toward the enemy ship, then Grapple Hook the nearest enemy it can reach.
+			What = TEXT("Grapple Hook");
+			const FDwCombatSnapshot Snapshot = Combat->GetSnapshot();
+			const FIntPoint EnemyTile = Enemies.IsEmpty() ? Captain->GetTile() : Enemies[0]->GetTile();
+			TArray<FIntPoint> Tiles;
+			for (int32 Index = 0; Index < Snapshot.Grid.Tiles.Num(); ++Index)
+			{
+				Tiles.Add(Snapshot.Grid.ToTile(Index));
+			}
+			Tiles.Sort([EnemyTile](const FIntPoint& A, const FIntPoint& B) { return (A - EnemyTile).Size() < (B - EnemyTile).Size(); });
+			if (!bCaptainDemoMoved)
+			{
+				bCaptainDemoMoved = true;
+				for (const FIntPoint& Tile : Tiles)
+				{
+					if ((Tile - EnemyTile).Size() > 2.5f && Combat->SubmitCommand(FDwCombatCommand::MakeMove(Captain->GetHandle(), Tile)) == EDwCommandResult::Accepted)
+					{
+						UE_LOG(LogDw, Log, TEXT("Dev capture 'captain': the captain steps to (%d, %d)."), Tile.X, Tile.Y);
+						break;
+					}
+				}
+				Next(2.0f); // the walk; the hook next step
+				return;
+			}
+			if (Combat->IsResolving())
+			{
+				Next(0.5f);
+				return;
+			}
+			Result = EDwCommandResult::InvalidTarget;
+			for (const ADwCombatUnit* Enemy : LivingUnits(*Combat, EDwSide::Enemy, Captain->GetTile()))
+			{
+				if (Result != EDwCommandResult::Accepted)
+				{
+					Result = UseCaptainAbility(*Combat, *Captain, DwTags::Ability_Captain_GrappleHook, Enemy);
+				}
+			}
+		}
+		else if (CaptainName.Contains(TEXT("TeamLeader")))
+		{
+			Capture(); // final frame: the board after the pull and the enemy turn
+			return;
 		}
 		else
 		{

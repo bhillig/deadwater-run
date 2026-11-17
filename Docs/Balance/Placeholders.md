@@ -107,3 +107,13 @@ Brandon's P4 / P7-P10 answers (2026-11-11, "recommended defaults, all placeholde
 | `CaptainTuning.json` | `Fearmongerer` | `StartingFearCap` | 2 | Brandon's K9 a): Dread Reputation never starts a fight at 3 (no instant surrenders) |
 
 Smoke and Fire and Six Pistols are real now; their `ManaCost` stays 0 until K13.
+
+## Set by DW-207 (Team Leader), 2026-11-17
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `CaptainTuning.json` | `TeamLeader` | `SynergyDamageMultiplier` | 1.2 | K13 is open: +20% when attacking beside an ally is noticeable but doesn't double-dip with perks |
+| `CaptainTuning.json` | `TeamLeader` | `GuardDamageMultiplier` | 0.5 (new field) | Brandon's K5 answer (2026-11-17): Defend redirects at reduced damage; half keeps guarding worth it while the captain's life ends the run |
+| `AbilityTuning.json` | `Captain_Defend` | `Range` | 1 | Defend guards an adjacent crewmate (K5 a) |
+
+Rally Cry (heal 15 + cleanse), Grapple Hook (range 10, LOS), Defend are real now; their `ManaCost` stays 0 until K13.

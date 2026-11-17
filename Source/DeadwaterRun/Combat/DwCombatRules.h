@@ -34,6 +34,24 @@ struct DEADWATERRUN_API FDwFearRules
 	static bool AllEnemiesSurrender(const FDwCombatSnapshot& Snapshot);
 };
 
+/**
+ * Team Leader synergy (Docs/Architecture/05 "The three captains", K4 + K4a): a player unit attacking while a living ally
+ * stands on a 4-way neighbour tile deals SynergyDamageMultiplier damage. Basic attacks and damaging abilities of every
+ * crew member, captain included; any ally (the captain too) counts as the neighbour; never cannons; never the enemy side.
+ * Read at preview and at activation from the same snapshot, so the preview is the result.
+ */
+struct DEADWATERRUN_API FDwSynergyRules
+{
+	/** A living ally of Unit's side on one of Unit's 4-way neighbour tiles (diagonals don't count). */
+	static bool HasAdjacentAlly(const FDwCombatSnapshot& Snapshot, const FDwUnitSnapshot& Unit);
+
+	/** Synergy applies to Source using Ability: the captain has Rule.Captain.Synergy, Source is on the player side, the ability isn't a cannon shot, and an ally is adjacent. */
+	static bool IsActive(const FDwCombatSnapshot& Snapshot, FDwUnitHandle Source, const UDwAbilityDefinition* Ability);
+
+	/** SynergyDamageMultiplier when IsActive, else 1. */
+	static float GetMultiplier(const FDwCombatSnapshot& Snapshot, FDwUnitHandle Source, const UDwAbilityDefinition* Ability);
+};
+
 struct DEADWATERRUN_API FDwCombatQueries
 {
 	/** The ability CDO of a definition, or nullptr. Pure queries (targets, previews, budgets) run on it. */

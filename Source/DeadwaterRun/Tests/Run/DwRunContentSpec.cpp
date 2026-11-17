@@ -230,7 +230,7 @@ void FDwRunContentSpec::Define()
 		TestEqual(TEXT("3 crew"), Setup.Crew.Num(), 3);
 		TestTrue(TEXT("Surrender enabled"), Setup.OutcomeConfig.bSurrenderEnabled);
 		TestFalse(TEXT("Not the boss"), Setup.OutcomeConfig.bIsBossFight);
-		TestTrue(TEXT("Rule tags"), Setup.CaptainRuleTags.HasTagExact(DwTags::Rule_Captain_DreadReputation));
+		TestTrue(TEXT("Rule tags"), Setup.CaptainRules.Has(DwTags::Rule_Captain_DreadReputation));
 		const FDwCombatSnapshot Snap = F.Combat->GetSnapshot();
 		const FDwUnitSnapshot* CaptainUnit = Snap.FindUnit(FindCrewUnit(Run->GetState().Crew[0].Id));
 		if (!TestNotNull(TEXT("Captain spawned"), CaptainUnit)) { return; }

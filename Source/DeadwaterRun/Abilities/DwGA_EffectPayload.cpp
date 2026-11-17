@@ -39,6 +39,12 @@ void UDwGA_EffectPayload::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	Context.DamageMultiplier = DamageMultiplier;
 	const FDwAbilityTarget Aimed = Grid->ToTarget();
 	ResolveTargets(Context, Aimed, ResolvedTargets);
+	// Each hit's damage multiplier from the same snapshot the preview used (synergy, guard): the preview is the result.
+	HitMultipliers.Reset(ResolvedTargets.Num());
+	for (const FDwAbilityTarget& Hit : ResolvedTargets)
+	{
+		HitMultipliers.Add(GetHitDamageMultiplier(Context, Hit));
+	}
 	if (ResolvedTargets.IsEmpty() || !PrepareActivation(Context, Aimed))
 	{
 		CancelActivation();
@@ -83,11 +89,12 @@ void UDwGA_EffectPayload::ApplyPayload()
 		}
 		if (Application.bApplyToSelf)
 		{
-			ApplyTunedEffect(Application.Effect, *Self, GetAvatarActorFromActorInfo());
+			ApplyTunedEffect(Application.Effect, *Self, GetAvatarActorFromActorInfo(), DamageMultiplier);
 			continue;
 		}
-		for (const FDwAbilityTarget& Target : ResolvedTargets)
+		for (int32 Index = 0; Index < ResolvedTargets.Num(); ++Index)
 		{
+			const FDwAbilityTarget& Target = ResolvedTargets[Index];
 			AActor* Actor = Combat->GetTargetActor(Target);
 			UAbilitySystemComponent* Asc = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
 			// The target's tags right now: an earlier application of this payload may have changed them.
@@ -96,7 +103,7 @@ void UDwGA_EffectPayload::ApplyPayload()
 			{
 				continue;
 			}
-			ApplyTunedEffect(Application.Effect, *Asc, Actor);
+			ApplyTunedEffect(Application.Effect, *Asc, Actor, HitMultipliers.IsValidIndex(Index) ? HitMultipliers[Index] : DamageMultiplier);
 		}
 	}
 	if (HitCue.IsValid())
@@ -115,16 +122,17 @@ void UDwGA_EffectPayload::ApplyPayload()
 	}
 }
 
-void UDwGA_EffectPayload::ApplyTunedEffect(TSubclassOf<UGameplayEffect> EffectClass, UAbilitySystemComponent& Target, AActor* TargetActor)
+void UDwGA_EffectPayload::ApplyTunedEffect(TSubclassOf<UGameplayEffect> EffectClass, UAbilitySystemComponent& Target, AActor* TargetActor,
+	float Multiplier)
 {
 	FGameplayEffectSpecHandle Spec = MakeTunedSpec(EffectClass);
 	if (!Spec.IsValid())
 	{
 		return;
 	}
-	if (!FMath::IsNearlyEqual(DamageMultiplier, 1.f))
+	if (!FMath::IsNearlyEqual(Multiplier, 1.f))
 	{
-		Spec.Data->SetSetByCallerMagnitude(DwTags::Data_DamageMultiplier, DamageMultiplier);
+		Spec.Data->SetSetByCallerMagnitude(DwTags::Data_DamageMultiplier, Multiplier);
 	}
 	CustomizeSpec(*Spec.Data, TargetActor);
 	GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Spec.Data, &Target);

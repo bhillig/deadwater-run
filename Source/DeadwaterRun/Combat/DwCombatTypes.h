@@ -162,6 +162,25 @@ namespace DwCombat
 	inline EDwSide Opposite(EDwSide Side) { return Side == EDwSide::Player ? EDwSide::Enemy : EDwSide::Player; }
 }
 
+/**
+ * The player captain's combat rules for one fight (Docs/Architecture/05-Crew-Captains.md), copied from the captain
+ * definition and its DT_CaptainTuning row by UDwRun::BuildEncounterSetup. Empty = no captain rules (dev fights, tests).
+ */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwCaptainCombatRules
+{
+	GENERATED_BODY()
+
+	/** Rule.Captain.* */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") FGameplayTagContainer RuleTags;
+	/** Team Leader synergy (K4): damage x this when the attacker has a 4-way adjacent ally (FDwSynergyRules). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") float SynergyDamageMultiplier = 1.f;
+	/** Team Leader defend (K5): a hit redirected onto the guarding captain deals x this. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") float GuardDamageMultiplier = 1.f;
+
+	bool Has(const FGameplayTag& Rule) const { return RuleTags.HasTagExact(Rule); }
+};
+
 /** Per-encounter switches only; captain death is always a defeat (C10), so it is not a flag. */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwOutcomeConfig
@@ -265,8 +284,8 @@ struct DEADWATERRUN_API FDwEncounterSetup
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") TArray<FDwItemStack> Items;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") FDwOutcomeConfig OutcomeConfig;
-	/** Captain rule tags (Rule.Captain.*), read by synergy, defend, surrender (DW-206..208). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") FGameplayTagContainer CaptainRuleTags;
+	/** The player captain's rules and numbers for this fight (synergy, defend, kill bonus: DW-206..208). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") FDwCaptainCombatRules CaptainRules;
 
 	/** Cower threshold and policy from DT_CombatTuning "Default". */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") float MaxFear = 3.f;

@@ -105,7 +105,7 @@ void UDwGA_FireCannon::ApplyPayload()
 		AActor* Ship = Combat ? Combat->GetTargetActor(Target) : nullptr;
 		if (UAbilitySystemComponent* Asc = Ship ? UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Ship) : nullptr)
 		{
-			ApplyTunedEffect(DwGas::GetSharedEffects().Damage, *Asc, Ship);
+			ApplyTunedEffect(DwGas::GetSharedEffects().Damage, *Asc, Ship, DamageMultiplier); // no synergy on cannons (K4a)
 		}
 	}
 	Super::ApplyPayload();

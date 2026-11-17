@@ -98,6 +98,8 @@ struct DEADWATERRUN_API FDwCaptainTuningRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Captain") float KillBonusCap = 0.f;
 	/** Team Leader passive: damage multiplier when attacking next to an ally (K4). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Captain") float SynergyDamageMultiplier = 1.f;
+	/** Team Leader defend (K5, Brandon 2026-11-17): a hit redirected onto the guarding captain deals x this. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Captain") float GuardDamageMultiplier = 1.f;
 };
 
 /** DT_ShipTuning, keyed by ship id. */

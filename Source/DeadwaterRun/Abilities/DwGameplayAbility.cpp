@@ -7,6 +7,7 @@
 #include "Abilities/DwDamageRules.h"
 #include "Abilities/DwGameplayEffects.h"
 #include "Board/DwGridQueries.h"
+#include "Combat/DwCombatRules.h"
 #include "Combat/DwCombatSnapshot.h"
 #include "Combat/DwCombatSubsystem.h"
 #include "Combat/DwCombatUnit.h"
@@ -419,7 +420,9 @@ void UDwGameplayAbility::ResolveTargets(const FDwTargetingContext& Context, cons
 		const FDwUnitSnapshot* Guardian = Context.Snapshot->FindUnit(Victim->GuardedBy);
 		if (Guardian && Guardian->bAlive && FDwLineOfSight::GetDistance(Context.Snapshot->GridRules, Guardian->Tile, Victim->Tile) == 1)
 		{
-			OutTargets.Add(FDwAbilityTarget::MakeUnit(Guardian->Handle, Guardian->Tile));
+			FDwAbilityTarget Redirected = FDwAbilityTarget::MakeUnit(Guardian->Handle, Guardian->Tile);
+			Redirected.bGuarded = true;
+			OutTargets.Add(Redirected);
 			return;
 		}
 	}
@@ -463,7 +466,7 @@ FDwAbilityPreview UDwGameplayAbility::PreviewOutcome(const FDwTargetingContext& 
 		Input.Scale = Tuning->DamageScale;
 		Input.AttackDamage = Source->AttackDamage;
 		Input.DamageBonus = Source->DamageBonus;
-		Input.SituationalMultiplier = Context.DamageMultiplier;
+		Input.SituationalMultiplier = GetHitDamageMultiplier(Context, Hit);
 
 		float Health = 0.f;
 		if (const FDwUnitSnapshot* Victim = Context.Snapshot->FindUnit(Hit.Unit))
@@ -482,6 +485,17 @@ FDwAbilityPreview UDwGameplayAbility::PreviewOutcome(const FDwTargetingContext& 
 		Entry.bLethal = Entry.Damage > 0 && Entry.Damage >= Health;
 	}
 	return Preview;
+}
+
+float UDwGameplayAbility::GetHitDamageMultiplier(const FDwTargetingContext& Context, const FDwAbilityTarget& Hit) const
+{
+	float Multiplier = Context.DamageMultiplier;
+	if (Context.Snapshot)
+	{
+		Multiplier *= FDwSynergyRules::GetMultiplier(*Context.Snapshot, Context.Source, Context.Ability);
+		Multiplier *= Hit.bGuarded ? Context.Snapshot->CaptainRules.GuardDamageMultiplier : 1.f;
+	}
+	return Multiplier;
 }
 
 FGameplayEffectSpecHandle UDwGameplayAbility::MakeTunedSpec(TSubclassOf<UGameplayEffect> EffectClass) const

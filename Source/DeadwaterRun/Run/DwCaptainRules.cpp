@@ -46,3 +46,19 @@ void FDwCaptainRules::OnCombatWon(FDwCaptainCounters& Counters, EDwCombatOutcome
 {
 	Counters.SurrenderWins += Outcome == EDwCombatOutcome::VictorySurrender ? 1 : 0;
 }
+
+FDwCaptainCombatRules FDwCaptainRules::GetCombatRules(const UDwCaptainDefinition* Captain)
+{
+	FDwCaptainCombatRules Rules;
+	if (!Captain)
+	{
+		return Rules;
+	}
+	Rules.RuleTags = Captain->RuleTags;
+	if (const FDwCaptainTuningRow* Row = Captain->GetTuningRow<FDwCaptainTuningRow>())
+	{
+		Rules.SynergyDamageMultiplier = Rules.Has(DwTags::Rule_Captain_Synergy) ? FMath::Max(0.f, Row->SynergyDamageMultiplier) : 1.f;
+		Rules.GuardDamageMultiplier = Rules.Has(DwTags::Rule_Captain_Defend) ? FMath::Max(0.f, Row->GuardDamageMultiplier) : 1.f;
+	}
+	return Rules;
+}
