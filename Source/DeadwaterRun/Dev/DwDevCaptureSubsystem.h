@@ -80,6 +80,8 @@ private:
 	int32 ShopStage = 0;
 	bool bShopFightStaged = false;
 	TSet<uint8> VoyageScreensSeen;
+	/** Demo "voyage": the first event's result screen has had its frame (after its choices). */
+	bool bVoyageEventResultShown = false;
 	int32 EnemyFrame = 0;
 	int32 EnemyTurnsPlayed = 0;
 	static constexpr int32 EnemyTurns = 2;

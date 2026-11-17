@@ -20,6 +20,7 @@
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
+#include "Run/Events/DwEventOutcome.h"
 #endif
 
 #define LOCTEXT_NAMESPACE "DwDefinitions"
@@ -195,6 +196,43 @@ EDataValidationResult UDwEventDefinition::IsDataValid(FDataValidationContext& Co
 		{
 			DwValidation::Error(Context, Result, FText::Format(LOCTEXT("NullOutcome", "Choices[{0}] has an empty outcome or requirement."), Index));
 		}
+		if (Choice.Outcomes.IsEmpty())
+		{
+			DwValidation::Error(Context, Result, FText::Format(
+				LOCTEXT("NoOutcome", "Choices[{0}] has no outcome (add a Nothing outcome if nothing happens)."), Index));
+		}
+		if (Choice.ResultText.IsEmptyOrWhitespace())
+		{
+			DwValidation::Error(Context, Result, FText::Format(LOCTEXT("NoResult", "Choices[{0}] has no ResultText."), Index));
+		}
+		TArray<FText> Problems;
+		for (const UDwEventOutcome* Outcome : Choice.Outcomes)
+		{
+			if (Outcome)
+			{
+				Outcome->Validate(Problems);
+			}
+		}
+		for (const UDwEventRequirement* Requirement : Choice.Requirements)
+		{
+			if (Requirement)
+			{
+				Requirement->Validate(Problems);
+			}
+		}
+		for (const FText& Problem : Problems)
+		{
+			DwValidation::Error(Context, Result, FText::Format(LOCTEXT("ChoiceProblem", "Choices[{0}]: {1}"), Index, Problem));
+		}
+	}
+	if (Title.IsEmptyOrWhitespace() || Body.IsEmptyOrWhitespace())
+	{
+		DwValidation::Error(Context, Result, LOCTEXT("EventText", "An event needs a Title and a Body."));
+	}
+	// The player is never stuck: at least one choice has no requirement.
+	if (!Choices.IsEmpty() && !Choices.ContainsByPredicate([](const FDwEventChoice& Choice) { return Choice.Requirements.IsEmpty(); }))
+	{
+		DwValidation::Error(Context, Result, LOCTEXT("EventStuck", "Every choice has a requirement: a player who meets none would be stuck."));
 	}
 	return Result;
 }

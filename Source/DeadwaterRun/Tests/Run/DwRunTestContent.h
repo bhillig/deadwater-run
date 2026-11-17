@@ -21,7 +21,9 @@
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 #include "Engine/DataTable.h"
+#include "Run/DwRun.h"
 #include "Run/DwRunTypes.h"
+#include "Run/Events/DwEventResolver.h"
 #include "UObject/Package.h"
 
 namespace DwRunTest
@@ -328,6 +330,37 @@ namespace DwRunTest
 			}
 		}
 		return Result;
+	}
+
+	/**
+	 * Specs that only sail through an event: take its first possible choice (FDwEventResolver::PickDefaultChoice),
+	 * leave, and claim whatever it led to (an ability offer skipped, level-ups' first perk) until back on the map.
+	 */
+	inline bool PassEvent(UDwRun& Run)
+	{
+		if (Run.GetEvent().Event && !Run.GetEvent().IsResolved())
+		{
+			FGuid Crew;
+			if (!Run.ChooseEventOption(FDwEventResolver::PickDefaultChoice(Run.GetState(), Crew), Crew))
+			{
+				return false;
+			}
+		}
+		if (!Run.LeaveEvent())
+		{
+			return false;
+		}
+		for (int32 Guard = 0; Guard < 20 && (Run.GetPhase() == EDwRunPhase::Rewards || Run.GetPhase() == EDwRunPhase::LevelUp); ++Guard)
+		{
+			const FDwPendingLevelUp* LevelUp = Run.GetCurrentLevelUp();
+			const bool bOk = Run.GetPhase() == EDwRunPhase::Rewards ? Run.ClaimRewards(INDEX_NONE, FGuid())
+				: Run.ChoosePerk(LevelUp && !LevelUp->PerkChoices.IsEmpty() ? 0 : INDEX_NONE);
+			if (!bOk)
+			{
+				return false;
+			}
+		}
+		return Run.GetPhase() == EDwRunPhase::Map;
 	}
 
 	inline FDwKillRecord KillBy(const FGuid& Killer, int32 Xp, EDwSide VictimSide = EDwSide::Enemy)

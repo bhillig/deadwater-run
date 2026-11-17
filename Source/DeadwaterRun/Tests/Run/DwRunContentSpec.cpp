@@ -10,6 +10,9 @@
 #include "Algo/Count.h"
 #include "Abilities/DwAttributeSets.h"
 #include "Data/DwEncounterDefinition.h"
+#include "Data/DwEventDefinition.h"
+#include "Data/DwMapRules.h"
+#include "Run/Events/DwEventResolver.h"
 #include "Abilities/DwGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Board/DwBoardBuilder.h"
@@ -30,6 +33,7 @@
 #include "Run/DwRunRandom.h"
 #include "Run/DwRunSubsystem.h"
 #include "Tests/Combat/DwCombatTestFixture.h"
+#include "Tests/Run/DwRunTestContent.h"
 
 BEGIN_DEFINE_SPEC(FDwRunContentSpec, "DeadwaterRun.Run.Content",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
@@ -68,7 +72,7 @@ BEGIN_DEFINE_SPEC(FDwRunContentSpec, "DeadwaterRun.Run.Content",
 				return false;
 			}
 			if (Run->GetPhase() == EDwRunPhase::Shop) { Run->LeaveShop(); }
-			if (Run->GetPhase() == EDwRunPhase::Event) { Run->LeaveEvent(); }
+			if (Run->GetPhase() == EDwRunPhase::Event) { TestTrue(TEXT("Passed the event"), DwRunTest::PassEvent(*Run)); }
 		}
 		FDwEncounterSetup Setup;
 		TArray<FString> Errors;
@@ -350,6 +354,35 @@ void FDwRunContentSpec::Define()
 		const UDwDeckLayout* Deck = GameData->DefaultPlayerDeck;
 		TestTrue(TEXT("The player deck has the third cannon's slot"), Deck && Deck->Tiles.ContainsByPredicate([](const FDwTile& T) { return FDwBoardBuilder::IsUpgradeCannonSlot(T); }));
 		TestTrue(TEXT("...and still validates"), Deck && Deck->Validate().IsEmpty());
+	});
+
+	It("has the event pool from Tuning/Events.json: 12 valid events, a Good and a Bad one on every layer after the first", [this]()
+	{
+		if (!TestNotNull(TEXT("DA_GameData"), GameData)) { return; }
+		TestEqual(TEXT("12 events"), GameData->Events.Num(), 12);
+		for (const UDwEventDefinition* Event : GameData->Events)
+		{
+			FDataValidationContext Context;
+			if (!TestEqual(*FString::Printf(TEXT("%s valid"), *GetNameSafe(Event)), Event ? Event->IsDataValid(Context) : EDataValidationResult::Invalid,
+				EDataValidationResult::Valid))
+			{
+				for (const FDataValidationContext::FIssue& Issue : Context.GetIssues())
+				{
+					AddInfo(Issue.Message.ToString());
+				}
+			}
+		}
+		// Layer 0 is always a fight (M3); events can sit on 1..MaxPathNodes-1.
+		const int32 LastLayer = GameData->MapRules ? GameData->MapRules->MaxPathNodes - 1 : 8;
+		for (int32 Layer = 1; Layer <= LastLayer; ++Layer)
+		{
+			for (const EDwEventValence Valence : { EDwEventValence::Good, EDwEventValence::Bad })
+			{
+				const bool bAny = GameData->Events.ContainsByPredicate([Layer, Valence](const UDwEventDefinition* Event)
+					{ return Event && Event->Valence == Valence && FDwEventResolver::IsAvailable(*Event, Layer); });
+				TestTrue(*FString::Printf(TEXT("Layer %d has a %s event"), Layer, Valence == EDwEventValence::Good ? TEXT("Good") : TEXT("Bad")), bAny);
+			}
+		}
 	});
 #endif
 

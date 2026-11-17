@@ -13,6 +13,7 @@ namespace DwRunRandom
 	constexpr uint32 SaltRewards = 0x52575244; // "RWRD"
 	constexpr uint32 SaltCrew = 0x43524557;    // "CREW"
 	constexpr uint32 SaltPerks = 0x5045524B;   // "PERK"
+	constexpr uint32 SaltEvent = 0x45564E54;   // "EVNT"
 
 	/** 32-bit finaliser (MurmurHash3 fmix32): spreads nearby seeds and indices apart. */
 	constexpr uint32 Mix(uint32 H)
@@ -37,7 +38,8 @@ int32 FDwRunRandom::Derive(int32 RunSeed, uint32 Salt, int32 Index)
 int32 FDwRunRandom::ForMap(int32 RunSeed, int32 Attempt)       { return Derive(RunSeed, DwRunRandom::SaltMap, Attempt); }
 int32 FDwRunRandom::ForNode(int32 RunSeed, int32 NodeIndex)    { return Derive(RunSeed, DwRunRandom::SaltNode, NodeIndex); }
 int32 FDwRunRandom::ForRewards(int32 RunSeed, int32 NodeIndex) { return Derive(RunSeed, DwRunRandom::SaltRewards, NodeIndex); }
-int32 FDwRunRandom::ForCrew(int32 RunSeed)                     { return Derive(RunSeed, DwRunRandom::SaltCrew, 0); }
+int32 FDwRunRandom::ForEvent(int32 RunSeed, int32 NodeIndex)   { return Derive(RunSeed, DwRunRandom::SaltEvent, NodeIndex); }
+int32 FDwRunRandom::ForCrew(int32 RunSeed)                    { return Derive(RunSeed, DwRunRandom::SaltCrew, 0); }
 int32 FDwRunRandom::ForPerks(int32 RunSeed, int32 NodeIndex, int32 Ordinal)
 {
 	return Derive(Derive(RunSeed, DwRunRandom::SaltPerks, NodeIndex), DwRunRandom::SaltPerks, Ordinal);

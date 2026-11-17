@@ -39,17 +39,23 @@
 | `UDwEventOutcome_Recruit` | unit definition (fails gracefully if crew full) |
 | `UDwEventOutcome_LoseCrew` | selector (never the captain unless Brandon decides otherwise) |
 | `UDwEventOutcome_RandomOf` | weighted list of nested outcomes (gambles) |
+| `UDwEventOutcome_Nothing` | none - the explicit "nothing happens" (added 2026-11-17, DW-205) |
 
-`UDwEventRequirement` (abstract, instanced): `_MinGold`, `_CrewCountAtLeast`, `_HasItem`, `_CaptainIs`.
+`UDwEventRequirement` (abstract, instanced): `_MinGold`, `_CrewCountAtLeast`, `_CrewCountAtMost`, `_HasItem`, `_CaptainIs`.
+
+- Changed 2026-11-17 (DW-205): `_CrewCountAtMost` added so a Recruit choice can be disabled when the crew is full (the content critic flagged full-crew Recruit choices as traps). `GiveItem` adds what fits under `MaxInventory` and reports the rest as left behind. `Recruit` joins at the shop recruit level (P8) and says so when there is no bunk. C10a decided a): Health and hull never drop below 1 from an event.
 
 - Changed 2026-10-25: `UDwEventOutcome_CrewMana` is removed. MP refills at every fight start (C9), so a mana change between fights would have no effect.
 
-`FDwEventContext`: `FDwRunState&`, `FRandomStream&`, chosen crew id, out log of applied changes (for the result text and `FDwRunStats`). Outcomes never touch the world.
+`FDwEventContext`: `FDwRunState&`, `FRandomStream&` (`FDwRunRandom::ForEvent(Seed, Node)`), chosen crew id, economy row, progression table and the captain's XP multipliers; out: change lines, level-ups, ability offers. Outcomes never touch the world.
+
+The pool: `DA_GameData.Events`, imported from `Tuning/Events.json` by the content script (`FDwEventImporter`; the content pipeline's event format). Layers in the JSON are 1-based as the player counts nodes; the definitions store them 0-based like encounters. Validation: Title, Body, 1-3 choices, each with a label, result text and at least one outcome, and at least one choice with no requirement (so nobody is stuck); the import fails without a Good and a Bad event.
 
 ## Flow (`FDwEventResolver`, Run/Events/, pure)
 1. `Roll(State, Rng)`: valence = Good with `DT_RunTuning.GoodEventChance` (0.6), then a weighted pick among unseen events of that valence valid for the current layer; if none unseen, allow repeats; if none of that valence exist, use the other valence (validator warns).
-2. `UDwRun` stores `FDwActiveEvent` and enters `Event`; the event view model shows title, body, choices (disabled with a reason when requirements fail).
-3. `ChooseEventOption(Index)` -> `FDwEventResolver::Apply` -> result text + change list -> back to `Map` (or `LevelUp` if XP queued level-ups).
+2. `UDwRun` stores `FDwActiveEvent` (and adds the event to `SeenEvents`) and enters `Event`; `WBP_NodeShell` (`UDwNodeShellViewModel`) shows title, body and one button per choice with its outcomes' "you will" lines, disabled with the first failing requirement. A dedicated `WBP_Event` is the UI engineer's.
+3. `ChooseEventOption(Index, CrewId)` -> `FDwEventResolver::Apply` -> the run stays in `Event` with `FDwActiveEvent` holding the choice and change lines; the screen shows the result text and changes. A choice with a `Chosen` outcome first asks the player for a crew member (`GetChoosableCrew`; `LoseCrew` never offers the captain).
+4. `LeaveEvent()` (Continue) -> `Rewards` if `AbilityChoice` offered moves (the normal claim flow, no gold), else `LevelUp` if XP queued level-ups, else `Map`. When no event fits the layer the screen is "Calm water" and Continue goes straight on.
 
 ## Connections
 - `09-Run-Map.md`: node entry and seeds (`ForNode`).

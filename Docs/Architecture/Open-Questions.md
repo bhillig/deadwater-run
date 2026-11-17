@@ -3,14 +3,14 @@
 - Every creative or design call the architecture needs. Agents never pick; they build the recommended default behind a data flag, clearly marked as a placeholder, until you answer.
 - **Where it lives** = the data field that holds your answer. Almost all answers are data, not code. Questions marked **(code)** change behaviour that data can't express.
 - **Needed by** follows the critical path in `Roadmap.md`.
-- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-11 (P4, P7-P10, C9a and the DW-204 price questions answered; P12-P18 raised by DW-204. 2026-11-10: K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
+- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-17 (C10a, K1a, K2a, K4a, K5, K6, K8-K12 answered for DW-205..DW-208: recommended defaults, K5 with reduced redirected damage; 2026-11-11: P4, P7-P10, C9a and the DW-204 price questions answered; P12-P18 raised by DW-204. 2026-11-10: K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
 
 ## Top 5 (they shape the most work)
 1. **C8a** - Explosive barrels: new in your C8 answer, not in the design doc or Scope. In v1 or post-launch?
-2. **K5** - Defend: now that captain death = defeat, should the captain still take hits for allies?
+2. **N1-N3** - the ~12 crew abilities and the 4-5 enemy crews (DW-304/305 are waiting on them).
 3. **B1-B3** - Kraken tentacles: how many, how much HP, what destroying one does, does it hurt the Kraken.
 4. **P2** - the perk pools (shared or per archetype, 2 or 3 choices). (M2 answered: at least 5 fights per path.)
-5. **K1a + K4a** - Conqueror's two actions (can they repeat?) and what the Team Leader's synergy bonus applies to.
+5. **E1** - events: one result text per gamble branch, so a gamble shows what actually happened (the critic's top finding on the drafts).
 
 ## Follow-ups from the 2026-10-25 answers
 
@@ -19,12 +19,8 @@
 | C5a | C5 | Your answer listed "ladder tile, climb cost 2, 1 unit, melee can't target the nest" but left out option a's "+2 range from it". Is there a range bonus from the nest? And can a unit in the nest use melee on the deck? | a) +2 range from the nest; melee blocked both ways (can't hit into or out of the nest) b) No range bonus (nest = LOS over crates + melee protection); melee blocked both ways c) +2 range; a nest unit can melee the ladder tile | a) - the nest is the sniper's spot; built as placeholder now | `DT_CombatTuning.RangeBonusPerElevation`, melee `bCanTargetElevated` | Oct 27 |
 | C6a | C6 | Do units block line of sight? | a) No, only masts/cabins and crates/rails b) Enemy units block c) All units block | a) - easiest to read; placeholder now | `FDwLineOfSight` **(code)** | Oct 27 |
 | C8a | C8 | Explosive barrels are new: not in `DeadwaterRun.md` and not in Scope (Scope rule: new ideas go on the post-launch list). In v1? | a) Post-launch; v1 ship damage = cannons + ship-targeting abilities only b) v1: barrels are 1-HP neutral prop units placed in deck layouts; destroying one deals X to that ship and Y to adjacent units (needs numbers, how many per ship, whether either side can shoot them, whether it counts as a kill, VFX/SFX, AI awareness - about 3-4 agent-days across gameplay, AI, art) c) v1, ship damage only, no splash | a) - protects Dec 3; b) fits the architecture cleanly if you want it (no new systems, just a unit definition + a death effect) | Scope; if b: `DA_Unit_ExplosiveBarrel`, deck layout slots, `DT_UnitTuning` | Nov 2 |
-| C10a | C10 | Can event outcomes kill? With captain death = defeat, a bad event could end the run off-screen | a) Event Health loss floors at 1 for everyone; ship Health floors at 1 b) Can kill crew, captain floors at 1 c) Can kill anyone; captain death = defeat | a) - deaths happen in fights the player can play | `UDwEventOutcome_CrewHealth`, `_ShipHealth` | Nov 2 |
 | C10b | C10 | Should enemies hunt the captain? | a) Every crew has a moderate captain-pressure weight b) Only some crews (e.g. an "assassin" crew) hunt the captain; others ignore him c) No captain preference | b) - a personality you can see; ties to N2 | `UDwAiProfile` captain-pressure weight | Nov 8 |
 | C13a | C13 | With no undo, how is a move confirmed? | a) Hover shows the path, one click on a highlighted tile moves b) First click previews, second click confirms c) a) with a setting for b) | a) - keeps the pace; the hover path is the preview | `UDwCombatInteraction` | Oct 27 |
-| K1a | K1 | Conqueror's 2 actions: can both be the same thing? | a) Any two actions, repeats allowed (two sword attacks, or the same ability twice if MP allows); each cannon still fires once per turn b) The two actions must differ c) Captain abilities at most once per turn, everything else may repeat | a) - simplest, MP costs limit abuse; balance designer checks in the simulator | `UDwGameplayAbility` per-turn use limit **(code if b or c)** | Oct 27 |
-| K2a | K2 | Can the Conqueror fire cannons? (cannons are not firearm abilities) | a) Yes b) No | a) | `BlockedAbilityTags` | Nov 2 |
-| K4a | K4 | Synergy "+X% when attacking while adjacent to an ally": which damage, and does the captain count? | a) Basic attacks and damaging abilities of every crew member including the captain; any ally (captain included) counts as the neighbour; not cannons b) Basic attacks only c) Everything including cannon shots | a) | `FDwSynergyRules`, ability tag filter | Nov 2 |
 | U3a | U3 | Colourblind-friendly highlights: one palette or several? | a) One colourblind-safe palette, plus distinct patterns per highlight type in both palettes b) Three palettes (deuteranopia, protanopia, tritanopia) | a) | `DA_HighlightPalette_*`, `UDwGameUserSettings.HighlightPalette` | Nov 2 |
 
 ## Combat and board (needed by Oct 27)
@@ -37,13 +33,6 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 
 | ID | Question | Options | Recommendation | Where it lives |
 |---|---|---|---|---|
-| K5 | Defend - how does it work? ("move onto them") | a) An action: move adjacent to an ally; until your next turn, single-target attacks on that ally hit the captain b) Passive: any adjacent ally is protected automatically c) Captain shares the ally's tile | a) - no tile stacking, clear counterplay; AoE not redirected. **New since C10:** captain death = defeat, so every redirected hit risks the run - consider capping redirected damage or letting Defend grant the captain damage reduction | `GA_Defend`, `GE_Guarded`, redirect rule |
-| K6 | Grapple: which tile does the target land on? Across ships? Out of the nest? MP cost? | a) Nearest free tile next to the captain along the line; works across ships and out of the nest b) Can't pull from the nest c) Pull only on the same ship | a) | `UDwGA_Grapple` + tuning |
-| K8 | After an enemy cowers, what happens to its Fear? | a) Resets to 0 b) Stays at 3 (cowers every turn) c) Drops to 1 | a) - b) is a lock | `DT_CombatTuning.FearCowerPolicy` |
-| K9 | Dread Reputation: starting Fear could reach 3 and cause instant surrender | a) Cap starting Fear at 2 b) No cap (later fights can be won on turn 1) c) Cap at 1 | a) | `StartingFearCap` |
-| K10 | Is the Kraken immune to Fear, freeze (Eye of the Tiger), grapple? | a) Immune to Fear and grapple; freeze works on tentacles only b) Immune to all three c) Not immune | a) | `Unit.Immune.*` tags |
-| K11 | Smoke and Fire damage to afraid enemies? Six Pistols: enemies only, LOS needed, can repeat targets? | a) Damage from tuning; Six Pistols: enemies in LOS, repeats allowed b) Six Pistols hits anyone in LOS including the ship | a) | Ability tuning + targeting |
-| K12 | Charge: straight line only? Blocked by obstacles? Eye of the Tiger: any range, no LOS? | a) Straight line, stops at obstacles; Eye ignores range and LOS b) Charge can path around obstacles | a) | `UDwGA_Charge` |
 | K13 | MP costs and damage for all 6 captain abilities; Conqueror base stats; Team Leader synergy X% | Balance Designer proposes 2-3 sets from simulations | Tuning | `DT_AbilityTuning`, `DT_UnitTuning`, `DT_CaptainTuning.SynergyDamageMultiplier` |
 | K14 | Same starting crew (Swordsman + Sniper) for every captain? Captain stats besides the Conqueror? | a) Same crew; Team Leader and Fearmongerer captains use base crew stats b) Different crews per captain | a) | `StartingCrew`, unit rows |
 
@@ -72,6 +61,7 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 | N2 | 4-5 enemy crews: names, units, ship layouts, personalities | e.g. gunners / boarders / snipers / mixed / elite (see C10b for a captain-hunting crew) | Drafts on request | `DA_Encounter_*`, `DA_AiProfile_*` |
 | N3 | Difficulty by depth: which crews appear where | a) Tier 1 layers 1-3, tier 2 layers 4-6, tier 3 layers 7-9 b) Any crew anywhere, scaled by level | a) | Encounter `MinLayer`/`MaxLayer` |
 | N4 | The 10-12 events (text, choices, outcomes) | Use the event format in `Editor-Tools.md` | - | `DA_Event_*` |
+| E1 | A gamble (`RandomOf`) has one result text for all its branches, so the text can't say which way it went (the critic flagged it on several drafts) | a) Optional `ResultText` per branch, shown after the choice's text b) Keep one text; writers stay branch-neutral and the change lines say what happened | a) - small code change, much better writing | `FDwEventRandomOption` **(code)** |
 | N5 | Any recruit archetypes beyond Swordsman and Sniper? | a) None in v1 b) 1-2 more (e.g. gunner, surgeon) | Your call; each adds abilities and art | Unit definitions |
 | N6 | Crew names: fixed, random from a list, or none? | a) Random from a name list b) Archetype names only | a) adds attachment to permadeath | Name list DataAsset |
 
@@ -196,3 +186,21 @@ U1-U5 answered - see Resolved. Follow-up U3a above.
 | DW-204 b | Where does a ship upgrade's price live? | A new `DT_ShipUpgradeTuning` (`FDwShipUpgradeTuningRow`: `Price` and the effect amounts), synced from `Tuning/ShipUpgradeTuning.json` by the content script; `UDwShipUpgradeDefinition` links its row | `06`, `13` |
 | DW-204 c | Inventory cap: total or per stack? | 6 items in total in the shared inventory, `DT_EconomyTuning.MaxInventory`. A full hold leaves plunder behind (P15 placeholder) | `10` |
 | DW-204 d | Recruit level formula | `max(1, floor(crew average level) + RecruitLevelOffset)`, `RecruitLevelOffset` -1 in `DT_EconomyTuning`; `DisbandRefund` stays 0 | `10` |
+
+
+### Answered 2026-11-17 (DW-205..DW-208: events and the three captains)
+
+| # | Question | Decision | Where it lives now |
+|---|---|---|---|
+| C10a | Can event outcomes kill? | a) Event Health loss floors at 1 for everyone; ship Health floors at 1 | `11`, `UDwEventOutcome_CrewHealth` / `_ShipHealth` |
+| K1a | Conqueror's 2 actions: repeats? | a) Any two actions, repeats allowed; each cannon still fires once per turn | `05`, `02` |
+| K2a | Conqueror and cannons | a) Yes, he can fire cannons | `05` (`BlockedAbilityTags` = firearm only) |
+| K4a | Synergy scope | a) Basic attacks and damaging abilities of every crew member including the captain; any ally counts as the neighbour; not cannons | `05`, `02` (`FDwSynergyRules`) |
+| K5 | Defend | a) An action: guard an adjacent ally until your next turn; single-target attacks on that ally hit the captain instead, **at reduced damage** (placeholder -50%, `DT_CaptainTuning.GuardDamageMultiplier`); AoE not redirected | `05`, `GA_Defend`, `GE_Guarded` |
+| K6 | Grapple landing tile | a) Nearest free tile next to the captain along the line; works across ships and out of the nest | `05`, `UDwGA_Grapple` |
+| K8 | Fear after cowering | a) Resets to 0 | `DT_CombatTuning.FearCowerPolicy` |
+| K9 | Dread Reputation cap | a) Starting Fear capped at 2 | `DT_CaptainTuning.StartingFearCap` |
+| K10 | Kraken immunities | a) Immune to Fear and grapple; freeze works on tentacles only | `Unit.Immune.*` tags on the Kraken units |
+| K11 | Smoke and Fire / Six Pistols | a) Damage from tuning; Six Pistols: enemies in LOS, repeats allowed | `DT_AbilityTuning`, targeting |
+| K12 | Charge / Eye of the Tiger | a) Charge: straight line, stops at obstacles; Eye ignores range and LOS | `UDwGA_Charge`, Eye of the Tiger BP |
+| N4 (partial) | The 10-12 events | The 12 content-pipeline drafts go in as they are (`Tuning/Events.json`); the critic's open findings in `Docs/ContentPipeline/out/*/report.md` still need Brandon before DW-306 closes | `Tuning/Events.json`, `DA_Event_*` |

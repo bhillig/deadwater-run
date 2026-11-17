@@ -258,7 +258,7 @@ void FDwRunViewModelSpec::Define()
 		{
 			UDwNodeShellViewModel* Shell = Make<UDwNodeShellViewModel>();
 			Shell->Bind(Run);
-			TestFalse(TEXT("Nothing to leave on the map"), Shell->GetLeave()->GetView().bEnabled);
+			TestEqual(TEXT("No buttons on the map"), Shell->GetActions().Num(), 0);
 			bool bShop = false, bEvent = false;
 			for (int32 Seed = 0; Seed < 20 && !(bShop && bEvent); ++Seed)
 			{
@@ -284,9 +284,11 @@ void FDwRunViewModelSpec::Define()
 					case EDwRunPhase::Event:
 					{
 						const bool bIsShop = Run->GetPhase() == EDwRunPhase::Shop;
-						TestEqual(TEXT("Headline"), Shell->GetHeadline().ToString(), FString(bIsShop ? TEXT("Shop") : TEXT("Something on the horizon")));
-						TestTrue(TEXT("Leave enabled"), Shell->GetLeave()->GetView().bEnabled);
-						TestTrue(TEXT("Left"), Shell->GetLeave()->Select());
+						// The test content has no events: an event node is calm water with one way on.
+						TestEqual(TEXT("Headline"), Shell->GetHeadline().ToString(), FString(bIsShop ? TEXT("Shop") : TEXT("Calm water")));
+						if (!TestEqual(TEXT("One button"), Shell->GetActions().Num(), 1)) { return; }
+						TestTrue(TEXT("Leave enabled"), Shell->GetActions()[0]->GetView().bEnabled);
+						TestTrue(TEXT("Left"), Shell->GetActions()[0]->Select());
 						TestEqual(TEXT("Map"), Run->GetPhase(), EDwRunPhase::Map);
 						(bIsShop ? bShop : bEvent) = true;
 						break;

@@ -9,7 +9,9 @@
 #include "Core/DwGameData.h"
 #include "Core/DwLog.h"
 #include "Data/DwCaptainDefinition.h"
+#include "Data/DwEventDefinition.h"
 #include "Engine/World.h"
+#include "Run/Events/DwEventResolver.h"
 #include "HAL/IConsoleManager.h"
 #include "Run/DwRun.h"
 #include "Run/DwRunSubsystem.h"
@@ -117,7 +119,32 @@ namespace DwRunDevCommands
 		Run->TryPurchase(OfferId, CrewId, Replace < 0 ? INDEX_NONE : Replace);
 	}
 
-	/** Dw.Run.Leave - leave the shop (or the event shell) for the map. */
+	/**
+	 * Dw.Run.Event [n] [Crew] - take the event's n-th choice (1-based; default: the first one possible). Crew is the
+	 * 1-based roster number when the choice lands on a crew member you pick (default: the first who can be picked).
+	 */
+	static void Event(const TArray<FString>& Args, UWorld* World)
+	{
+		UDwRun* Run = GetRun(World);
+		if (!Run)
+		{
+			return;
+		}
+		const FDwRunState& S = Run->GetState();
+		FGuid CrewId;
+		int32 Choice = FDwEventResolver::PickDefaultChoice(S, CrewId);
+		if (Args.Num() > 0)
+		{
+			Choice = FCString::Atoi(*Args[0]) - 1;
+			const UDwEventDefinition* Def = S.Event.Event;
+			const TArray<FGuid> Choosable = Def && Def->Choices.IsValidIndex(Choice) ? FDwEventResolver::GetChoosableCrew(S, Def->Choices[Choice]) : TArray<FGuid>();
+			const int32 Member = Args.Num() > 1 ? FCString::Atoi(*Args[1]) - 1 : INDEX_NONE;
+			CrewId = S.Crew.IsValidIndex(Member) ? S.Crew[Member].Id : (Choosable.IsEmpty() ? FGuid() : Choosable[0]);
+		}
+		Run->ChooseEventOption(Choice, CrewId);
+	}
+
+	/** Dw.Run.Leave - leave the shop, or the event once chosen, for the map. */
 	static void Leave(const TArray<FString>& /*Args*/, UWorld* World)
 	{
 		if (UDwRun* Run = GetRun(World))
@@ -149,6 +176,9 @@ namespace DwRunDevCommands
 	static FAutoConsoleCommandWithWorldAndArgs BuyCommand(TEXT("Dw.Run.Buy"),
 		TEXT("Dw.Run.Buy <Offer> [Crew] [ReplaceSlot]: buy the n-th shop offer on the run readout (1-based)."),
 		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&Buy));
+	static FAutoConsoleCommandWithWorldAndArgs EventCommand(TEXT("Dw.Run.Event"),
+		TEXT("Dw.Run.Event [n] [Crew]: take the event's n-th choice (1-based; default the first possible), then Dw.Run.Leave."),
+		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&Event));
 	static FAutoConsoleCommandWithWorldAndArgs LeaveCommand(TEXT("Dw.Run.Leave"),
 		TEXT("Dw.Run.Leave: leave the shop (or the event) and return to the map."),
 		FConsoleCommandWithWorldAndArgsDelegate::CreateStatic(&Leave));

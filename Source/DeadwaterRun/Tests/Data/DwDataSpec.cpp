@@ -17,6 +17,7 @@
 #include "Data/Tuning/DwTuningRows.h"
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
+#include "Run/Events/DwEventOutcome.h"
 #endif
 
 namespace DwDataSpec
@@ -273,8 +274,12 @@ void FDwDataSpec::Define()
 			Event->DisplayName = FText::FromString(TEXT("Test"));
 			FDataValidationContext NoChoices;
 			TestEqual(TEXT("0 choices invalid"), Event->IsDataValid(NoChoices), EDataValidationResult::Invalid);
+			Event->Title = FText::FromString(TEXT("Test"));
+			Event->Body = FText::FromString(TEXT("A test event."));
 			FDwEventChoice Choice;
 			Choice.Label = FText::FromString(TEXT("Sail on"));
+			Choice.ResultText = FText::FromString(TEXT("You sail on."));
+			Choice.Outcomes.Add(NewObject<UDwEventOutcome_Nothing>(Event));
 			Event->Choices.Add(Choice);
 			FDataValidationContext OneChoice;
 			TestEqual(TEXT("1 choice valid"), Event->IsDataValid(OneChoice), EDataValidationResult::Valid);

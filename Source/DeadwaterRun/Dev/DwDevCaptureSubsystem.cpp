@@ -39,6 +39,24 @@
 #include "Containers/Ticker.h"
 #include "TimerManager.h"
 #include "UnrealClient.h"
+#include "Run/Events/DwEventResolver.h"
+
+namespace
+{
+	/** Demos that only pass through an event: take its first possible choice (FDwEventResolver::PickDefaultChoice), then leave. */
+	bool ResolveEvent(UDwRun& Run)
+	{
+		if (Run.GetEvent().Event && !Run.GetEvent().IsResolved())
+		{
+			FGuid Crew;
+			if (!Run.ChooseEventOption(FDwEventResolver::PickDefaultChoice(Run.GetState(), Crew), Crew))
+			{
+				return false;
+			}
+		}
+		return Run.LeaveEvent();
+	}
+}
 
 bool UDwDevCaptureSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -274,7 +292,16 @@ void UDwDevCaptureSubsystem::RunDemoStep()
 				return false;
 			}
 			if (Run->GetPhase() == EDwRunPhase::Shop) { Run->LeaveShop(); }
-			if (Run->GetPhase() == EDwRunPhase::Event) { Run->LeaveEvent(); }
+			if (Run->GetPhase() == EDwRunPhase::Event) { ResolveEvent(*Run); }
+			while (Run->GetPhase() == EDwRunPhase::Rewards || Run->GetPhase() == EDwRunPhase::LevelUp) // an event's ability offer or levels
+			{
+				const bool bClaim = Run->GetPhase() == EDwRunPhase::Rewards;
+				const FDwPendingLevelUp* LevelUp = Run->GetCurrentLevelUp();
+				if (!(bClaim ? Run->ClaimRewards(INDEX_NONE, FGuid()) : Run->ChoosePerk(LevelUp && !LevelUp->PerkChoices.IsEmpty() ? 0 : INDEX_NONE)))
+				{
+					return false;
+				}
+			}
 		}
 		return Run->GetPhase() == EDwRunPhase::Combat;
 	};
@@ -597,7 +624,23 @@ void UDwDevCaptureSubsystem::VoyageDemoStep()
 		bOk = Run->ChoosePerk(Run->GetCurrentLevelUp() && !Run->GetCurrentLevelUp()->PerkChoices.IsEmpty() ? 0 : INDEX_NONE);
 		break;
 	case EDwRunPhase::Shop:  bOk = Run->LeaveShop(); break;
-	case EDwRunPhase::Event: bOk = Run->LeaveEvent(); break;
+	case EDwRunPhase::Event:
+		// Two screens: the choices (captured above), then the result (captured on the next step).
+		if (Run->GetEvent().Event && !Run->GetEvent().IsResolved())
+		{
+			FGuid Crew;
+			bOk = Run->ChooseEventOption(FDwEventResolver::PickDefaultChoice(Run->GetState(), Crew), Crew);
+			if (!bVoyageEventResultShown) // the first event's result gets its own frame too
+			{
+				VoyageScreensSeen.Remove(static_cast<uint8>(EDwRunPhase::Event));
+				bVoyageEventResultShown = true;
+			}
+		}
+		else
+		{
+			bOk = Run->LeaveEvent();
+		}
+		break;
 	default: break;
 	}
 	UE_CLOG(!bOk, LogDw, Error, TEXT("Dev capture '%s': could not act in phase %s."), *Demo, *DwRun::PhaseName(Phase));
@@ -711,7 +754,7 @@ void UDwDevCaptureSubsystem::ShopDemoStep()
 		return;
 	}
 	case EDwRunPhase::Event:
-		Run->LeaveEvent();
+		ResolveEvent(*Run);
 		Next(0.6f);
 		return;
 	case EDwRunPhase::Shop:

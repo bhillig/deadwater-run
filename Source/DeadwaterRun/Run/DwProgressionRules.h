@@ -28,6 +28,12 @@ struct DEADWATERRUN_API FDwProgressionRules
 	static int32 GrantXp(FDwCrewMemberState& Crew, int32 Amount, float XpMultiplier, float ThresholdMultiplier, const UDataTable* Progression,
 		int32 MaxLevel);
 
+	/**
+	 * One FDwPendingLevelUp per level Crew gained above OldLevel (CrewId, NewLevel, StatGain), appended in order. Ordinal
+	 * is left for the caller, who numbers the whole queue. Used by fight rewards and event XP alike.
+	 */
+	static void AppendLevelUps(TArray<FDwPendingLevelUp>& Out, const FDwCrewMemberState& Crew, int32 OldLevel);
+
 	/** Base + per-level gains x (Level - 1); the same numbers combat spawns with (FDwUnitTuningRow::Get*AtLevel). */
 	static FDwLevelStats GetLevelStats(const FDwUnitTuningRow& Row, int32 Level);
 

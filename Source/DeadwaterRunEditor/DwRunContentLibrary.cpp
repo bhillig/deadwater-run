@@ -21,6 +21,7 @@
 #include "Data/DwUnitDefinition.h"
 #include "DwCombatContentLibrary.h"
 #include "DwContentAssetUtils.h"
+#include "DwEventImporter.h"
 
 namespace DwRunContent
 {
@@ -354,7 +355,10 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 	bOk &= Save(MapRules, Log);
 	GameData->MapRules = MapRules;
 
-	// 12. DW-210 shell travel: Set Sail opens L_Sea, Main Menu opens L_MainMenu (16-Shell D1).
+	// 12. DW-205 events: DA_Event_* and DA_GameData.Events from Tuning/Events.json (after the captains and items they name).
+	bOk &= FDwEventImporter::Import(*GameData, Log);
+
+	// 13. DW-210 shell travel: Set Sail opens L_Sea, Main Menu opens L_MainMenu (16-Shell D1).
 	GameData->MainMenuLevel = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/DeadwaterRun/Maps/L_MainMenu.L_MainMenu")));
 	GameData->SeaLevel = TSoftObjectPtr<UWorld>(FSoftObjectPath(TEXT("/Game/DeadwaterRun/Maps/L_Sea.L_Sea")));
 	bOk &= Save(GameData, Log);

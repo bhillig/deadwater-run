@@ -26,6 +26,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDwOnRunStateChanged);
  * Flow: Map -> ChooseNode(fight) -> Combat -> ApplyCombatResult -> Rewards -> ClaimRewards -> [LevelUp -> ChoosePerk]
  * x levels gained -> Map ... -> ChooseNode(shop) -> Shop -> [TryPurchase]* -> LeaveShop -> Map ... -> ChooseNode(boss) ->
  * Combat -> Victory. Any defeat -> Defeat. Abandon -> Defeat (Abandoned).
+ * Events: ChooseNode(event) -> Event -> ChooseEventOption -> LeaveEvent -> [Rewards (ability offers)] -> [LevelUp] -> Map.
  */
 UCLASS(BlueprintType)
 class DEADWATERRUN_API UDwRun : public UObject
@@ -129,7 +130,31 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
 	bool LeaveShop();
 
-	/** Event phase only: back to the map. DW-205 replaces it with ChooseEventOption. */
+	/**
+	 * The event at the current node (Event phase; rolled on arrival by FDwEventResolver::Roll from DA_GameData.Events,
+	 * FDwRunRandom::ForNode). Not open in any other phase. Event is null when no event fits the layer.
+	 */
+	const FDwActiveEvent& GetEvent() const { return State.Event; }
+
+	/**
+	 * Whether ChooseEventOption(ChoiceIndex, CrewId) would go through, without logging. OutReason (optional) gets the
+	 * disabled reason: the first failing requirement, "Choose a crew member" when the choice needs one and CrewId isn't
+	 * one of FDwEventResolver::GetChoosableCrew, or why the event can't take a choice now.
+	 */
+	bool CanChooseEventOption(int32 ChoiceIndex, FGuid CrewId, FText* OutReason = nullptr) const;
+
+	/**
+	 * Event phase only, once per event. Applies the choice's outcomes in order (FDwEventResolver::Apply, stream
+	 * FDwRunRandom::ForEvent) and keeps the run on the event screen with the result text and change lines. CrewId is
+	 * the picked crew member when the choice needs one (EDwCrewSelector::Chosen), ignored otherwise.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
+	bool ChooseEventOption(int32 ChoiceIndex, FGuid CrewId);
+
+	/**
+	 * Event phase only, after ChooseEventOption (or at once when no event was rolled): closes the event and goes on to
+	 * Rewards if it offered abilities, else LevelUp if it gave levels, else the map.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|Run")
 	bool LeaveEvent();
 
@@ -151,6 +176,10 @@ private:
 	/** Rolls the shop of the node just entered into State.Shop. */
 	void OpenShop(int32 NodeIndex);
 	FDwShopContext GetShopContext() const;
+	/** Rolls the event of the node just entered into State.Event. */
+	void OpenEvent(int32 NodeIndex);
+	/** Sets each pending level-up's Ordinal to its queue position (picks its perk stream). */
+	void NumberLevelUps();
 	/** Back to the map after a completed node (counts it as cleared). */
 	void CompleteNode();
 	/** XP, level-ups and the reward bundle after a won (non-boss) fight. */

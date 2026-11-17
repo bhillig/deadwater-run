@@ -9,6 +9,21 @@
 #include "Data/Tuning/DwTuningRows.h"
 #include "Engine/DataTable.h"
 
+void FDwProgressionRules::AppendLevelUps(TArray<FDwPendingLevelUp>& Out, const FDwCrewMemberState& Crew, int32 OldLevel)
+{
+	const FDwUnitTuningRow* UnitRow = Crew.Unit ? Crew.Unit->GetTuningRow<FDwUnitTuningRow>() : nullptr;
+	for (int32 Level = OldLevel + 1; Level <= Crew.Level; ++Level)
+	{
+		FDwPendingLevelUp& LevelUp = Out.AddDefaulted_GetRef();
+		LevelUp.CrewId = Crew.Id;
+		LevelUp.NewLevel = Level;
+		if (UnitRow)
+		{
+			LevelUp.StatGain = GetLevelStats(*UnitRow, Level) - GetLevelStats(*UnitRow, Level - 1);
+		}
+	}
+}
+
 int32 FDwProgressionRules::GetXpToNext(const UDataTable* Progression, int32 Level, float ThresholdMultiplier)
 {
 	const FDwProgressionTuningRow* Row = Progression && Progression->GetRowStruct() == FDwProgressionTuningRow::StaticStruct()

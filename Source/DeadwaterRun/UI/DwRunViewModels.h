@@ -233,7 +233,12 @@ private:
 // ---------------------------------------------------------------------------------------------------------------------
 // Shop and event shells
 
-/** Phases Shop and Event until DW-204 / DW-205 fill them: a title, a line of text and the way out. */
+/**
+ * WBP_NodeShell: phase Shop until the shop screen lands (just the gold and Leave), and phase Event (DW-205):
+ * 1. The event's title and body, one button per choice ("you will ..." line, disabled with the failing requirement).
+ * 2. A choice that lands on a crew member the player picks: one button per crew member who can be picked, and Back.
+ * 3. After the choice: the result text and every change, and Continue (UDwRun::LeaveEvent).
+ */
 UCLASS(BlueprintType)
 class DEADWATERRUN_API UDwNodeShellViewModel : public UDwRunScreenViewModel
 {
@@ -242,14 +247,24 @@ class DEADWATERRUN_API UDwNodeShellViewModel : public UDwRunScreenViewModel
 public:
 	FText GetHeadline() const { return Headline; }
 	FText GetBody() const { return Body; }
-	/** Leave (shop) / Continue (event): UDwRun::LeaveShop / LeaveEvent. */
-	UDwChoiceViewModel* GetLeave() const { return Leave; }
+	/** The buttons in order: the event's choices, crew to pick, or the one way out (Leave / Continue). */
+	const TArray<TObjectPtr<UDwChoiceViewModel>>& GetActions() const { return Actions; }
+
+	/** Intent: the event choice at Index. Choices that need a crew member open step 2 instead of resolving. */
+	bool SelectEventChoice(int32 Index);
+	/** Step 2: back to the choices. */
+	bool CancelCrewPick();
 
 protected:
 	virtual void Refresh() override;
 
 private:
+	void RefreshEvent(const UDwRun& TheRun, int32& Count);
+
 	FText Headline;
 	FText Body;
-	UPROPERTY(Transient) TObjectPtr<UDwChoiceViewModel> Leave;
+	/** Step 2: the choice waiting for its crew member, INDEX_NONE otherwise. Reset when a new event opens. */
+	int32 PendingChoice = INDEX_NONE;
+	int32 PendingNode = INDEX_NONE;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwChoiceViewModel>> Actions;
 };

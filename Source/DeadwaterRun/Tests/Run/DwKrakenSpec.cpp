@@ -25,6 +25,7 @@
 #include "Run/DwRun.h"
 #include "Run/DwRunSubsystem.h"
 #include "Tests/Combat/DwCombatTestFixture.h"
+#include "Tests/Run/DwRunTestContent.h"
 
 BEGIN_DEFINE_SPEC(FDwKrakenSpec, "DeadwaterRun.Run.Kraken",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
@@ -135,7 +136,7 @@ BEGIN_DEFINE_SPEC(FDwKrakenSpec, "DeadwaterRun.Run.Kraken",
 				return false;
 			}
 			if (Run->GetPhase() == EDwRunPhase::Shop) { Run->LeaveShop(); }
-			if (Run->GetPhase() == EDwRunPhase::Event) { Run->LeaveEvent(); }
+			if (Run->GetPhase() == EDwRunPhase::Event) { TestTrue(TEXT("Passed the event"), DwRunTest::PassEvent(*Run)); }
 		}
 		TArray<FString> Errors;
 		const bool bBuilt = Run->BuildEncounterSetup(OutSetup, Errors);

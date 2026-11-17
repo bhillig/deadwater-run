@@ -337,8 +337,7 @@ void UDwNodeShellScreen::NativeOnViewModelChanged()
 	}
 	HeadlineText->SetText(Shell->GetHeadline());
 	BodyText->SetText(Shell->GetBody());
-	const TArray<TObjectPtr<UDwChoiceViewModel>> Leave = { Shell->GetLeave() };
-	FillChoices(ActionSlot, Leave);
+	FillChoices(ActionSlot, Shell->GetActions());
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -10,6 +10,7 @@
 class UDwAbilityDefinition;
 class UDwCaptainDefinition;
 class UDwEncounterDefinition;
+class UDwEventDefinition;
 class UDwItemDefinition;
 class UDwPerkDefinition;
 class UDwShipUpgradeDefinition;
@@ -345,7 +346,30 @@ struct DEADWATERRUN_API FDwShopInventory
 	bool IsOpen() const { return Node != INDEX_NONE; }
 };
 
-/** Everything a run is (09 "FDwRunState"). Only UDwRun writes it. Event state arrives with DW-205. */
+/**
+ * The event at the current node (11 "Flow"): rolled on arrival, then resolved by one choice. The event screen shows the
+ * title, body and choices until ChosenIndex is set, then the result text and the change lines until LeaveEvent.
+ */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwActiveEvent
+{
+	GENERATED_BODY()
+
+	/** Map node of this event; INDEX_NONE when no event is open. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Event") int32 Node = INDEX_NONE;
+	/** Null when the pool had nothing for this layer: the event screen just lets the player sail on. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Event") TObjectPtr<const UDwEventDefinition> Event;
+	/** The choice taken; INDEX_NONE until ChooseEventOption. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Event") int32 ChosenIndex = INDEX_NONE;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Event") FGuid ChosenCrew;
+	/** What changed ("+50 gold", "Swordsman -30 HP (40/70)"), in the order applied. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Event") TArray<FText> Changes;
+
+	bool IsOpen() const { return Node != INDEX_NONE; }
+	bool IsResolved() const { return ChosenIndex != INDEX_NONE; }
+};
+
+/** Everything a run is (09 "FDwRunState"). Only UDwRun writes it. */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwRunState
 {
@@ -372,6 +396,10 @@ struct DEADWATERRUN_API FDwRunState
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Run") TArray<FDwPendingLevelUp> PendingLevelUps;
 	/** Shop phase: what's for sale (DW-204). Empty otherwise. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Run") FDwShopInventory Shop;
+	/** Event phase: the event at the current node (DW-205). Empty otherwise. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Run") FDwActiveEvent Event;
+	/** Every event rolled this run, in order: the roll prefers unseen ones (11 "Flow" 1). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Run") TArray<TObjectPtr<const UDwEventDefinition>> SeenEvents;
 
 	const FDwCrewMemberState* FindCrew(const FGuid& Id) const;
 	FDwCrewMemberState* FindCrew(const FGuid& Id);

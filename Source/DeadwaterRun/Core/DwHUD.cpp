@@ -5,6 +5,7 @@
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwCaptainDefinition.h"
 #include "Data/DwEncounterDefinition.h"
+#include "Data/DwEventDefinition.h"
 #include "Data/DwItemDefinition.h"
 #include "Data/DwPerkDefinition.h"
 #include "Data/DwShipUpgradeDefinition.h"
@@ -15,6 +16,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Run/DwRun.h"
 #include "Run/DwRunSubsystem.h"
+#include "Run/Events/DwEventResolver.h"
 
 #if !UE_BUILD_SHIPPING
 namespace DwHUD
@@ -164,6 +166,31 @@ void ADwHUD::DrawRunReadout()
 				Can == EDwPurchaseResult::Ok ? TEXT("") : *FString::Printf(TEXT("   (%s)"), *DwRun::PurchaseResultName(Can))));
 		}
 		Lines.Add(TEXT("  [Dw.Run.Leave]  back to the map"));
+	}
+	else if (S.Phase == EDwRunPhase::Event)
+	{
+		const FDwActiveEvent& Active = Run->GetEvent();
+		const UDwEventDefinition* Event = Active.Event;
+		Lines.Add(FString::Printf(TEXT("EVENT: %s (%s)"), Event ? *Event->Title.ToString() : TEXT("calm water"),
+			Event ? *StaticEnum<EDwEventValence>()->GetNameStringByValue(static_cast<int64>(Event->Valence)) : TEXT("none")));
+		if (Event && !Active.IsResolved())
+		{
+			for (int32 Choice = 0; Choice < Event->Choices.Num(); ++Choice)
+			{
+				const FText Reason = FDwEventResolver::GetRequirementBlocker(S, Event->Choices[Choice]);
+				const bool bCan = Reason.IsEmpty();
+				Lines.Add(FString::Printf(TEXT("  [Dw.Run.Event %d%s]  %s%s"), Choice + 1, FDwEventResolver::NeedsChosenCrew(Event->Choices[Choice]) ? TEXT(" <crew#>") : TEXT(""),
+					*Event->Choices[Choice].Label.ToString(), bCan ? TEXT("") : *FString::Printf(TEXT("   (%s)"), *Reason.ToString())));
+			}
+		}
+		else
+		{
+			for (const FText& Change : Active.Changes)
+			{
+				Lines.Add(FString::Printf(TEXT("  %s"), *Change.ToString()));
+			}
+			Lines.Add(TEXT("  [Dw.Run.Leave]  sail on"));
+		}
 	}
 	if (S.IsOver())
 	{

@@ -14,6 +14,7 @@ class UDwAbilityDefinition;
 class UDwCaptainDefinition;
 class UDwDeckLayout;
 class UDwEncounterDefinition;
+class UDwEventDefinition;
 class UDwMapRules;
 class UDwShopDefinition;
 class UGameplayEffect;
@@ -118,6 +119,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Run")
 	TObjectPtr<UDwShopDefinition> DefaultShop;
+
+	/** The event pool (Docs/Architecture/11-Events.md): every event node rolls from it. Needs at least one Good and one Bad. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Run")
+	TArray<TObjectPtr<UDwEventDefinition>> Events;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Run")
 	TObjectPtr<UDwEncounterDefinition> KrakenEncounter;

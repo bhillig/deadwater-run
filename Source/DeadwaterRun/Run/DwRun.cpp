@@ -10,6 +10,7 @@
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwCaptainDefinition.h"
 #include "Data/DwEncounterDefinition.h"
+#include "Data/DwEventDefinition.h"
 #include "Data/DwItemDefinition.h"
 #include "Data/DwMapRules.h"
 #include "Data/DwPerkDefinition.h"
@@ -22,6 +23,8 @@
 #include "Run/DwProgressionRules.h"
 #include "Run/DwRunRandom.h"
 #include "Run/Economy/DwRewardRules.h"
+#include "Run/Events/DwEventOutcome.h"
+#include "Run/Events/DwEventResolver.h"
 #include "Run/Map/DwMapGenerator.h"
 
 const FName UDwRun::DefaultTuningRow(TEXT("Default"));
@@ -153,6 +156,10 @@ bool UDwRun::ChooseNode(int32 NodeIndex)
 	{
 		OpenShop(NodeIndex);
 	}
+	else if (State.Phase == EDwRunPhase::Event)
+	{
+		OpenEvent(NodeIndex);
+	}
 	Changed(Old);
 	return true;
 }
@@ -242,14 +249,164 @@ bool UDwRun::LeaveShop()
 	return true;
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Events
+
+void UDwRun::OpenEvent(int32 NodeIndex)
+{
+	State.Event = FDwActiveEvent();
+	State.Event.Node = NodeIndex;
+	const FDwRunTuningRow* RunRow = GetRunTuning();
+	UE_CLOG(!RunRow, LogDwRun, Error, TEXT("Event at node %d: DT_RunTuning 'Default' is missing; using GoodEventChance 0.6."), NodeIndex);
+	const float GoodChance = RunRow ? RunRow->GoodEventChance : 0.6f;
+	TArray<const UDwEventDefinition*> Pool;
+	if (GameData)
+	{
+		for (const UDwEventDefinition* Event : GameData->Events)
+		{
+			Pool.Add(Event);
+		}
+	}
+	FRandomStream Random(FDwRunRandom::ForNode(State.Seed, NodeIndex));
+	const UDwEventDefinition* Event = FDwEventResolver::Roll(State, Pool, State.Map.Nodes[NodeIndex].Layer, GoodChance, Random);
+	State.Event.Event = Event;
+	if (Event)
+	{
+		State.SeenEvents.Add(Event);
+		UE_LOG(LogDwRun, Log, TEXT("Event at node %d: %s (%s, %d choice(s))."), NodeIndex, *Event->GetName(),
+			*StaticEnum<EDwEventValence>()->GetNameStringByValue(static_cast<int64>(Event->Valence)), Event->Choices.Num());
+	}
+	else if (Pool.IsEmpty())
+	{
+		// Only transient test content has no pool: the content script fails without a Good and a Bad event.
+		UE_LOG(LogDwRun, Log, TEXT("Event at node %d: DA_GameData.Events is empty; the player sails on."), NodeIndex);
+	}
+	else
+	{
+		UE_LOG(LogDwRun, Warning, TEXT("Event at node %d: no event in DA_GameData.Events fits layer %d; the player sails on."), NodeIndex,
+			State.Map.Nodes[NodeIndex].Layer);
+	}
+}
+
+bool UDwRun::CanChooseEventOption(int32 ChoiceIndex, FGuid CrewId, FText* OutReason) const
+{
+	auto Refuse = [OutReason](const FText& Reason)
+	{
+		if (OutReason)
+		{
+			*OutReason = Reason;
+		}
+		return false;
+	};
+	const FDwActiveEvent& Active = State.Event;
+	if (State.Phase != EDwRunPhase::Event || !Active.Event)
+	{
+		return Refuse(NSLOCTEXT("DwRun", "NoEvent", "There is no event here."));
+	}
+	if (Active.IsResolved())
+	{
+		return Refuse(NSLOCTEXT("DwRun", "EventDone", "You've already chosen."));
+	}
+	if (!Active.Event->Choices.IsValidIndex(ChoiceIndex))
+	{
+		return Refuse(NSLOCTEXT("DwRun", "NoChoice", "No such choice."));
+	}
+	const FDwEventChoice& Choice = Active.Event->Choices[ChoiceIndex];
+	const FText Blocker = FDwEventResolver::GetRequirementBlocker(State, Choice);
+	if (!Blocker.IsEmpty())
+	{
+		return Refuse(Blocker);
+	}
+	if (FDwEventResolver::NeedsChosenCrew(Choice) && !FDwEventResolver::GetChoosableCrew(State, Choice).Contains(CrewId))
+	{
+		return Refuse(NSLOCTEXT("DwRun", "PickCrew", "Choose a crew member."));
+	}
+	return true;
+}
+
+bool UDwRun::ChooseEventOption(int32 ChoiceIndex, FGuid CrewId)
+{
+	if (!RequirePhase(EDwRunPhase::Event, TEXT("ChooseEventOption")))
+	{
+		return false;
+	}
+	FText Reason;
+	if (!CanChooseEventOption(ChoiceIndex, CrewId, &Reason))
+	{
+		UE_LOG(LogDwRun, Warning, TEXT("ChooseEventOption(%d) refused: %s"), ChoiceIndex, *Reason.ToString());
+		return false;
+	}
+	FDwActiveEvent& Active = State.Event;
+	const FDwEventChoice& Choice = Active.Event->Choices[ChoiceIndex];
+	const FDwRunTuningRow* RunRow = GetRunTuning();
+
+	FRandomStream Random(FDwRunRandom::ForEvent(State.Seed, Active.Node));
+	FDwEventContext Context(State, Random);
+	Context.ChosenCrew = CrewId;
+	Context.Economy = GetEconomyTuning();
+	Context.Progression = GameData ? GameData->TuningTables.Progression.Get() : nullptr;
+	Context.MaxLevel = RunRow ? RunRow->MaxLevel : 0;
+	Context.XpMultiplier = FDwCaptainRules::GetXpMultiplier(State.Captain);
+	Context.ThresholdMultiplier = FDwCaptainRules::GetLevelThresholdMultiplier(State.Captain);
+	FDwEventResolver::Apply(Choice, Context);
+
+	Active.ChosenIndex = ChoiceIndex;
+	Active.ChosenCrew = CrewId;
+	Active.Changes = MoveTemp(Context.Changes);
+	State.PendingLevelUps = MoveTemp(Context.LevelUps);
+	NumberLevelUps();
+	State.PendingRewards = FDwRewardBundle();
+	State.PendingRewards.AbilityChoices = MoveTemp(Context.AbilityChoices);
+
+	TArray<FString> Lines;
+	for (const FText& Line : Active.Changes)
+	{
+		Lines.Add(Line.ToString());
+	}
+	UE_LOG(LogDwRun, Log, TEXT("Event %s: chose %d (%s): %s."), *Active.Event->GetName(), ChoiceIndex, *Choice.Label.ToString(),
+		Lines.IsEmpty() ? TEXT("nothing happens") : *FString::Join(Lines, TEXT("; ")));
+	Changed(State.Phase);
+	return true;
+}
+
 bool UDwRun::LeaveEvent()
 {
 	if (!RequirePhase(EDwRunPhase::Event, TEXT("LeaveEvent")))
 	{
 		return false;
 	}
+	if (State.Event.Event && !State.Event.IsResolved())
+	{
+		UE_LOG(LogDwRun, Warning, TEXT("LeaveEvent refused: choose one of %s's choices first."), *State.Event.Event->GetName());
+		return false;
+	}
+	State.Event = FDwActiveEvent();
+	if (!State.PendingRewards.AbilityChoices.IsEmpty())
+	{
+		const EDwRunPhase Old = State.Phase;
+		State.Phase = EDwRunPhase::Rewards;
+		RollCurrentLevelUp();
+		Changed(Old);
+		return true;
+	}
+	if (!State.PendingLevelUps.IsEmpty())
+	{
+		const EDwRunPhase Old = State.Phase;
+		RollCurrentLevelUp();
+		State.Phase = EDwRunPhase::LevelUp;
+		Changed(Old);
+		return true;
+	}
 	CompleteNode();
 	return true;
+}
+
+void UDwRun::NumberLevelUps()
+{
+	for (int32 Index = 0; Index < State.PendingLevelUps.Num(); ++Index)
+	{
+		State.PendingLevelUps[Index].Ordinal = Index;
+	}
 }
 
 void UDwRun::CompleteNode()
@@ -488,20 +645,10 @@ void UDwRun::QueueRewards(const FDwCombatResult& Result)
 		Gain.Xp = FMath::RoundToInt(Xp * XpMultiplier);
 		Gain.LevelsGained = Gained;
 
-		const FDwUnitTuningRow* UnitRow = Member.Unit ? Member.Unit->GetTuningRow<FDwUnitTuningRow>() : nullptr;
-		for (int32 Level = OldLevel + 1; Level <= OldLevel + Gained; ++Level)
-		{
-			FDwPendingLevelUp& LevelUp = State.PendingLevelUps.AddDefaulted_GetRef();
-			LevelUp.CrewId = Member.Id;
-			LevelUp.NewLevel = Level;
-			LevelUp.Ordinal = State.PendingLevelUps.Num() - 1;
-			if (UnitRow)
-			{
-				LevelUp.StatGain = FDwProgressionRules::GetLevelStats(*UnitRow, Level) - FDwProgressionRules::GetLevelStats(*UnitRow, Level - 1);
-			}
-		}
+		FDwProgressionRules::AppendLevelUps(State.PendingLevelUps, Member, OldLevel);
 		UE_CLOG(Gained > 0, LogDwRun, Log, TEXT("%s gained %d XP: level %d -> %d."), *Member.GetDisplayName().ToString(), Gain.Xp, OldLevel, Member.Level);
 	}
+	NumberLevelUps();
 	RollCurrentLevelUp(); // the rewards screen can preview the first one
 
 	const FDwRewardBundle& Bundle = State.PendingRewards;

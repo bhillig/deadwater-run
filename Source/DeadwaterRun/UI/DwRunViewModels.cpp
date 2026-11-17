@@ -3,9 +3,12 @@
 #include "UI/DwRunViewModels.h"
 
 #include "Data/DwAbilityDefinition.h"
+#include "Data/DwEventDefinition.h"
 #include "Data/DwItemDefinition.h"
 #include "Data/DwPerkDefinition.h"
 #include "Run/DwRun.h"
+#include "Run/Events/DwEventOutcome.h"
+#include "Run/Events/DwEventResolver.h"
 
 #define LOCTEXT_NAMESPACE "DwRunScreens"
 
@@ -318,6 +321,7 @@ void UDwRewardsViewModel::Refresh()
 		case EDwCombatOutcome::VictorySunk:         Headline = LOCTEXT("Sunk", "Their ship is sunk"); break;
 		case EDwCombatOutcome::VictoryCrewDefeated: Headline = LOCTEXT("Plunder", "Their crew is beaten - plunder!"); break;
 		case EDwCombatOutcome::VictorySurrender:    Headline = LOCTEXT("Surrender", "They surrendered - plunder!"); break;
+		case EDwCombatOutcome::None:                Headline = LOCTEXT("EventLearn", "Something to learn"); break; // an event's Ability Choice
 		default:                                    Headline = LOCTEXT("Victory", "Victory"); break;
 		}
 		Lines.Add(FText::Format(LOCTEXT("Gold", "+{0} gold"), R.Gold));
@@ -440,33 +444,148 @@ void UDwNodeShellViewModel::Refresh()
 {
 	UDwRun* TheRun = GetRun();
 	const EDwRunPhase Phase = TheRun ? TheRun->GetPhase() : EDwRunPhase::Map;
-	if (!Leave)
-	{
-		Leave = NewObject<UDwChoiceViewModel>(this);
-	}
-	FDwChoiceView View;
+	int32 Count = 0;
 	if (Phase == EDwRunPhase::Shop)
 	{
 		Headline = LOCTEXT("ShopTitle", "Shop");
-		Body = FText::Format(LOCTEXT("ShopBody", "You have {0} gold.\nThe shopkeeper is still unpacking (shop: DW-204)."), TheRun->GetState().Gold);
+		Body = FText::Format(LOCTEXT("ShopBody", "You have {0} gold.\nThe shopkeeper is still unpacking (shop screen: next UI ticket)."), TheRun->GetState().Gold);
+		FDwChoiceView View;
 		View.Title = LOCTEXT("LeaveShop", "Leave the shop");
-		Leave->Set(View, [this]() { UDwRun* R = GetRun(); return R && R->LeaveShop(); });
+		Choice(Actions, Count++)->Set(View, [this]() { UDwRun* R = GetRun(); return R && R->LeaveShop(); });
 	}
 	else if (Phase == EDwRunPhase::Event)
 	{
-		Headline = LOCTEXT("EventTitle", "Something on the horizon");
-		Body = LOCTEXT("EventBody", "Nothing happens... yet (events: DW-205).");
-		View.Title = LOCTEXT("LeaveEvent", "Sail on");
-		Leave->Set(View, [this]() { UDwRun* R = GetRun(); return R && R->LeaveEvent(); });
+		RefreshEvent(*TheRun, Count);
 	}
 	else
 	{
 		Headline = Body = FText::GetEmpty();
-		View.bEnabled = false;
-		View.DisabledReason = LOCTEXT("NotHere", "Not at a shop or event.");
-		Leave->Set(View, nullptr);
+		PendingChoice = PendingNode = INDEX_NONE;
 	}
+	Actions.SetNum(Count);
 	NotifyChanged();
+}
+
+void UDwNodeShellViewModel::RefreshEvent(const UDwRun& TheRun, int32& Count)
+{
+	const FDwRunState& S = TheRun.GetState();
+	const FDwActiveEvent& Active = TheRun.GetEvent();
+	const UDwEventDefinition* Event = Active.Event;
+	if (PendingNode != Active.Node)
+	{
+		PendingNode = Active.Node;
+		PendingChoice = INDEX_NONE;
+	}
+	auto Continue = [this, &Count](const FText& Title)
+	{
+		FDwChoiceView View;
+		View.Title = Title;
+		Choice(Actions, Count++)->Set(View, [this]() { UDwRun* R = GetRun(); return R && R->LeaveEvent(); });
+	};
+
+	// No event fits this layer: calm water.
+	if (!Event)
+	{
+		Headline = LOCTEXT("CalmTitle", "Calm water");
+		Body = LOCTEXT("CalmBody", "The sea is quiet. Nothing stirs on the horizon.");
+		Continue(LOCTEXT("SailOn", "Sail on"));
+		return;
+	}
+	Headline = Event->Title;
+
+	// 3. Resolved: what happened.
+	if (Active.IsResolved())
+	{
+		TArray<FString> Lines;
+		if (Event->Choices.IsValidIndex(Active.ChosenIndex))
+		{
+			Lines.Add(Event->Choices[Active.ChosenIndex].ResultText.ToString());
+		}
+		Lines.Add(FString());
+		for (const FText& Change : Active.Changes)
+		{
+			Lines.Add(Change.ToString());
+		}
+		Body = FText::FromString(FString::Join(Lines, TEXT("\n")).TrimEnd());
+		Continue(LOCTEXT("Continue", "Continue"));
+		return;
+	}
+
+	// 2. Picking who the choice lands on.
+	if (Event->Choices.IsValidIndex(PendingChoice))
+	{
+		const FDwEventChoice& Pending = Event->Choices[PendingChoice];
+		Body = FText::Format(LOCTEXT("PickWho", "{0}\n\n{1}: choose a crew member."), Event->Body, Pending.Label);
+		for (const FGuid& Id : FDwEventResolver::GetChoosableCrew(S, Pending))
+		{
+			const FDwCrewMemberState* Member = S.FindCrew(Id);
+			FDwChoiceView View;
+			View.Title = DwRunScreens::CrewName(S, Id);
+			View.Body = Member ? FText::Format(LOCTEXT("CrewHp", "{0} / {1} HP"), FMath::RoundToInt(Member->Health), FMath::RoundToInt(Member->GetMaxHealth()))
+				: FText::GetEmpty();
+			const int32 Index = PendingChoice;
+			Choice(Actions, Count++)->Set(View, [this, Index, Id]() { UDwRun* R = GetRun(); return R && R->ChooseEventOption(Index, Id); });
+		}
+		FDwChoiceView Back;
+		Back.Title = LOCTEXT("Back", "Back");
+		Choice(Actions, Count++)->Set(Back, [this]() { return CancelCrewPick(); });
+		return;
+	}
+
+	// 1. The choices.
+	Body = Event->Body;
+	for (int32 Index = 0; Index < Event->Choices.Num(); ++Index)
+	{
+		const FDwEventChoice& EventChoice = Event->Choices[Index];
+		FDwChoiceView View;
+		View.Title = EventChoice.Label;
+		TArray<FString> Parts;
+		for (const UDwEventOutcome* Outcome : EventChoice.Outcomes)
+		{
+			const FText Line = Outcome ? Outcome->Describe() : FText::GetEmpty();
+			if (!Line.IsEmpty())
+			{
+				Parts.Add(Line.ToString());
+			}
+		}
+		View.Body = FText::FromString(FString::Join(Parts, TEXT("\n")));
+		const FText Blocker = FDwEventResolver::GetRequirementBlocker(S, EventChoice);
+		View.bEnabled = Blocker.IsEmpty();
+		View.DisabledReason = Blocker;
+		Choice(Actions, Count++)->Set(View, [this, Index]() { return SelectEventChoice(Index); });
+	}
+}
+
+bool UDwNodeShellViewModel::SelectEventChoice(int32 Index)
+{
+	UDwRun* TheRun = GetRun();
+	const UDwEventDefinition* Event = TheRun ? TheRun->GetEvent().Event.Get() : nullptr;
+	if (!Event || !Event->Choices.IsValidIndex(Index) || TheRun->GetEvent().IsResolved())
+	{
+		return false;
+	}
+	if (FDwEventResolver::NeedsChosenCrew(Event->Choices[Index]))
+	{
+		if (!FDwEventResolver::GetRequirementBlocker(TheRun->GetState(), Event->Choices[Index]).IsEmpty())
+		{
+			return false;
+		}
+		PendingChoice = Index;
+		Refresh();
+		return true;
+	}
+	return TheRun->ChooseEventOption(Index, FGuid());
+}
+
+bool UDwNodeShellViewModel::CancelCrewPick()
+{
+	if (PendingChoice == INDEX_NONE)
+	{
+		return false;
+	}
+	PendingChoice = INDEX_NONE;
+	Refresh();
+	return true;
 }
 
 #undef LOCTEXT_NAMESPACE
