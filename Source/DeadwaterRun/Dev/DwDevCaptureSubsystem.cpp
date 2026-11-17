@@ -593,39 +593,21 @@ void UDwDevCaptureSubsystem::CaptainDemoStep()
 			What = TEXT("Charge");
 			if (!bCaptainDemoMoved)
 			{
-				// Step to a tile from which a straight line of up to 6 tiles reaches an enemy (try the nearest first).
+				// Demo staging (like the "run" demo): open a lane - the first direction with 3+ free tiles from the captain -
+				// and put the nearest enemy at its end, so the charge has someone to hit.
 				bCaptainDemoMoved = true;
 				const FDwCombatSnapshot Board = Combat->GetSnapshot();
-				TArray<FIntPoint> Starts;
-				for (int32 Index = 0; Index < Board.Grid.Tiles.Num(); ++Index)
+				for (const FIntPoint& Dir : FDwGridModel::Directions)
 				{
-					const FIntPoint Tile = Board.Grid.ToTile(Index);
-					if (!Board.Grid.IsStandable(Tile) || Board.Grid.IsOccupied(Tile))
+					const FDwLineHit Lane = FDwTargetingQuery::FirstUnitAlongLine(Board.Grid, Board.GridRules, Captain->GetTile(), Dir, 6);
+					const FIntPoint Run3 = Lane.StopTile - Captain->GetTile();
+					if (!Lane.Unit.IsSet() && FMath::Abs(Run3.X) + FMath::Abs(Run3.Y) >= 3 && !Enemies.IsEmpty())
 					{
-						continue;
-					}
-					for (const FIntPoint& Dir : FDwGridModel::Directions)
-					{
-						const FDwLineHit Hit = FDwTargetingQuery::FirstUnitAlongLine(Board.Grid, Board.GridRules, Tile, Dir, 6);
-						const FDwUnitSnapshot* Met = Hit.Unit.IsSet() ? Board.FindUnit(Hit.Unit.Unit) : nullptr;
-						if (Met && Met->Side == EDwSide::Enemy && Hit.StopTile != Tile)
-						{
-							Starts.AddUnique(Tile);
-						}
-					}
-				}
-				const FIntPoint From = Captain->GetTile();
-				Starts.Sort([From](const FIntPoint& A, const FIntPoint& B) { return (A - From).Size() < (B - From).Size(); });
-				for (const FIntPoint& Tile : Starts)
-				{
-					if (Combat->SubmitCommand(FDwCombatCommand::MakeMove(Captain->GetHandle(), Tile)) == EDwCommandResult::Accepted)
-					{
-						UE_LOG(LogDw, Log, TEXT("Dev capture 'captain': the Conqueror steps to (%d, %d) to charge."), Tile.X, Tile.Y);
+						Combat->MoveUnit(Enemies[0]->GetHandle(), Lane.StopTile, /*bSnapActor*/ true);
+						UE_LOG(LogDw, Log, TEXT("Dev capture captain: staged an enemy at (%d, %d) for the charge."), Lane.StopTile.X, Lane.StopTile.Y);
 						break;
 					}
 				}
-				Next(2.0f);
-				return;
 			}
 			if (Combat->IsResolving())
 			{
