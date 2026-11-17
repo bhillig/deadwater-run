@@ -1,0 +1,263 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_RivalsCache",
+      "title": "The Rival's Cache",
+      "body": "A tarred barrel bobs on a short line, painted with a rival crew's mark. Below it, the rope runs taut into green water. Someone sank their plunder here and meant to come back for it.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Haul it up fast",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 60
+            }
+          ],
+          "resultText": "The line snaps halfway up and the chest goes back to the deep. You keep the purse that was lashed to the rope."
+        },
+        {
+          "label": "Bring up the whole chest",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 3,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 150
+                    }
+                  ]
+                },
+                {
+                  "weight": 2,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 20
+                    },
+                    {
+                      "type": "ShipHealth",
+                      "delta": -50
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "Either the chest comes up heavy and nobody comes looking, or its owners show up and put a broadside into your hull while you're still hauling."
+        },
+        {
+          "label": "Leave their mark alone",
+          "requirements": [],
+          "outcomes": [],
+          "resultText": "You sail on. Nothing happens, and some days that's the best you'll get."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_DesertersLongboat",
+      "title": "Deserters in a Longboat",
+      "body": "A longboat bumps against your hull. The sailors in it walked off a rival ship two nights ago and haven't eaten since. One still has a sword and another has a long rifle wrapped in sailcloth.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Sign the swordsman",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Recruit",
+              "unit": "Swordsman"
+            }
+          ],
+          "resultText": "The swordsman climbs aboard and asks where to sleep. If your deck is already full, they take one look and row on."
+        },
+        {
+          "label": "Pay the marksman's price",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 40
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -40
+            },
+            {
+              "type": "Recruit",
+              "unit": "Sniper"
+            }
+          ],
+          "resultText": "The marksman counts your coin twice before unwrapping the rifle. If your deck is already full, they keep the coin anyway and call it a fee."
+        },
+        {
+          "label": "Trade rations for medicine",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -20
+            },
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 2
+            }
+          ],
+          "resultText": "They give up two stolen medicine kits for a sack of hardtack and a few coins. Nobody asks whose they were."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_SquallLine",
+      "title": "Squall Line",
+      "body": "The horizon goes black from end to end. The wind turns against you, and the first rain hits the deck sideways. You have a minute to decide how to take it.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Run before the wind",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -45
+            }
+          ],
+          "resultText": "You outrun the worst of it, but the hull takes a beating from the waves on the way."
+        },
+        {
+          "label": "Reef sails and hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -20,
+              "selector": "All"
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -15
+            }
+          ],
+          "resultText": "Everyone works the rigging until their hands bleed. The ship mostly holds."
+        },
+        {
+          "label": "Drive straight through",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -10
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -70
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "You find either a gap in the storm or the very worst of it. Whatever the sea took, it took fast."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_MutteringsBelowDeck",
+      "title": "Mutterings Below Deck",
+      "body": "The talk stops whenever you go below. Too many fights and too few shares have soured the crew. By morning, somebody will act on it.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Pay out shares",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 60
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -60
+            }
+          ],
+          "resultText": "Coin goes around the deck and the muttering stops. For now."
+        },
+        {
+          "label": "Settle it with fists",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -30,
+              "selector": "Captain"
+            }
+          ],
+          "resultText": "The captain takes the ringleader on in front of everyone and wins, barely. No one mutters after that."
+        },
+        {
+          "label": "Let it fester",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 2,
+                  "outcomes": [
+                    {
+                      "type": "CrewHealth",
+                      "delta": -20,
+                      "selector": "All"
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "LoseCrew",
+                      "selector": "Random"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "Either a brawl breaks out below deck and everyone gets hurt, or you wake to find a crewmate gone with the spare longboat."
+        }
+      ]
+    }
+  ],
+  "notes": "- Brief coverage: layers 4-6 on all four events. 2 Good (RivalsCache, DesertersLongboat), 2 Bad (SquallLine, MutteringsBelowDeck). Theme: rival leftovers (Cache, Deserters), bad weather (Squall), crew under strain (Mutterings).\n- Crew roster: Recruit (Swordsman, Sniper) in DesertersLongboat. LoseCrew Random in MutteringsBelowDeck, which never takes the captain.\n- Gambles (RandomOf): RivalsCache (3:2, +150 gold vs +20 gold and -50 ship), SquallLine (1:1, -10 vs -70 ship), Mutterings (2:1, -20 all crew vs lose a crewmate).\n- Damage-limiting options in the Bad events: Squall has two sure costs and one gamble. Mutterings has a sure captain-HP cost with no requirements, so a broke player can always avoid the LoseCrew gamble.\n- Guardrails: gold within +150/-60, ship loss at most 70, crew delta at most 30, item count 2. No banned words.\n- RivalsCache 'Leave their mark alone' has no outcomes. This is allowed because its result text says nothing happens.\n- Deserters medicine trade: 2 HealthRestore for 20 gold, against the 30 each charged at shops. That's a deliberate good-event bargain. Brandon to confirm.\n- Idea for Brandon: there's no CrewCountAtMost requirement (or 'crew not full'). With a full crew of 4, the Recruit choices do nothing, and the Sniper choice still takes 40 gold. The result text admits this, but a requirement that disables the button would be cleaner.\n- Idea for Brandon: a ShipHealth/Gold requirement (e.g. MinShipHealth) would let the Squall 'Drive straight through' choice show the stakes better."
+}

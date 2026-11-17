@@ -1,0 +1,270 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_RivalsCache",
+      "title": "The Rival's Cache",
+      "body": "A tarred barrel bobs on a short line, painted with a rival crew's mark. Below it, the rope runs taut into green water. Someone sank their plunder here and meant to come back for it.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Cut the purse free",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 50
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -15,
+              "selector": "Chosen"
+            }
+          ],
+          "resultText": "Your diver saws through the line and comes up with a fat purse and a gashed arm."
+        },
+        {
+          "label": "Bring up the whole chest",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 3,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 150
+                    }
+                  ]
+                },
+                {
+                  "weight": 2,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 20
+                    },
+                    {
+                      "type": "ShipHealth",
+                      "delta": -50
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "You get a hook on the chest and start hauling. The sea decides the rest."
+        },
+        {
+          "label": "Strip the marker barrel",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 1
+            }
+          ],
+          "resultText": "Under the tar, the barrel is packed with someone's spare medicine. You leave the line to its owners."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_DesertersLongboat",
+      "title": "Deserters in a Longboat",
+      "body": "A longboat bumps against your hull. The sailors in it walked off a rival ship two nights ago and haven't eaten since. One still has a sword and another has a long rifle wrapped in sailcloth.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Wave the swordsman aboard",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Recruit",
+              "unit": "Swordsman"
+            }
+          ],
+          "resultText": "You wave the swordsman over the rail. Whether there's a bunk to spare is another matter."
+        },
+        {
+          "label": "Wave the marksman aboard",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Recruit",
+              "unit": "Sniper"
+            }
+          ],
+          "resultText": "You wave the marksman over the rail. Whether there's a bunk to spare is another matter."
+        },
+        {
+          "label": "Trade rations for medicine",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 20
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -20
+            },
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 2
+            }
+          ],
+          "resultText": "They give up two stolen medicine kits for a sack of hardtack and a few coins. Nobody asks whose they were."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_SquallLine",
+      "title": "Squall Line",
+      "body": "The horizon goes black from end to end. The wind turns against you, and the first rain hits the deck sideways. You have a minute to decide how to take it.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Run before the wind",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -45
+            }
+          ],
+          "resultText": "You outrun the worst of it, but the hull takes a beating from the waves on the way."
+        },
+        {
+          "label": "Reef sails and hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -20,
+              "selector": "All"
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -15
+            }
+          ],
+          "resultText": "Everyone works the rigging until their hands bleed. The ship mostly holds."
+        },
+        {
+          "label": "Drive straight through",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -10
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -70
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "You put the bow into the black and hold on. Whatever the sea took, it took fast."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_MutteringsBelowDeck",
+      "title": "Mutterings Below Deck",
+      "body": "The talk stops whenever you go below. Too many fights and too few shares have soured the crew. By morning, somebody will act on it.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Pay out shares",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 50
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -50
+            }
+          ],
+          "resultText": "Coin goes around the deck and the muttering stops. For now."
+        },
+        {
+          "label": "Settle it with fists",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -50,
+              "selector": "Captain"
+            }
+          ],
+          "resultText": "The captain takes the ringleader on in front of everyone and wins, barely. No one mutters after that."
+        },
+        {
+          "label": "Let it fester",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 2,
+                  "outcomes": [
+                    {
+                      "type": "CrewHealth",
+                      "delta": -20,
+                      "selector": "All"
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "LoseCrew",
+                      "selector": "Random"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "You leave them to it and turn in. By morning, the crew has settled it their own way."
+        }
+      ]
+    }
+  ],
+  "notes": "Fixes:\n- RivalsCache dead button (major): I took out 'Leave their mark alone'. The sure-gold choice is now 'Cut the purse free': +50 gold and -15 HP to a Chosen crewmate. The new third choice, 'Strip the marker barrel', gives 1 HealthRestore. That's about 30 gold of value with no HP cost, but it uses an inventory slot. All three choices now trade something different: HP for gold, a gamble, or a sure item. The chest gamble is unchanged.\n- RandomOf result text (major): every 'Either... or...' hedge is gone. Each text is now one line that's true for every branch. Chest: 'You get a hook on the chest... The sea decides the rest.' Squall: 'You put the bow into the black... Whatever the sea took, it took fast.' Mutterings: 'By morning, the crew has settled it their own way.' The Recruit texts no longer spell out the full-crew case. They read 'Whether there's a bunk to spare is another matter', which is true either way.\n- DesertersLongboat trap (major): I removed the Gold -40 from the Sniper choice. Both recruits are now free and can't waste gold. The pick is which role you add. The medicine trade now needs MinGold 20, so the item isn't free at 0 gold. A broke player can still pick a recruit choice, so they're never stuck.\n- Mutterings dominance (major): I did both of the critic's suggestions. The fight now costs -50 HP on the Captain (the guardrail max), and paying out costs 50 gold instead of 60. The two sure choices now cost about the same in different currencies. Losing 50 HP on the captain is a real risk going into the next fight.\n\nBrief coverage: layers 4-6. 2 Good (RivalsCache, DesertersLongboat) and 2 Bad (SquallLine, MutteringsBelowDeck). Recruit is in Deserters and LoseCrew Random is in Mutterings (it never takes the captain). RandomOf is in Cache, Squall and Mutterings. Guardrails: gold between +150 and -50, ship loss at most 70, crew loss at most 50, items at most 2. No banned words.\n\nOpen for Brandon:\n- Deserters is still weak with a full crew of 4. Both recruit buttons do nothing, so only the medicine trade has any effect. A 'crew not full' requirement (CrewCountAtMost) would let those buttons disable cleanly. Until that exists, you could hold this event.\n- The Mutterings fists cost assumes crew HP carries between nodes. If HP refills, -50 captain HP is close to free and Pay should drop further.\n- A MinShipHealth requirement would let Squall show its stakes more clearly. This is an idea only."
+}

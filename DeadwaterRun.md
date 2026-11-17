@@ -199,6 +199,18 @@
 - **Input & Output**: Prompt -> Asset options report
 - **What the player sees**: A consistent look and sound across the whole game
 
+#### Event Writer
+
+- **Role**: Drafts map events (text, choices, outcomes) in the event data format from a brief. Drafts only; Brandon approves and adds every event
+- **Input & Output**: Brief + GDD/tuning facts -> Event drafts (JSON + readable sheet)
+- **What the player sees**: A drifting wreck asks whether to risk the crew for the gold in its hold
+
+#### Content Critic
+
+- **Role**: Reviews any generated content against the GDD, tuning data, architecture docs and voice sheet. Read-only; returns findings
+- **Input & Output**: Generated content + game facts -> Findings (blocker/major/minor) and a voice score
+- **What the player sees**: Events and text that sound like one game and never promise what the game can't do
+
 #### Working together
 
 - All systems must work together - no system is implemented in a silo

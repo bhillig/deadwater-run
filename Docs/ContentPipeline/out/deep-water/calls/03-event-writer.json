@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 38690,
+  "stop_reason": "end_turn",
+  "session_id": "f410aa3c-9a2f-4e91-9094-9e76195df733",
+  "total_cost_usd": 0.1868718,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 12421,
+    "cache_read_input_tokens": 3379,
+    "output_tokens": 4341,
+    "output_tokens_details": {
+      "thinking_tokens": 1111
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 12421,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 4341,
+        "cache_read_input_tokens": 3379,
+        "cache_creation_input_tokens": 12421,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 12421
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 4341,
+      "cacheReadInputTokens": 3379,
+      "cacheCreationInputTokens": 12421,
+      "webSearchRequests": 0,
+      "costUSD": 0.1868718,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1111,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 12421,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"events\": [\n    {\n      \"id\": \"DA_Event_RivalsCache\",\n      \"title\": \"The Rival's Cache\",\n      \"body\": \"A tarred barrel bobs on a short line, painted with a rival crew's mark. Below it, the rope runs taut into green water. Someone sank their plunder here and meant to come back for it.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 4,\n      \"maxLayer\": 6,\n      \"choices\": [\n        {\n          \"label\": \"Cut the purse free\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 50 },\n            { \"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"Chosen\" }\n          ],\n          \"resultText\": \"Your diver saws through the line and comes up with a fat purse and a gashed arm.\"\n        },\n        {\n          \"label\": \"Bring up the whole chest\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                { \"weight\": 3, \"outcomes\": [ { \"type\": \"Gold\", \"delta\": 150 } ] },\n                { \"weight\": 2, \"outcomes\": [ { \"type\": \"Gold\", \"delta\": 20 }, { \"type\": \"ShipHealth\", \"delta\": -50 } ] }\n              ]\n            }\n          ],\n          \"resultText\": \"You get a hook on the chest and start hauling. The sea decides the rest.\"\n        },\n        {\n          \"label\": \"Strip the marker barrel\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 1 }\n          ],\n          \"resultText\": \"Under the tar, the barrel is packed with someone's spare medicine. You leave the line to its owners.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_DesertersLongboat\",\n      \"title\": \"Deserters in a Longboat\",\n      \"body\": \"A longboat bumps against your hull. The sailors in it walked off a rival ship two nights ago and haven't eaten since. One still has a sword and another has a long rifle wrapped in sailcloth.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 4,\n      \"maxLayer\": 6,\n      \"choices\": [\n        {\n          \"label\": \"Wave the swordsman aboard\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Recruit\", \"unit\": \"Swordsman\" }\n          ],\n          \"resultText\": \"You wave the swordsman over the rail. Whether there's a bunk to spare is another matter.\"\n        },\n        {\n          \"label\": \"Wave the marksman aboard\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Recruit\", \"unit\": \"Sniper\" }\n          ],\n          \"resultText\": \"You wave the marksman over the rail. Whether there's a bunk to spare is another matter.\"\n        },\n        {\n          \"label\": \"Trade rations for medicine\",\n          \"requirements\": [\n            { \"type\": \"MinGold\", \"amount\": 20 }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -20 },\n            { \"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 2 }\n          ],\n          \"resultText\": \"They give up two stolen medicine kits for a sack of hardtack and a few coins. Nobody asks whose they were.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_SquallLine\",\n      \"title\": \"Squall Line\",\n      \"body\": \"The horizon goes black from end to end. The wind turns against you, and the first rain hits the deck sideways. You have a minute to decide how to take it.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 4,\n      \"maxLayer\": 6,\n      \"choices\": [\n        {\n          \"label\": \"Run before the wind\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": -45 }\n          ],\n          \"resultText\": \"You outrun the worst of it, but the hull takes a beating from the waves on the way.\"\n        },\n        {\n          \"label\": \"Reef sails and hold\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -20, \"selector\": \"All\" },\n            { \"type\": \"ShipHealth\", \"delta\": -15 }\n          ],\n          \"resultText\": \"Everyone works the rigging until their hands bleed. The ship mostly holds.\"\n        },\n        {\n          \"label\": \"Drive straight through\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                { \"weight\": 1, \"outcomes\": [ { \"type\": \"ShipHealth\", \"delta\": -10 } ] },\n                { \"weight\": 1, \"outcomes\": [ { \"type\": \"ShipHealth\", \"delta\": -70 } ] }\n              ]\n            }\n          ],\n          \"resultText\": \"You put the bow into the black and hold on. Whatever the sea took, it took fast.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_MutteringsBelowDeck\",\n      \"title\": \"Mutterings Below Deck\",\n      \"body\": \"The talk stops whenever you go below. Too many fights and too few shares have soured the crew. By morning, somebody will act on it.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 4,\n      \"maxLayer\": 6,\n      \"choices\": [\n        {\n          \"label\": \"Pay out shares\",\n          \"requirements\": [\n            { \"type\": \"MinGold\", \"amount\": 50 }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -50 }\n          ],\n          \"resultText\": \"Coin goes around the deck and the muttering stops. For now.\"\n        },\n        {\n          \"label\": \"Settle it with fists\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -50, \"selector\": \"Captain\" }\n          ],\n          \"resultText\": \"The captain takes the ringleader on in front of everyone and wins, barely. No one mutters after that.\"\n        },\n        {\n          \"label\": \"Let it fester\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                { \"weight\": 2, \"outcomes\": [ { \"type\": \"CrewHealth\", \"delta\": -20, \"selector\": \"All\" } ] },\n                { \"weight\": 1, \"outcomes\": [ { \"type\": \"LoseCrew\", \"selector\": \"Random\" } ] }\n              ]\n            }\n          ],\n          \"resultText\": \"You leave them to it and turn in. By morning, the crew has settled it their own way.\"\n        }\n      ]\n    }\n  ],\n  \"notes\": \"Fixes:\\n- RivalsCache dead button (major): I took out 'Leave their mark alone'. The sure-gold choice is now 'Cut the purse free': +50 gold and -15 HP to a Chosen crewmate. The new third choice, 'Strip the marker barrel', gives 1 HealthRestore. That's about 30 gold of value with no HP cost, but it uses an inventory slot. All three choices now trade something different: HP for gold, a gamble, or a sure item. The chest gamble is unchanged.\\n- RandomOf result text (major): every 'Either... or...' hedge is gone. Each text is now one line that's true for every branch. Chest: 'You get a hook on the chest... The sea decides the rest.' Squall: 'You put the bow into the black... Whatever the sea took, it took fast.' Mutterings: 'By morning, the crew has settled it their own way.' The Recruit texts no longer spell out the full-crew case. They read 'Whether there's a bunk to spare is another matter', which is true either way.\\n- DesertersLongboat trap (major): I removed the Gold -40 from the Sniper choice. Both recruits are now free and can't waste gold. The pick is which role you add. The medicine trade now needs MinGold 20, so the item isn't free at 0 gold. A broke player can still pick a recruit choice, so they're never stuck.\\n- Mutterings dominance (major): I did both of the critic's suggestions. The fight now costs -50 HP on the Captain (the guardrail max), and paying out costs 50 gold instead of 60. The two sure choices now cost about the same in different currencies. Losing 50 HP on the captain is a real risk going into the next fight.\\n\\nBrief coverage: layers 4-6. 2 Good (RivalsCache, DesertersLongboat) and 2 Bad (SquallLine, MutteringsBelowDeck). Recruit is in Deserters and LoseCrew Random is in Mutterings (it never takes the captain). RandomOf is in Cache, Squall and Mutterings. Guardrails: gold between +150 and -50, ship loss at most 70, crew loss at most 50, items at most 2. No banned words.\\n\\nOpen for Brandon:\\n- Deserters is still weak with a full crew of 4. Both recruit buttons do nothing, so only the medicine trade has any effect. A 'crew not full' requirement (CrewCountAtMost) would let those buttons disable cleanly. Until that exists, you could hold this event.\\n- The Mutterings fists cost assumes crew HP carries between nodes. If HP refills, -50 captain HP is close to free and Pay should drop further.\\n- A MinShipHealth requirement would let Squall show its stakes more clearly. This is an idea only.\"\n}\n```",
+  "ttft_ms": 15174,
+  "type": "result",
+  "duration_ms": 38814,
+  "uuid": "f095ee41-533f-44c4-9efe-38445f92fa17",
+  "ttft_stream_ms": 2782,
+  "time_to_request_ms": 122,
+  "first_content_frame_ms": 2783,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

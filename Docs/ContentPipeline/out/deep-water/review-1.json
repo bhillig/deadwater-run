@@ -1,0 +1,84 @@
+{
+  "code": [],
+  "critic": {
+    "verdict": "revise",
+    "voice": {
+      "score": 4,
+      "sounds_like_deadwater_run": true,
+      "why": "The bodies are tight and concrete and use second person, and the stakes are physical. They sound like Deadwater Run. The weak spots are the result texts that cover both gamble branches with 'Either X, or Y', and one line that slips into third person.",
+      "weakest_lines": [
+        "Either the chest comes up heavy and nobody comes looking, or its owners show up and put a broadside into your hull while you're still hauling.",
+        "Either a brawl breaks out below deck and everyone gets hurt, or you wake to find a crewmate gone with the spare longboat.",
+        "You find either a gap in the storm or the very worst of it.",
+        "The captain takes the ringleader on in front of everyone and wins, barely.",
+        "If your deck is already full, they take one look and row on."
+      ]
+    },
+    "findings": [
+      {
+        "severity": "major",
+        "event": "DA_Event_RivalsCache",
+        "field": "choices[2]",
+        "rule": "No strictly dominated choice",
+        "problem": "'Haul it up fast' gives a sure +60 gold with no cost and no requirement. 'Leave their mark alone' gives nothing, and the game has no state where nothing beats free gold. So 'Leave' is a dead button, not a decision.",
+        "fix": "Give 'Haul it up fast' a small real cost so leaving it can be the right call. One option is a small RandomOf with a minor ShipHealth or CrewHealth hit. Another is to swap 'Leave' for a choice with its own trade-off. Keep the 'Bring up the whole chest' gamble as it is (EV is about +78 gold-equivalent against the sure +60, which is a fair gamble)."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_DesertersLongboat",
+        "field": "choices[1].outcomes",
+        "rule": "No trap choices / text matches data",
+        "problem": "With a full crew of 4, 'Pay the marksman's price' still takes the 40 gold and Recruit does nothing. It's a pure loss in a Good event. The result text admits this, but the button stays enabled and the label still promises a marksman. Requirements can't gate on 'crew not full'. CrewCountAtLeast is the only crew requirement, and the writer is right that there's no AtMost.",
+        "fix": "Remove the Gold -40 so the choice is a free pick between Swordsman and Sniper, and put the cost somewhere that can't go to waste. Or hold this event until Brandon adds a 'crew not full' requirement (see open questions)."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_MutteringsBelowDeck",
+        "field": "choices[1].outcomes[0]",
+        "rule": "No strictly dominant choice / costs bite harder",
+        "problem": "'Settle it with fists' costs 30 captain HP with no requirement, and event damage floors at 1. A HealthRestore costs 30 gold at shops, so the fight costs about 30 gold or less. 'Pay out shares' costs 60 gold, so in practice it's never the right pick. If crew HP refills between nodes, the fight is almost free, which also undercuts the brief's 'costs bite harder now'.",
+        "fix": "Raise the fight cost toward the guardrail (CrewHealth -50 on Captain) or cut Pay to about 30-40 gold, so the two sure options cost roughly the same in different currencies."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_RivalsCache",
+        "field": "choices[1].resultText",
+        "rule": "Voice: result text for RandomOf",
+        "problem": "FDwEventChoice has one ResultText per choice, so the writer has listed both branches with 'Either... or...'. After the roll, the player reads a hedge instead of what happened, and it breaks the present-tense, concrete voice. The same pattern is in SquallLine choices[2].resultText and MutteringsBelowDeck choices[2].resultText, and DesertersLongboat uses it for full-crew cases ('If your deck is already full...').",
+        "fix": "Write one line that's true for every branch and leave the specifics to the change log. For example, for the chest: 'You get a hook on the chest and start hauling. The sea decides the rest.' For the squall, cut 'You find either a gap in the storm or the very worst of it.' and keep 'Whatever the sea took, it took fast.' Do the same for Mutterings and the Recruit texts."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_DesertersLongboat",
+        "field": "choices[2].requirements",
+        "rule": "Requirement matches cost",
+        "problem": "'Trade rations for medicine' takes 20 gold but has no MinGold requirement. Gold floors at 0, so a broke player gets two HealthRestore for free while the result text says they paid 'a few coins'.",
+        "fix": "Add { \"type\": \"MinGold\", \"amount\": 20 }, matching how choices[1] gates its 40 gold."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_MutteringsBelowDeck",
+        "field": "choices[1].resultText",
+        "rule": "Voice: second person",
+        "problem": "'The captain takes the ringleader on in front of everyone and wins, barely.' The player is the captain, and the voice sheet asks for second person.",
+        "fix": "'You take the ringleader on in front of everyone and win, barely. No one mutters after that.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_RivalsCache",
+        "field": "choices[1].outcomes[0].options[1]",
+        "rule": "Fit: rival crew without a fight",
+        "problem": "In the bad branch, the cache's owners 'show up' and fire a broadside, then the event ends with no fight. That's fine mechanically, but it's an odd beat in a game where meeting a rival crew means a fight.",
+        "fix": "Optional: make the damage the cache's own trap or the strain of hauling it (e.g. a fouled line that tears into the hull) rather than the rival crew arriving."
+      }
+    ],
+    "code_check_disputes": [],
+    "open_questions": [
+      "Should events get a 'crew not full' requirement (e.g. CrewCountAtMost)? Without it, any Recruit choice that costs gold is a trap with a full crew of 4.",
+      "Should RandomOf options get their own result text? Without it, every gamble's result text has to stay vague or list every branch.",
+      "Does crew HP carry over between nodes or refill after fights? This decides how much the CrewHealth costs in SquallLine and MutteringsBelowDeck actually hurt.",
+      "What happens when GiveItem would go over the 6-item inventory cap? Does it fail gracefully, add only part, or block the choice? It matters for the Deserters medicine trade.",
+      "Is two HealthRestore for 20 gold (half the shop price) an acceptable Good-event bargain? The writer flagged this too."
+    ]
+  }
+}

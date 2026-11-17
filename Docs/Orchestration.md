@@ -25,6 +25,10 @@ The roster is defined in `DeadwaterRun.md` → "AI Agents". Definitions live in 
 | `sound-wrangler` | Sound .uassets, mixes, combat sound cues (Uses Sonnet 5.5) |
 | `release-engineer` | Packaging, Steamworks, store page and release checklists (Uses Sonnet 5.5) |
 | `asset-scraper` | Third-party asset options (read-only, never imports) (Uses Sonnet 5.5)|
+| `event-writer` | Event drafts (text, choices, outcomes) from a brief; never adds them to `Content/` (Uses Opus 5.5) |
+| `content-critic` | Reviews any generated content against the GDD, tuning and `Docs/ContentPipeline/voice.md`; read-only (Uses Opus 5.5) |
+
+Content pipeline: `Tools/ContentPipeline/` runs writer -> code checks + critic -> one revision. See `Docs/ContentPipeline/README.md`.
 
 ## Working together
 - Deadwater Run is one game, not a set of features. No system is built in a silo: every system uses the shared tags, attributes, data assets and run state, and every report lists the other systems a change touches

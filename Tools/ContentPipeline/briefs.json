@@ -1,0 +1,26 @@
+{
+  "about": "Three batches = the v1.0 event pool draft (Scope.md: ~10-12 events, 60/40). 7 Good / 5 Bad = 58% Good. Edit a brief and rerun its batch.",
+  "briefs": [
+    {
+      "id": "early-waters",
+      "layers": [1, 3],
+      "count": 4,
+      "valences": { "Good": 3, "Bad": 1 },
+      "theme": "The first days out of port. Wrecks, traders, small strokes of luck. Low stakes: the player is learning that events are trade-offs (gold vs. HP, a sure thing vs. a gamble), not free loot."
+    },
+    {
+      "id": "deep-water",
+      "layers": [4, 6],
+      "count": 4,
+      "valences": { "Good": 2, "Bad": 2 },
+      "theme": "Mid-run. What rival crews leave behind, bad weather, a crew under strain. Costs bite harder now. At least one event touches the crew roster (Recruit or LoseCrew) and at least one is a gamble (RandomOf)."
+    },
+    {
+      "id": "kraken-reach",
+      "layers": [6, 9],
+      "count": 4,
+      "valences": { "Good": 2, "Bad": 2 },
+      "theme": "The last stretch before the Kraken: omens, broken ships, a sea that is getting worse. No Kraken fight in an event. Across the batch, give each of the 3 captains one CaptainIs-gated choice that plays to who they are (TeamLeader: a loyal crew; Fearmongerer: a feared reputation; Conqueror: a captain stronger than his crew)."
+    }
+  ]
+}

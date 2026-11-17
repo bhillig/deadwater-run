@@ -1,0 +1,83 @@
+{
+  "code": [
+    {
+      "source": "code",
+      "severity": "minor",
+      "event": "DA_Event_TheTallyRock",
+      "field": "choices[2].resultText",
+      "rule": "E02 text",
+      "problem": "Result text is more than 2 sentences",
+      "fix": "Trim"
+    }
+  ],
+  "critic": {
+    "verdict": "revise",
+    "voice": {
+      "score": 4,
+      "sounds_like_deadwater_run": true,
+      "why": "The writing is plain, in second person and dry, with concrete nouns, and it never uses a banned word. The Fearmongerer and Conqueror lines are strong. A few lines either claim things the data can't back up or contradict the body.",
+      "weakest_lines": [
+        "He says he won't be needing them where he's going.",
+        "Scrawled warnings about tentacles, timing and where to stand.",
+        "The hull takes it badly, but the purse stays full."
+      ]
+    },
+    "findings": [
+      {
+        "severity": "major",
+        "event": "DA_Event_WreckersAmongTheHulls",
+        "field": "choices[0].requirements",
+        "rule": "No free choice when broke",
+        "problem": "'Pay the toll' (-80 gold) has no requirement, and gold floors at 0. A captain with little or no gold pays nothing or very little, so the choice becomes the clear best pick for a broke player in a Bad event. The result text 'They count it twice' also makes no sense when you paid nothing.",
+        "fix": "Add { \"type\": \"MinGold\", \"amount\": 80 } to choices[0].requirements. 'Run the shallows' stays as the choice with no requirement."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_SomethingUnderTheKeel",
+        "field": "choices[1].requirements",
+        "rule": "No free choice when broke",
+        "problem": "'Dump the cargo and run' (-70 gold, -20 ship) has no requirement, and gold floors at 0. A player with 0 gold gets a sure -20 ship, which beats 'ride it out' (about -47 ship on average). The gamble disappears exactly when the player is weakest.",
+        "fix": "Add { \"type\": \"MinGold\", \"amount\": 70 } to choices[1].requirements. Choice 0 still has no requirement, so the event always has an open choice."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_WreckersAmongTheHulls",
+        "field": "choices[2].outcomes",
+        "rule": "No strictly dominant choice",
+        "problem": "The Fearmongerer's 'Let them see your face' costs nothing and gives +40 gold, so it beats -80 gold and -50 ship outright. For him a Bad event becomes a free Good event with no decision. The other two captain gates both cost something: the Conqueror gives up 60 gold and the crew's XP, and the TeamLeader takes -15 crew HP and -20 ship.",
+        "fix": "Give it a cost or a risk. For example, drop the gold so the gate just avoids the loss, or use a RandomOf where some longboats don't turn (weight 1: ShipHealth -30) and the rest give the purse (weight 2: Gold +40)."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_WreckersAmongTheHulls",
+        "field": "choices[1].resultText",
+        "rule": "Text matches data",
+        "problem": "'the purse stays full' is wrong for a player with little gold, and it reads as gaining something when the choice only avoids a loss.",
+        "fix": "Change it to something neutral, such as 'The hull takes it badly. The wreckers don't follow.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheTurningBrig",
+        "field": "choices[1].resultText",
+        "rule": "Consistency with body",
+        "problem": "The body says he is going home. 'Won't be needing them where he's going' is the stock line for a dying man, so it muddles the picture, and it's a cliché.",
+        "fix": "Tie it to the trip home, for example 'Two tonics, corked and sealed. He'd rather you drank them than the sea.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheTallyRock",
+        "field": "choices[1].resultText",
+        "rule": "No promised effects",
+        "problem": "'warnings about tentacles, timing and where to stand' suggests real knowledge for the Kraken fight. The only outcome is +60 XP, and nothing in the boss fight changes.",
+        "fix": "Keep the notes vague, for example 'Scrawled warnings from crews who went on ahead. The crew make you read it twice.'"
+      }
+    ],
+    "code_check_disputes": [],
+    "open_questions": [
+      "GiveItem when the inventory is full (6 items): does 'Take his medicine chest' fail gracefully, drop the extra, or block the choice? If it silently does nothing, should HealthRestore events get a requirement or a fallback result text?",
+      "The writer flagged the 60-gold price for +100 ship (shop repair costs 100). Keep 60 for a Good event this late in the run, or raise it to 80?",
+      "Should captain-gated choices be allowed to be strictly better than the open choices, as a reward for that captain? If so, the Wreckers finding drops to minor. Please write the rule into voice.md or 11-Events.md either way.",
+      "The writer suggests a CrewCountAtMost requirement so Recruit choices don't silently fail on a full crew. Do you want it added to the requirements list?"
+    ]
+  }
+}

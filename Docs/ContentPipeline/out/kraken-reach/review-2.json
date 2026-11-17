@@ -1,0 +1,107 @@
+{
+  "code": [
+    {
+      "source": "code",
+      "severity": "minor",
+      "event": "DA_Event_TheTallyRock",
+      "field": "choices[2].resultText",
+      "rule": "E02 text",
+      "problem": "Result text is more than 2 sentences",
+      "fix": "Trim"
+    }
+  ],
+  "critic": {
+    "verdict": "revise",
+    "voice": {
+      "score": 4,
+      "sounds_like_deadwater_run": true,
+      "why": "Mostly right: plain second-person present tense, concrete nouns and dry understatement ('Whoever left it isn't coming back for it.'). Two result texts let it down. The Fearmongerer gamble describes both branches at once, and a couple of lines overreach into melodrama or promise more than the data does.",
+      "weakest_lines": [
+        "The longboats scatter, some fast enough to drop their purses, some too close to stop before they ram you.",
+        "The crew don't need to know how it ends. You'll be the one ending it.",
+        "Your ship sails on sounder than it has in weeks.",
+        "Crates of plunder go over the side and the ship rides higher. Whatever it was loses interest."
+      ]
+    },
+    "findings": [
+      {
+        "severity": "blocker",
+        "event": "DA_Event_WreckersAmongTheHulls",
+        "field": "choices[2].resultText",
+        "rule": "Text matches data",
+        "problem": "FDwEventChoice has a single ResultText (11-Events.md L27), so every branch shows the same text. That text says both things happened: purses were dropped (+gold) and a longboat rammed you (hull loss). Each RandomOf branch applies only one of them. On the 2/3 branch the text claims hull damage that never happens. On the 1/3 branch it implies gold you never get. The writer's note says the text 'never promises something that didn't happen', and that's wrong. 'Drop their purses' is also odd logic: it's not clear why wreckers rowing in to extort you would be carrying purses or how you'd collect them.",
+        "fix": "Write branch-neutral text that names neither effect, e.g. 'You light the fuses in your beard and stand at the rail. The longboats break and scatter.' Let the applied-change log show the gold or hull result. Otherwise, ask Brandon for per-option result text on RandomOf (open question)."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_WreckersAmongTheHulls",
+        "field": "choices[2].outcomes[0].options[1]",
+        "rule": "No strictly dominant choice",
+        "problem": "The Fearmongerer's worst case (ShipHealth -30) is better than the free alternative 'Run the shallows' (ShipHealth -50), and his best case gains gold. Every branch beats every other choice, so for him this is still not a decision. It also turns a Bad event into a net-positive one (EV about +27 gold, -10 hull). The RandomOf added variance but not a real choice.",
+        "fix": "Make the bad branch worse than the free option, e.g. ShipHealth -70 (the shipLossMax guardrail). He keeps the best average (~+27 gold, ~-23 hull) but now risks a worse hit than running the shallows."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_TheTurningBrig",
+        "field": "choices[2].label",
+        "rule": "Text matches data",
+        "problem": "'Pay for the whole lot' says you get everything in his hold, which includes the medicine chest from choice 1. The outcomes only give ShipHealth +100 and no HealthRestore. The result text even switches to a carpenter instead.",
+        "fix": "Change the label to match the outcome, e.g. 'Pay for his carpenter' or 'Pay him to patch you up'. Keep the outcomes as they are. Don't add the tonics, since 60 gold for +100 hull is already under shop price."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheTurningBrig",
+        "field": "choices[2].resultText",
+        "rule": "Text matches data",
+        "problem": "'Sounder than it has in weeks' overpromises. Hull is capped at 250, so a nearly full ship gains little, and +100 on a badly damaged ship still leaves it far from sound. 'Weeks' also sets a time scale the run doesn't have.",
+        "fix": "Understate it: 'His carpenter works through the afternoon. The worst of it is shut.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheTurningBrig",
+        "field": "choices[2].outcomes",
+        "rule": "Economy fit",
+        "problem": "Agreeing with the writer's flag: +100 hull for 60 gold undercuts the shop's 100-gold repair. It's also only 50 hull more than the free 'Take his planks'. It's a Good event so the discount can be justified, but it's the cheapest repair in the game.",
+        "fix": "Either raise it to MinGold 80 / Gold -80, or keep 60 and accept it as a Good-event discount. Brandon's call."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheTallyRock",
+        "field": "choices[1].resultText",
+        "rule": "No promises outcomes don't keep",
+        "problem": "'Scrawled warnings about tentacles, timing and where to stand' reads as real Kraken intel. The only effect is generic XP, and the boss fight gives no benefit for having read it.",
+        "fix": "Keep it vaguer so the XP reads as the payoff, e.g. 'Scrawled warnings from crews who went on ahead. The crew make you read it twice.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheTallyRock",
+        "field": "choices[2].resultText",
+        "rule": "Captain fit",
+        "problem": "Besides the code check's length flag, the Conqueror leaving half the coin under the cairn is out of character for a captain who takes everything. It reads as an arbitrary reason for the gold being 60 instead of 120.",
+        "fix": "Give a reason that fits him, or just say he takes a share: 'You read every page alone and take what coin you can carry. The crew don't need to know how it ends.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_SomethingUnderTheKeel",
+        "field": "choices[2].outcomes",
+        "rule": "Valence fit",
+        "problem": "For the TeamLeader, a Bad event becomes close to a net gain. He takes -15 crew HP and -20 hull but gets +40 XP for everyone, which his Veteran Crew rule raises to 60. That's more than half a level each, on layers 6-9 right before the Kraken. It's not strictly dominant because crew HP carries into fights, but it's generous.",
+        "fix": "Cut GrantXp to 20-25, or raise CrewHealth to -20/-25 so it still feels like a Bad event."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_SomethingUnderTheKeel",
+        "field": "choices[1].resultText",
+        "rule": "Fiction logic",
+        "problem": "'Whatever it was loses interest' doesn't follow from throwing weight overboard. Riding higher helps you run, but it has nothing to do with the creature losing interest.",
+        "fix": "Tie it to the escape: 'Crates of plunder go over the side. The ship rides higher and you leave the dark water behind.'"
+      }
+    ],
+    "code_check_disputes": [],
+    "open_questions": [
+      "Should RandomOf options have their own result text? With one ResultText per choice, every gamble's text has to be vague. Or does the applied-change log in FDwEventContext show the player what happened?",
+      "What does GiveItem do when the inventory is full (6 items)? Does it leave the item behind like plunder (P15) or fail silently? 'Take his medicine chest' could do nothing for a player with a full hold.",
+      "Should captain-gated choices beat the ungated ones in every branch, or only on average? The brief asks them to 'play to who they are', but the critic rules forbid strictly dominant choices."
+    ]
+  }
+}

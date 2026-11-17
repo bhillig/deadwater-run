@@ -1,0 +1,118 @@
+{
+  "code": [
+    {
+      "source": "code",
+      "severity": "minor",
+      "event": "DA_Event_HiddenShoal",
+      "field": "choices[1].resultText",
+      "rule": "E02 text",
+      "problem": "Result text is more than 2 sentences",
+      "fix": "Trim"
+    }
+  ],
+  "critic": {
+    "verdict": "revise",
+    "voice": {
+      "score": 4,
+      "sounds_like_deadwater_run": true,
+      "why": "The bodies are plain and physical, in second person, with dry understatement that fits the sheet (\"He names a fair price, which is how you know he wants to be gone.\", \"Small, but it's yours.\"). A few result lines are flat or menu-like, and two hedge with 'or/if' to cover branches the player can't see.",
+      "weakest_lines": [
+        "You hold your course. Nothing happens, and behind you the wreck slips under.",
+        "He takes one look at the beard and calls it a gift. He sails off fast.",
+        "Your diver comes up with a full chest - or with a fistful of coin and a gash from the timbers.",
+        "He keeps his purse and joins the crew. If there's no bunk for him, he drops off at the next shore."
+      ]
+    },
+    "findings": [
+      {
+        "severity": "major",
+        "event": "DA_Event_DriftingWreck",
+        "field": "choices[1].outcomes[0].options",
+        "rule": "Design: no dominant choice",
+        "problem": "'Dive the hold' is close to dominant over 'Strip the deck'. On average it pays 84 gold against a sure 40, and its worst case (+30 gold, -20 HP to one random crew member, with HP floored at 1) is barely worse than the safe pick. The brief asks for 'a sure thing vs. a gamble', but this gamble has almost no real downside.",
+        "fix": "Make the bad branch hurt. For example, 50/50 weights with the bad branch at 0 gold and -25 to -30 CrewHealth (Random). Or raise 'Strip the deck' to about 60 gold so the safe pick is worth taking."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_CastawayOnASpar",
+        "field": "choices[0]",
+        "rule": "Design: no trap choice",
+        "problem": "With a full crew (4), 'Sign him on' is still enabled but does nothing (Recruit fails gracefully), while the other choice gives 60 gold. No requirement exists to disable it. A player with 3 crew plus a recruit from a shop or earlier event walks into a free loss. The result text admits this ('If there's no bunk for him...'), but the button still invites the click.",
+        "fix": "Block on Brandon's call: either add a 'CrewCountAtMost' requirement (not in the facts, see open questions) or accept the trap and rewrite the label or body so a full crew is warned up front. Don't ship as-is."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_HiddenShoal",
+        "field": "choices[2].requirements",
+        "rule": "Design: Bad event must cost something",
+        "problem": "'Lighten the hold' has no requirement, and Gold floors at 0. A player with little or no gold (common right after a shop) loses nothing, so the Bad event becomes free and the choice beats ship damage and crew damage outright.",
+        "fix": "Add { \"type\": \"MinGold\", \"amount\": 60 } to choices[2].requirements. Choices 0 and 1 remain as fallbacks with no requirements."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_HiddenShoal",
+        "field": "choices[0].resultText",
+        "rule": "Text matches data",
+        "problem": "\"leaves half the keel on the sand\" overstates a -50 ShipHealth hit, which is 20% of 250 max HP.",
+        "fix": "Tone it down, e.g. \"...and leaves a good length of keel on the sand.\""
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_HiddenShoal",
+        "field": "choices[2].resultText",
+        "rule": "Text matches data",
+        "problem": "\"Over go stores and a chest of coin\" suggests the player loses more than gold. The only outcome is Gold -60.",
+        "fix": "Make it only about coin, e.g. \"Over goes a chest of coin. She floats off clean, and you're poorer for it.\""
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_DriftingWreck",
+        "field": "choices[1].resultText",
+        "rule": "Text matches data",
+        "problem": "One result text covers both RandomOf branches ('a full chest - or ...'), so the player never reads what actually happened. The data format has no per-option result text.",
+        "fix": "Write a neutral line that doesn't describe either outcome (e.g. \"Your diver goes over the side with a knife in his teeth.\") and let the outcome readout show the result. See the open question about per-option text."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_DriftingWreck",
+        "field": "choices[2]",
+        "rule": "Design: real decisions",
+        "problem": "'Leave her to the sea' is strictly worse than 'Strip the deck', which is free and has no requirements. Nobody would ever pick it. The line 'Nothing happens' also reads like a menu item.",
+        "fix": "Cut it to 2 choices, or give it a small upside (e.g. a little ShipHealth from salvaged timber). If kept, replace 'Nothing happens' with something drier."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_PeddlersSloop",
+        "field": "choices[0].resultText",
+        "rule": "Text consistency",
+        "problem": "The body says he names 'a fair price'. The result says 'Cheaper than any port will sell them.' Those are slightly at odds. The joke works better if the price is suspiciously good.",
+        "fix": "Change the body to 'He names a low price, which is how you know he wants to be gone.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_PeddlersSloop",
+        "field": "choices[0].outcomes[1]",
+        "rule": "Inventory cap",
+        "problem": "With 5 or 6 items in inventory, the player pays 40 gold and may get 1 or 0 tonics. GiveItem's behaviour when inventory is full isn't in the facts, and no requirement can check free slots.",
+        "fix": "Wait for Brandon's answer on GiveItem overflow. If it drops items silently, refund the gold or add a free-slot requirement."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_PeddlersSloop",
+        "field": "choices[1].resultText",
+        "rule": "Voice",
+        "problem": "\"He sails off fast.\" is flat and repeats the body's 'wants to be gone' beat.",
+        "fix": "Make it drier, e.g. \"He's under full sail before you can say thank you.\""
+      }
+    ],
+    "code_check_disputes": [],
+    "open_questions": [
+      "GiveItem when the inventory is full (6 items): does it partly fail, fully fail, or overflow? It affects whether PeddlersSloop 'Buy two tonics' can take gold and give nothing.",
+      "Should there be a 'CrewCountAtMost' requirement (or should Recruit choices auto-disable when the crew is full)? Without one, every Recruit event is a trap for a full crew.",
+      "Should RandomOf options get their own resultText? Without it, gamble choices can't tell the player which way the roll went in-voice.",
+      "Does crew HP carry over between fights? If HP resets, every event CrewHealth loss (Wreck dive, Shoal push) costs nothing and these trade-offs fall apart.",
+      "Is a captain-only choice that is strictly better for that captain (Fearmongerer gets free items in PeddlersSloop) the intended way to do captain perks?",
+      "PeddlersSloop sells 2 HealthRestore at 20 each, against 30 in the shop. Is that discount OK for a Good event in layers 1-3? (The writer raised this.)"
+    ]
+  }
+}

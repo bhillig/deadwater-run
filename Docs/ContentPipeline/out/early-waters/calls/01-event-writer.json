@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 34212,
+  "stop_reason": "end_turn",
+  "session_id": "ae20171b-9a1a-494d-b671-fe115a2c1b6c",
+  "total_cost_usd": 0.1309878,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 7768,
+    "cache_read_input_tokens": 3379,
+    "output_tokens": 3408,
+    "output_tokens_details": {
+      "thinking_tokens": 963
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 7768,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 3408,
+        "cache_read_input_tokens": 3379,
+        "cache_creation_input_tokens": 7768,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 7768
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 3408,
+      "cacheReadInputTokens": 3379,
+      "cacheCreationInputTokens": 7768,
+      "webSearchRequests": 0,
+      "costUSD": 0.1309878,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 963,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 7768,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"events\": [\n    {\n      \"id\": \"DA_Event_DriftingWreck\",\n      \"title\": \"The Drifting Wreck\",\n      \"body\": \"A merchant hull lies on her side in the swell, masts gone, hold half under. Something glints below the waterline. The tide is turning, and she won't float much longer.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Strip the deck\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 40 }\n          ],\n          \"resultText\": \"Brass fittings, a purse in a dead man's coat. Small, but it's yours.\"\n        },\n        {\n          \"label\": \"Dive the hold\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                { \"weight\": 60, \"outcomes\": [ { \"type\": \"Gold\", \"delta\": 120 } ] },\n                { \"weight\": 40, \"outcomes\": [ { \"type\": \"Gold\", \"delta\": 30 }, { \"type\": \"CrewHealth\", \"delta\": -20, \"selector\": \"Random\" } ] }\n              ]\n            }\n          ],\n          \"resultText\": \"Your diver comes up with a full chest - or with a fistful of coin and a gash from the timbers.\"\n        },\n        {\n          \"label\": \"Leave her to the sea\",\n          \"requirements\": [],\n          \"outcomes\": [],\n          \"resultText\": \"You hold your course. Nothing happens, and behind you the wreck slips under.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_PeddlersSloop\",\n      \"title\": \"A Peddler's Sloop\",\n      \"body\": \"A little sloop runs up her colours and comes alongside. Her captain has crates of tonics lashed to the rail and a nervous smile. He names a fair price, which is how you know he wants to be gone.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Buy two tonics\",\n          \"requirements\": [\n            { \"type\": \"MinGold\", \"amount\": 40 }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -40 },\n            { \"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 2 }\n          ],\n          \"resultText\": \"Two bottles for forty gold. Cheaper than any port will sell them.\"\n        },\n        {\n          \"label\": \"Let him see your captain\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"Fearmongerer\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 1 },\n            { \"type\": \"GiveItem\", \"item\": \"ManaRestore\", \"count\": 1 }\n          ],\n          \"resultText\": \"He takes one look at the beard and calls it a gift. He sails off fast.\"\n        },\n        {\n          \"label\": \"Wave him off\",\n          \"requirements\": [],\n          \"outcomes\": [],\n          \"resultText\": \"Nothing changes hands. The sloop goes off looking for an easier crew.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_CastawayOnASpar\",\n      \"title\": \"Castaway on a Spar\",\n      \"body\": \"A man clings to a broken spar, cutlass still in his belt. He says he's a fighter and his ship went down two nights ago. There's a heavy purse around his neck, and he offers it for a ride to shore.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Sign him on\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Recruit\", \"unit\": \"Swordsman\" }\n          ],\n          \"resultText\": \"He keeps his purse and joins the crew. If there's no bunk for him, he drops off at the next shore.\"\n        },\n        {\n          \"label\": \"Take the purse\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 60 }\n          ],\n          \"resultText\": \"You row him to a sandbar and take your fare. A fair trade, more or less.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_HiddenShoal\",\n      \"title\": \"The Hidden Shoal\",\n      \"body\": \"The keel grinds and the whole ship shudders to a stop. You've run onto a sandbank the chart never showed. The tide is going out, and the hull groans with every wave.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Force her off\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": -50 }\n          ],\n          \"resultText\": \"Full sail drags her free, and leaves half the keel on the sand.\"\n        },\n        {\n          \"label\": \"Over the side and push\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\" },\n            { \"type\": \"ShipHealth\", \"delta\": -10 }\n          ],\n          \"resultText\": \"Waist-deep in cold water, the crew heaves her clear. The hull barely notices. The crew's shoulders do.\"\n        },\n        {\n          \"label\": \"Lighten the hold\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -60 }\n          ],\n          \"resultText\": \"Over go stores and a chest of coin. She floats off clean, and you're poorer for it.\"\n        }\n      ]\n    }\n  ],\n  \"notes\": \"Batch early-waters: 3 Good (DriftingWreck, PeddlersSloop, CastawayOnASpar), 1 Bad (HiddenShoal), all layers 1-3, weight 1.\\n- Trade-offs: a sure thing vs. a gamble (Wreck); gold vs. items plus a captain-only perk (Sloop); a crew member vs. gold (Castaway); ship vs. crew vs. gold (Shoal, the bad event, where every choice limits the damage).\\n- Every event has at least one choice with no requirements. All numbers are inside the guardrails: gold up to +120 and down to -60, ship down to -50, crew down to -20, items up to 2.\\n- PeddlersSloop prices 2 HealthRestore at 40 total, below the shop's 30 each. The discount is the point, but Brandon should confirm it's acceptable.\\n- Open questions for Brandon: (1) GiveItem with a full inventory (6) - does it fail gracefully like Recruit? The Sloop choices assume it does. (2) Castaway 'Sign him on' gives nothing if the crew is full (4). The result text covers that, but a 'CrewCountAtMost' requirement (doesn't exist yet) would let the button disable cleanly instead.\\n- Idea, not used: a 'ShipCannon'/upgrade outcome for wreck salvage, if ship upgrades become event-grantable.\"\n}\n```",
+  "ttft_ms": 13104,
+  "type": "result",
+  "duration_ms": 34399,
+  "uuid": "8c825874-2dcc-4889-a621-3f573b963e64",
+  "ttft_stream_ms": 1653,
+  "time_to_request_ms": 185,
+  "first_content_frame_ms": 1653,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

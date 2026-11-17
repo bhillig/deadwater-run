@@ -2,43 +2,6 @@
 
 A turn-based pirate roguelike built in Unreal Engine 5.8 by one developer and a crew of coordinated AI agents.
 
-## Combat Playable: DW-103 / 104 / 105 (2026-11-09)
-
-| # | Ticket | Branch | What it is |
-|---|---|---|---|
-| 1 | **DW-103** Combat core | `orchestrator/dw-103-combat-core` | `UDwCombatSubsystem` (one validated `SubmitCommand` for player, AI, tests, simulator), `UDwTurnManager` (player first, enemies one by one, skips, durations), outcome rules (defeats first), death and sinking, replayable `FDwCombatRecord` |
-| 2 | **DW-104** Core actions | `orchestrator/dw-104-core-actions` | Move (one per turn), payload attacks, cannons, items, presentation tasks with instant mode; placeholder content: `GA_*`, `DA_Ability_*`, items, units, `DA_Encounter_Placeholder` |
-| 3 | **DW-105** Input and camera | `orchestrator/dw-105-input-camera` | `ADwPlayerController` + Enhanced Input (`IMC_Combat`), `UDwCombatInteraction` (select, path preview, targets, damage preview, cancel), `ADwCameraRig`; placeholder decks, HP labels and a text HUD until DW-107 |
-
-**Play it:** open the project, press Play on `L_Sea`. A 3 v 3 starts on two 250 HP ships. Left-click a pirate, then a blue tile to move or a lit enemy to attack. Keys `1`-`6` pick an action, right-click cancels, `Tab` picks the next pirate, `Space` ends the turn, `WASD` pans and the wheel zooms. Enemies don't act yet: their AI is DW-106.
-
-**Scripts** (first output line is PASS/FAIL):
-- `./Tools/Build.ps1` then `./Tools/Test.ps1`: 145 tests
-- `./Tools/CreateCombatContent.ps1`: rebuilds the placeholder content and syncs the DataTables it reads, headless and idempotent
-- `./Tools/Capture.ps1 -Demo move|aim|cannon`: plays `L_Sea` and saves a screenshot to `Saved/Captures/`, so proof doesn't need the editor MCP
-
-## First Build: Week 0 Foundation (2026-11-08)
-
-The first three pieces from [Docs/Architecture/Roadmap.md](Docs/Architecture/Roadmap.md), built from the architecture docs.
-
-| # | Ticket | Branch | What it is | Proof |
-|---|---|---|---|---|
-| 1 | **DW-002** Template cleanup + skeleton | `orchestrator/dw-002-cleanup` | Deleted the UE template code and content (Strategy, TwinStick, TopDown). New `Build.cs` and `.uproject` plugins (MCP/Terminal set to editor-only). `ADwGameMode`, `ADwMenuGameMode`, `ADwPlayerController`. Empty `L_MainMenu` and `L_Sea` levels set as the default maps | Editor build passes with 0 warnings. A headless script loads both maps and all 3 classes |
-| 2 | **DW-003** Editor module + scripts | `orchestrator/dw-003-editor-module` | `DeadwaterRunEditor` module. `Tools/Build.ps1` and `Tools/Test.ps1` print `PASS`/`FAIL` on the first line and return non-zero on failure. Placeholder test | `BUILD PASS`, `TEST PASS 1/1`. Failure paths checked on purpose: a forced compile error gives BUILD FAIL, a wrong expectation gives TEST FAIL, and a filter that matches nothing also fails |
-| 3 | **DW-004** Shared core layer | `orchestrator/dw-004-core-layer` | 88 native gameplay tags, log categories, shared types. `UDwDefinitionBase`, `UDwAssetManager`, `UDwGameData`. All 15 definition classes and 12 tuning row structs. `Tuning/*.json` holds every number from the design doc and is imported into the `DT_*Tuning` tables and `DA_GameData` | Editor and Game targets build with 0 project warnings. `TEST PASS 15/15`: tags, the Asset Manager, design numbers read back from the DataTables, and validation rules |
-
-I can run them via: `./Tools/Build.ps1` then `./Tools/Test.ps1`. Set `$env:UE_ENGINE_DIR` if UE 5.8 is somewhere unusual.
-
-### What We Caught
-
-**Bugs found and fixed while building**
-- **Every commandlet exited 1.** The project was already logging a `GameFeatureData` Asset Manager error at startup (it's in `Saved/Logs/DeadwaterRun_2.log` too). That error would have made every PASS/FAIL script fail. Fixed in `DefaultGame.ini`
-- **The Asset Manager preloaded nothing in the editor.** At `StartInitialLoading` the asset registry is still scanning, so the eager load quietly loaded 0 types. It now runs after the scan, and a test fails if it ever stops working
-- **"Zero warnings" couldn't be met on the Game target.** Epic's own 5.8.4 headers produce 19 deprecation warnings. `Build.ps1` now fails only on warnings in our files and reports the engine count separately
-- **Doc 01's cleanup list was incomplete.** It missed `Content/__ExternalActors__` and `__ExternalObjects__`, the One File Per Actor (OFPA) data for the deleted template levels. Those are removed too
-- **UE 5.8 isn't installed in the default folder.** It's at `%USERPROFILE%\Epic Games\UE_5.8` and isn't in the launcher manifest, so the scripts look for it instead of assuming a path
-
-
 - **Design doc:** [DeadwaterRun.md](DeadwaterRun.md) · **Scope:** [Docs/Scope.md](Docs/Scope.md) · **Architecture:** [Docs/Architecture/](Docs/Architecture/)
 
 ## The Game

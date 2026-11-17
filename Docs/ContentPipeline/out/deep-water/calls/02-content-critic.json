@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 53366,
+  "stop_reason": "end_turn",
+  "session_id": "8db65af6-ec5c-4ad7-9c42-91cb135f4ce1",
+  "total_cost_usd": 0.22224399999999997,
+  "usage": {
+    "input_tokens": 4,
+    "cache_creation_input_tokens": 14294,
+    "cache_read_input_tokens": 18080,
+    "output_tokens": 5213,
+    "output_tokens_details": {
+      "thinking_tokens": 2609
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 14294,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 4931,
+        "cache_read_input_tokens": 14709,
+        "cache_creation_input_tokens": 2956,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 2956
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 5213,
+      "cacheReadInputTokens": 18080,
+      "cacheCreationInputTokens": 14294,
+      "webSearchRequests": 0,
+      "costUSD": 0.22224399999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2609,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 14294,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"verdict\": \"revise\",\n  \"voice\": {\n    \"score\": 4,\n    \"sounds_like_deadwater_run\": true,\n    \"why\": \"The bodies are tight and concrete and use second person, and the stakes are physical. They sound like Deadwater Run. The weak spots are the result texts that cover both gamble branches with 'Either X, or Y', and one line that slips into third person.\",\n    \"weakest_lines\": [\n      \"Either the chest comes up heavy and nobody comes looking, or its owners show up and put a broadside into your hull while you're still hauling.\",\n      \"Either a brawl breaks out below deck and everyone gets hurt, or you wake to find a crewmate gone with the spare longboat.\",\n      \"You find either a gap in the storm or the very worst of it.\",\n      \"The captain takes the ringleader on in front of everyone and wins, barely.\",\n      \"If your deck is already full, they take one look and row on.\"\n    ]\n  },\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_RivalsCache\",\n      \"field\": \"choices[2]\",\n      \"rule\": \"No strictly dominated choice\",\n      \"problem\": \"'Haul it up fast' gives a sure +60 gold with no cost and no requirement. 'Leave their mark alone' gives nothing, and the game has no state where nothing beats free gold. So 'Leave' is a dead button, not a decision.\",\n      \"fix\": \"Give 'Haul it up fast' a small real cost so leaving it can be the right call. One option is a small RandomOf with a minor ShipHealth or CrewHealth hit. Another is to swap 'Leave' for a choice with its own trade-off. Keep the 'Bring up the whole chest' gamble as it is (EV is about +78 gold-equivalent against the sure +60, which is a fair gamble).\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DesertersLongboat\",\n      \"field\": \"choices[1].outcomes\",\n      \"rule\": \"No trap choices / text matches data\",\n      \"problem\": \"With a full crew of 4, 'Pay the marksman's price' still takes the 40 gold and Recruit does nothing. It's a pure loss in a Good event. The result text admits this, but the button stays enabled and the label still promises a marksman. Requirements can't gate on 'crew not full'. CrewCountAtLeast is the only crew requirement, and the writer is right that there's no AtMost.\",\n      \"fix\": \"Remove the Gold -40 so the choice is a free pick between Swordsman and Sniper, and put the cost somewhere that can't go to waste. Or hold this event until Brandon adds a 'crew not full' requirement (see open questions).\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_MutteringsBelowDeck\",\n      \"field\": \"choices[1].outcomes[0]\",\n      \"rule\": \"No strictly dominant choice / costs bite harder\",\n      \"problem\": \"'Settle it with fists' costs 30 captain HP with no requirement, and event damage floors at 1. A HealthRestore costs 30 gold at shops, so the fight costs about 30 gold or less. 'Pay out shares' costs 60 gold, so in practice it's never the right pick. If crew HP refills between nodes, the fight is almost free, which also undercuts the brief's 'costs bite harder now'.\",\n      \"fix\": \"Raise the fight cost toward the guardrail (CrewHealth -50 on Captain) or cut Pay to about 30-40 gold, so the two sure options cost roughly the same in different currencies.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_RivalsCache\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"Voice: result text for RandomOf\",\n      \"problem\": \"FDwEventChoice has one ResultText per choice, so the writer has listed both branches with 'Either... or...'. After the roll, the player reads a hedge instead of what happened, and it breaks the present-tense, concrete voice. The same pattern is in SquallLine choices[2].resultText and MutteringsBelowDeck choices[2].resultText, and DesertersLongboat uses it for full-crew cases ('If your deck is already full...').\",\n      \"fix\": \"Write one line that's true for every branch and leave the specifics to the change log. For example, for the chest: 'You get a hook on the chest and start hauling. The sea decides the rest.' For the squall, cut 'You find either a gap in the storm or the very worst of it.' and keep 'Whatever the sea took, it took fast.' Do the same for Mutterings and the Recruit texts.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DesertersLongboat\",\n      \"field\": \"choices[2].requirements\",\n      \"rule\": \"Requirement matches cost\",\n      \"problem\": \"'Trade rations for medicine' takes 20 gold but has no MinGold requirement. Gold floors at 0, so a broke player gets two HealthRestore for free while the result text says they paid 'a few coins'.\",\n      \"fix\": \"Add { \\\"type\\\": \\\"MinGold\\\", \\\"amount\\\": 20 }, matching how choices[1] gates its 40 gold.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_MutteringsBelowDeck\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"Voice: second person\",\n      \"problem\": \"'The captain takes the ringleader on in front of everyone and wins, barely.' The player is the captain, and the voice sheet asks for second person.\",\n      \"fix\": \"'You take the ringleader on in front of everyone and win, barely. No one mutters after that.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_RivalsCache\",\n      \"field\": \"choices[1].outcomes[0].options[1]\",\n      \"rule\": \"Fit: rival crew without a fight\",\n      \"problem\": \"In the bad branch, the cache's owners 'show up' and fire a broadside, then the event ends with no fight. That's fine mechanically, but it's an odd beat in a game where meeting a rival crew means a fight.\",\n      \"fix\": \"Optional: make the damage the cache's own trap or the strain of hauling it (e.g. a fouled line that tears into the hull) rather than the rival crew arriving.\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"open_questions\": [\n    \"Should events get a 'crew not full' requirement (e.g. CrewCountAtMost)? Without it, any Recruit choice that costs gold is a trap with a full crew of 4.\",\n    \"Should RandomOf options get their own result text? Without it, every gamble's result text has to stay vague or list every branch.\",\n    \"Does crew HP carry over between nodes or refill after fights? This decides how much the CrewHealth costs in SquallLine and MutteringsBelowDeck actually hurt.\",\n    \"What happens when GiveItem would go over the 6-item inventory cap? Does it fail gracefully, add only part, or block the choice? It matters for the Deserters medicine trade.\",\n    \"Is two HealthRestore for 20 gold (half the shop price) an acceptable Good-event bargain? The writer flagged this too.\"\n  ]\n}\n```",
+  "ttft_ms": 4271,
+  "type": "result",
+  "duration_ms": 53626,
+  "uuid": "197ba1d6-3e3f-487c-9f65-8ec67cf65a45",
+  "ttft_stream_ms": 2648,
+  "time_to_request_ms": 181,
+  "first_content_frame_ms": 2648,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

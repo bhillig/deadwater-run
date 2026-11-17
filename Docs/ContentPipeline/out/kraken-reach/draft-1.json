@@ -1,0 +1,245 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_TheTurningBrig",
+      "title": "The Turning Brig",
+      "body": "A brig limps past on the other tack, her foremast gone and her rail torn open. Her captain shouts across that he has seen what waits ahead and is going home. He has no more use for what's in his hold.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Take his planks",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": 50
+            }
+          ],
+          "resultText": "His crew pass over timber and pitch. By dusk the worst of your holes are shut."
+        },
+        {
+          "label": "Take his medicine chest",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 2
+            }
+          ],
+          "resultText": "Two tonics, corked and sealed. He says he won't be needing them where he's going."
+        },
+        {
+          "label": "Pay for the whole lot",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 60
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -60
+            },
+            {
+              "type": "ShipHealth",
+              "delta": 100
+            }
+          ],
+          "resultText": "He takes your coin for the road home and his carpenter for the afternoon. Your ship sails on sounder than it has in weeks."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheTallyRock",
+      "title": "The Tally Rock",
+      "body": "A black rock stands alone in the swell, cut all over with names. Every crew that sailed on to the Kraken stopped here first. Under a cairn at its foot sits a strongbox and a page of notes, weighted with a stone.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Open the strongbox",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 120
+            }
+          ],
+          "resultText": "Old coin, still dry. Whoever left it isn't coming back for it."
+        },
+        {
+          "label": "Read the notes aloud",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "GrantXp",
+              "amount": 60,
+              "selector": "All"
+            }
+          ],
+          "resultText": "Scrawled warnings about tentacles, timing and where to stand. The crew make you read it twice."
+        },
+        {
+          "label": "Keep the notes to yourself",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Conqueror"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "GrantXp",
+              "amount": 80,
+              "selector": "Captain"
+            },
+            {
+              "type": "Gold",
+              "delta": 60
+            }
+          ],
+          "resultText": "You read every page alone, then pocket half the coin and leave the rest under the cairn. The crew don't need to know how it ends. You'll be the one ending it."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_WreckersAmongTheHulls",
+      "title": "Wreckers Among the Hulls",
+      "body": "Broken ships lie on their sides in the shallows, ribs open to the sky. A wrecker crew is stripping them, and their longboats are already pulling your way. Their captain wants a toll, or your hull for parts.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Pay the toll",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -80
+            }
+          ],
+          "resultText": "They count it twice and row off. Cheaper than a fight this close to the end."
+        },
+        {
+          "label": "Run the shallows",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -50
+            }
+          ],
+          "resultText": "You scrape over a sunken keel to get clear. The hull takes it badly, but the purse stays full."
+        },
+        {
+          "label": "Let them see your face",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Fearmongerer"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 40
+            }
+          ],
+          "resultText": "You light the fuses in your beard and stand at the rail. The longboats turn as one, and in the hurry somebody drops a purse in the shallows."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_SomethingUnderTheKeel",
+      "title": "Something Under the Keel",
+      "body": "The water goes flat and dark. Something long passes beneath the ship, slow enough that you can count the seconds. Then the deck lifts under your feet.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Hold on and ride it out",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 2,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -60
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -20
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "It rises once more and is gone. Whatever it cost the hull, you hear it groaning for an hour after."
+        },
+        {
+          "label": "Dump the cargo and run",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -70
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -20
+            }
+          ],
+          "resultText": "Crates of plunder go over the side and the ship rides higher. Whatever it was loses interest."
+        },
+        {
+          "label": "Every hand to the pumps",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "TeamLeader"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -15,
+              "selector": "All"
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -20
+            },
+            {
+              "type": "GrantXp",
+              "amount": 40,
+              "selector": "All"
+            }
+          ],
+          "resultText": "Nobody waits to be told. They bail until their hands bleed, and the ship stays dry enough to sail."
+        }
+      ]
+    }
+  ],
+  "notes": "- **Captain gates:** one per captain across the batch, as the brief asks. The Conqueror's is on The Tally Rock (he learns alone and gets 80 XP for himself, the crew get nothing). The Fearmongerer's is on Wreckers Among the Hulls (his reputation turns a toll into a small gain). The TeamLeader's is on Something Under the Keel (his loyal crew take the hit together and learn from it).\n- **Valences:** 2 Good (The Turning Brig, The Tally Rock) and 2 Bad (Wreckers Among the Hulls, Something Under the Keel). All four run layers 6-9.\n- **Theme:** omens (the Tally Rock, the shape under the keel), broken ships (the turning brig, the wrecks in the shallows) and a sea that's getting worse. There's no Kraken fight. The shape under the keel is never named, so the omen stays unexplained.\n- **Not repeating other batches:** the wreckers are a hostile crew working a field of grounded hulls. There's no lone derelict to loot, so this doesn't overlap DrifitingWreck or RivalsCache. The Turning Brig is a crewed, friendly ship, so it's not a peddler (it's free or a flat deal) and not a deserter boat.\n- **Guardrails:** gold is between +120 and -80, ship between +100 and -60, crew -15, XP at most 80, items at most 2. Every event has at least two choices with no requirements.\n- **Balance:** in Turning Brig, 'Pay for the whole lot' costs 60 gold for +100 ship. That's cheaper than a shop repair (100 gold), which is fine for a Good event near the boss. Brandon may want 80. In Something Under the Keel, 'ride it out' loses about 47 ship on average (2:1 odds of -60 or -20). That's the gamble against a sure loss of 70 gold and 20 ship.\n- **Idea for Brandon (not used):** a 'CrewCountAtMost' requirement, or a Recruit result text that changes when the crew is full. Then the brig captain's gunner could join as a Sniper without the risk of the choice silently doing nothing on a full crew."
+}

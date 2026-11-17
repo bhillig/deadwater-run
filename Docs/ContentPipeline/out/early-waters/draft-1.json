@@ -1,0 +1,210 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_DriftingWreck",
+      "title": "The Drifting Wreck",
+      "body": "A merchant hull lies on her side in the swell, masts gone, hold half under. Something glints below the waterline. The tide is turning, and she won't float much longer.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Strip the deck",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 40
+            }
+          ],
+          "resultText": "Brass fittings, a purse in a dead man's coat. Small, but it's yours."
+        },
+        {
+          "label": "Dive the hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 60,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 120
+                    }
+                  ]
+                },
+                {
+                  "weight": 40,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 30
+                    },
+                    {
+                      "type": "CrewHealth",
+                      "delta": -20,
+                      "selector": "Random"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "Your diver comes up with a full chest - or with a fistful of coin and a gash from the timbers."
+        },
+        {
+          "label": "Leave her to the sea",
+          "requirements": [],
+          "outcomes": [],
+          "resultText": "You hold your course. Nothing happens, and behind you the wreck slips under."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_PeddlersSloop",
+      "title": "A Peddler's Sloop",
+      "body": "A little sloop runs up her colours and comes alongside. Her captain has crates of tonics lashed to the rail and a nervous smile. He names a fair price, which is how you know he wants to be gone.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Buy two tonics",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 40
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -40
+            },
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 2
+            }
+          ],
+          "resultText": "Two bottles for forty gold. Cheaper than any port will sell them."
+        },
+        {
+          "label": "Let him see your captain",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Fearmongerer"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 1
+            },
+            {
+              "type": "GiveItem",
+              "item": "ManaRestore",
+              "count": 1
+            }
+          ],
+          "resultText": "He takes one look at the beard and calls it a gift. He sails off fast."
+        },
+        {
+          "label": "Wave him off",
+          "requirements": [],
+          "outcomes": [],
+          "resultText": "Nothing changes hands. The sloop goes off looking for an easier crew."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_CastawayOnASpar",
+      "title": "Castaway on a Spar",
+      "body": "A man clings to a broken spar, cutlass still in his belt. He says he's a fighter and his ship went down two nights ago. There's a heavy purse around his neck, and he offers it for a ride to shore.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Sign him on",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Recruit",
+              "unit": "Swordsman"
+            }
+          ],
+          "resultText": "He keeps his purse and joins the crew. If there's no bunk for him, he drops off at the next shore."
+        },
+        {
+          "label": "Take the purse",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 60
+            }
+          ],
+          "resultText": "You row him to a sandbar and take your fare. A fair trade, more or less."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_HiddenShoal",
+      "title": "The Hidden Shoal",
+      "body": "The keel grinds and the whole ship shudders to a stop. You've run onto a sandbank the chart never showed. The tide is going out, and the hull groans with every wave.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Force her off",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -50
+            }
+          ],
+          "resultText": "Full sail drags her free, and leaves half the keel on the sand."
+        },
+        {
+          "label": "Over the side and push",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -15,
+              "selector": "All"
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -10
+            }
+          ],
+          "resultText": "Waist-deep in cold water, the crew heaves her clear. The hull barely notices. The crew's shoulders do."
+        },
+        {
+          "label": "Lighten the hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -60
+            }
+          ],
+          "resultText": "Over go stores and a chest of coin. She floats off clean, and you're poorer for it."
+        }
+      ]
+    }
+  ],
+  "notes": "Batch early-waters: 3 Good (DriftingWreck, PeddlersSloop, CastawayOnASpar), 1 Bad (HiddenShoal), all layers 1-3, weight 1.\n- Trade-offs: a sure thing vs. a gamble (Wreck); gold vs. items plus a captain-only perk (Sloop); a crew member vs. gold (Castaway); ship vs. crew vs. gold (Shoal, the bad event, where every choice limits the damage).\n- Every event has at least one choice with no requirements. All numbers are inside the guardrails: gold up to +120 and down to -60, ship down to -50, crew down to -20, items up to 2.\n- PeddlersSloop prices 2 HealthRestore at 40 total, below the shop's 30 each. The discount is the point, but Brandon should confirm it's acceptable.\n- Open questions for Brandon: (1) GiveItem with a full inventory (6) - does it fail gracefully like Recruit? The Sloop choices assume it does. (2) Castaway 'Sign him on' gives nothing if the crew is full (4). The result text covers that, but a 'CrewCountAtMost' requirement (doesn't exist yet) would let the button disable cleanly instead.\n- Idea, not used: a 'ShipCannon'/upgrade outcome for wreck salvage, if ship upgrades become event-grantable."
+}

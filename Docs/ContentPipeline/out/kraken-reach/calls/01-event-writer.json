@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 67947,
+  "stop_reason": "end_turn",
+  "session_id": "45a67641-e810-4c2d-b522-7193720aaf14",
+  "total_cost_usd": 0.1983798,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 8022,
+    "cache_read_input_tokens": 3379,
+    "output_tokens": 6676,
+    "output_tokens_details": {
+      "thinking_tokens": 3639
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 8022,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 6676,
+        "cache_read_input_tokens": 3379,
+        "cache_creation_input_tokens": 8022,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 8022
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 6676,
+      "cacheReadInputTokens": 3379,
+      "cacheCreationInputTokens": 8022,
+      "webSearchRequests": 0,
+      "costUSD": 0.1983798,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3639,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 8022,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "{\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheTurningBrig\",\n      \"title\": \"The Turning Brig\",\n      \"body\": \"A brig limps past on the other tack, her foremast gone and her rail torn open. Her captain shouts across that he has seen what waits ahead and is going home. He has no more use for what's in his hold.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 6,\n      \"maxLayer\": 9,\n      \"choices\": [\n        {\n          \"label\": \"Take his planks\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": 50 }\n          ],\n          \"resultText\": \"His crew pass over timber and pitch. By dusk the worst of your holes are shut.\"\n        },\n        {\n          \"label\": \"Take his medicine chest\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 2 }\n          ],\n          \"resultText\": \"Two tonics, corked and sealed. He says he won't be needing them where he's going.\"\n        },\n        {\n          \"label\": \"Pay for the whole lot\",\n          \"requirements\": [\n            { \"type\": \"MinGold\", \"amount\": 60 }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -60 },\n            { \"type\": \"ShipHealth\", \"delta\": 100 }\n          ],\n          \"resultText\": \"He takes your coin for the road home and his carpenter for the afternoon. Your ship sails on sounder than it has in weeks.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheTallyRock\",\n      \"title\": \"The Tally Rock\",\n      \"body\": \"A black rock stands alone in the swell, cut all over with names. Every crew that sailed on to the Kraken stopped here first. Under a cairn at its foot sits a strongbox and a page of notes, weighted with a stone.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 6,\n      \"maxLayer\": 9,\n      \"choices\": [\n        {\n          \"label\": \"Open the strongbox\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 120 }\n          ],\n          \"resultText\": \"Old coin, still dry. Whoever left it isn't coming back for it.\"\n        },\n        {\n          \"label\": \"Read the notes aloud\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"GrantXp\", \"amount\": 60, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"Scrawled warnings about tentacles, timing and where to stand. The crew make you read it twice.\"\n        },\n        {\n          \"label\": \"Keep the notes to yourself\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"Conqueror\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"GrantXp\", \"amount\": 80, \"selector\": \"Captain\" },\n            { \"type\": \"Gold\", \"delta\": 60 }\n          ],\n          \"resultText\": \"You read every page alone, then pocket half the coin and leave the rest under the cairn. The crew don't need to know how it ends. You'll be the one ending it.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_WreckersAmongTheHulls\",\n      \"title\": \"Wreckers Among the Hulls\",\n      \"body\": \"Broken ships lie on their sides in the shallows, ribs open to the sky. A wrecker crew is stripping them, and their longboats are already pulling your way. Their captain wants a toll, or your hull for parts.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 6,\n      \"maxLayer\": 9,\n      \"choices\": [\n        {\n          \"label\": \"Pay the toll\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -80 }\n          ],\n          \"resultText\": \"They count it twice and row off. Cheaper than a fight this close to the end.\"\n        },\n        {\n          \"label\": \"Run the shallows\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": -50 }\n          ],\n          \"resultText\": \"You scrape over a sunken keel to get clear. The hull takes it badly, but the purse stays full.\"\n        },\n        {\n          \"label\": \"Let them see your face\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"Fearmongerer\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 40 }\n          ],\n          \"resultText\": \"You light the fuses in your beard and stand at the rail. The longboats turn as one, and in the hurry somebody drops a purse in the shallows.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_SomethingUnderTheKeel\",\n      \"title\": \"Something Under the Keel\",\n      \"body\": \"The water goes flat and dark. Something long passes beneath the ship, slow enough that you can count the seconds. Then the deck lifts under your feet.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 6,\n      \"maxLayer\": 9,\n      \"choices\": [\n        {\n          \"label\": \"Hold on and ride it out\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                { \"weight\": 2, \"outcomes\": [ { \"type\": \"ShipHealth\", \"delta\": -60 } ] },\n                { \"weight\": 1, \"outcomes\": [ { \"type\": \"ShipHealth\", \"delta\": -20 } ] }\n              ]\n            }\n          ],\n          \"resultText\": \"It rises once more and is gone. Whatever it cost the hull, you hear it groaning for an hour after.\"\n        },\n        {\n          \"label\": \"Dump the cargo and run\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -70 },\n            { \"type\": \"ShipHealth\", \"delta\": -20 }\n          ],\n          \"resultText\": \"Crates of plunder go over the side and the ship rides higher. Whatever it was loses interest.\"\n        },\n        {\n          \"label\": \"Every hand to the pumps\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"TeamLeader\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\" },\n            { \"type\": \"ShipHealth\", \"delta\": -20 },\n            { \"type\": \"GrantXp\", \"amount\": 40, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"Nobody waits to be told. They bail until their hands bleed, and the ship stays dry enough to sail.\"\n        }\n      ]\n    }\n  ],\n  \"notes\": \"- **Captain gates:** one per captain across the batch, as the brief asks. The Conqueror's is on The Tally Rock (he learns alone and gets 80 XP for himself, the crew get nothing). The Fearmongerer's is on Wreckers Among the Hulls (his reputation turns a toll into a small gain). The TeamLeader's is on Something Under the Keel (his loyal crew take the hit together and learn from it).\\n- **Valences:** 2 Good (The Turning Brig, The Tally Rock) and 2 Bad (Wreckers Among the Hulls, Something Under the Keel). All four run layers 6-9.\\n- **Theme:** omens (the Tally Rock, the shape under the keel), broken ships (the turning brig, the wrecks in the shallows) and a sea that's getting worse. There's no Kraken fight. The shape under the keel is never named, so the omen stays unexplained.\\n- **Not repeating other batches:** the wreckers are a hostile crew working a field of grounded hulls. There's no lone derelict to loot, so this doesn't overlap DrifitingWreck or RivalsCache. The Turning Brig is a crewed, friendly ship, so it's not a peddler (it's free or a flat deal) and not a deserter boat.\\n- **Guardrails:** gold is between +120 and -80, ship between +100 and -60, crew -15, XP at most 80, items at most 2. Every event has at least two choices with no requirements.\\n- **Balance:** in Turning Brig, 'Pay for the whole lot' costs 60 gold for +100 ship. That's cheaper than a shop repair (100 gold), which is fine for a Good event near the boss. Brandon may want 80. In Something Under the Keel, 'ride it out' loses about 47 ship on average (2:1 odds of -60 or -20). That's the gamble against a sure loss of 70 gold and 20 ship.\\n- **Idea for Brandon (not used):** a 'CrewCountAtMost' requirement, or a Recruit result text that changes when the crew is full. Then the brig captain's gunner could join as a Sniper without the risk of the choice silently doing nothing on a full crew.\"\n}",
+  "ttft_ms": 44097,
+  "type": "result",
+  "duration_ms": 68052,
+  "uuid": "dce2eb78-6ca8-4556-93c9-a7703ee64b18",
+  "ttft_stream_ms": 2111,
+  "time_to_request_ms": 104,
+  "first_content_frame_ms": 2111,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

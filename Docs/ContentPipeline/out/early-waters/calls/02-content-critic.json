@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 56239,
+  "stop_reason": "end_turn",
+  "session_id": "e3ec24ee-2738-43e1-baa1-3e9b20ea588a",
+  "total_cost_usd": 0.1978102,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 10841,
+    "cache_read_input_tokens": 3371,
+    "output_tokens": 5520,
+    "output_tokens_details": {
+      "thinking_tokens": 2793
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 10841,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 5520,
+        "cache_read_input_tokens": 3371,
+        "cache_creation_input_tokens": 10841,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 10841
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 5520,
+      "cacheReadInputTokens": 3371,
+      "cacheCreationInputTokens": 10841,
+      "webSearchRequests": 0,
+      "costUSD": 0.1978102,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2793,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 10841,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"verdict\": \"revise\",\n  \"voice\": {\n    \"score\": 4,\n    \"sounds_like_deadwater_run\": true,\n    \"why\": \"The bodies are plain and physical, in second person, with dry understatement that fits the sheet (\\\"He names a fair price, which is how you know he wants to be gone.\\\", \\\"Small, but it's yours.\\\"). A few result lines are flat or menu-like, and two hedge with 'or/if' to cover branches the player can't see.\",\n    \"weakest_lines\": [\n      \"You hold your course. Nothing happens, and behind you the wreck slips under.\",\n      \"He takes one look at the beard and calls it a gift. He sails off fast.\",\n      \"Your diver comes up with a full chest - or with a fistful of coin and a gash from the timbers.\",\n      \"He keeps his purse and joins the crew. If there's no bunk for him, he drops off at the next shore.\"\n    ]\n  },\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DriftingWreck\",\n      \"field\": \"choices[1].outcomes[0].options\",\n      \"rule\": \"Design: no dominant choice\",\n      \"problem\": \"'Dive the hold' is close to dominant over 'Strip the deck'. On average it pays 84 gold against a sure 40, and its worst case (+30 gold, -20 HP to one random crew member, with HP floored at 1) is barely worse than the safe pick. The brief asks for 'a sure thing vs. a gamble', but this gamble has almost no real downside.\",\n      \"fix\": \"Make the bad branch hurt. For example, 50/50 weights with the bad branch at 0 gold and -25 to -30 CrewHealth (Random). Or raise 'Strip the deck' to about 60 gold so the safe pick is worth taking.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_CastawayOnASpar\",\n      \"field\": \"choices[0]\",\n      \"rule\": \"Design: no trap choice\",\n      \"problem\": \"With a full crew (4), 'Sign him on' is still enabled but does nothing (Recruit fails gracefully), while the other choice gives 60 gold. No requirement exists to disable it. A player with 3 crew plus a recruit from a shop or earlier event walks into a free loss. The result text admits this ('If there's no bunk for him...'), but the button still invites the click.\",\n      \"fix\": \"Block on Brandon's call: either add a 'CrewCountAtMost' requirement (not in the facts, see open questions) or accept the trap and rewrite the label or body so a full crew is warned up front. Don't ship as-is.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_HiddenShoal\",\n      \"field\": \"choices[2].requirements\",\n      \"rule\": \"Design: Bad event must cost something\",\n      \"problem\": \"'Lighten the hold' has no requirement, and Gold floors at 0. A player with little or no gold (common right after a shop) loses nothing, so the Bad event becomes free and the choice beats ship damage and crew damage outright.\",\n      \"fix\": \"Add { \\\"type\\\": \\\"MinGold\\\", \\\"amount\\\": 60 } to choices[2].requirements. Choices 0 and 1 remain as fallbacks with no requirements.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_HiddenShoal\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"\\\"leaves half the keel on the sand\\\" overstates a -50 ShipHealth hit, which is 20% of 250 max HP.\",\n      \"fix\": \"Tone it down, e.g. \\\"...and leaves a good length of keel on the sand.\\\"\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_HiddenShoal\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"\\\"Over go stores and a chest of coin\\\" suggests the player loses more than gold. The only outcome is Gold -60.\",\n      \"fix\": \"Make it only about coin, e.g. \\\"Over goes a chest of coin. She floats off clean, and you're poorer for it.\\\"\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DriftingWreck\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"One result text covers both RandomOf branches ('a full chest - or ...'), so the player never reads what actually happened. The data format has no per-option result text.\",\n      \"fix\": \"Write a neutral line that doesn't describe either outcome (e.g. \\\"Your diver goes over the side with a knife in his teeth.\\\") and let the outcome readout show the result. See the open question about per-option text.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DriftingWreck\",\n      \"field\": \"choices[2]\",\n      \"rule\": \"Design: real decisions\",\n      \"problem\": \"'Leave her to the sea' is strictly worse than 'Strip the deck', which is free and has no requirements. Nobody would ever pick it. The line 'Nothing happens' also reads like a menu item.\",\n      \"fix\": \"Cut it to 2 choices, or give it a small upside (e.g. a little ShipHealth from salvaged timber). If kept, replace 'Nothing happens' with something drier.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_PeddlersSloop\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"Text consistency\",\n      \"problem\": \"The body says he names 'a fair price'. The result says 'Cheaper than any port will sell them.' Those are slightly at odds. The joke works better if the price is suspiciously good.\",\n      \"fix\": \"Change the body to 'He names a low price, which is how you know he wants to be gone.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_PeddlersSloop\",\n      \"field\": \"choices[0].outcomes[1]\",\n      \"rule\": \"Inventory cap\",\n      \"problem\": \"With 5 or 6 items in inventory, the player pays 40 gold and may get 1 or 0 tonics. GiveItem's behaviour when inventory is full isn't in the facts, and no requirement can check free slots.\",\n      \"fix\": \"Wait for Brandon's answer on GiveItem overflow. If it drops items silently, refund the gold or add a free-slot requirement.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_PeddlersSloop\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"Voice\",\n      \"problem\": \"\\\"He sails off fast.\\\" is flat and repeats the body's 'wants to be gone' beat.\",\n      \"fix\": \"Make it drier, e.g. \\\"He's under full sail before you can say thank you.\\\"\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"open_questions\": [\n    \"GiveItem when the inventory is full (6 items): does it partly fail, fully fail, or overflow? It affects whether PeddlersSloop 'Buy two tonics' can take gold and give nothing.\",\n    \"Should there be a 'CrewCountAtMost' requirement (or should Recruit choices auto-disable when the crew is full)? Without one, every Recruit event is a trap for a full crew.\",\n    \"Should RandomOf options get their own resultText? Without it, gamble choices can't tell the player which way the roll went in-voice.\",\n    \"Does crew HP carry over between fights? If HP resets, every event CrewHealth loss (Wreck dive, Shoal push) costs nothing and these trade-offs fall apart.\",\n    \"Is a captain-only choice that is strictly better for that captain (Fearmongerer gets free items in PeddlersSloop) the intended way to do captain perks?\",\n    \"PeddlersSloop sells 2 HealthRestore at 20 each, against 30 in the shop. Is that discount OK for a Good event in layers 1-3? (The writer raised this.)\"\n  ]\n}\n```",
+  "ttft_ms": 32822,
+  "type": "result",
+  "duration_ms": 56463,
+  "uuid": "f3cddb3b-f363-4d31-b9fb-ab5a9838fd59",
+  "ttft_stream_ms": 2823,
+  "time_to_request_ms": 223,
+  "first_content_frame_ms": 2823,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 40391,
+  "stop_reason": "end_turn",
+  "session_id": "3cdd0f4e-567a-4bb2-8af4-a295611e1428",
+  "total_cost_usd": 0.1758942,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 11519,
+    "cache_read_input_tokens": 3371,
+    "output_tokens": 4153,
+    "output_tokens_details": {
+      "thinking_tokens": 2333
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 11519,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 4153,
+        "cache_read_input_tokens": 3371,
+        "cache_creation_input_tokens": 11519,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 11519
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 4153,
+      "cacheReadInputTokens": 3371,
+      "cacheCreationInputTokens": 11519,
+      "webSearchRequests": 0,
+      "costUSD": 0.1758942,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2333,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 11519,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"verdict\": \"revise\",\n  \"voice\": {\n    \"score\": 4,\n    \"sounds_like_deadwater_run\": true,\n    \"why\": \"The writing is plain, in second person and dry, with concrete nouns, and it never uses a banned word. The Fearmongerer and Conqueror lines are strong. A few lines either claim things the data can't back up or contradict the body.\",\n    \"weakest_lines\": [\n      \"He says he won't be needing them where he's going.\",\n      \"Scrawled warnings about tentacles, timing and where to stand.\",\n      \"The hull takes it badly, but the purse stays full.\"\n    ]\n  },\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_WreckersAmongTheHulls\",\n      \"field\": \"choices[0].requirements\",\n      \"rule\": \"No free choice when broke\",\n      \"problem\": \"'Pay the toll' (-80 gold) has no requirement, and gold floors at 0. A captain with little or no gold pays nothing or very little, so the choice becomes the clear best pick for a broke player in a Bad event. The result text 'They count it twice' also makes no sense when you paid nothing.\",\n      \"fix\": \"Add { \\\"type\\\": \\\"MinGold\\\", \\\"amount\\\": 80 } to choices[0].requirements. 'Run the shallows' stays as the choice with no requirement.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_SomethingUnderTheKeel\",\n      \"field\": \"choices[1].requirements\",\n      \"rule\": \"No free choice when broke\",\n      \"problem\": \"'Dump the cargo and run' (-70 gold, -20 ship) has no requirement, and gold floors at 0. A player with 0 gold gets a sure -20 ship, which beats 'ride it out' (about -47 ship on average). The gamble disappears exactly when the player is weakest.\",\n      \"fix\": \"Add { \\\"type\\\": \\\"MinGold\\\", \\\"amount\\\": 70 } to choices[1].requirements. Choice 0 still has no requirement, so the event always has an open choice.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_WreckersAmongTheHulls\",\n      \"field\": \"choices[2].outcomes\",\n      \"rule\": \"No strictly dominant choice\",\n      \"problem\": \"The Fearmongerer's 'Let them see your face' costs nothing and gives +40 gold, so it beats -80 gold and -50 ship outright. For him a Bad event becomes a free Good event with no decision. The other two captain gates both cost something: the Conqueror gives up 60 gold and the crew's XP, and the TeamLeader takes -15 crew HP and -20 ship.\",\n      \"fix\": \"Give it a cost or a risk. For example, drop the gold so the gate just avoids the loss, or use a RandomOf where some longboats don't turn (weight 1: ShipHealth -30) and the rest give the purse (weight 2: Gold +40).\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_WreckersAmongTheHulls\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"'the purse stays full' is wrong for a player with little gold, and it reads as gaining something when the choice only avoids a loss.\",\n      \"fix\": \"Change it to something neutral, such as 'The hull takes it badly. The wreckers don't follow.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheTurningBrig\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"Consistency with body\",\n      \"problem\": \"The body says he is going home. 'Won't be needing them where he's going' is the stock line for a dying man, so it muddles the picture, and it's a cliché.\",\n      \"fix\": \"Tie it to the trip home, for example 'Two tonics, corked and sealed. He'd rather you drank them than the sea.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheTallyRock\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"No promised effects\",\n      \"problem\": \"'warnings about tentacles, timing and where to stand' suggests real knowledge for the Kraken fight. The only outcome is +60 XP, and nothing in the boss fight changes.\",\n      \"fix\": \"Keep the notes vague, for example 'Scrawled warnings from crews who went on ahead. The crew make you read it twice.'\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"open_questions\": [\n    \"GiveItem when the inventory is full (6 items): does 'Take his medicine chest' fail gracefully, drop the extra, or block the choice? If it silently does nothing, should HealthRestore events get a requirement or a fallback result text?\",\n    \"The writer flagged the 60-gold price for +100 ship (shop repair costs 100). Keep 60 for a Good event this late in the run, or raise it to 80?\",\n    \"Should captain-gated choices be allowed to be strictly better than the open choices, as a reward for that captain? If so, the Wreckers finding drops to minor. Please write the rule into voice.md or 11-Events.md either way.\",\n    \"The writer suggests a CrewCountAtMost requirement so Recruit choices don't silently fail on a full crew. Do you want it added to the requirements list?\"\n  ]\n}\n```",
+  "ttft_ms": 24388,
+  "type": "result",
+  "duration_ms": 40510,
+  "uuid": "720a04e1-dd4a-4a06-a6ee-46eeece308ee",
+  "ttft_stream_ms": 2424,
+  "time_to_request_ms": 118,
+  "first_content_frame_ms": 2424,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

@@ -1,0 +1,274 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_TheTurningBrig",
+      "title": "The Turning Brig",
+      "body": "A brig limps past on the other tack, her foremast gone and her rail torn open. Her captain shouts across that he has seen what waits ahead and is going home. He has no more use for what's in his hold.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Take his planks",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": 50
+            }
+          ],
+          "resultText": "His crew pass over timber and pitch. By dusk the worst of your holes are shut."
+        },
+        {
+          "label": "Take his medicine chest",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 2
+            }
+          ],
+          "resultText": "Two tonics, corked and sealed. He says he won't be needing them where he's going."
+        },
+        {
+          "label": "Pay for the whole lot",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 60
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -60
+            },
+            {
+              "type": "ShipHealth",
+              "delta": 100
+            }
+          ],
+          "resultText": "He takes your coin for the road home and lends you his carpenter for the afternoon. Your ship sails on sounder than it has in weeks."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheTallyRock",
+      "title": "The Tally Rock",
+      "body": "A black rock stands alone in the swell, cut all over with names. Every crew that sailed on to the Kraken stopped here first. Under a cairn at its foot sits a strongbox and a page of notes, weighted with a stone.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Open the strongbox",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 120
+            }
+          ],
+          "resultText": "Old coin, still dry. Whoever left it isn't coming back for it."
+        },
+        {
+          "label": "Read the notes aloud",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "GrantXp",
+              "amount": 60,
+              "selector": "All"
+            }
+          ],
+          "resultText": "Scrawled warnings about tentacles, timing and where to stand. The crew make you read it twice."
+        },
+        {
+          "label": "Keep the notes to yourself",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Conqueror"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "GrantXp",
+              "amount": 80,
+              "selector": "Captain"
+            },
+            {
+              "type": "Gold",
+              "delta": 60
+            }
+          ],
+          "resultText": "You read every page alone, then pocket half the coin and leave the rest under the cairn. The crew don't need to know how it ends. You'll be the one ending it."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_WreckersAmongTheHulls",
+      "title": "Wreckers Among the Hulls",
+      "body": "Broken ships lie on their sides in the shallows, ribs open to the sky. A wrecker crew is stripping them, and their longboats are already pulling your way. Their captain wants a toll, or your hull for parts.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Pay the toll",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 80
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -80
+            }
+          ],
+          "resultText": "They count it twice and row off. Cheaper than a fight this close to the end."
+        },
+        {
+          "label": "Run the shallows",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -50
+            }
+          ],
+          "resultText": "You scrape over a sunken keel to get clear. The hull takes it badly, but the purse stays full."
+        },
+        {
+          "label": "Let them see your face",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Fearmongerer"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 2,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 40
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -30
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "You light the fuses in your beard and stand at the rail. The longboats scatter, some fast enough to drop their purses, some too close to stop before they ram you."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_SomethingUnderTheKeel",
+      "title": "Something Under the Keel",
+      "body": "The water goes flat and dark. Something long passes beneath the ship, slow enough that you can count the seconds. Then the deck lifts under your feet.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Hold on and ride it out",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 2,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -60
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "ShipHealth",
+                      "delta": -20
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "It rises once more and is gone. Whatever it cost the hull, you hear it groaning for an hour after."
+        },
+        {
+          "label": "Dump the cargo and run",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 70
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -70
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -20
+            }
+          ],
+          "resultText": "Crates of plunder go over the side and the ship rides higher. Whatever it was loses interest."
+        },
+        {
+          "label": "Every hand to the pumps",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "TeamLeader"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -15,
+              "selector": "All"
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -20
+            },
+            {
+              "type": "GrantXp",
+              "amount": 40,
+              "selector": "All"
+            }
+          ],
+          "resultText": "Nobody waits to be told. They bail until their hands bleed, and the ship stays dry enough to sail."
+        }
+      ]
+    }
+  ],
+  "notes": "**Fixes from the review:**\n- **Wreckers, 'Pay the toll' (major, broke player):** added MinGold 80 to match the -80 delta. A broke player can't get out of the event for free now, and 'They count it twice' is always true. 'Run the shallows' still has no requirement, so no player is stuck.\n- **Something Under the Keel, 'Dump the cargo and run' (major, broke player):** added MinGold 70 to match the -70 delta. With no gold you have to take the gamble (or the TeamLeader's pumps). Choice 0 still has no requirement.\n- **Wreckers, Fearmongerer gate (major, dominant choice):** changed it from a sure +40 gold to the critic's RandomOf: weight 2 gives Gold +40, weight 1 gives ShipHealth -30. He still has the best average result, since his reputation should count for something. But now one time in three it costs him hull, so it's a real gamble and not a free win. The result text covers both outcomes (purses dropped, or a longboat rams you) so it never promises something that didn't happen.\n- **Untouched:** The Turning Brig, The Tally Rock and the other choices, since the critic didn't flag them.\n\n**Batch summary:**\n- Captain gates, one each: Conqueror on The Tally Rock, Fearmongerer on Wreckers Among the Hulls, TeamLeader on Something Under the Keel.\n- Valence: 2 Good (Turning Brig, Tally Rock) and 2 Bad (Wreckers, Something Under the Keel). All are on layers 6-9.\n- Guardrails: gold from +120 to -80, ship from +100 to -60, crew -15, XP at most 80, items at most 2. Every event has at least one choice with no requirement. Every choice that loses gold now needs MinGold equal to the loss.\n- Balance for Brandon: 'Pay for the whole lot' gives +100 ship for 60 gold, which beats a shop repair (100 gold). You might want it at 80.\n- Idea for Brandon (not used): a 'CrewCountAtMost' requirement, so a Recruit choice can't silently do nothing when the crew is full."
+}

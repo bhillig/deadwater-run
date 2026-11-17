@@ -40,6 +40,8 @@
 | Sound Wrangler | Sound assets, mix, combat sound cues |
 | Release Engineer | Packaged builds, Steam depot upload, store page checklist |
 | Asset Scraper | Finds art/audio options for approval (2-3 options per request) |
+| Event Writer | Drafts events (text, choices, outcomes) for Brandon to approve |
+| Content Critic | Reviews generated content against the GDD, tuning and voice sheet |
 
 All systems are built to work together - no system in a silo. See `Docs/Orchestration.md`.
 

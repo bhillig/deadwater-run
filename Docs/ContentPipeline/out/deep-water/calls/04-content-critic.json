@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 61636,
+  "stop_reason": "end_turn",
+  "session_id": "7181bfad-5961-4728-8ab6-13b72568f74f",
+  "total_cost_usd": 0.2703892,
+  "usage": {
+    "input_tokens": 4,
+    "cache_creation_input_tokens": 18853,
+    "cache_read_input_tokens": 18346,
+    "output_tokens": 5794,
+    "output_tokens_details": {
+      "thinking_tokens": 3614
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 18853,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2058,
+        "cache_read_input_tokens": 14975,
+        "cache_creation_input_tokens": 7249,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 7249
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 5794,
+      "cacheReadInputTokens": 18346,
+      "cacheCreationInputTokens": 18853,
+      "webSearchRequests": 0,
+      "costUSD": 0.2703892,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3614,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 18853,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 2,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "{\"verdict\":\"revise\",\"voice\":{\"score\":4,\"sounds_like_deadwater_run\":true,\"why\":\"The writing is mostly plain and physical, in second person and present tense, with dry understatement ('For now.', 'wins, barely.'). Two lines are hedges, two lines repeat each other, and two RandomOf texts reuse the same 'the sea' wording.\",\"weakest_lines\":[\"Whether there's a bunk to spare is another matter.\",\"You wave the swordsman over the rail. / You wave the marksman over the rail.\",\"The sea decides the rest.\",\"Whatever the sea took, it took fast.\",\"The sailors in it walked off a rival ship two nights ago\"]},\"findings\":[{\"severity\":\"major\",\"event\":\"DA_Event_MutteringsBelowDeck\",\"field\":\"choices[2].outcomes[0].options\",\"rule\":\"No trap choice\",\"problem\":\"'Let it fester' is worse than 'Settle it with fists' in nearly every crew state. In 2/3 of rolls it costs -20 to every crewmate, which is 60-80 total HP for a crew of 3-4 and more than the fists' -50. In the other 1/3 it permanently kills a crewmate. Neither branch has an upside, so the gamble only pays off with a solo captain. HP carries between fights (C9, 03-Combat-Turns.md), so the damage is real.\",\"fix\":\"Give the gamble a cheap branch so it competes with the sure costs. For example: weight 2 → CrewHealth -10 on Random (a scuffle), weight 1 → LoseCrew Random. Keep the crew-loss branch, which covers the brief's LoseCrew requirement.\"},{\"severity\":\"major\",\"event\":\"DA_Event_DesertersLongboat\",\"field\":\"choices[0], choices[1]\",\"rule\":\"No dead buttons / text matches data\",\"problem\":\"At layers 4-6 a full crew of 4 is a common state, because shop recruits are 80 gold. With a full crew, two of the three choices do nothing. The player can still click them, and 'Whether there's a bunk to spare is another matter' hides the no-op instead of saying it. Facts list no CrewCountAtMost requirement, so this can't be gated today. The writer flagged this as open but shipped it anyway.\",\"fix\":\"Either hold the event until Brandon adds a crew-not-full requirement, or restructure within the current rules. Merge to one recruit choice and give it a second outcome that still lands when the crew is full, for example taking the deserters' kit via GiveItem HealthRestore 1. That frees a slot for a different choice that works at 4 crew.\"},{\"severity\":\"minor\",\"event\":\"DA_Event_RivalsCache\",\"field\":\"choices[0].label\",\"rule\":\"Text matches body\",\"problem\":\"'Cut the purse free' brings in a purse the body never mentions. The body only sets up a barrel, a taut line and sunken plunder, so the player can't tell how a purse differs from 'the whole chest'.\",\"fix\":\"Set the purse up in the body, for example 'A purse is lashed to the line above the chest', or rename the choice to something already on screen.\"},{\"severity\":\"minor\",\"event\":\"DA_Event_DesertersLongboat\",\"field\":\"choices[0].resultText, choices[1].resultText\",\"rule\":\"Voice: no copy-paste\",\"problem\":\"The two result texts are identical apart from one noun, and each just repeats its label ('Wave … aboard' → 'You wave … over the rail').\",\"fix\":\"Give each recruit its own concrete beat: the swordsman tests the rail with his blade, the marksman unwraps the rifle and checks the powder.\"},{\"severity\":\"minor\",\"event\":\"DA_Event_DesertersLongboat\",\"field\":\"body\",\"rule\":\"Voice: concrete and plausible\",\"problem\":\"In 'walked off a rival ship', the idiom 'walked off' sits oddly at sea.\",\"fix\":\"'slipped off a rival ship' or 'cut loose from a rival ship'.\"},{\"severity\":\"minor\",\"event\":\"DA_Event_RivalsCache / DA_Event_SquallLine\",\"field\":\"choices[1].resultText / choices[2].resultText\",\"rule\":\"Fit: near-duplicates\",\"problem\":\"'The sea decides the rest.' and 'Whatever the sea took, it took fast.' use the same 'the sea' wording to cover a RandomOf. Seen in the same run, the repetition is obvious.\",\"fix\":\"Give one of them a physical detail instead. For the chest: 'The line sings as it comes up.'\"},{\"severity\":\"minor\",\"event\":\"DA_Event_RivalsCache / DA_Event_DesertersLongboat\",\"field\":\"choices[2].outcomes / choices[2].outcomes\",\"rule\":\"Fit: variety\",\"problem\":\"Both Good events reward HealthRestore, described both times as someone else's 'medicine'. The set never uses ManaRestore, GrantXp or AbilityChoice.\",\"fix\":\"Swap one of them. For example, the cache barrel could give ManaRestore or GrantXp, or the deserters could pass on what they know (GrantXp to Chosen).\"}],\"code_check_disputes\":[],\"open_questions\":[\"The writer asked whether crew HP carries between nodes. It does: C9 (03-Combat-Turns.md, 09-Run-Map.md) says HP carries and only MP refills. The Mutterings and Squall crew costs are real as priced, so no further gold cut is needed for that reason.\",\"Should Brandon add a CrewCountAtMost (or 'crew not full') requirement? Without it, any Recruit event is a dead button with a full crew.\",\"What does GiveItem do when the inventory already holds 6 items? Both Good events can land on a full bag, and the facts don't define overflow.\",\"Does the event result screen list the outcomes that were applied, for example which crewmate LoseCrew removed? Each choice has only one resultText, so in Mutterings a permadeath could happen with no named victim on screen.\"]}",
+  "ttft_ms": 39597,
+  "type": "result",
+  "duration_ms": 61927,
+  "uuid": "893daafc-8781-42a5-9b05-8601e7e5df36",
+  "ttft_stream_ms": 3142,
+  "time_to_request_ms": 139,
+  "first_content_frame_ms": 3142,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

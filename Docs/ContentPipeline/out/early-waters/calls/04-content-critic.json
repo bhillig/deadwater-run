@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 50460,
+  "stop_reason": "end_turn",
+  "session_id": "f5f4aa14-ec18-4f0b-835e-aa2389884247",
+  "total_cost_usd": 0.2301296,
+  "usage": {
+    "input_tokens": 4,
+    "cache_creation_input_tokens": 15932,
+    "cache_read_input_tokens": 17688,
+    "output_tokens": 4956,
+    "output_tokens_details": {
+      "thinking_tokens": 2770
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 15932,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2418,
+        "cache_read_input_tokens": 14317,
+        "cache_creation_input_tokens": 4986,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 4986
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 4956,
+      "cacheReadInputTokens": 17688,
+      "cacheCreationInputTokens": 15932,
+      "webSearchRequests": 0,
+      "costUSD": 0.2301296,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2770,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 15932,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"verdict\": \"revise\",\n  \"voice\": {\n    \"score\": 4,\n    \"sounds_like_deadwater_run\": true,\n    \"why\": \"Mostly plain, physical and dry, in second person. 'The hull barely notices. The crew's shoulders do.' and the sandbar line land well. The weak spots are one result text that reads like a rules summary and a few lines that promise more than the outcomes do.\",\n    \"weakest_lines\": [\n      \"Your diver comes up with a full chest, or comes up empty-handed and bleeding from the timbers.\",\n      \"He names a fair price, which is how you know he wants to be gone.\",\n      \"your crew stops dropping their guard.\",\n      \"Over go stores and a chest of coin.\"\n    ]\n  },\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DriftingWreck\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"Voice / result text fits every branch\",\n      \"problem\": \"FDwEventChoice has one ResultText per choice (DwEventDefinition.h:24), so writing for both branches is the right idea. But 'X, or Y' reads like a tooltip listing the possible results, not like something that happened. The player who gets +120 gold still reads 'or comes up empty-handed and bleeding'. 'Bleeding from the timbers' is also garbled: the timbers aren't bleeding.\",\n      \"fix\": \"Write one line that is true for both branches and let the change log show what happened. For example: 'Your diver goes down into the black hold, and the sea decides what comes back up.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DriftingWreck\",\n      \"field\": \"choices[2]\",\n      \"rule\": \"Design: no dead choice\",\n      \"problem\": \"'Leave her to the sea' gives nothing. 'Strip the deck' gives +50 gold for free. So Leave is strictly worse and never worth picking. That works against the brief's point that events are trade-offs.\",\n      \"fix\": \"Either drop Leave (two choices is allowed) or give 'Strip the deck' a small cost so walking away is a real option. For example, a 25/75 RandomOf with -10 CrewHealth on a Random crew member.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_PeddlersSloop\",\n      \"field\": \"body / choices[0].resultText\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"The body says 'He names a fair price', but the result text says 'Cheaper than any port will sell them'. The data agrees with the result text: 40 gold for two, against 60 at a shop. The body and result text contradict each other.\",\n      \"fix\": \"Change the body to 'He names a low price, which is how you know he wants to be gone.' That also makes the hurry line make sense.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_CastawayOnASpar\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"No promised effects\",\n      \"problem\": \"'your crew stops dropping their guard' sounds like a defence buff. The only outcome is +50 XP to All.\",\n      \"fix\": \"Point it at growth instead. For example: '...He keeps his purse, and your crew learns a few of his tricks.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_CastawayOnASpar\",\n      \"field\": \"body\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"'the heavy purse around his neck' sets up a big payout. It pays 60 gold, less than half of a fight's 150.\",\n      \"fix\": \"Change it to 'a thin purse' or just 'his purse'. Or raise the gold to around 80-100, still inside goldGainMax, and rebalance against the XP choice.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_HiddenShoal\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"No promised effects\",\n      \"problem\": \"'Over go stores' suggests supplies or items are lost, but the only outcome is -60 gold.\",\n      \"fix\": \"Change it to 'Over goes a chest of coin. She floats off clean, and you're poorer for it.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_HiddenShoal\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"'leaves half the keel on the sand' overstates -50 ship HP, which is 20% of 250. The pain sounds much bigger than the hit.\",\n      \"fix\": \"Tone it down. For example: '...and leaves a long strip of her keel on the sand.'\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"open_questions\": [\n    \"GiveItem when the inventory is full (max 6): does the item get dropped, the choice get blocked, or the gold get refunded? 'Buy two tonics' takes 40 gold before GiveItem runs, so if items are dropped silently, a player with 5-6 items pays for nothing. If that's how it works, we may need a 'has inventory space' requirement.\",\n    \"Is it OK for the sloop to sell 2 HealthRestore for 40 gold, below the shop's 30 each? This is the writer's question; I think it's fine for a Good event.\",\n    \"The Fearmongerer-only choice gives a free HealthRestore and ManaRestore, and the other captains get no matching option. Are captain-gated freebies in events the intended pattern?\",\n    \"Should a CrewCountAtMost requirement be added so Recruit events like 'Sign him on' can come back without being a trap?\"\n  ]\n}\n```",
+  "ttft_ms": 24680,
+  "type": "result",
+  "duration_ms": 50712,
+  "uuid": "03585dc4-93d6-4af8-88e0-db7866b1f1ee",
+  "ttft_stream_ms": 2328,
+  "time_to_request_ms": 185,
+  "first_content_frame_ms": 2328,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

@@ -1,0 +1,92 @@
+{
+  "code": [
+    {
+      "source": "code",
+      "severity": "minor",
+      "event": "DA_Event_HiddenShoal",
+      "field": "choices[1].resultText",
+      "rule": "E02 text",
+      "problem": "Result text is more than 2 sentences",
+      "fix": "Trim"
+    }
+  ],
+  "critic": {
+    "verdict": "revise",
+    "voice": {
+      "score": 4,
+      "sounds_like_deadwater_run": true,
+      "why": "Mostly plain, physical and dry, in second person. 'The hull barely notices. The crew's shoulders do.' and the sandbar line land well. The weak spots are one result text that reads like a rules summary and a few lines that promise more than the outcomes do.",
+      "weakest_lines": [
+        "Your diver comes up with a full chest, or comes up empty-handed and bleeding from the timbers.",
+        "He names a fair price, which is how you know he wants to be gone.",
+        "your crew stops dropping their guard.",
+        "Over go stores and a chest of coin."
+      ]
+    },
+    "findings": [
+      {
+        "severity": "major",
+        "event": "DA_Event_DriftingWreck",
+        "field": "choices[1].resultText",
+        "rule": "Voice / result text fits every branch",
+        "problem": "FDwEventChoice has one ResultText per choice (DwEventDefinition.h:24), so writing for both branches is the right idea. But 'X, or Y' reads like a tooltip listing the possible results, not like something that happened. The player who gets +120 gold still reads 'or comes up empty-handed and bleeding'. 'Bleeding from the timbers' is also garbled: the timbers aren't bleeding.",
+        "fix": "Write one line that is true for both branches and let the change log show what happened. For example: 'Your diver goes down into the black hold, and the sea decides what comes back up.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_DriftingWreck",
+        "field": "choices[2]",
+        "rule": "Design: no dead choice",
+        "problem": "'Leave her to the sea' gives nothing. 'Strip the deck' gives +50 gold for free. So Leave is strictly worse and never worth picking. That works against the brief's point that events are trade-offs.",
+        "fix": "Either drop Leave (two choices is allowed) or give 'Strip the deck' a small cost so walking away is a real option. For example, a 25/75 RandomOf with -10 CrewHealth on a Random crew member."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_PeddlersSloop",
+        "field": "body / choices[0].resultText",
+        "rule": "Text matches data",
+        "problem": "The body says 'He names a fair price', but the result text says 'Cheaper than any port will sell them'. The data agrees with the result text: 40 gold for two, against 60 at a shop. The body and result text contradict each other.",
+        "fix": "Change the body to 'He names a low price, which is how you know he wants to be gone.' That also makes the hurry line make sense."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_CastawayOnASpar",
+        "field": "choices[0].resultText",
+        "rule": "No promised effects",
+        "problem": "'your crew stops dropping their guard' sounds like a defence buff. The only outcome is +50 XP to All.",
+        "fix": "Point it at growth instead. For example: '...He keeps his purse, and your crew learns a few of his tricks.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_CastawayOnASpar",
+        "field": "body",
+        "rule": "Text matches data",
+        "problem": "'the heavy purse around his neck' sets up a big payout. It pays 60 gold, less than half of a fight's 150.",
+        "fix": "Change it to 'a thin purse' or just 'his purse'. Or raise the gold to around 80-100, still inside goldGainMax, and rebalance against the XP choice."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_HiddenShoal",
+        "field": "choices[2].resultText",
+        "rule": "No promised effects",
+        "problem": "'Over go stores' suggests supplies or items are lost, but the only outcome is -60 gold.",
+        "fix": "Change it to 'Over goes a chest of coin. She floats off clean, and you're poorer for it.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_HiddenShoal",
+        "field": "choices[0].resultText",
+        "rule": "Text matches data",
+        "problem": "'leaves half the keel on the sand' overstates -50 ship HP, which is 20% of 250. The pain sounds much bigger than the hit.",
+        "fix": "Tone it down. For example: '...and leaves a long strip of her keel on the sand.'"
+      }
+    ],
+    "code_check_disputes": [],
+    "open_questions": [
+      "GiveItem when the inventory is full (max 6): does the item get dropped, the choice get blocked, or the gold get refunded? 'Buy two tonics' takes 40 gold before GiveItem runs, so if items are dropped silently, a player with 5-6 items pays for nothing. If that's how it works, we may need a 'has inventory space' requirement.",
+      "Is it OK for the sloop to sell 2 HealthRestore for 40 gold, below the shop's 30 each? This is the writer's question; I think it's fine for a Good event.",
+      "The Fearmongerer-only choice gives a free HealthRestore and ManaRestore, and the other captains get no matching option. Are captain-gated freebies in events the intended pattern?",
+      "Should a CrewCountAtMost requirement be added so Recruit events like 'Sign him on' can come back without being a trap?"
+    ]
+  }
+}

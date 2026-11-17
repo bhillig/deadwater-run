@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 59174,
+  "stop_reason": "end_turn",
+  "session_id": "ce024bb1-ba5f-4d4a-b8bb-47af692e5eda",
+  "total_cost_usd": 0.2699796,
+  "usage": {
+    "input_tokens": 4,
+    "cache_creation_input_tokens": 18417,
+    "cache_read_input_tokens": 18438,
+    "output_tokens": 5947,
+    "output_tokens_details": {
+      "thinking_tokens": 2987
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 18417,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2743,
+        "cache_read_input_tokens": 15067,
+        "cache_creation_input_tokens": 6721,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 6721
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 4,
+      "outputTokens": 5947,
+      "cacheReadInputTokens": 18438,
+      "cacheCreationInputTokens": 18417,
+      "webSearchRequests": 0,
+      "costUSD": 0.2699796,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2987,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 18417,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 3,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "{\n  \"verdict\": \"revise\",\n  \"voice\": {\n    \"score\": 4,\n    \"sounds_like_deadwater_run\": true,\n    \"why\": \"Mostly right: plain second-person present tense, concrete nouns and dry understatement ('Whoever left it isn't coming back for it.'). Two result texts let it down. The Fearmongerer gamble describes both branches at once, and a couple of lines overreach into melodrama or promise more than the data does.\",\n    \"weakest_lines\": [\n      \"The longboats scatter, some fast enough to drop their purses, some too close to stop before they ram you.\",\n      \"The crew don't need to know how it ends. You'll be the one ending it.\",\n      \"Your ship sails on sounder than it has in weeks.\",\n      \"Crates of plunder go over the side and the ship rides higher. Whatever it was loses interest.\"\n    ]\n  },\n  \"findings\": [\n    {\n      \"severity\": \"blocker\",\n      \"event\": \"DA_Event_WreckersAmongTheHulls\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"FDwEventChoice has a single ResultText (11-Events.md L27), so every branch shows the same text. That text says both things happened: purses were dropped (+gold) and a longboat rammed you (hull loss). Each RandomOf branch applies only one of them. On the 2/3 branch the text claims hull damage that never happens. On the 1/3 branch it implies gold you never get. The writer's note says the text 'never promises something that didn't happen', and that's wrong. 'Drop their purses' is also odd logic: it's not clear why wreckers rowing in to extort you would be carrying purses or how you'd collect them.\",\n      \"fix\": \"Write branch-neutral text that names neither effect, e.g. 'You light the fuses in your beard and stand at the rail. The longboats break and scatter.' Let the applied-change log show the gold or hull result. Otherwise, ask Brandon for per-option result text on RandomOf (open question).\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_WreckersAmongTheHulls\",\n      \"field\": \"choices[2].outcomes[0].options[1]\",\n      \"rule\": \"No strictly dominant choice\",\n      \"problem\": \"The Fearmongerer's worst case (ShipHealth -30) is better than the free alternative 'Run the shallows' (ShipHealth -50), and his best case gains gold. Every branch beats every other choice, so for him this is still not a decision. It also turns a Bad event into a net-positive one (EV about +27 gold, -10 hull). The RandomOf added variance but not a real choice.\",\n      \"fix\": \"Make the bad branch worse than the free option, e.g. ShipHealth -70 (the shipLossMax guardrail). He keeps the best average (~+27 gold, ~-23 hull) but now risks a worse hit than running the shallows.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_TheTurningBrig\",\n      \"field\": \"choices[2].label\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"'Pay for the whole lot' says you get everything in his hold, which includes the medicine chest from choice 1. The outcomes only give ShipHealth +100 and no HealthRestore. The result text even switches to a carpenter instead.\",\n      \"fix\": \"Change the label to match the outcome, e.g. 'Pay for his carpenter' or 'Pay him to patch you up'. Keep the outcomes as they are. Don't add the tonics, since 60 gold for +100 hull is already under shop price.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheTurningBrig\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"Text matches data\",\n      \"problem\": \"'Sounder than it has in weeks' overpromises. Hull is capped at 250, so a nearly full ship gains little, and +100 on a badly damaged ship still leaves it far from sound. 'Weeks' also sets a time scale the run doesn't have.\",\n      \"fix\": \"Understate it: 'His carpenter works through the afternoon. The worst of it is shut.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheTurningBrig\",\n      \"field\": \"choices[2].outcomes\",\n      \"rule\": \"Economy fit\",\n      \"problem\": \"Agreeing with the writer's flag: +100 hull for 60 gold undercuts the shop's 100-gold repair. It's also only 50 hull more than the free 'Take his planks'. It's a Good event so the discount can be justified, but it's the cheapest repair in the game.\",\n      \"fix\": \"Either raise it to MinGold 80 / Gold -80, or keep 60 and accept it as a Good-event discount. Brandon's call.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheTallyRock\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"No promises outcomes don't keep\",\n      \"problem\": \"'Scrawled warnings about tentacles, timing and where to stand' reads as real Kraken intel. The only effect is generic XP, and the boss fight gives no benefit for having read it.\",\n      \"fix\": \"Keep it vaguer so the XP reads as the payoff, e.g. 'Scrawled warnings from crews who went on ahead. The crew make you read it twice.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheTallyRock\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"Captain fit\",\n      \"problem\": \"Besides the code check's length flag, the Conqueror leaving half the coin under the cairn is out of character for a captain who takes everything. It reads as an arbitrary reason for the gold being 60 instead of 120.\",\n      \"fix\": \"Give a reason that fits him, or just say he takes a share: 'You read every page alone and take what coin you can carry. The crew don't need to know how it ends.'\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_SomethingUnderTheKeel\",\n      \"field\": \"choices[2].outcomes\",\n      \"rule\": \"Valence fit\",\n      \"problem\": \"For the TeamLeader, a Bad event becomes close to a net gain. He takes -15 crew HP and -20 hull but gets +40 XP for everyone, which his Veteran Crew rule raises to 60. That's more than half a level each, on layers 6-9 right before the Kraken. It's not strictly dominant because crew HP carries into fights, but it's generous.\",\n      \"fix\": \"Cut GrantXp to 20-25, or raise CrewHealth to -20/-25 so it still feels like a Bad event.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_SomethingUnderTheKeel\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"Fiction logic\",\n      \"problem\": \"'Whatever it was loses interest' doesn't follow from throwing weight overboard. Riding higher helps you run, but it has nothing to do with the creature losing interest.\",\n      \"fix\": \"Tie it to the escape: 'Crates of plunder go over the side. The ship rides higher and you leave the dark water behind.'\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"open_questions\": [\n    \"Should RandomOf options have their own result text? With one ResultText per choice, every gamble's text has to be vague. Or does the applied-change log in FDwEventContext show the player what happened?\",\n    \"What does GiveItem do when the inventory is full (6 items)? Does it leave the item behind like plunder (P15) or fail silently? 'Take his medicine chest' could do nothing for a player with a full hold.\",\n    \"Should captain-gated choices beat the ungated ones in every branch, or only on average? The brief asks them to 'play to who they are', but the critic rules forbid strictly dominant choices.\"\n  ]\n}",
+  "ttft_ms": 31546,
+  "type": "result",
+  "duration_ms": 59486,
+  "uuid": "6d792ff5-556a-4c7d-826b-e17d887da9cc",
+  "ttft_stream_ms": 2609,
+  "time_to_request_ms": 234,
+  "first_content_frame_ms": 2609,
+  "queued_turn_count": 0,
+  "result_index": 0
+}
