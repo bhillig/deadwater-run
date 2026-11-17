@@ -154,6 +154,15 @@ public:
 	UDwGE_ConquerorExtraMove();
 };
 
+/** Infinite: grants Rule.Turn.SingleChoice - the Conqueror's crew make one choice per turn, move or act (05). */
+UCLASS()
+class DEADWATERRUN_API UDwGE_SingleChoice : public UDwGameplayEffect
+{
+	GENERATED_BODY()
+public:
+	UDwGE_SingleChoice();
+};
+
 /** Infinite: DamageBonus += Data.DamageBonus (Conqueror kill bonus, perks). */
 UCLASS()
 class DEADWATERRUN_API UDwGE_DamageBonus : public UDwGameplayEffect

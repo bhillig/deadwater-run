@@ -177,6 +177,12 @@ struct DEADWATERRUN_API FDwCaptainCombatRules
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") float SynergyDamageMultiplier = 1.f;
 	/** Team Leader defend (K5): a hit redirected onto the guarding captain deals x this. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") float GuardDamageMultiplier = 1.f;
+	/** Conqueror (Rule.Captain.KillBonus, K3): the run's bonus going in (0.05 = +5% damage), per own kill, and the cap. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") float KillBonusPct = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") float KillBonusPerKill = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") float KillBonusCap = 0.f;
+	/** Victims that don't count (Kraken tentacles, K3). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Captain") FGameplayTagContainer KillBonusIgnoredUnitTags;
 
 	bool Has(const FGameplayTag& Rule) const { return RuleTags.HasTagExact(Rule); }
 };
@@ -332,6 +338,8 @@ struct DEADWATERRUN_API FDwCombatResult
 	UPROPERTY(BlueprintReadOnly, Category = "Result") TArray<FDwCrewResult> Crew;
 	UPROPERTY(BlueprintReadOnly, Category = "Result") TArray<FDwKillRecord> Kills;
 	UPROPERTY(BlueprintReadOnly, Category = "Result") float PlayerShipHealth = 0.f;
+	/** Conqueror kill bonus after this fight (the setup's KillBonusPct plus this fight's counted kills, capped). */
+	UPROPERTY(BlueprintReadOnly, Category = "Result") float CaptainKillBonusPct = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Result") TMap<FName, int32> ItemsUsed;
 
 	bool operator==(const FDwCombatResult& Other) const;

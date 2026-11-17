@@ -61,6 +61,8 @@ namespace DwTags
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Immune_Fear);
 	/** K10: the Kraken can't be grappled. */
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Immune_Grapple);
+	/** K10: the Kraken body can't be frozen (tentacles can). */
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Immune_Freeze);
 
 	// Captain run rules (data on UDwCaptainDefinition::RuleTags)
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Rule_Captain_Synergy);

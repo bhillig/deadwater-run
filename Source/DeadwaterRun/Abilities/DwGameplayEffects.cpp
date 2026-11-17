@@ -212,6 +212,12 @@ UDwGE_ConquerorExtraMove::UDwGE_ConquerorExtraMove()
 	AddConstant(FUnit::GetMaxActionPointsAttribute(), EGameplayModOp::AddBase, 1.f);
 }
 
+UDwGE_SingleChoice::UDwGE_SingleChoice()
+{
+	DurationPolicy = EGameplayEffectDurationType::Infinite;
+	AddGrantedTags(FGameplayTagContainer(DwTags::Rule_Turn_SingleChoice));
+}
+
 UDwGE_DamageBonus::UDwGE_DamageBonus()
 {
 	DurationPolicy = EGameplayEffectDurationType::Infinite;

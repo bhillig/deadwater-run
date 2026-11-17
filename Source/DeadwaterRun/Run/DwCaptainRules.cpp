@@ -47,7 +47,7 @@ void FDwCaptainRules::OnCombatWon(FDwCaptainCounters& Counters, EDwCombatOutcome
 	Counters.SurrenderWins += Outcome == EDwCombatOutcome::VictorySurrender ? 1 : 0;
 }
 
-FDwCaptainCombatRules FDwCaptainRules::GetCombatRules(const UDwCaptainDefinition* Captain)
+FDwCaptainCombatRules FDwCaptainRules::GetCombatRules(const UDwCaptainDefinition* Captain, const FDwCaptainCounters& Counters)
 {
 	FDwCaptainCombatRules Rules;
 	if (!Captain)
@@ -59,6 +59,22 @@ FDwCaptainCombatRules FDwCaptainRules::GetCombatRules(const UDwCaptainDefinition
 	{
 		Rules.SynergyDamageMultiplier = Rules.Has(DwTags::Rule_Captain_Synergy) ? FMath::Max(0.f, Row->SynergyDamageMultiplier) : 1.f;
 		Rules.GuardDamageMultiplier = Rules.Has(DwTags::Rule_Captain_Defend) ? FMath::Max(0.f, Row->GuardDamageMultiplier) : 1.f;
+		if (Rules.Has(DwTags::Rule_Captain_KillBonus))
+		{
+			Rules.KillBonusPerKill = FMath::Max(0.f, Row->KillBonusPerKill);
+			Rules.KillBonusCap = FMath::Max(0.f, Row->KillBonusCap);
+			Rules.KillBonusPct = FMath::Clamp(Counters.ConquerorKillBonusPct, 0.f, Rules.KillBonusCap);
+			Rules.KillBonusIgnoredUnitTags = Captain->KillBonusIgnoredUnitTags;
+		}
 	}
 	return Rules;
+}
+
+float FDwCaptainRules::OnEnemyKilled(float Current, const FDwCaptainCombatRules& Rules, const FGameplayTagContainer& VictimTags)
+{
+	if (!Rules.Has(DwTags::Rule_Captain_KillBonus) || VictimTags.HasAny(Rules.KillBonusIgnoredUnitTags))
+	{
+		return Current;
+	}
+	return FMath::Min(Current + Rules.KillBonusPerKill, Rules.KillBonusCap);
 }

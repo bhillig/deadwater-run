@@ -23,6 +23,7 @@
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 #include "Presentation/DwPresentationSubsystem.h"
+#include "Run/DwCaptainRules.h"
 #include "Engine/World.h"
 #include "GameplayEffectExtension.h"
 
@@ -91,6 +92,8 @@ bool UDwCombatSubsystem::StartEncounter(const FDwEncounterSetup& InSetup)
 	Kills.Reset();
 	CannonsUsed.Reset();
 	CoweringEffects.Reset();
+	KillBonusPct = Setup.CaptainRules.KillBonusPct;
+	KillBonusEffect = FActiveGameplayEffectHandle();
 	bResolving = false;
 	SubmitDepth = 0;
 	bEndTurnSuggested = false;
@@ -384,6 +387,12 @@ ADwCombatUnit* UDwCombatSubsystem::SpawnUnit(const FDwCombatantSetup& Combatant,
 			PerkSpec.Data->SetSetByCallerMagnitude(DwTags::Data_Value, PerkRow ? PerkRow->Value : 0.f);
 			Asc->ApplyGameplayEffectSpecToSelf(*PerkSpec.Data);
 		}
+	}
+
+	// Conqueror: the run's kill bonus so far (K3).
+	if (Spawn.bIsCaptain && Side == EDwSide::Player && Setup.CaptainRules.Has(DwTags::Rule_Captain_KillBonus))
+	{
+		RefreshKillBonus(*Asc);
 	}
 
 	// Abilities: basic attack, definition defaults, learned/captain abilities, then Move/Cannon/Item. One per tag.
@@ -708,7 +717,20 @@ void UDwCombatSubsystem::HandleUnitDied(ADwCombatUnit& Victim, AActor* Instigato
 		const FDwUnitTuningRow* VictimRow = Victim.GetDefinition() ? Victim.GetDefinition()->GetTuningRow<FDwUnitTuningRow>() : nullptr;
 		Kill.Xp = VictimRow ? VictimRow->XpOnKill : 0;
 		Died.Source = Killer->GetHandle();
-		// Conqueror kill bonus (FDwCaptainRules::OnEnemyKilled) hooks in here with DW-208.
+
+		// Conqueror kill bonus (K3): counts at once, so his very next hit in this fight is stronger.
+		if (Killer->IsCaptain() && Killer->GetSide() == EDwSide::Player && Victim.GetSide() == EDwSide::Enemy)
+		{
+			FGameplayTagContainer VictimTags;
+			Victim.GetDwAbilitySystem()->GetOwnedGameplayTags(VictimTags);
+			const float NewBonus = FDwCaptainRules::OnEnemyKilled(KillBonusPct, Setup.CaptainRules, VictimTags);
+			if (!FMath::IsNearlyEqual(NewBonus, KillBonusPct))
+			{
+				KillBonusPct = NewBonus;
+				RefreshKillBonus(*Killer->GetDwAbilitySystem());
+				UE_LOG(LogDwCombat, Log, TEXT("Kill bonus: +%.0f%% damage"), KillBonusPct * 100.f);
+			}
+		}
 	}
 	UE_LOG(LogDwCombat, Log, TEXT("Unit %d (%s) died, killer %d"), Victim.GetHandle().Id, *DwCombatSubsystem::SideName(Victim.GetSide()), Died.Source.Id);
 
@@ -717,6 +739,26 @@ void UDwCombatSubsystem::HandleUnitDied(ADwCombatUnit& Victim, AActor* Instigato
 	Victim.GetDwAbilitySystem()->ExecuteGameplayCue(DwTags::GameplayCue_Unit_Death, Cue);
 	Emit(Died);
 	Victim.OnDied();
+}
+
+void UDwCombatSubsystem::RefreshKillBonus(UDwAbilitySystemComponent& CaptainAsc)
+{
+	if (KillBonusEffect.IsValid())
+	{
+		CaptainAsc.RemoveActiveGameplayEffect(KillBonusEffect);
+		KillBonusEffect = FActiveGameplayEffectHandle();
+	}
+	const TSubclassOf<UGameplayEffect> Bonus = DwGas::GetSharedEffects().DamageBonus;
+	if (KillBonusPct <= 0.f || !Bonus)
+	{
+		return;
+	}
+	FGameplayEffectSpecHandle Spec = CaptainAsc.MakeOutgoingSpec(Bonus, 1, CaptainAsc.MakeEffectContext());
+	if (Spec.IsValid())
+	{
+		Spec.Data->SetSetByCallerMagnitude(DwTags::Data_DamageBonus, KillBonusPct);
+		KillBonusEffect = CaptainAsc.ApplyGameplayEffectSpecToSelf(*Spec.Data);
+	}
 }
 
 void UDwCombatSubsystem::HandleShipSunk(ADwShip& Ship)
@@ -888,6 +930,7 @@ void UDwCombatSubsystem::BuildResult()
 	}
 	Result.Kills = Kills;
 	Result.PlayerShipHealth = PlayerShip ? PlayerShip->GetHealth() : 0.f;
+	Result.CaptainKillBonusPct = KillBonusPct;
 	Result.ItemsUsed = ItemsUsed;
 }
 

@@ -507,7 +507,7 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 		const bool bImmune = Enemy.Definition && Enemy.Definition->UnitTags.HasTagExact(DwTags::Unit_Immune_Fear);
 		Enemy.StartingFear = bImmune ? 0.f : FMath::Max(Enemy.StartingFear, StartingFear);
 	}
-	Out.CaptainRules = FDwCaptainRules::GetCombatRules(Captain);
+	Out.CaptainRules = FDwCaptainRules::GetCombatRules(Captain, State.Counters);
 	Out.OutcomeConfig.bSurrenderEnabled = Captain->RuleTags.HasTagExact(DwTags::Rule_Captain_Surrender);
 	// The Kraken encounter is a boss fight wherever it is played (BuildKraken); the boss node is one by definition.
 	Out.OutcomeConfig.bIsBossFight |= Node->Type == EDwNodeType::Boss;
@@ -578,6 +578,10 @@ bool UDwRun::ApplyCombatResult(const FDwCombatResult& Result)
 		State.Stats.Kills += Kill.VictimSide == EDwSide::Enemy && Kill.KillerRosterId.IsValid() ? 1 : 0;
 	}
 	State.Stats.Rounds += Result.Rounds;
+	if (State.Captain && State.Captain->RuleTags.HasTagExact(DwTags::Rule_Captain_KillBonus))
+	{
+		State.Counters.ConquerorKillBonusPct = Result.CaptainKillBonusPct; // persists for the run (K3)
+	}
 
 	UE_LOG(LogDwRun, Log, TEXT("Fight at node %d: %s after %d rounds; %d of %d crew alive, ship %.0f/%.0f."), State.CurrentNode,
 		*StaticEnum<EDwCombatOutcome>()->GetNameStringByValue(static_cast<int64>(Result.Outcome)), Result.Rounds, State.CountLivingCrew(),

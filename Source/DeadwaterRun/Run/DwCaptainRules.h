@@ -33,5 +33,11 @@ struct DEADWATERRUN_API FDwCaptainRules
 	 * The captain's rules for a fight: rule tags; SynergyDamageMultiplier only with Rule.Captain.Synergy and
 	 * GuardDamageMultiplier only with Rule.Captain.Defend (else 1).
 	 */
-	static FDwCaptainCombatRules GetCombatRules(const UDwCaptainDefinition* Captain);
+	static FDwCaptainCombatRules GetCombatRules(const UDwCaptainDefinition* Captain, const FDwCaptainCounters& Counters);
+
+	/**
+	 * Conqueror kill bonus (K3): the bonus after the captain kills Victim. +KillBonusPerKill up to KillBonusCap when the
+	 * rule is on and the victim has none of KillBonusIgnoredUnitTags (tentacles); otherwise Current unchanged.
+	 */
+	static float OnEnemyKilled(float Current, const FDwCaptainCombatRules& Rules, const FGameplayTagContainer& VictimTags);
 };

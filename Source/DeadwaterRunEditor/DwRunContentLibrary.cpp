@@ -4,6 +4,7 @@
 
 #include "Abilities/DwAttributeSets.h"
 #include "Abilities/DwGA_EffectPayload.h"
+#include "Abilities/DwGA_Charge.h"
 #include "Abilities/DwGA_Grapple.h"
 #include "Abilities/DwGameplayEffects.h"
 #include "Board/DwBoardBuilder.h"
@@ -55,6 +56,9 @@ namespace DwRunContent
 		TArray<FGameplayTag> KillBonusIgnoredUnitTags;
 		/** Abilities a rule gives him besides his two (UDwCaptainDefinition::RuleAbilities). */
 		TArray<FAbilitySpec> RuleAbilities;
+		/** Rule GEs at spawn: on the captain, and on every crew member beside him (UDwCaptainDefinition). */
+		TArray<UClass*> CaptainEffects;
+		TArray<UClass*> CrewEffects;
 	};
 
 	/** Text from DeadwaterRun.md "Captains"; rules and numbers in Docs/Architecture/05 and DT_*Tuning. */
@@ -84,7 +88,8 @@ namespace DwRunContent
 					TEXT("Dash up to six tiles and strike the first enemy hit for heavy damage."), TEXT("DW-208") },
 				  { TEXT("DA_Ability_Captain_EyeOfTheTiger"), TEXT("Eye of the Tiger"), DwTags::Ability_Captain_EyeOfTheTiger, TEXT("Captain_EyeOfTheTiger"),
 					TEXT("Freeze one enemy anywhere on the board: it can't move or act for one turn."), TEXT("DW-208") } },
-				{ DwTags::Rule_Captain_KillBonus }, { DwTags::Ability_Weapon_Firearm }, { DwTags::Unit_Kraken_Tentacle } },
+				{ DwTags::Rule_Captain_KillBonus }, { DwTags::Ability_Weapon_Firearm }, { DwTags::Unit_Kraken_Tentacle }, {},
+				{ UDwGE_ConquerorExtraMove::StaticClass() }, { UDwGE_SingleChoice::StaticClass() } },
 		};
 	}
 
@@ -180,6 +185,33 @@ namespace DwRunContent
 				Guard.Effect = DwGas::GetSharedEffects().Guarded;
 				Payload.Applications = { Guard };
 				Payload.PlaceholderSeconds = 0.4f;
+			} });
+		// DW-208 Charge (05, K12 a): UDwGA_Charge finds the straight line; the hit is GE_Damage from the tuning row.
+		Out.Add(TEXT("DA_Ability_Captain_Charge"), { TEXT("GA_Captain_Charge"), UDwGA_Charge::StaticClass(),
+			[](UDwGameplayAbility& Ability)
+			{
+				UDwGA_Charge& Charge = static_cast<UDwGA_Charge&>(Ability);
+				Charge.Targeting = GetDefault<UDwGA_Charge>()->Targeting;
+				FDwEffectApplication Hit;
+				Hit.Effect = DwGas::GetSharedEffects().Damage;
+				Charge.Applications = { Hit };
+			} });
+
+		// DW-208 Eye of the Tiger (05, K12 a): one enemy anywhere, no line of sight needed, frozen for a turn. Not the
+		// Kraken body (K10: freeze works on tentacles only).
+		Out.Add(TEXT("DA_Ability_Captain_EyeOfTheTiger"), { TEXT("GA_Captain_EyeOfTheTiger"), UDwGA_EffectPayload::StaticClass(),
+			[](UDwGameplayAbility& Ability)
+			{
+				UDwGA_EffectPayload& Payload = static_cast<UDwGA_EffectPayload&>(Ability);
+				Payload.Targeting = FDwTargetingRules();
+				Payload.Targeting.Pattern = EDwTargetPattern::SingleUnit;
+				Payload.Targeting.Side = EDwTargetSide::Enemy;
+				Payload.Targeting.bIgnoreRange = true;
+				Payload.Targeting.BlockedTargetTags.AddTag(DwTags::Unit_Immune_Freeze);
+				FDwEffectApplication Freeze;
+				Freeze.Effect = DwGas::GetSharedEffects().Frozen;
+				Payload.Applications = { Freeze };
+				Payload.PlaceholderSeconds = 0.5f;
 			} });
 		return Out;
 	}
@@ -365,7 +397,11 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 		Captain->RuleTags = Container(Spec.RuleTags);
 		Captain->BlockedAbilityTags = Container(Spec.BlockedAbilityTags);
 		Captain->KillBonusIgnoredUnitTags = Container(Spec.KillBonusIgnoredUnitTags);
-		// Rule GEs (Conqueror's extra action, single-choice crew) are wired by DW-208 with their behaviour.
+		// Rule GEs (DW-208): the Conqueror's second action (K1) and his crew's one choice per turn.
+		Captain->CaptainCombatEffects.Reset();
+		for (UClass* Effect : Spec.CaptainEffects) { Captain->CaptainCombatEffects.Add(TSubclassOf<UGameplayEffect>(Effect)); }
+		Captain->CrewCombatEffects.Reset();
+		for (UClass* Effect : Spec.CrewEffects) { Captain->CrewCombatEffects.Add(TSubclassOf<UGameplayEffect>(Effect)); }
 		Captain->Tuning = Row(CaptainTable, Spec.TuningRow, Log, bOk);
 		bOk &= Save(Captain, Log);
 		Captains.Add(Captain);

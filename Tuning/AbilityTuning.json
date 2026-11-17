@@ -9,7 +9,7 @@
 	{ "Name": "Captain_GrappleHook",   "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 10, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
 	{ "Name": "Captain_SmokeAndFire",  "ManaCost": 0, "Damage": 20, "DamageScale": 0.0, "Heal": 0,  "Fear": 1, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
 	{ "Name": "Captain_SixPistols",    "ManaCost": 0, "Damage": 15, "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 6, "MaxHits": 6, "DurationTurns": 0, "ShopPrice": 0 },
-	{ "Name": "Captain_Charge",        "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 6,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
+	{ "Name": "Captain_Charge",        "ManaCost": 0, "Damage": 40, "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 6,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
 	{ "Name": "Captain_EyeOfTheTiger", "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 1, "ShopPrice": 0 },
 	{ "Name": "Kraken_TentacleSlam",   "ManaCost": 0, "Damage": 50, "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
 	{ "Name": "Kraken_KrankySwipe",    "ManaCost": 0, "Damage": 20, "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },

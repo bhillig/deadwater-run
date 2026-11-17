@@ -117,3 +117,11 @@ Smoke and Fire and Six Pistols are real now; their `ManaCost` stays 0 until K13.
 | `AbilityTuning.json` | `Captain_Defend` | `Range` | 1 | Defend guards an adjacent crewmate (K5 a) |
 
 Rally Cry (heal 15 + cleanse), Grapple Hook (range 10, LOS), Defend are real now; their `ManaCost` stays 0 until K13.
+
+## Set by DW-208 (Conqueror), 2026-11-17
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `AbilityTuning.json` | `Captain_Charge` | `Damage` | 40 | "Heavy damage": more than a basic swing, kills a 30 HP pirate; K13 sets the real number |
+
+Charge and Eye of the Tiger are real now; their `ManaCost` stays 0 until K13. The Conqueror keeps the design doc's 100 HP / 20 MP ("a pirate crew of three (100 HP/20 MP)"): his strength is the second action (K1) and the kill bonus.

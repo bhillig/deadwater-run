@@ -394,6 +394,152 @@ void FDwCaptainSpec::Define()
 			TestTrue(TEXT("Grapple blocks immune units"), FDwCombatQueries::GetAbilityCDO(Hook)->Targeting.BlockedTargetTags.HasTagExact(DwTags::Unit_Immune_Grapple));
 		});
 	});
+
+	Describe("Conqueror (DW-208)", [this]()
+	{
+		It("kill bonus rules: +1% per own kill up to 20%, tentacles don't count, nothing without the rule", [this]()
+		{
+			const UDwCaptainDefinition* Conqueror = UDwRunSubsystem::FindCaptain(TEXT("Conqueror"));
+			if (!TestNotNull(TEXT("Conqueror"), Conqueror)) { return; }
+			FDwCaptainCounters Counters;
+			const FDwCaptainCombatRules Rules = FDwCaptainRules::GetCombatRules(Conqueror, Counters);
+			const FGameplayTagContainer Pirate;
+			const FGameplayTagContainer Tentacle(DwTags::Unit_Kraken_Tentacle);
+			TestEqual(TEXT("+1%"), FDwCaptainRules::OnEnemyKilled(0.f, Rules, Pirate), 0.01f, 1e-6f);
+			TestEqual(TEXT("Tentacle ignored (K3)"), FDwCaptainRules::OnEnemyKilled(0.05f, Rules, Tentacle), 0.05f, 1e-6f);
+			TestEqual(TEXT("Capped at 20%"), FDwCaptainRules::OnEnemyKilled(0.2f, Rules, Pirate), 0.2f, 1e-6f);
+			Counters.ConquerorKillBonusPct = 0.07f;
+			TestEqual(TEXT("The run's bonus goes into the fight"), FDwCaptainRules::GetCombatRules(Conqueror, Counters).KillBonusPct, 0.07f, 1e-6f);
+			const FDwCaptainCombatRules None = FDwCaptainRules::GetCombatRules(UDwRunSubsystem::FindCaptain(TEXT("TeamLeader")), Counters);
+			TestEqual(TEXT("No rule, no bonus"), FDwCaptainRules::OnEnemyKilled(0.f, None, Pirate), 0.f);
+			TestTrue(TEXT("Never offered firearms (K2)"), Conqueror->BlockedAbilityTags.HasTagExact(DwTags::Ability_Weapon_Firearm));
+		});
+
+		It("two actions for him (act, move, act; a third is refused) and one choice per turn for his crew", [this]()
+		{
+			if (!R.StartRun(TEXT("Conqueror")) || !R.StartNextFight()) { return; }
+			R.MakeEnemiesPassive();
+			const FDwUnitHandle Captain = R.CaptainUnit();
+			const FDwUnitHandle Swordsman = R.FindCrewUnit(R.Run->GetState().Crew[1].Id);
+			TestEqual(TEXT("2 actions"), R.F.Attr(Captain, UDwUnitAttributeSet::GetMaxActionPointsAttribute()), 2.f);
+			TestTrue(TEXT("Crew: single choice"), R.F.Asc(Swordsman)->HasMatchingGameplayTag(DwTags::Rule_Turn_SingleChoice));
+			TestFalse(TEXT("Not the captain"), R.F.Asc(Captain)->HasMatchingGameplayTag(DwTags::Rule_Turn_SingleChoice));
+
+			// The Eye of the Tiger reaches any enemy: a cheap way to spend an action without moving anyone.
+			const UDwAbilityDefinition* Eye = R.CaptainAbility(DwTags::Ability_Captain_EyeOfTheTiger);
+			const TArray<FDwUnitHandle> Enemies = R.Units(EDwSide::Enemy);
+			if (!TestNotNull(TEXT("Eye of the Tiger"), Eye) || !TestTrue(TEXT("3 enemies"), Enemies.Num() >= 3)) { return; }
+			TestEqual(TEXT("Act"), R.Use(Captain, Eye, Enemies[0]), EDwCommandResult::Accepted);
+			const FDwCombatSnapshot Snap = R.F.Combat->GetSnapshot();
+			TOptional<FIntPoint> Near;
+			for (const FIntPoint& Dir : FDwGridModel::Directions)
+			{
+				const FIntPoint Tile = TileOf(Captain) + Dir;
+				if (!Near.IsSet() && Snap.Grid.IsStandable(Tile) && !Snap.Grid.IsOccupied(Tile) && Snap.Grid.GetTile(Tile)->Elevation == 0)
+				{
+					Near = Tile;
+				}
+			}
+			if (!TestTrue(TEXT("A free tile beside him"), Near.IsSet())) { return; }
+			TestEqual(TEXT("Move"), R.F.MoveTo(Captain, Near.GetValue()), EDwCommandResult::Accepted);
+			TestEqual(TEXT("Act again"), R.Use(Captain, Eye, Enemies[1]), EDwCommandResult::Accepted);
+			TestEqual(TEXT("A third action is refused"), R.Use(Captain, Eye, Enemies[2]), EDwCommandResult::CannotAfford);
+
+			// The swordsman moves: his action is gone too.
+			TOptional<FIntPoint> SwordStep;
+			const FDwCombatSnapshot Now = R.F.Combat->GetSnapshot();
+			for (const FIntPoint& Dir : FDwGridModel::Directions)
+			{
+				const FIntPoint Tile = TileOf(Swordsman) + Dir;
+				if (!SwordStep.IsSet() && Now.Grid.IsStandable(Tile) && !Now.Grid.IsOccupied(Tile) && Now.Grid.GetTile(Tile)->Elevation == 0)
+				{
+					SwordStep = Tile;
+				}
+			}
+			if (!TestTrue(TEXT("Room to step"), SwordStep.IsSet())) { return; }
+			TestEqual(TEXT("Crew moves"), R.F.MoveTo(Swordsman, SwordStep.GetValue()), EDwCommandResult::Accepted);
+			TestEqual(TEXT("...and can't act after"), R.F.Attr(Swordsman, UDwUnitAttributeSet::GetActionPointsAttribute()), 0.f);
+		});
+
+		It("Eye of the Tiger freezes one enemy anywhere for a turn; never the Kraken body (K10)", [this]()
+		{
+			if (!R.StartRun(TEXT("Conqueror")) || !R.StartNextFight()) { return; }
+			R.MakeEnemiesPassive();
+			const UDwAbilityDefinition* Eye = R.CaptainAbility(DwTags::Ability_Captain_EyeOfTheTiger);
+			const TArray<FDwUnitHandle> Enemies = R.Units(EDwSide::Enemy);
+			if (!TestNotNull(TEXT("Eye"), Eye)) { return; }
+			// The farthest enemy: range and sight don't matter.
+			FDwUnitHandle Far = Enemies[0];
+			for (const FDwUnitHandle Enemy : Enemies)
+			{
+				Far = (TileOf(Enemy) - TileOf(R.CaptainUnit())).Size() > (TileOf(Far) - TileOf(R.CaptainUnit())).Size() ? Enemy : Far;
+			}
+			TestEqual(TEXT("Freeze"), R.Use(R.CaptainUnit(), Eye, Far), EDwCommandResult::Accepted);
+			TestTrue(TEXT("Frozen"), R.F.Asc(Far)->HasMatchingGameplayTag(DwTags::Status_Incapacitated_Frozen));
+			const UDwUnitDefinition* Body = LoadObject<UDwUnitDefinition>(nullptr, TEXT("/Game/DeadwaterRun/Data/Units/DA_Unit_KrakenBody.DA_Unit_KrakenBody"));
+			TestTrue(TEXT("Kraken body immune to freeze"), Body && Body->UnitTags.HasTagExact(DwTags::Unit_Immune_Freeze));
+			TestTrue(TEXT("Eye blocks it"), FDwCombatQueries::GetAbilityCDO(Eye)->Targeting.BlockedTargetTags.HasTagExact(DwTags::Unit_Immune_Freeze));
+		});
+
+		It("Charge: dashes the straight line, stops before the first enemy and hits it; a kill raises his damage at once and for the run", [this]()
+		{
+			if (!R.StartRun(TEXT("Conqueror")) || !R.StartNextFight()) { return; }
+			R.MakeEnemiesPassive();
+			const FDwUnitHandle Captain = R.CaptainUnit();
+			const UDwAbilityDefinition* Charge = R.CaptainAbility(DwTags::Ability_Captain_Charge);
+			const TArray<FDwUnitHandle> Enemies = R.Units(EDwSide::Enemy);
+			if (!TestNotNull(TEXT("Charge"), Charge)) { return; }
+
+			// Open a lane: the first direction with at least 3 free tiles, the enemy at its end.
+			const FDwCombatSnapshot Snap = R.F.Combat->GetSnapshot();
+			TOptional<FIntPoint> EnemyTile;
+			FIntPoint Expected = FIntPoint::ZeroValue;
+			for (const FIntPoint& Dir : FDwGridModel::Directions)
+			{
+				const FDwLineHit Line = FDwTargetingQuery::FirstUnitAlongLine(Snap.Grid, Snap.GridRules, TileOf(Captain), Dir, 6);
+				const int32 Length = FMath::Abs(Line.StopTile.X - TileOf(Captain).X) + FMath::Abs(Line.StopTile.Y - TileOf(Captain).Y);
+				if (!EnemyTile.IsSet() && !Line.Unit.IsSet() && Length >= 3)
+				{
+					EnemyTile = Line.StopTile;
+					Expected = Line.StopTile - Dir;
+				}
+			}
+			if (!TestTrue(TEXT("A lane of 3+ free tiles"), EnemyTile.IsSet())) { return; }
+			const FDwUnitHandle Victim = Enemies[0];
+			R.F.Combat->MoveUnit(Victim, EnemyTile.GetValue(), true);
+			R.F.Asc(Victim)->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), 30.f); // the 40-damage hit kills
+
+			const FDwAbilityPreview ChargePreview = Preview(Captain, Charge, Victim);
+			TestTrue(TEXT("Lethal preview"), ChargePreview.bValid && ChargePreview.Targets.Num() == 1 && ChargePreview.Targets[0].bLethal);
+			TestEqual(TEXT("Charge"), R.Use(Captain, Charge, Victim), EDwCommandResult::Accepted);
+			TestEqual(TEXT("Stopped before the enemy"), TileOf(Captain), Expected);
+			TestFalse(TEXT("Killed"), R.F.Unit(Victim)->IsAlive());
+			TestEqual(TEXT("+1% damage at once"), R.F.Attr(Captain, UDwUnitAttributeSet::GetDamageBonusAttribute()), 0.01f, 1e-5f);
+
+			// His second action shows the bonus straight away (preview = what lands).
+			const FDwUnitHandle Next = Enemies[1];
+			const TOptional<FIntPoint> Beside = FreeBeside(Captain, TileOf(Next));
+			if (!TestTrue(TEXT("Room beside"), Beside.IsSet())) { return; }
+			R.F.Combat->MoveUnit(Next, Beside.GetValue(), true);
+			const UDwAbilityDefinition* Sword = BasicAttack(Captain);
+			const FDwAbilityPreview Swing = Preview(Captain, Sword, Next);
+			const float Before = Health(Next);
+			TestEqual(TEXT("Second action"), R.Use(Captain, Sword, Next), EDwCommandResult::Accepted);
+			TestEqual(TEXT("Hit with the bonus = preview"), Before - Health(Next), static_cast<float>(Swing.Targets[0].Damage));
+
+			// The fight's end carries it into the run and the next fight.
+			for (const FDwUnitHandle Enemy : R.Units(EDwSide::Enemy))
+			{
+				R.F.ApplyEffect(DwGas::GetSharedEffects().Kill, Enemy); // no instigator: no kill bonus
+			}
+			R.F.EndTurn(EDwSide::Player);
+			TestEqual(TEXT("Result carries 1%"), R.F.Combat->GetResult().CaptainKillBonusPct, 0.01f, 1e-5f);
+			if (!R.FinishFight()) { return; }
+			TestEqual(TEXT("Run counter"), R.Run->GetState().Counters.ConquerorKillBonusPct, 0.01f, 1e-5f);
+			if (!R.StartNextFight()) { return; }
+			TestEqual(TEXT("Next fight starts with it"), R.F.Attr(R.CaptainUnit(), UDwUnitAttributeSet::GetDamageBonusAttribute()), 0.01f, 1e-5f);
+		});
+	});
 }
 
 #endif // WITH_DEV_AUTOMATION_TESTS

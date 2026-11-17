@@ -8,6 +8,7 @@
 #include "Board/DwGridQueries.h"
 #include "Presentation/DwCameraRig.h"
 #include "Core/DwGameData.h"
+#include "Data/DwAbilityDefinition.h"
 #include "Data/DwCaptainDefinition.h"
 #include "Data/DwItemDefinition.h"
 #include "Data/DwShipUpgradeDefinition.h"
@@ -499,6 +500,7 @@ void UDwDevCaptureSubsystem::CaptainDemoStep()
 	if (CaptainStage % 3 == 0)
 	{
 		++CaptainStage;
+		bCaptainDemoMoved = false;
 		Combat->SubmitCommand(FDwCombatCommand::MakeEndTurn(EDwSide::Player));
 		Next(1.0f);
 		return;
@@ -509,6 +511,40 @@ void UDwDevCaptureSubsystem::CaptainDemoStep()
 		EDwCommandResult Result = EDwCommandResult::Accepted;
 		FString What;
 		const int32 Turn = CaptainStage / 3; // 0-based player turn of the demo
+		// Step toward the nearest enemy (to the reachable tile closest to it, at least MinDistance away), once per turn.
+		// True while the step is under way: come back next step.
+		auto StepToward = [&](float MinDistance)
+		{
+			if (!bCaptainDemoMoved)
+			{
+				bCaptainDemoMoved = true;
+				const FDwCombatSnapshot Snapshot = Combat->GetSnapshot();
+				const FIntPoint EnemyTile = Enemies.IsEmpty() ? Captain->GetTile() : Enemies[0]->GetTile();
+				TArray<FIntPoint> Tiles;
+				for (int32 Index = 0; Index < Snapshot.Grid.Tiles.Num(); ++Index)
+				{
+					Tiles.Add(Snapshot.Grid.ToTile(Index));
+				}
+				Tiles.Sort([EnemyTile](const FIntPoint& A, const FIntPoint& B) { return (A - EnemyTile).Size() < (B - EnemyTile).Size(); });
+				for (const FIntPoint& Tile : Tiles)
+				{
+					if ((Tile - EnemyTile).Size() > MinDistance && Combat->SubmitCommand(FDwCombatCommand::MakeMove(Captain->GetHandle(), Tile)) == EDwCommandResult::Accepted)
+					{
+						UE_LOG(LogDw, Log, TEXT("Dev capture 'captain': the captain steps to (%d, %d)."), Tile.X, Tile.Y);
+						break;
+					}
+				}
+				Next(2.0f); // the walk
+				return true;
+			}
+			if (Combat->IsResolving())
+			{
+				Next(0.5f);
+				return true;
+			}
+			return false;
+		};
+
 		if (CaptainName.Contains(TEXT("Fearmongerer")))
 		{
 			// DW-206: Smoke and Fire every turn until every enemy is at 3 Fear and the crew surrenders.
@@ -532,31 +568,8 @@ void UDwDevCaptureSubsystem::CaptainDemoStep()
 		{
 			// DW-207 turn 2: step toward the enemy ship, then Grapple Hook the nearest enemy it can reach.
 			What = TEXT("Grapple Hook");
-			const FDwCombatSnapshot Snapshot = Combat->GetSnapshot();
-			const FIntPoint EnemyTile = Enemies.IsEmpty() ? Captain->GetTile() : Enemies[0]->GetTile();
-			TArray<FIntPoint> Tiles;
-			for (int32 Index = 0; Index < Snapshot.Grid.Tiles.Num(); ++Index)
+			if (StepToward(2.5f))
 			{
-				Tiles.Add(Snapshot.Grid.ToTile(Index));
-			}
-			Tiles.Sort([EnemyTile](const FIntPoint& A, const FIntPoint& B) { return (A - EnemyTile).Size() < (B - EnemyTile).Size(); });
-			if (!bCaptainDemoMoved)
-			{
-				bCaptainDemoMoved = true;
-				for (const FIntPoint& Tile : Tiles)
-				{
-					if ((Tile - EnemyTile).Size() > 2.5f && Combat->SubmitCommand(FDwCombatCommand::MakeMove(Captain->GetHandle(), Tile)) == EDwCommandResult::Accepted)
-					{
-						UE_LOG(LogDw, Log, TEXT("Dev capture 'captain': the captain steps to (%d, %d)."), Tile.X, Tile.Y);
-						break;
-					}
-				}
-				Next(2.0f); // the walk; the hook next step
-				return;
-			}
-			if (Combat->IsResolving())
-			{
-				Next(0.5f);
 				return;
 			}
 			Result = EDwCommandResult::InvalidTarget;
@@ -568,9 +581,89 @@ void UDwDevCaptureSubsystem::CaptainDemoStep()
 				}
 			}
 		}
-		else if (CaptainName.Contains(TEXT("TeamLeader")))
+		else if (CaptainName.Contains(TEXT("TeamLeader")) && Turn >= 2)
 		{
 			Capture(); // final frame: the board after the pull and the enemy turn
+			return;
+		}
+		else if (CaptainName.Contains(TEXT("Conqueror")) && Turn == 0)
+		{
+			// DW-208 turn 1: step up and Charge the first enemy a straight line reaches. Demo staging: that pirate is
+			// already hurt (30 HP), so the charge kills and the log shows the kill bonus rising.
+			What = TEXT("Charge");
+			if (!bCaptainDemoMoved)
+			{
+				// Step to a tile from which a straight line of up to 6 tiles reaches an enemy (try the nearest first).
+				bCaptainDemoMoved = true;
+				const FDwCombatSnapshot Board = Combat->GetSnapshot();
+				TArray<FIntPoint> Starts;
+				for (int32 Index = 0; Index < Board.Grid.Tiles.Num(); ++Index)
+				{
+					const FIntPoint Tile = Board.Grid.ToTile(Index);
+					if (!Board.Grid.IsStandable(Tile) || Board.Grid.IsOccupied(Tile))
+					{
+						continue;
+					}
+					for (const FIntPoint& Dir : FDwGridModel::Directions)
+					{
+						const FDwLineHit Hit = FDwTargetingQuery::FirstUnitAlongLine(Board.Grid, Board.GridRules, Tile, Dir, 6);
+						const FDwUnitSnapshot* Met = Hit.Unit.IsSet() ? Board.FindUnit(Hit.Unit.Unit) : nullptr;
+						if (Met && Met->Side == EDwSide::Enemy && Hit.StopTile != Tile)
+						{
+							Starts.AddUnique(Tile);
+						}
+					}
+				}
+				const FIntPoint From = Captain->GetTile();
+				Starts.Sort([From](const FIntPoint& A, const FIntPoint& B) { return (A - From).Size() < (B - From).Size(); });
+				for (const FIntPoint& Tile : Starts)
+				{
+					if (Combat->SubmitCommand(FDwCombatCommand::MakeMove(Captain->GetHandle(), Tile)) == EDwCommandResult::Accepted)
+					{
+						UE_LOG(LogDw, Log, TEXT("Dev capture 'captain': the Conqueror steps to (%d, %d) to charge."), Tile.X, Tile.Y);
+						break;
+					}
+				}
+				Next(2.0f);
+				return;
+			}
+			if (Combat->IsResolving())
+			{
+				Next(0.5f);
+				return;
+			}
+			const FDwCombatSnapshot Snapshot = Combat->GetSnapshot();
+			const UDwAbilityDefinition* Charge = nullptr;
+			for (const UDwAbilityDefinition* Ability : Run->GetState().Captain->CaptainAbilities)
+			{
+				Charge = Ability && Ability->AbilityTag == DwTags::Ability_Captain_Charge ? Ability : Charge;
+			}
+			TArray<FDwAbilityTarget> Reachable;
+			if (const UDwGameplayAbility* Cdo = FDwCombatQueries::GetAbilityCDO(Charge))
+			{
+				FDwTargetingContext Context;
+				Context.Snapshot = &Snapshot;
+				Context.Ability = Charge;
+				Context.Source = Captain->GetHandle();
+				Cdo->GatherValidTargets(Context, Reachable);
+			}
+			Result = EDwCommandResult::InvalidTarget;
+			if (ADwCombatUnit* Target = Reachable.IsEmpty() ? nullptr : Combat->FindUnit(Reachable[0].Unit))
+			{
+				Target->GetDwAbilitySystem()->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), 30.f);
+				Result = UseCaptainAbility(*Combat, *Captain, DwTags::Ability_Captain_Charge, Target);
+			}
+			UE_CLOG(Reachable.IsEmpty(), LogDw, Warning, TEXT("Dev capture 'captain': no enemy on a straight line from the Conqueror."));
+		}
+		else if (CaptainName.Contains(TEXT("Conqueror")) && Turn == 1)
+		{
+			// DW-208 turn 2: Eye of the Tiger on the farthest enemy - range and sight don't matter.
+			What = TEXT("Eye of the Tiger");
+			Result = UseCaptainAbility(*Combat, *Captain, DwTags::Ability_Captain_EyeOfTheTiger, Enemies.IsEmpty() ? nullptr : Enemies.Last());
+		}
+		else if (CaptainName.Contains(TEXT("Conqueror")))
+		{
+			Capture(); // final frame
 			return;
 		}
 		else

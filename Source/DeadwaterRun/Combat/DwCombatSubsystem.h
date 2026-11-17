@@ -143,6 +143,8 @@ private:
 	void HandleAbilityEnded(UDwAbilitySystemComponent* Owner, FGameplayAbilitySpecHandle Ability);
 	void HandleHealthDepleted(UDwAbilitySystemComponent* Victim, AActor* Instigator);
 	void HandleUnitDied(ADwCombatUnit& Victim, AActor* Instigator);
+	/** Replaces the captain's kill-bonus GE_DamageBonus with one for KillBonusPct (none at 0). */
+	void RefreshKillBonus(UDwAbilitySystemComponent& CaptainAsc);
 	void HandleShipSunk(ADwShip& Ship);
 	void HandleUnitHealthChanged(const FOnAttributeChangeData& Data, FDwUnitHandle Unit);
 	void HandleUnitFearChanged(const FOnAttributeChangeData& Data, FDwUnitHandle Unit);
@@ -187,6 +189,9 @@ private:
 	UPROPERTY() TMap<FName, TObjectPtr<const UDwItemDefinition>> ItemDefinitions;
 	TArray<FDwKillRecord> Kills;
 	TMap<FDwUnitHandle, FActiveGameplayEffectHandle> CoweringEffects;
+	/** Conqueror kill bonus in this fight (starts at Setup.CaptainRules.KillBonusPct) and the captain's GE_DamageBonus for it. */
+	float KillBonusPct = 0.f;
+	FActiveGameplayEffectHandle KillBonusEffect;
 
 	bool bActive = false;
 	bool bResolving = false;
