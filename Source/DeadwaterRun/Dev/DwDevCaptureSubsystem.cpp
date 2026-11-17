@@ -56,6 +56,71 @@ namespace
 		}
 		return Run.LeaveEvent();
 	}
+
+	/** From the map to the next fight: a fight route if offered; shops left and events passed on the way. True in Combat. */
+	bool SailToNextFight(UDwRun& Run)
+	{
+		for (int32 Step = 0; Step < 20 && Run.GetPhase() == EDwRunPhase::Map; ++Step)
+		{
+			const TArray<int32> Choices = Run.GetChoices();
+			const int32* Fight = Choices.FindByPredicate([&Run](int32 Index) { return Run.GetState().Map.Nodes[Index].Type == EDwNodeType::Fight; });
+			if (Choices.IsEmpty() || !Run.ChooseNode(Fight ? *Fight : Choices[0]))
+			{
+				return false;
+			}
+			if (Run.GetPhase() == EDwRunPhase::Shop) { Run.LeaveShop(); }
+			if (Run.GetPhase() == EDwRunPhase::Event) { ResolveEvent(Run); }
+			while (Run.GetPhase() == EDwRunPhase::Rewards || Run.GetPhase() == EDwRunPhase::LevelUp) // an event's ability offer or levels
+			{
+				const bool bClaim = Run.GetPhase() == EDwRunPhase::Rewards;
+				const FDwPendingLevelUp* LevelUp = Run.GetCurrentLevelUp();
+				if (!(bClaim ? Run.ClaimRewards(INDEX_NONE, FGuid()) : Run.ChoosePerk(LevelUp && !LevelUp->PerkChoices.IsEmpty() ? 0 : INDEX_NONE)))
+				{
+					return false;
+				}
+			}
+		}
+		return Run.GetPhase() == EDwRunPhase::Combat;
+	}
+
+	/** The run's captain in the fight (invalid handle if none). */
+	ADwCombatUnit* FindCaptainUnit(const UDwRun& Run, const UDwCombatSubsystem& Combat)
+	{
+		const FGuid CaptainId = Run.GetState().Crew.IsEmpty() ? FGuid() : Run.GetState().Crew[0].Id;
+		for (ADwCombatUnit* Unit : Combat.GetUnits())
+		{
+			if (Unit->GetRosterId() == CaptainId && Unit->IsAlive())
+			{
+				return Unit;
+			}
+		}
+		return nullptr;
+	}
+
+	/** Living units of Side, nearest to From first. */
+	TArray<ADwCombatUnit*> LivingUnits(const UDwCombatSubsystem& Combat, EDwSide Side, FIntPoint From = FIntPoint::ZeroValue)
+	{
+		TArray<ADwCombatUnit*> Out;
+		for (ADwCombatUnit* Unit : Combat.GetUnits())
+		{
+			if (Unit->GetSide() == Side && Unit->IsAlive())
+			{
+				Out.Add(Unit);
+			}
+		}
+		Out.Sort([From](const ADwCombatUnit& A, const ADwCombatUnit& B)
+			{ return (A.GetTile() - From).Size() < (B.GetTile() - From).Size(); });
+		return Out;
+	}
+
+	/** Submits the run captain's ability with Tag at Target (a unit, or a tile when TargetTile is set). */
+	EDwCommandResult UseCaptainAbility(UDwCombatSubsystem& Combat, const ADwCombatUnit& Captain, const FGameplayTag& Tag, const ADwCombatUnit* Target,
+		TOptional<FIntPoint> TargetTile = {})
+	{
+		const FDwAbilityTarget Aim = TargetTile.IsSet() ? FDwAbilityTarget::MakeTile(TargetTile.GetValue())
+			: FDwAbilityTarget::MakeUnit(Target ? Target->GetHandle() : FDwUnitHandle(), Target ? Target->GetTile() : FIntPoint::ZeroValue);
+		return Combat.SubmitCommand(FDwCombatCommand::MakeAbility(Captain.GetHandle(), Tag, Aim));
+	}
 }
 
 bool UDwDevCaptureSubsystem::ShouldCreateSubsystem(UObject* Outer) const
@@ -106,6 +171,11 @@ void UDwDevCaptureSubsystem::StageDemo()
 	if (Demo == TEXT("shell"))
 	{
 		ShellDemoStep();
+		return;
+	}
+	if (Demo == TEXT("captain"))
+	{
+		CaptainDemoStep();
 		return;
 	}
 	if (Demo == TEXT("shop"))
@@ -280,31 +350,7 @@ void UDwDevCaptureSubsystem::RunDemoStep()
 	{
 		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::RunDemoStep), Seconds, false);
 	};
-	auto Sail = [Run]()
-	{
-		// The next fight: a fight route if offered, shops and events on the way left at once.
-		for (int32 Step = 0; Step < 20 && Run->GetPhase() == EDwRunPhase::Map; ++Step)
-		{
-			const TArray<int32> Choices = Run->GetChoices();
-			const int32* Fight = Choices.FindByPredicate([Run](int32 Index) { return Run->GetState().Map.Nodes[Index].Type == EDwNodeType::Fight; });
-			if (Choices.IsEmpty() || !Run->ChooseNode(Fight ? *Fight : Choices[0]))
-			{
-				return false;
-			}
-			if (Run->GetPhase() == EDwRunPhase::Shop) { Run->LeaveShop(); }
-			if (Run->GetPhase() == EDwRunPhase::Event) { ResolveEvent(*Run); }
-			while (Run->GetPhase() == EDwRunPhase::Rewards || Run->GetPhase() == EDwRunPhase::LevelUp) // an event's ability offer or levels
-			{
-				const bool bClaim = Run->GetPhase() == EDwRunPhase::Rewards;
-				const FDwPendingLevelUp* LevelUp = Run->GetCurrentLevelUp();
-				if (!(bClaim ? Run->ClaimRewards(INDEX_NONE, FGuid()) : Run->ChoosePerk(LevelUp && !LevelUp->PerkChoices.IsEmpty() ? 0 : INDEX_NONE)))
-				{
-					return false;
-				}
-			}
-		}
-		return Run->GetPhase() == EDwRunPhase::Combat;
-	};
+	auto Sail = [Run]() { return SailToNextFight(*Run); };
 	if (!Run || !Combat)
 	{
 		UE_LOG(LogDw, Error, TEXT("Dev capture 'run': no run (start the game with -DwCaptain=<name>)."));
@@ -394,6 +440,95 @@ void UDwDevCaptureSubsystem::RunDemoStep()
 		Capture();
 		return;
 	}
+}
+
+void UDwDevCaptureSubsystem::CaptainDemoStep()
+{
+	UWorld* World = GetWorld();
+	const UDwRunSubsystem* Runs = UDwRunSubsystem::Get(World);
+	UDwRun* Run = Runs ? Runs->GetRun() : nullptr;
+	UDwCombatSubsystem* Combat = World->GetSubsystem<UDwCombatSubsystem>();
+	auto Next = [this, World](float Seconds)
+	{
+		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::CaptainDemoStep), Seconds, false);
+	};
+	if (!Run || !Combat || !Run->GetState().Captain)
+	{
+		UE_LOG(LogDw, Error, TEXT("Dev capture 'captain': no run (start the game with -DwCaptain=<name>)."));
+		Capture();
+		return;
+	}
+	const FString CaptainName = Run->GetState().Captain->GetName();
+	ADwCombatUnit* Captain = FindCaptainUnit(*Run, *Combat);
+	const bool bFightOver = Combat->GetOutcome() != EDwCombatOutcome::None;
+
+	if (CaptainStage == 0)
+	{
+		UE_CLOG(!SailToNextFight(*Run), LogDw, Error, TEXT("Dev capture 'captain': could not sail to a fight."));
+		CaptainStage = 1;
+		Next(2.5f); // spawn and settle
+		return;
+	}
+	if (CaptainStage == 100) // the fight is over: the post-combat beat, then the rewards screen
+	{
+		CaptainStage = 101;
+		Next(3.5f);
+		return;
+	}
+	if (CaptainStage == 101)
+	{
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'captain': %s ends the fight %s; phase %s."), *CaptainName,
+			*StaticEnum<EDwCombatOutcome>()->GetNameStringByValue(static_cast<int64>(Run->GetState().PendingRewards.Outcome)), *DwRun::PhaseName(Run->GetPhase()));
+		Capture(); // final frame
+		return;
+	}
+	if (bFightOver)
+	{
+		CaptainStage = 100;
+		Next(0.1f);
+		return;
+	}
+	if (Combat->GetActiveSide() != EDwSide::Player || !Captain)
+	{
+		UE_CLOG(!Captain, LogDw, Error, TEXT("Dev capture 'captain': the captain is not in the fight."));
+		Next(0.5f); // the enemy turn plays out
+		return;
+	}
+
+	// Three steps per turn: act, capture what it did, end the turn (screenshots are taken at the end of the frame).
+	if (CaptainStage % 3 == 0)
+	{
+		++CaptainStage;
+		Combat->SubmitCommand(FDwCombatCommand::MakeEndTurn(EDwSide::Player));
+		Next(1.0f);
+		return;
+	}
+	if (CaptainStage % 3 == 1)
+	{
+		const TArray<ADwCombatUnit*> Enemies = LivingUnits(*Combat, EDwSide::Enemy, Captain->GetTile());
+		EDwCommandResult Result = EDwCommandResult::Accepted;
+		FString What;
+		if (CaptainName.Contains(TEXT("Fearmongerer")))
+		{
+			// DW-206: Smoke and Fire every turn until every enemy is at 3 Fear and the crew surrenders.
+			What = TEXT("Smoke and Fire");
+			Result = UseCaptainAbility(*Combat, *Captain, DwTags::Ability_Captain_SmokeAndFire, Enemies.IsEmpty() ? nullptr : Enemies[0]);
+		}
+		else
+		{
+			UE_LOG(LogDw, Error, TEXT("Dev capture 'captain': no script for %s yet."), *CaptainName);
+			Capture();
+			return;
+		}
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'captain': %s uses %s: %s."), *CaptainName, *What, *StaticEnum<EDwCommandResult>()->GetNameStringByValue(static_cast<int64>(Result)));
+		++CaptainStage;
+		Next(1.5f); // the presentation beat
+		return;
+	}
+	CaptureFrame(++CaptainFrame);
+	UE_LOG(LogDw, Log, TEXT("Dev capture 'captain': frame %02d (round %d)."), CaptainFrame, Combat->GetRound());
+	++CaptainStage;
+	Next(0.5f);
 }
 
 void UDwDevCaptureSubsystem::ShellDemoStep()

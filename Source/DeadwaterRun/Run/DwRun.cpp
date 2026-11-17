@@ -496,6 +496,13 @@ bool UDwRun::BuildEncounterSetup(FDwEncounterSetup& Out, TArray<FString>& OutErr
 			Out.Items.Add(Stack);
 		}
 	}
+	// Dread Reputation (K9): every enemy that can feel fear starts the fight afraid.
+	const float StartingFear = FDwCaptainRules::GetStartingFear(State.Counters, Captain);
+	for (FDwCombatantSetup& Enemy : Out.Enemies)
+	{
+		const bool bImmune = Enemy.Definition && Enemy.Definition->UnitTags.HasTagExact(DwTags::Unit_Immune_Fear);
+		Enemy.StartingFear = bImmune ? 0.f : FMath::Max(Enemy.StartingFear, StartingFear);
+	}
 	Out.CaptainRuleTags = Captain->RuleTags;
 	Out.OutcomeConfig.bSurrenderEnabled = Captain->RuleTags.HasTagExact(DwTags::Rule_Captain_Surrender);
 	// The Kraken encounter is a boss fight wherever it is played (BuildKraken); the boss node is one by definition.
@@ -588,6 +595,7 @@ bool UDwRun::ApplyCombatResult(const FDwCombatResult& Result)
 	State.Stats.FightsSunk += Result.Outcome == EDwCombatOutcome::VictorySunk ? 1 : 0;
 	State.Stats.FightsPlundered += Result.Outcome == EDwCombatOutcome::VictoryCrewDefeated ? 1 : 0;
 	State.Stats.FightsSurrendered += Result.Outcome == EDwCombatOutcome::VictorySurrender ? 1 : 0;
+	FDwCaptainRules::OnCombatWon(State.Counters, Result.Outcome);
 	const EDwRunPhase Old = State.Phase;
 	QueueRewards(Result);
 	State.Phase = EDwRunPhase::Rewards;

@@ -15,13 +15,14 @@
   ./Tools/Capture.ps1 -Demo voyage          # a whole chart through the run screens (DW-202/211): map at every stop, first rewards/level-up/shop, the first event's choices and its result (DW-205), the Kraken fight; ends on the Victory summary
   ./Tools/Capture.ps1 -Demo boss            # DW-209: the same voyage, frames from the last stop only: map with only the Kraken, the Kraken fight, its slam; ends on the Victory summary
   ./Tools/Capture.ps1 -Demo shop            # DW-204: fights until there is gold to shop, then a shop with the run readout: arrival, after buying (repair, recruit, upgrade, item), the map; ends in the next fight (recruit aboard, third cannon)
+  ./Tools/Capture.ps1 -Demo captain -Captain Fearmongerer   # DW-206..208: the captain's showcase in fight 1, a frame per turn; Fearmongerer: Smoke and Fire until the crew surrenders
   ./Tools/Capture.ps1 -Demo shell           # DW-210 from the main menu: menu, settings, captain select, Set Sail, map, pause, abandon, summary, New Run
   ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p
   ./Tools/Capture.ps1 -Mood Storm           # the storm look (default Day; Random rolls from the seed)
   ./Tools/Capture.ps1 -Zoom 0.3 -Tile "0,1" # close-up of a tile for art review
 #>
 param(
-    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage', 'boss', 'shop', 'shell')] [string] $Demo = 'none',
+    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage', 'boss', 'shop', 'shell', 'captain')] [string] $Demo = 'none',
     # Start a run with this captain (TeamLeader, Fearmongerer, Conqueror) instead of the dev fight. -Demo run defaults to TeamLeader.
     [string] $Captain = '',
     # Level to open: Sea (L_Sea) or MainMenu (L_MainMenu). -Demo shell defaults to MainMenu.
@@ -66,7 +67,7 @@ $gameArgs = @(
     '-nosound', '-nosplash', '-unattended', "-abslog=$log"
 )
 if ($Mood -and $Mood -ne 'Random') { $gameArgs += "-DwMood=$Mood" }
-if ($Demo -in @('run', 'voyage', 'boss', 'shop') -and -not $Captain) { $Captain = 'TeamLeader' }
+if ($Demo -in @('run', 'voyage', 'boss', 'shop', 'captain') -and -not $Captain) { $Captain = 'TeamLeader' }
 if ($Captain) { $gameArgs += "-DwCaptain=$Captain" }
 if ($Zoom -gt 0) { $gameArgs += "-DwCaptureZoom=$Zoom" }
 if ($Tile) { $gameArgs += "-DwCaptureTile=$Tile" }

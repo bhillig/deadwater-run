@@ -5,6 +5,7 @@
 #include "Core/DwGameplayTags.h"
 #include "Data/DwCaptainDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
+#include "Run/DwRunTypes.h"
 
 namespace DwCaptainRules
 {
@@ -25,4 +26,23 @@ float FDwCaptainRules::GetLevelThresholdMultiplier(const UDwCaptainDefinition* C
 {
 	const FDwCaptainTuningRow* Row = DwCaptainRules::VeteranRow(Captain);
 	return Row && Row->LevelThresholdMultiplier > 0.f ? Row->LevelThresholdMultiplier : 1.f;
+}
+
+float FDwCaptainRules::GetStartingFear(const FDwCaptainCounters& Counters, const UDwCaptainDefinition* Captain)
+{
+	if (!Captain || !Captain->RuleTags.HasTagExact(DwTags::Rule_Captain_DreadReputation))
+	{
+		return 0.f;
+	}
+	const FDwCaptainTuningRow* Row = Captain->GetTuningRow<FDwCaptainTuningRow>();
+	if (!Row)
+	{
+		return 0.f;
+	}
+	return static_cast<float>(FMath::Clamp(Counters.SurrenderWins * Row->FearPerSurrender, 0, FMath::Max(0, Row->StartingFearCap)));
+}
+
+void FDwCaptainRules::OnCombatWon(FDwCaptainCounters& Counters, EDwCombatOutcome Outcome)
+{
+	Counters.SurrenderWins += Outcome == EDwCombatOutcome::VictorySurrender ? 1 : 0;
 }

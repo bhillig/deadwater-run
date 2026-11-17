@@ -62,6 +62,12 @@ private:
 	 * recruit on deck and the third cannon.
 	 */
 	void ShopDemoStep();
+	/**
+	 * Demo "captain" (needs -DwCaptain=; DW-206..208): the captain's own showcase in the first fight, one frame per turn
+	 * after the captain acts, final frame the rewards screen. Fearmongerer: Smoke and Fire every turn until the enemy
+	 * crew surrenders (frames show the Fear pips rising; the final frame is "They surrendered").
+	 */
+	void CaptainDemoStep();
 	/** Kills every living enemy with the player captain as the instigator (kill XP), then ends the player turn. */
 	void WinFightByCaptain() const;
 	void CaptureFrame(int32 Frame) const;
@@ -82,6 +88,9 @@ private:
 	TSet<uint8> VoyageScreensSeen;
 	/** Demo "voyage": the first event's result screen has had its frame (after its choices). */
 	bool bVoyageEventResultShown = false;
+	/** Demo "captain": 0 sailing; then act / capture / end turn per player turn; 100+ the fight is over. */
+	int32 CaptainStage = 0;
+	int32 CaptainFrame = 0;
 	int32 EnemyFrame = 0;
 	int32 EnemyTurnsPlayed = 0;
 	static constexpr int32 EnemyTurns = 2;

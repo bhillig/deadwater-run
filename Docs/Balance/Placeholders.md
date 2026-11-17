@@ -98,3 +98,12 @@ Brandon's P4 / P7-P10 answers (2026-11-11, "recommended defaults, all placeholde
 | `ShipUpgradeTuning.json` (new) | `ReinforcedHull` | `MaxHealthBonus` | 50 | P9 a): +50 max hull (current hull rises too, P14) |
 | `ShipUpgradeTuning.json` (new) | `HeavyShot` | `CannonDamageBonus` | 20 | P9 a): +20 cannon damage (70 -> 90) |
 | `DA_Deck_PlayerShip` (layout, not JSON) | - | third cannon slot | row 0, column 1 | Next to the first cannon, reachable from the spawn column; the art pass decides (P18) |
+
+## Set by DW-206 (Fearmongerer), 2026-11-17
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `AbilityTuning.json` | `Captain_SmokeAndFire` | `Damage` | 20 | K11 a): damage from tuning. Hits only enemies already afraid; one cast per turn means 3 casts take a fresh crew from 0 to 3 Fear (surrender) |
+| `CaptainTuning.json` | `Fearmongerer` | `StartingFearCap` | 2 | Brandon's K9 a): Dread Reputation never starts a fight at 3 (no instant surrenders) |
+
+Smoke and Fire and Six Pistols are real now; their `ManaCost` stays 0 until K13.

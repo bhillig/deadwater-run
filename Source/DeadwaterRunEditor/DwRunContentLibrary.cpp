@@ -68,9 +68,9 @@ namespace DwRunContent
 			{ TEXT("DA_Captain_Fearmongerer"), TEXT("DA_Unit_Captain_Fearmongerer"), TEXT("Fearmongerer"), TEXT("Fearmongerer"),
 				TEXT("Known across the seas for his ruthlessness. Enemies gather Fear; at 3 they cower, and if every enemy is at 3 the crew surrenders.\nDread Reputation: every surrender win adds starting Fear to later fights."),
 				{ { TEXT("DA_Ability_Captain_SmokeAndFire"), TEXT("Smoke and Fire"), DwTags::Ability_Captain_SmokeAndFire, TEXT("Captain_SmokeAndFire"),
-					TEXT("Lights the fuses in his beard: every enemy gets 1 Fear, and enemies already afraid take smoke damage."), TEXT("DW-206") },
+					TEXT("Lights the fuses in his beard: enemies already afraid take 20 damage, then every enemy gains 1 Fear."), TEXT("DW-206") },
 				  { TEXT("DA_Ability_Captain_SixPistols"), TEXT("Six Pistols"), DwTags::Ability_Captain_SixPistols, TEXT("Captain_SixPistols"),
-					TEXT("Six shots at random enemies for 15 damage each."), TEXT("DW-206") } },
+					TEXT("Six shots at random enemies in sight, 15 damage each. The same enemy can be hit more than once."), TEXT("DW-206") } },
 				{ DwTags::Rule_Captain_Surrender, DwTags::Rule_Captain_DreadReputation }, {}, {} },
 			{ TEXT("DA_Captain_Conqueror"), TEXT("DA_Unit_Captain_Conqueror"), TEXT("The Conqueror"), TEXT("Conqueror"),
 				TEXT("Strikes twice a turn and fights with a sword only. His crew make one choice each turn: move or act.\nEvery enemy he kills himself gives him +1% damage for the run (up to 20%)."),
@@ -80,6 +80,60 @@ namespace DwRunContent
 					TEXT("Freeze one enemy anywhere on the board: it can't move or act for one turn."), TEXT("DW-208") } },
 				{ DwTags::Rule_Captain_KillBonus }, { DwTags::Ability_Weapon_Firearm }, { DwTags::Unit_Kraken_Tentacle } },
 		};
+	}
+
+	/** A captain ability's real class: a GA_Captain_* Blueprint of Parent whose defaults Configure sets. */
+	struct FCaptainAbilityClass
+	{
+		const TCHAR* Blueprint;
+		UClass* Parent;
+		TFunction<void(UDwGameplayAbility&)> Configure;
+	};
+
+	/**
+	 * The captain abilities that have their behaviour (DW-206..208), by DA_Ability_* name. Abilities not listed keep the
+	 * do-nothing placeholder. Numbers are DT_AbilityTuning's.
+	 */
+	TMap<FString, FCaptainAbilityClass> CaptainAbilityClasses()
+	{
+		TMap<FString, FCaptainAbilityClass> Out;
+
+		// DW-206 Smoke and Fire (05): every enemy; the already afraid take damage first, then everyone gains Fear.
+		Out.Add(TEXT("DA_Ability_Captain_SmokeAndFire"), { TEXT("GA_Captain_SmokeAndFire"), UDwGA_EffectPayload::StaticClass(),
+			[](UDwGameplayAbility& Ability)
+			{
+				UDwGA_EffectPayload& Payload = static_cast<UDwGA_EffectPayload&>(Ability);
+				const FDwSharedEffects& Effects = DwGas::GetSharedEffects();
+				Payload.Targeting = FDwTargetingRules();
+				Payload.Targeting.Pattern = EDwTargetPattern::AllEnemies;
+				Payload.Targeting.Side = EDwTargetSide::Enemy;
+				Payload.Targeting.bIgnoreRange = true;
+				FDwEffectApplication Smoke;
+				Smoke.Effect = Effects.Damage;
+				Smoke.RequiredTargetTags.AddTag(DwTags::Status_Afraid);
+				FDwEffectApplication Fear;
+				Fear.Effect = Effects.AddFear;
+				Payload.Applications = { Smoke, Fear };
+				Payload.PlaceholderSeconds = 0.6f;
+			} });
+
+		// DW-206 Six Pistols (05, K11 a): six hits on random enemies in sight, repeats allowed.
+		Out.Add(TEXT("DA_Ability_Captain_SixPistols"), { TEXT("GA_Captain_SixPistols"), UDwGA_EffectPayload::StaticClass(),
+			[](UDwGameplayAbility& Ability)
+			{
+				UDwGA_EffectPayload& Payload = static_cast<UDwGA_EffectPayload&>(Ability);
+				const FDwSharedEffects& Effects = DwGas::GetSharedEffects();
+				Payload.Targeting = FDwTargetingRules();
+				Payload.Targeting.Pattern = EDwTargetPattern::RandomEnemies;
+				Payload.Targeting.Side = EDwTargetSide::Enemy;
+				Payload.Targeting.bIgnoreRange = true;
+				Payload.Targeting.bRequiresLineOfSight = true;
+				FDwEffectApplication Shot;
+				Shot.Effect = Effects.Damage;
+				Payload.Applications = { Shot };
+				Payload.PlaceholderSeconds = 0.8f;
+			} });
+		return Out;
 	}
 
 	const FString PerkEffects = TEXT("/Game/DeadwaterRun/Abilities/Perks");
@@ -199,14 +253,32 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 		Unit->Tuning = Row(UnitTable, *FString::Printf(TEXT("Captain_%s"), Spec.TuningRow), Log, bOk);
 		bOk &= Save(Unit, Log);
 
-		// 4. Its two combat abilities.
+		// 4. Its two combat abilities: the real GA_Captain_* class once its ticket has built it, else the placeholder.
 		TArray<TObjectPtr<UDwAbilityDefinition>> CaptainAbilities;
+		const TMap<FString, FCaptainAbilityClass> RealClasses = CaptainAbilityClasses();
 		for (const FAbilitySpec& AbilitySpec : Spec.Abilities)
 		{
 			UDwAbilityDefinition* Ability = FindOrCreate<UDwAbilityDefinition>(AbilityData, AbilitySpec.Asset, Log);
 			Ability->DisplayName = FText::FromString(AbilitySpec.Name);
-			Ability->Description = FText::FromString(FString::Printf(TEXT("%s\n(Placeholder: no effect until %s.)"), AbilitySpec.Description, AbilitySpec.Ticket));
-			Ability->AbilityClass = TSubclassOf<UDwGameplayAbility>(PlaceholderBp->GeneratedClass.Get());
+			UClass* AbilityClass = PlaceholderBp->GeneratedClass.Get();
+			if (const FCaptainAbilityClass* Real = RealClasses.Find(AbilitySpec.Asset))
+			{
+				UBlueprint* Bp = FindOrCreateBlueprint(Abilities, Real->Blueprint, Real->Parent, Log);
+				UDwGameplayAbility* Defaults = Bp ? Cast<UDwGameplayAbility>(Bp->GeneratedClass->GetDefaultObject()) : nullptr;
+				if (!Defaults)
+				{
+					return Fail();
+				}
+				Real->Configure(*Defaults);
+				bOk &= Save(Bp, Log);
+				AbilityClass = Bp->GeneratedClass.Get();
+				Ability->Description = FText::FromString(AbilitySpec.Description);
+			}
+			else
+			{
+				Ability->Description = FText::FromString(FString::Printf(TEXT("%s\n(Placeholder: no effect until %s.)"), AbilitySpec.Description, AbilitySpec.Ticket));
+			}
+			Ability->AbilityClass = TSubclassOf<UDwGameplayAbility>(AbilityClass);
 			Ability->AbilityTag = AbilitySpec.Tag;
 			Ability->AbilityTags = FGameplayTagContainer();
 			Ability->Tuning = Row(AbilityTable, AbilitySpec.TuningRow, Log, bOk);
