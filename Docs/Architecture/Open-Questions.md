@@ -203,5 +203,5 @@ U1-U5 answered - see Resolved. Follow-up U3a above.
 | B6 | Telegraphing | a) Every intent with its target | Intent storage `UDwCombatSubsystem::DeclareIntents` (DW-301); declaring them is DW-302, showing them DW-303 |
 | B7 | Phase change at 30% | a) At the start of its next turn, with a banner | `UDwCombatSubsystem::UpdateKrakenTurn`, `PhaseChanged` event (banner: DW-303) |
 | B8 | Do Swipe / Arms of Fury hit the ship? | a) Crew only | `GA_Kraken_KrankySwipe` / `GA_Kraken_ArmsOfFury` targeting |
-| N1 | The ~12 crew abilities | Set A "Cutlass and Musket" from `Docs/Balance/N1-AbilityDrafts.md` (balance-designer draft, numbers are placeholders for DW-401); crew only, captains don't learn them | DW-304: `DA_Ability_*`, `AbilityTuning.json`, ability pools |
-| P2 | Perk pools | a) Shared pool + a few archetype perks, 3 choices | DW-304: `UDwPerkPool`, `RunTuning.json` `PerkChoices` |
+| N1 | The ~12 crew abilities | Set A "Cutlass and Musket" from `Docs/Balance/N1-AbilityDrafts.md` (balance-designer draft, numbers are placeholders for DW-401); crew only, captains don't learn them | `GA/DA_Ability_Crew_*`, `AbilityTuning.json` `Crew_*`, `DA_AbilityPool_Swordsman` / `_Sniper` (built in DW-304) |
+| P2 | Perk pools | a) Shared pool + a few archetype perks, 3 choices; perk list (Brandon): shared Sea Legs, Hardened, Cutthroat, Thick Skin, Rum Ration; Swordsman Iron Hide, Brawler; Sniper Steady Hand, Deep Breath | `DA_PerkPool_Shared` (archetype perks by `RequiredUnitTags`), `PerkTuning.json` (built in DW-304) |

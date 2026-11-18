@@ -75,7 +75,7 @@ struct DEADWATERRUN_API FDwCrewMemberState
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Crew") TArray<TObjectPtr<const UDwAbilityDefinition>> Abilities;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Crew") TArray<TObjectPtr<const UDwPerkDefinition>> Perks;
 
-	/** Unit tuning MaxHealth + HealthPerLevel per level above 1 (the same numbers combat spawns with); 0 without a row. */
+	/** Unit tuning MaxHealth + HealthPerLevel per level above 1 (the same numbers combat spawns with), plus max-Health perks; 0 without a row. */
 	float GetMaxHealth() const;
 	FText GetDisplayName() const;
 };

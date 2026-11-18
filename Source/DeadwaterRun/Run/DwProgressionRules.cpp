@@ -141,7 +141,9 @@ bool FDwProgressionRules::ApplyPerk(FDwCrewMemberState& Crew, const UDwPerkDefin
 	{
 		return false;
 	}
+	const float OldMax = Crew.GetMaxHealth();
 	Crew.Perks.Add(&Perk);
+	Crew.Health += FMath::Max(0.f, Crew.GetMaxHealth() - OldMax); // a max-Health perk's new Health is usable, like a level-up
 	const UDwAbilityDefinition* Granted = Perk.GrantedAbility;
 	if (Granted && !Crew.Abilities.ContainsByPredicate([Granted](const UDwAbilityDefinition* Known) { return Known == Granted; }))
 	{

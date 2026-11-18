@@ -23,6 +23,18 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Kraken_TentacleGrab, "Ability.Kraken.TentacleGrab");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Kraken_ArmsOfFury, "Ability.Kraken.ArmsOfFury");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Kraken_EyesOfTheSea, "Ability.Kraken.EyesOfTheSea");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_HeavyBlow, "Ability.Crew.HeavyBlow");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_Cleave, "Ability.Crew.Cleave");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_Hamstring, "Ability.Crew.Hamstring");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_PommelStrike, "Ability.Crew.PommelStrike");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_BoardingCry, "Ability.Crew.BoardingCry");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_AimedShot, "Ability.Crew.AimedShot");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_CrowsNestShot, "Ability.Crew.CrowsNestShot");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_PinningShot, "Ability.Crew.PinningShot");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_Scattershot, "Ability.Crew.Scattershot");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_ChainShot, "Ability.Crew.ChainShot");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_FieldDressing, "Ability.Crew.FieldDressing");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Crew_GrogCourage, "Ability.Crew.GrogCourage");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Weapon_Sword, "Ability.Weapon.Sword");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Weapon_Firearm, "Ability.Weapon.Firearm");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Afraid, "Status.Afraid");

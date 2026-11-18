@@ -1,6 +1,6 @@
 # N1 - Crew ability drafts (DW-304)
 
-**DRAFT for Brandon to pick from. Nothing here is in data yet.** Every number is a placeholder for the DW-401 simulator pass. Owner: balance-designer.
+**Brandon picked Set A, crew only (2026-11-17); built in DW-304 (`Tuning/AbilityTuning.json` `Crew_*`). Sets B and C are kept for reference.** Every number is a placeholder for the DW-401 simulator pass. Owner: balance-designer.
 
 ## Constraints every set obeys (read from Source/, 2026-11-17)
 

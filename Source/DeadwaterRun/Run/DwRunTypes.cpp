@@ -2,7 +2,9 @@
 
 #include "Run/DwRunTypes.h"
 
+#include "Abilities/DwAttributeSets.h"
 #include "Data/DwItemDefinition.h"
+#include "Data/DwPerkDefinition.h"
 #include "Data/DwShipUpgradeDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
@@ -10,7 +12,16 @@
 float FDwCrewMemberState::GetMaxHealth() const
 {
 	const FDwUnitTuningRow* Row = Unit ? Unit->GetTuningRow<FDwUnitTuningRow>() : nullptr;
-	return Row ? static_cast<float>(Row->GetMaxHealthAtLevel(Level)) : 0.f;
+	if (!Row)
+	{
+		return 0.f;
+	}
+	float MaxHealth = static_cast<float>(Row->GetMaxHealthAtLevel(Level));
+	for (const UDwPerkDefinition* Perk : Perks)
+	{
+		MaxHealth += Perk ? Perk->GetAttributeBonus(UDwUnitAttributeSet::GetMaxHealthAttribute()) : 0.f; // Thick Skin, Brawler
+	}
+	return MaxHealth;
 }
 
 FText FDwCrewMemberState::GetDisplayName() const

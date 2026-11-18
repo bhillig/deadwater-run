@@ -29,6 +29,7 @@
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 #include "Misc/DataValidation.h"
+#include "Run/DwProgressionRules.h"
 #include "Run/DwRun.h"
 #include "Run/DwRunRandom.h"
 #include "Run/DwRunSubsystem.h"
@@ -281,11 +282,11 @@ void FDwRunContentSpec::Define()
 	});
 
 #if WITH_EDITOR
-	It("has three valid placeholder perks in one shared pool on every crew archetype and captain, and a plunder item list", [this]()
+	It("has the nine perks (P2 a: shared plus archetype perks) in one valid shared pool on every crew archetype and captain, and a plunder item list", [this]()
 	{
 		if (!TestNotNull(TEXT("DA_GameData"), GameData)) { return; }
 		const UDwPerkPool* Pool = GameData->Captains[0]->CaptainUnit->PerkPool;
-		if (!TestNotNull(TEXT("DA_PerkPool_Shared"), Pool) || !TestEqual(TEXT("3 perks"), Pool->Perks.Num(), 3)) { return; }
+		if (!TestNotNull(TEXT("DA_PerkPool_Shared"), Pool) || !TestEqual(TEXT("9 perks"), Pool->Perks.Num(), 9)) { return; }
 		for (const UDwPerkDefinition* Perk : Pool->Perks)
 		{
 			FDataValidationContext Context;
@@ -303,6 +304,12 @@ void FDwRunContentSpec::Define()
 		}
 		const UDwPerkDefinition* Hardened = FindPerk(TEXT("DA_Perk_Hardened"));
 		TestEqual(TEXT("Hardened text"), Hardened ? Hardened->GetFormattedDescription().ToString() : FString(), FString(TEXT("Takes 10% less damage.")));
+		auto Requires = [this](const TCHAR* Name) { const UDwPerkDefinition* P = FindPerk(Name); return P ? P->RequiredUnitTags : FGameplayTagContainer(); };
+		TestTrue(TEXT("Shared perks have no requirement"), Requires(TEXT("DA_Perk_ThickSkin")).IsEmpty() && Requires(TEXT("DA_Perk_RumRation")).IsEmpty());
+		TestTrue(TEXT("Iron Hide and Brawler: swordsmen"), Requires(TEXT("DA_Perk_IronHide")).HasTagExact(DwTags::Unit_Archetype_Swordsman)
+			&& Requires(TEXT("DA_Perk_Brawler")).HasTagExact(DwTags::Unit_Archetype_Swordsman));
+		TestTrue(TEXT("Steady Hand and Deep Breath: snipers"), Requires(TEXT("DA_Perk_SteadyHand")).HasTagExact(DwTags::Unit_Archetype_Sniper)
+			&& Requires(TEXT("DA_Perk_DeepBreath")).HasTagExact(DwTags::Unit_Archetype_Sniper));
 		for (const UDwCaptainDefinition* Def : GameData->Captains)
 		{
 			TestTrue(TEXT("Captain unit uses the shared pool"), Def->CaptainUnit->PerkPool.Get() == Pool);
@@ -323,7 +330,12 @@ void FDwRunContentSpec::Define()
 		TestEqual(TEXT("Rewards"), S.Phase, EDwRunPhase::Rewards);
 		TestEqual(TEXT("150 x 1.5"), S.PendingRewards.Gold, 225);
 		TestEqual(TEXT("One plunder item (P6: always)"), S.PendingRewards.Items.Num(), 1);
-		TestTrue(TEXT("No learnable moves yet (N1)"), S.PendingRewards.AbilityChoices.IsEmpty());
+		// N1: abilities from the crew's archetype pools, never for the captain (crew only).
+		TestFalse(TEXT("Ability choices from the crew pools"), S.PendingRewards.AbilityChoices.IsEmpty());
+		for (const FDwAbilityOffer& Offer : S.PendingRewards.AbilityChoices)
+		{
+			TestFalse(TEXT("Never the captain"), Offer.EligibleCrew.Contains(S.Crew[0].Id));
+		}
 		// Clear 80 for all; the swordsman also has 3 x 20 kill XP. Team Leader: x1.5.
 		TestEqual(TEXT("Captain 120 XP"), S.PendingRewards.Xp[0].Xp, 120);
 		TestEqual(TEXT("Swordsman 210 XP"), S.PendingRewards.Xp[1].Xp, 210);
@@ -459,12 +471,23 @@ void FDwRunContentSpec::Define()
 		const FGuid CaptainId = Run->GetState().Crew[0].Id;
 		const FGuid SwordsmanId = Run->GetState().Crew[1].Id;
 		if (!WinBy(CaptainId) || !Run->ClaimRewards(INDEX_NONE, FGuid())) { return; }
-		// Captain (80 + 60 = 140) and swordsman (80): only the captain levels. Pick Sea Legs if offered.
+		// Captain (80 + 60 = 140) and swordsman (80): only the captain levels. Pick Sea Legs if offered (3 of the 5 perks
+		// a captain can take); otherwise any perk that leaves move range and damage taken alone, and give Sea Legs by hand.
 		const FDwPendingLevelUp* LevelUp = Run->GetCurrentLevelUp();
 		if (!TestTrue(TEXT("Captain levelled"), LevelUp && LevelUp->CrewId == CaptainId)) { return; }
-		if (!TestTrue(TEXT("Sea Legs offered (3 of 3)"), LevelUp->PerkChoices.Contains(SeaLegs))) { return; }
-		Run->ChoosePerk(LevelUp->PerkChoices.IndexOfByKey(SeaLegs));
+		TestEqual(TEXT("3 choices"), LevelUp->PerkChoices.Num(), 3);
+		int32 Pick = LevelUp->PerkChoices.IndexOfByKey(SeaLegs);
+		if (Pick == INDEX_NONE)
+		{
+			Pick = LevelUp->PerkChoices.IndexOfByPredicate([Hardened](const UDwPerkDefinition* P) { return P != Hardened; });
+		}
+		const bool bTookSeaLegs = LevelUp->PerkChoices.IsValidIndex(Pick) && LevelUp->PerkChoices[Pick] == SeaLegs;
+		Run->ChoosePerk(Pick);
 		TestEqual(TEXT("Map"), Run->GetPhase(), EDwRunPhase::Map);
+		if (!bTookSeaLegs)
+		{
+			TestTrue(TEXT("Sea Legs by hand"), FDwProgressionRules::ApplyPerk(*const_cast<FDwRunState&>(Run->GetState()).FindCrew(CaptainId), *SeaLegs));
+		}
 		// Give the swordsman Hardened by hand: the second fight checks both effects.
 		FDwCrewMemberState* Swordsman = const_cast<FDwRunState&>(Run->GetState()).FindCrew(SwordsmanId);
 		Swordsman->Perks.Add(Hardened);

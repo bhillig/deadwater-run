@@ -40,6 +40,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Perk")
 	FText GetFormattedDescription() const;
 
+	/**
+	 * What this perk adds to Attribute: its tuning Value when Effect has an AddBase modifier on Attribute driven by
+	 * Data.Value (how every GE_Perk_* is built), else 0. The run uses it for stats it tracks outside a fight (max Health).
+	 */
+	float GetAttributeBonus(const struct FGameplayAttribute& Attribute) const;
+
 	virtual FPrimaryAssetType GetDwAssetType() const override { return FTypes::Perk; }
 	virtual const UScriptStruct* GetTuningRowStruct() const override;
 };

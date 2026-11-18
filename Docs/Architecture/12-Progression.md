@@ -67,18 +67,20 @@ sequenceDiagram
 
 ## Build order (gameplay-engineer)
 1. DW-203: tables, rules, pending level-ups, `ChoosePerk`, 3 placeholder perks in one pool.
-2. DW-304: final perk pools once Brandon answers P2.
+2. DW-304 (done 2026-11-17): the nine perks above (P2 a).
 3. balance-designer DW-401: XP curve so the simulator shows ~1 level per encounter.
 
 ## How it's tested (`DeadwaterRun.Rules.Progression.*`, pure)
 - XP exactly at threshold levels up; multi-level gains queue multiple level-ups; max level caps.
 - Veteran Crew multipliers change levels as configured (both readings of K7 covered by table tests).
 - Perk rolls: correct count, no duplicates, respect tags and stacks, stable per seed.
-- Suites: `DeadwaterRun.Rules.Progression` (pure), `DeadwaterRun.Rules.Run` "XP and level-ups (DW-203)" (kill/clear XP, queue order, refusals, seeds), `DeadwaterRun.Run.Content` (real perks valid; Sea Legs and Hardened change the next fight).
+- Suites: `DeadwaterRun.Rules.Progression` (pure), `DeadwaterRun.Rules.Run` "XP and level-ups (DW-203)" (kill/clear XP, queue order, refusals, seeds), `DeadwaterRun.Run.Content` (real perks valid; Sea Legs and Hardened change the next fight), `DeadwaterRun.Run.CrewAbilities` "Perks" (archetype filter, max Health and MP perks in the run and the fight).
 - Simulator: mean levels per encounter per captain.
 
-## DW-203 placeholders
-- One shared pool `DA_PerkPool_Shared` (P2 still open): Sea Legs (+1 move, 1 stack), Hardened (-10% damage taken, 2 stacks), Cutthroat (+10% damage, 2 stacks). 3 choices per level-up. Final pools: DW-304.
+## Perks (DW-304, P2 a)
+- One shared pool `DA_PerkPool_Shared` on every crew archetype and captain; archetype perks carry their archetype in `RequiredUnitTags`, so a roll only offers them to that archetype. 3 choices per level-up (`RunTuning.json` `PerkChoices`).
+- Shared: Sea Legs (+1 move, 1 stack), Hardened (-10% damage taken, 2), Cutthroat (+10% damage, 2), Thick Skin (+20 max Health, 2), Rum Ration (+5 max MP, 2). Swordsman: Iron Hide (-20% damage taken), Brawler (+30 max Health). Sniper: Steady Hand (+20% damage), Deep Breath (+10 max MP). Numbers: `PerkTuning.json`, placeholders until DW-401.
+- Max-Health perks count in the run too: `FDwCrewMemberState::GetMaxHealth` adds every perk's `UDwPerkDefinition::GetAttributeBonus(MaxHealth)`, a new one's Health is usable at once (like a level-up), and a fight sets Health and Mana after perks (fresh = full at the perked maximum; Mana always full, C9).
 - XP curve, kill and clear XP, `MaxLevel` 10, `HealthPerLevel` 10: `Docs/Balance/Placeholders.md`.
 
 ## What the player sees

@@ -416,6 +416,15 @@ ADwCombatUnit* UDwCombatSubsystem::SpawnUnit(const FDwCombatantSetup& Combatant,
 			Asc->ApplyGameplayEffectSpecToSelf(*PerkSpec.Data);
 		}
 	}
+	// Max-Health / max-Mana perks raise the maxima after init: Health is set against the perked maximum (the run's
+	// FDwCrewMemberState::GetMaxHealth counts the same perks), and Mana always starts full (C9).
+	if (!Combatant.Perks.IsEmpty())
+	{
+		const float MaxHealth = Asc->GetNumericAttribute(UDwUnitAttributeSet::GetMaxHealthAttribute());
+		Asc->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(),
+			Combatant.Health < 0.f ? MaxHealth : FMath::Clamp(Combatant.Health, 0.f, MaxHealth));
+		Asc->SetNumericAttributeBase(UDwUnitAttributeSet::GetManaAttribute(), Asc->GetNumericAttribute(UDwUnitAttributeSet::GetMaxManaAttribute()));
+	}
 
 	// Conqueror: the run's kill bonus so far (K3).
 	if (Spawn.bIsCaptain && Side == EDwSide::Player && Setup.CaptainRules.Has(DwTags::Rule_Captain_KillBonus))

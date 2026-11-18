@@ -1,5 +1,11 @@
 [
-	{ "Name": "SeaLegs",   "Value": 1.0, "Value2": 0.0 },
-	{ "Name": "Hardened",  "Value": 0.1, "Value2": 0.0 },
-	{ "Name": "Cutthroat", "Value": 0.1, "Value2": 0.0 }
+	{ "Name": "SeaLegs",    "Value": 1.0,  "Value2": 0.0 },
+	{ "Name": "Hardened",   "Value": 0.1,  "Value2": 0.0 },
+	{ "Name": "Cutthroat",  "Value": 0.1,  "Value2": 0.0 },
+	{ "Name": "ThickSkin",  "Value": 20.0, "Value2": 0.0 },
+	{ "Name": "RumRation",  "Value": 5.0,  "Value2": 0.0 },
+	{ "Name": "IronHide",   "Value": 0.2,  "Value2": 0.0 },
+	{ "Name": "Brawler",    "Value": 30.0, "Value2": 0.0 },
+	{ "Name": "SteadyHand", "Value": 0.2,  "Value2": 0.0 },
+	{ "Name": "DeepBreath", "Value": 10.0, "Value2": 0.0 }
 ]

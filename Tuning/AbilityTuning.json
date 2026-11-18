@@ -15,5 +15,17 @@
 	{ "Name": "Kraken_KrankySwipe",    "ManaCost": 0, "Damage": 20, "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 0 },
 	{ "Name": "Kraken_TentacleGrab",   "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 1, "ShopPrice": 0 },
 	{ "Name": "Kraken_ArmsOfFury",     "ManaCost": 0, "Damage": 40, "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 3, "MaxHits": 5, "DurationTurns": 0, "ShopPrice": 0 },
-	{ "Name": "Kraken_EyesOfTheSea",   "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 1, "ShopPrice": 0 }
+	{ "Name": "Kraken_EyesOfTheSea",   "ManaCost": 0, "Damage": 0,  "DamageScale": 0.0, "Heal": 0,  "Fear": 0, "Range": 0,  "MinHits": 0, "MaxHits": 0, "DurationTurns": 1, "ShopPrice": 0 },
+	{ "Name": "Crew_HeavyBlow",      "ManaCost": 10, "Damage": 45, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 1, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 50 },
+	{ "Name": "Crew_Cleave",         "ManaCost": 8, "Damage": 20, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 1, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 50 },
+	{ "Name": "Crew_Hamstring",      "ManaCost": 6, "Damage": 15, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 1, "MinHits": 0, "MaxHits": 0, "DurationTurns": 1, "ShopPrice": 50 },
+	{ "Name": "Crew_PommelStrike",   "ManaCost": 12, "Damage": 10, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 1, "MinHits": 0, "MaxHits": 0, "DurationTurns": 1, "ShopPrice": 50 },
+	{ "Name": "Crew_BoardingCry",    "ManaCost": 6, "Damage": 0, "DamageScale": 0.0, "Heal": 0, "Fear": 2, "Range": 3, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 50 },
+	{ "Name": "Crew_AimedShot",      "ManaCost": 10, "Damage": 40, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 8, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 50 },
+	{ "Name": "Crew_CrowsNestShot",  "ManaCost": 14, "Damage": 55, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 10, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 50 },
+	{ "Name": "Crew_PinningShot",    "ManaCost": 6, "Damage": 15, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 6, "MinHits": 0, "MaxHits": 0, "DurationTurns": 1, "ShopPrice": 50 },
+	{ "Name": "Crew_Scattershot",    "ManaCost": 10, "Damage": 12, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 5, "MinHits": 3, "MaxHits": 3, "DurationTurns": 0, "ShopPrice": 50 },
+	{ "Name": "Crew_ChainShot",      "ManaCost": 10, "Damage": 50, "DamageScale": 0.0, "Heal": 0, "Fear": 0, "Range": 0, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 50 },
+	{ "Name": "Crew_FieldDressing",  "ManaCost": 8, "Damage": 0, "DamageScale": 0.0, "Heal": 30, "Fear": 0, "Range": 1, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 50 },
+	{ "Name": "Crew_GrogCourage",    "ManaCost": 5, "Damage": 0, "DamageScale": 0.0, "Heal": 10, "Fear": 0, "Range": 0, "MinHits": 0, "MaxHits": 0, "DurationTurns": 0, "ShopPrice": 50 }
 ]

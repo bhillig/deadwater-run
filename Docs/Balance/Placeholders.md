@@ -139,3 +139,15 @@ The real Kraken (`DA_Encounter_Kraken`, Docs/Architecture/08). Tentacle count, H
 | `DA_Kraken` (data asset) | phases | move `Weight` | 1 each | Even odds until DW-302's brain uses them |
 | `DA_Deck_KrakenArena` (layout) | - | body anchor | 3 tiles from the rail | Muskets (range 6) reach it from the rail and from the nest; from the back row (8 tiles) they don't, so snipers have to advance |
 | Ship cannons vs the body | - | damage | 70 per cannon, flat | The ship's `CannonDamage`, unchanged: two cannons take 140 of 500 a turn. Likely too strong once balanced (DW-401) |
+
+## Set by DW-304 (crew abilities and perks), 2026-11-17
+
+The numbers of Set A (`Docs/Balance/N1-AbilityDrafts.md`, chosen by Brandon) and of Brandon's perk list are all placeholders for the DW-401 simulator pass.
+
+| File | Rows | Fields | Placeholder | Why this number |
+|---|---|---|---|---|
+| `AbilityTuning.json` | `Crew_*` (12) | `ManaCost`, `Damage`, `Heal`, `Fear`, `Range`, hits, `DurationTurns` | Set A table | Rough rule: ~+2 damage per MP over the free basic attack; average 8.75 MP = about 2 casts per 20 MP fight |
+| `AbilityTuning.json` | `Crew_*` (12) | `ShopPrice` | 50 | The design doc's "unlock new abilities (50 gold each)" |
+| `PerkTuning.json` | `ThickSkin` / `RumRation` | `Value` | 20 HP / 5 MP | A fifth of a fresh pirate's Health and a quarter of its MP; 2 stacks each |
+| `PerkTuning.json` | `IronHide` / `SteadyHand` | `Value` | 0.2 / 0.2 | Twice the shared Hardened / Cutthroat, as the archetype's signature pick; 1 stack each |
+| `PerkTuning.json` | `Brawler` / `DeepBreath` | `Value` | 30 HP / 10 MP | One and a half / two times the shared versions |

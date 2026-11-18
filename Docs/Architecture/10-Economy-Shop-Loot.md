@@ -75,7 +75,7 @@ sequenceDiagram
 1. DW-104: `UDwItemDefinition` + the two items (needed for the item action in combat).
 2. DW-203: `FDwRewardRules`, pending rewards, claim flow.
 3. DW-204: `UDwShopDefinition`, `FDwShopRules`, `FDwCrewFactory`, `UDwRun::TryPurchase`.
-4. DW-304: final ability pools and upgrade content.
+4. DW-304 (done 2026-11-17): the twelve crew abilities (N1 Set A, `GA/DA_Ability_Crew_*`, 50 gold each) in `DA_AbilityPool_Swordsman` and `DA_AbilityPool_Sniper` (shared Field Dressing and Grog Courage in both); captains have no pool (crew only). Upgrade content was DW-204.
 
 ## How it's tested (`DeadwaterRun.Rules.Economy.*`, pure)
 - Gold: 150 base -> 150 sunk, 225 crew defeated, 225 surrender, 0 boss.

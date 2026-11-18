@@ -4,6 +4,7 @@
 // Kept in one translation unit so the rules are reviewable side by side; behaviour arrives with each system's ticket.
 
 #include "Board/DwDeckLayout.h"
+#include "GameplayEffect.h"
 #include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwCaptainDefinition.h"
@@ -345,4 +346,24 @@ FText UDwPerkDefinition::GetFormattedDescription() const
 	Args.Add(TEXT("Value2"), FText::AsNumber(Value2));
 	Args.Add(TEXT("Value2Pct"), FText::AsNumber(FMath::RoundToInt(Value2 * 100.f)));
 	return FText::Format(Description, Args);
+}
+
+float UDwPerkDefinition::GetAttributeBonus(const FGameplayAttribute& Attribute) const
+{
+	const UGameplayEffect* Cdo = Effect ? Effect->GetDefaultObject<UGameplayEffect>() : nullptr;
+	const FDwPerkTuningRow* Row = GetTuningRow<FDwPerkTuningRow>();
+	if (!Cdo || !Row)
+	{
+		return 0.f;
+	}
+	for (const FGameplayModifierInfo& Modifier : Cdo->Modifiers)
+	{
+		if (Modifier.Attribute == Attribute && Modifier.ModifierOp == EGameplayModOp::AddBase
+			&& Modifier.ModifierMagnitude.GetMagnitudeCalculationType() == EGameplayEffectMagnitudeCalculation::SetByCaller
+			&& Modifier.ModifierMagnitude.GetSetByCallerFloat().DataTag == DwTags::Data_Value)
+		{
+			return Row->Value;
+		}
+	}
+	return 0.f;
 }

@@ -230,18 +230,38 @@ namespace DwRunContent
 		const TCHAR* Description;
 		FGameplayAttribute Attribute;
 		int32 MaxStacks;
+		FGameplayTag RequiredUnitTag; // archetype perks (P2 a); empty = shared
 	};
 
-	/** DW-203 placeholders (final perks: DW-304, P2). Numbers live in Tuning/PerkTuning.json. */
+	/**
+	 * The perks (DW-304, P2 a: one shared pool; archetype perks carry their archetype tag and are only offered to it).
+	 * Brandon's list, 2026-11-17. Numbers live in Tuning/PerkTuning.json (placeholders until DW-401).
+	 */
 	TArray<FPerkSpec> Perks()
 	{
+		using FUnit = UDwUnitAttributeSet;
 		return {
+			// Shared
 			{ TEXT("DA_Perk_SeaLegs"), TEXT("GE_Perk_SeaLegs"), TEXT("Sea Legs"), TEXT("SeaLegs"),
-				TEXT("Moves {Value} more tile each turn."), UDwUnitAttributeSet::GetMoveRangeAttribute(), 1 },
+				TEXT("Moves {Value} more tile each turn."), FUnit::GetMoveRangeAttribute(), 1, FGameplayTag() },
 			{ TEXT("DA_Perk_Hardened"), TEXT("GE_Perk_Hardened"), TEXT("Hardened"), TEXT("Hardened"),
-				TEXT("Takes {ValuePct}% less damage."), UDwUnitAttributeSet::GetDamageReductionAttribute(), 2 },
+				TEXT("Takes {ValuePct}% less damage."), FUnit::GetDamageReductionAttribute(), 2, FGameplayTag() },
 			{ TEXT("DA_Perk_Cutthroat"), TEXT("GE_Perk_Cutthroat"), TEXT("Cutthroat"), TEXT("Cutthroat"),
-				TEXT("Deals {ValuePct}% more damage."), UDwUnitAttributeSet::GetDamageBonusAttribute(), 2 },
+				TEXT("Deals {ValuePct}% more damage."), FUnit::GetDamageBonusAttribute(), 2, FGameplayTag() },
+			{ TEXT("DA_Perk_ThickSkin"), TEXT("GE_Perk_ThickSkin"), TEXT("Thick Skin"), TEXT("ThickSkin"),
+				TEXT("+{Value} max Health."), FUnit::GetMaxHealthAttribute(), 2, FGameplayTag() },
+			{ TEXT("DA_Perk_RumRation"), TEXT("GE_Perk_RumRation"), TEXT("Rum Ration"), TEXT("RumRation"),
+				TEXT("+{Value} max MP."), FUnit::GetMaxManaAttribute(), 2, FGameplayTag() },
+			// Swordsman
+			{ TEXT("DA_Perk_IronHide"), TEXT("GE_Perk_IronHide"), TEXT("Iron Hide"), TEXT("IronHide"),
+				TEXT("Takes {ValuePct}% less damage."), FUnit::GetDamageReductionAttribute(), 1, DwTags::Unit_Archetype_Swordsman },
+			{ TEXT("DA_Perk_Brawler"), TEXT("GE_Perk_Brawler"), TEXT("Brawler"), TEXT("Brawler"),
+				TEXT("+{Value} max Health."), FUnit::GetMaxHealthAttribute(), 1, DwTags::Unit_Archetype_Swordsman },
+			// Sniper
+			{ TEXT("DA_Perk_SteadyHand"), TEXT("GE_Perk_SteadyHand"), TEXT("Steady Hand"), TEXT("SteadyHand"),
+				TEXT("Deals {ValuePct}% more damage."), FUnit::GetDamageBonusAttribute(), 1, DwTags::Unit_Archetype_Sniper },
+			{ TEXT("DA_Perk_DeepBreath"), TEXT("GE_Perk_DeepBreath"), TEXT("Deep Breath"), TEXT("DeepBreath"),
+				TEXT("+{Value} max MP."), FUnit::GetMaxManaAttribute(), 1, DwTags::Unit_Archetype_Sniper },
 		};
 	}
 
@@ -410,7 +430,7 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 	// 6. Captain select order.
 	GameData->Captains = Captains;
 
-	// 7. DW-203 placeholder perks: one shared pool (P2 placeholder) for every crew archetype and captain. Each perk is a
+	// 7. Perks (DW-304, P2 a): one shared pool for every crew archetype and captain; archetype perks are filtered by tag. Each perk is a
 	//    GE_Perk_* Blueprint whose single modifier reads Data.Value, filled at spawn from DT_PerkTuning.
 	UDataTable* PerkTable = Load<UDataTable>(Tuning, TEXT("DT_PerkTuning"));
 	UDwPerkPool* PerkPool = FindOrCreate<UDwPerkPool>(PerkData, TEXT("DA_PerkPool_Shared"), Log);
@@ -433,7 +453,7 @@ TArray<FString> UDwRunContentLibrary::CreateRunContent()
 		Perk->Description = FText::FromString(Spec.Description);
 		Perk->Effect = TSubclassOf<UGameplayEffect>(EffectBp->GeneratedClass.Get());
 		Perk->GrantedAbility = nullptr;
-		Perk->RequiredUnitTags = FGameplayTagContainer();
+		Perk->RequiredUnitTags = Spec.RequiredUnitTag.IsValid() ? FGameplayTagContainer(Spec.RequiredUnitTag) : FGameplayTagContainer();
 		Perk->MaxStacks = Spec.MaxStacks;
 		Perk->Weight = 1.f;
 		Perk->Tuning = Row(PerkTable, Spec.TuningRow, Log, bOk);
