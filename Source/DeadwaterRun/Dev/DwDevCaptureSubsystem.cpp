@@ -1108,23 +1108,59 @@ void UDwDevCaptureSubsystem::BossFightStep()
 	}
 	const FDwCombatSnapshot Snapshot = Combat->GetSnapshot();
 	FDwUnitHandle Sniper;
-	FDwUnitHandle Kraken;
+	FDwUnitHandle Swordsman;
+	FDwUnitHandle Tentacle; // the first living tentacle
 	for (const FDwUnitSnapshot& Unit : Snapshot.Units)
 	{
-		Sniper = !Sniper.IsValid() && Unit.bAlive && Unit.Side == EDwSide::Player && Unit.Tags.HasTag(DwTags::Unit_Archetype_Sniper) ? Unit.Handle : Sniper;
-		Kraken = Unit.Tags.HasTagExact(DwTags::Unit_Kraken_Body) ? Unit.Handle : Kraken;
+		const bool bCrew = Unit.bAlive && Unit.Side == EDwSide::Player;
+		Sniper = !Sniper.IsValid() && bCrew && Unit.Tags.HasTag(DwTags::Unit_Archetype_Sniper) ? Unit.Handle : Sniper;
+		Swordsman = !Swordsman.IsValid() && bCrew && Unit.Tags.HasTag(DwTags::Unit_Archetype_Swordsman) ? Unit.Handle : Swordsman;
+		Tentacle = !Tentacle.IsValid() && Unit.bAlive && Unit.Tags.HasTagExact(DwTags::Unit_Kraken_Tentacle) ? Unit.Handle : Tentacle;
 	}
-	const FDwUnitSnapshot* KrakenUnit = Snapshot.FindUnit(Kraken);
+	const FDwKrakenSnapshot& K = Snapshot.Kraken;
+	const FDwUnitSnapshot* KrakenUnit = Snapshot.FindUnit(K.Body);
+	const FDwUnitSnapshot* TentacleUnit = Snapshot.FindUnit(Tentacle);
+	// The rail tile beside a tentacle slot (slots are the arena's first column, next to the player's boarding edge).
+	auto RailBeside = [](const FDwUnitSnapshot& Slot) { return Slot.Tile - FIntPoint(1, 0); };
+	// What the Kraken did on its last turn, from the command record.
+	auto LastKrakenMoves = [Combat, &K]()
+	{
+		TArray<FString> Moves;
+		for (const FDwCombatCommand& Command : Combat->GetRecord().Commands)
+		{
+			if (Command.Unit == K.Body && Command.Type == EDwCommandType::Ability)
+			{
+				Moves.Add(Command.AbilityTag.GetTagLeafName().ToString());
+			}
+		}
+		return Moves;
+	};
+	auto KrakenLine = [&]()
+	{
+		return FString::Printf(TEXT("body %.0f HP, phase %s, tentacles %d/%d cut, damage x%.1f, moves so far [%s]"), KrakenUnit ? KrakenUnit->Health : 0.f,
+			*K.PhaseId.ToString(), K.TentaclesDead, K.TentaclesTotal, K.DamageMultiplier, *FString::Join(LastKrakenMoves(), TEXT(", ")));
+	};
 
 	switch (BossStep++)
 	{
 	case 0:
+		// Staging: a tougher crew, so the random enraged moves never end the demo before its last frame.
+		for (const FDwUnitSnapshot& Unit : Snapshot.Units)
+		{
+			if (Unit.bAlive && Unit.Side == EDwSide::Player)
+			{
+				UDwAbilitySystemComponent* Asc = Combat->FindUnit(Unit.Handle)->GetDwAbilitySystem();
+				Asc->SetNumericAttributeBase(UDwUnitAttributeSet::GetMaxHealthAttribute(), 400.f);
+				Asc->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), 400.f);
+			}
+		}
+		UE_CLOG(!KrakenUnit, LogDw, Error, TEXT("Dev capture '%s': the boss fight has no Kraken body."), *Demo);
 		Next(2.5f); // spawn and settle
 		return;
-	case 1: // the sniper on the rail aiming at the Kraken: target highlight and damage preview
-		if (Interaction && Sniper.IsValid() && KrakenUnit)
+	case 1: // the sniper on the rail aiming at the body (B4: muskets reach it): target highlight and damage preview
+		if (Interaction && Sniper.IsValid() && KrakenUnit && TentacleUnit)
 		{
-			Combat->MoveUnit(Sniper, KrakenUnit->Tile - FIntPoint(1, 1), /*bSnapActor*/ true);
+			Combat->MoveUnit(Sniper, RailBeside(*TentacleUnit) + FIntPoint(0, 1), /*bSnapActor*/ true);
 			Interaction->SelectUnit(Sniper);
 			const FDwUnitSnapshot* Unit = Combat->GetSnapshot().FindUnit(Sniper);
 			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Attack_Ranged)))
@@ -1132,30 +1168,71 @@ void UDwDevCaptureSubsystem::BossFightStep()
 				Interaction->HoverTile(KrakenUnit->Tile);
 			}
 		}
-		UE_CLOG(!KrakenUnit, LogDw, Error, TEXT("Dev capture '%s': the boss fight has no Kraken body."), *Demo);
 		CaptureFrame(++VoyageFrame);
-		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = Kraken fight, sniper aiming (%s)"), *Demo, VoyageFrame,
-			KrakenUnit ? *FString::Printf(TEXT("%.0f HP"), KrakenUnit->Health) : TEXT("no body"));
+		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = Kraken fight, sniper aiming at the body (%s)"), *Demo, VoyageFrame, *KrakenLine());
 		Next(0.5f);
 		return;
-	case 2: // fire, then end the turn: the Kraken answers with Tentacle Slam
+	case 2:
 		if (Interaction && KrakenUnit)
 		{
 			Interaction->ClickTile(KrakenUnit->Tile);
 		}
 		Next(1.2f);
 		return;
-	case 3:
+	case 3: // the swordsman on the rail aiming at a tentacle (melee reaches only the tentacles)
+		if (Interaction && Swordsman.IsValid() && TentacleUnit)
+		{
+			Combat->MoveUnit(Swordsman, RailBeside(*TentacleUnit), /*bSnapActor*/ true);
+			Interaction->SelectUnit(Swordsman);
+			const FDwUnitSnapshot* Unit = Combat->GetSnapshot().FindUnit(Swordsman);
+			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Attack_Melee)))
+			{
+				Interaction->HoverTile(TentacleUnit->Tile);
+			}
+		}
+		CaptureFrame(++VoyageFrame);
+		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = swordsman aiming at a tentacle (%s)"), *Demo, VoyageFrame, *KrakenLine());
+		Next(0.5f);
+		return;
+	case 4:
+		if (Interaction && TentacleUnit)
+		{
+			Interaction->ClickTile(TentacleUnit->Tile);
+		}
+		Next(1.2f);
+		return;
+	case 5: // staging: finish that tentacle (one cutlass hit is 25 of its 60), then end the turn
+		if (TentacleUnit && TentacleUnit->bAlive)
+		{
+			UDwAbilitySystemComponent* SwordAsc = Combat->FindUnit(Swordsman)->GetDwAbilitySystem();
+			SwordAsc->ApplyGameplayEffectToTarget(DwGas::GetSharedEffects().Kill->GetDefaultObject<UGameplayEffect>(),
+				Combat->FindUnit(Tentacle)->GetDwAbilitySystem(), 1.f, SwordAsc->MakeEffectContext());
+		}
 		if (Interaction)
 		{
 			Interaction->RequestEndTurn();
 		}
-		Next(3.0f);
+		Next(3.5f);
 		return;
-	case 4: // after the slam: HP bars and floating text on both sides
+	case 6: // after the Kraken's initial-phase turn, one tentacle short (x0.9)
 		CaptureFrame(++VoyageFrame);
-		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = after the Kraken's turn (%s, round %d)"), *Demo, VoyageFrame,
-			KrakenUnit ? *FString::Printf(TEXT("%.0f HP"), KrakenUnit->Health) : TEXT("no body"), Snapshot.Round);
+		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = after the initial-phase turn (%s, round %d)"), *Demo, VoyageFrame, *KrakenLine(), Snapshot.Round);
+		Next(0.5f);
+		return;
+	case 7: // staging: the body at 28%, so it enrages at the start of its next turn (B7)
+		if (KrakenUnit)
+		{
+			Combat->FindUnit(K.Body)->GetDwAbilitySystem()->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), KrakenUnit->MaxHealth * 0.28f);
+		}
+		if (Interaction)
+		{
+			Interaction->RequestEndTurn();
+		}
+		Next(4.0f);
+		return;
+	case 8: // after the enraged turn: Arms of Fury or Eyes of the Sea
+		CaptureFrame(++VoyageFrame);
+		UE_LOG(LogDw, Log, TEXT("Dev capture '%s': frame %02d = after the enraged turn (%s, round %d)"), *Demo, VoyageFrame, *KrakenLine(), Snapshot.Round);
 		Next(0.5f);
 		return;
 	default:

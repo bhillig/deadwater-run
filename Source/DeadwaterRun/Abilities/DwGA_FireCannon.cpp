@@ -4,6 +4,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/DwDamageRules.h"
 #include "Abilities/DwGameplayEffects.h"
 #include "Board/DwBoard.h"
 #include "Combat/DwCombatRules.h"
@@ -40,7 +41,20 @@ void UDwGA_FireCannon::GatherValidTargets(const FDwTargetingContext& Context, TA
 	{
 		return;
 	}
-	Super::GatherValidTargets(Context, OutTargets);
+	const EDwSide EnemySide = Unit->Side == EDwSide::Player ? EDwSide::Enemy : EDwSide::Player;
+	if (Context.Snapshot->FindShip(EnemySide))
+	{
+		Super::GatherValidTargets(Context, OutTargets);
+		return;
+	}
+	// No enemy ship (the Kraken fight, B4): the guns aim at the enemy's cannon targets - the Kraken body.
+	for (const FDwUnitSnapshot& Candidate : Context.Snapshot->Units)
+	{
+		if (Candidate.bAlive && Candidate.Side == EnemySide && Candidate.Tags.HasTagExact(DwTags::Unit_CannonTarget))
+		{
+			OutTargets.Add(FDwAbilityTarget::MakeUnit(Candidate.Handle, Candidate.Tile));
+		}
+	}
 }
 
 FDwAbilityPreview UDwGA_FireCannon::PreviewOutcome(const FDwTargetingContext& Context, const FDwAbilityTarget& Target) const
@@ -56,14 +70,18 @@ FDwAbilityPreview UDwGA_FireCannon::PreviewOutcome(const FDwTargetingContext& Co
 		}
 		return Preview;
 	}
-	// Ships take the firing ship's CannonDamage, unmodified by unit stats.
+	// Ships (and the Kraken body) take the firing ship's CannonDamage, unmodified by the gunner's stats.
 	const FDwUnitSnapshot* Unit = Context.Snapshot->FindUnit(Context.Source);
 	const FDwShipSnapshot* Own = Unit ? Context.Snapshot->FindShip(Unit->Side) : nullptr;
 	for (FDwTargetPreview& Entry : Preview.Targets)
 	{
-		const FDwShipSnapshot* Victim = Entry.Target.bShip ? Context.Snapshot->FindShip(Entry.Target.ShipSide) : nullptr;
-		Entry.Damage = Own ? FMath::RoundToInt(Own->CannonDamage) : 0;
-		Entry.bLethal = Victim && Entry.Damage >= Victim->Health;
+		const FDwShipSnapshot* Ship = Entry.Target.bShip ? Context.Snapshot->FindShip(Entry.Target.ShipSide) : nullptr;
+		const FDwUnitSnapshot* Body = Entry.Target.IsUnit() ? Context.Snapshot->FindUnit(Entry.Target.Unit) : nullptr;
+		FDwDamageInput Input; // flat: no gunner bonus (Effect.Damage.Flat), the body's own reduction still counts
+		Input.Flat = Own ? Own->CannonDamage : 0.f;
+		Input.DamageReduction = Body ? Body->DamageReduction : 0.f;
+		Entry.Damage = Ship ? FMath::RoundToInt(Input.Flat) : FDwDamageRules::Compute(Input).Damage;
+		Entry.bLethal = (Ship && Entry.Damage >= Ship->Health) || (Body && Entry.Damage >= Body->Health);
 	}
 	return Preview;
 }
@@ -115,6 +133,7 @@ void UDwGA_FireCannon::CustomizeSpec(FGameplayEffectSpec& Spec, AActor* /*Target
 {
 	Spec.SetSetByCallerMagnitude(DwTags::Data_Damage, CannonDamage);
 	Spec.SetSetByCallerMagnitude(DwTags::Data_DamageScale, 0.f);
+	Spec.AddDynamicAssetTag(DwTags::Effect_Damage_Flat); // a unit target (the Kraken body) takes it flat, like a ship
 }
 
 #undef LOCTEXT_NAMESPACE

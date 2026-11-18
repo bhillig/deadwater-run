@@ -30,11 +30,15 @@ struct DEADWATERRUN_API FDwKrakenPhase
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phase", meta = (Categories = "Music"))
 	FGameplayTag MusicState;
 
+	/** Executed on the body when the phase starts (not for the first phase). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phase", meta = (Categories = "GameplayCue"))
 	FGameplayTag EnterCue;
 };
 
-/** What tentacles do (Open-Questions B2, B3). */
+/**
+ * What cutting tentacles does (Open-Questions B2: -10% damage each; numbers in DT_KrakenTuning). Tentacles are separate
+ * targets: damage to them never reaches the body's 500 HP (B3).
+ */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwKrakenTentacleRules
 {
@@ -42,9 +46,6 @@ struct DEADWATERRUN_API FDwKrakenTentacleRules
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tentacles")
 	EDwTentacleEffect Effect = EDwTentacleEffect::ReduceDamage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tentacles")
-	bool bTentacleDamageHitsBody = false;
 };
 
 /** The final boss (Docs/Architecture/08-Kraken-Boss.md). */

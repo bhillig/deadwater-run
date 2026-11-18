@@ -212,6 +212,13 @@ UDwGE_ConquerorExtraMove::UDwGE_ConquerorExtraMove()
 	AddConstant(FUnit::GetMaxActionPointsAttribute(), EGameplayModOp::AddBase, 1.f);
 }
 
+UDwGE_ExtraActionNextTurn::UDwGE_ExtraActionNextTurn()
+{
+	AddTurnDuration(1, EDwTurnTickPoint::OwnerSideTurnEnd);
+	AddConstant(FUnit::GetMaxActionPointsAttribute(), EGameplayModOp::AddBase, 1.f);
+	AddAssetTags(FGameplayTagContainer(DwTags::Effect_Buff));
+}
+
 UDwGE_SingleChoice::UDwGE_SingleChoice()
 {
 	DurationPolicy = EGameplayEffectDurationType::Infinite;

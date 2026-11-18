@@ -9,6 +9,8 @@
 class UDwAbilityDefinition;
 class UDwGameplayAbility;
 struct FDwCombatSnapshot;
+struct FDwKrakenPhase;
+struct FDwKrakenTuningRow;
 struct FDwUnitSnapshot;
 
 /*
@@ -78,6 +80,33 @@ struct DEADWATERRUN_API FDwCombatQueries
 	 * Same checks as ValidateCommand, so the "End turn?" prompt never appears while a legal action exists (C14).
 	 */
 	static bool SideHasAvailableAction(const FDwCombatSnapshot& Snapshot, EDwSide Side);
+};
+
+/**
+ * The Kraken's rules (Docs/Architecture/08-Kraken-Boss.md "Behaviour"): which phase is in force, how many actions it
+ * gets, and how much missing tentacles weaken it. Rules only - which move and target it picks is the brain's (DW-302).
+ */
+struct DEADWATERRUN_API FDwKrakenRules
+{
+	/**
+	 * Index of the deepest phase whose threshold the body is under: a phase starts when Health % drops *below*
+	 * EnterBelowHealthPct (30% exactly is still the initial phase); a threshold of 1 or more is in force from the start.
+	 * 0 when Phases is empty.
+	 */
+	static int32 GetPhaseIndex(TConstArrayView<FDwKrakenPhase> Phases, float HealthPct);
+
+	/**
+	 * Actions per turn: BaseActionsPerTurn of the phase (1 if the row has no entry for it), minus
+	 * floor(DeadTentacles * ActionsLostPerTentacle) when tentacles reduce actions; never below 1 while the body lives.
+	 * Eyes of the Sea's extra action comes on top, as an effect.
+	 */
+	static int32 GetActionsPerTurn(const FDwKrakenTuningRow& Tuning, EDwTentacleEffect Effect, int32 PhaseIndex, int32 DeadTentacles);
+
+	/** 1 - DeadTentacles * DamageMultiplierPerMissingTentacle when tentacles reduce damage (B2), never below 0; else 1. */
+	static float GetDamageMultiplier(const FDwKrakenTuningRow& Tuning, EDwTentacleEffect Effect, int32 DeadTentacles);
+
+	/** The AbilityTag of every move in the phase. */
+	static FGameplayTagContainer GetPhaseMoves(const FDwKrakenPhase& Phase);
 };
 
 /** Cannons (Docs/Architecture/06-Ship-Cannons.md, C7). */

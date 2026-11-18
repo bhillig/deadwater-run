@@ -3,14 +3,12 @@
 - Every creative or design call the architecture needs. Agents never pick; they build the recommended default behind a data flag, clearly marked as a placeholder, until you answer.
 - **Where it lives** = the data field that holds your answer. Almost all answers are data, not code. Questions marked **(code)** change behaviour that data can't express.
 - **Needed by** follows the critical path in `Roadmap.md`.
-- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-17 (C10a, K1a, K2a, K4a, K5, K6, K8-K12 answered for DW-205..DW-208: recommended defaults, K5 with reduced redirected damage; 2026-11-11: P4, P7-P10, C9a and the DW-204 price questions answered; P12-P18 raised by DW-204. 2026-11-10: K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
+- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-17 (B1-B8 answered for DW-301 and N1 + P2 for DW-304: recommended defaults, N1 = the balance-designer's Set A, crew only; earlier that day: C10a, K1a, K2a, K4a, K5, K6, K8-K12 answered for DW-205..DW-208: recommended defaults, K5 with reduced redirected damage; 2026-11-11: P4, P7-P10, C9a and the DW-204 price questions answered; P12-P18 raised by DW-204. 2026-11-10: K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
 
-## Top 5 (they shape the most work)
+## Top open questions (they shape the most work)
 1. **C8a** - Explosive barrels: new in your C8 answer, not in the design doc or Scope. In v1 or post-launch?
-2. **N1-N3** - the ~12 crew abilities and the 4-5 enemy crews (DW-304/305 are waiting on them).
-3. **B1-B3** - Kraken tentacles: how many, how much HP, what destroying one does, does it hurt the Kraken.
-4. **P2** - the perk pools (shared or per archetype, 2 or 3 choices). (M2 answered: at least 5 fights per path.)
-5. **E1** - events: one result text per gamble branch, so a gamble shows what actually happened (the critic's top finding on the drafts).
+2. **N2-N3** - the 4-5 enemy crews and where they appear (DW-305 is waiting on them).
+3. **E1** - events: one result text per gamble branch, so a gamble shows what actually happened (the critic's top finding on the drafts).
 
 ## Follow-ups from the 2026-10-25 answers
 
@@ -41,7 +39,6 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 | ID | Question | Options | Recommendation | Where it lives |
 |---|---|---|---|---|
 | P1 | XP: kill XP, clear XP, curve, max level (and kill XP for a Kraken tentacle) | Balance Designer proposes; target ~1 level per encounter | Tuning | `DT_ProgressionTuning`, `XpOnKill`, `ClearXp`, `MaxLevel` |
-| P2 | Level-up stat gains per archetype; perk pools; 2 or 3 perk choices | a) Shared pool + a few archetype perks, 3 choices b) Per-archetype pools, 2 choices c) One shared pool, 3 choices | a) | `UDwPerkPool`, `PerkChoices`, unit rows |
 | P3 | Level-ups mid-fight or after? | a) After the fight b) Immediately on the kill | a) | Flow (code is the same) |
 | P5 | "A new move" on victory: how? | a) Choose 1 of 3 abilities and who learns it b) Random ability to a random crew member c) Skip allowed for gold | a) | `RewardAbilityChoices` |
 | P12 | Repair when less than `RepairAmount` hull is missing (DW-204) | a) Full price, hull fills to max b) Pay only for what is fixed (rounded up) c) Refused until a full `RepairAmount` is missing | a) - built as the placeholder; simplest to read | `FDwShopRules::ApplyPurchase` **(code if b or c)** |
@@ -57,7 +54,6 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 
 | ID | Question | Options | Recommendation | Where it lives |
 |---|---|---|---|---|
-| N1 | The ~12 crew abilities (names, effects, numbers) | Balance Designer + Gameplay Engineer can draft 2-3 sets of 12 within the existing ability classes for you to pick from | Ask for drafts by Nov 4 | `DA_Ability_*`, pools |
 | N2 | 4-5 enemy crews: names, units, ship layouts, personalities | e.g. gunners / boarders / snipers / mixed / elite (see C10b for a captain-hunting crew) | Drafts on request | `DA_Encounter_*`, `DA_AiProfile_*` |
 | N3 | Difficulty by depth: which crews appear where | a) Tier 1 layers 1-3, tier 2 layers 4-6, tier 3 layers 7-9 b) Any crew anywhere, scaled by level | a) | Encounter `MinLayer`/`MaxLayer` |
 | N4 | The 10-12 events (text, choices, outcomes) | Use the event format in `Editor-Tools.md` | - | `DA_Event_*` |
@@ -71,17 +67,7 @@ M1-M6 answered 2026-11-10 (recommended defaults) - see Resolved.
 
 ## Kraken (needed by Nov 8)
 
-| ID | Question | Options | Recommendation | Where it lives |
-|---|---|---|---|---|
-| B1 | How many tentacles, how much HP, do they regrow? | a) 4 tentacles, 60 HP, no regrow b) 4 tentacles, 80 HP, regrow after 3 turns c) 6 tentacles, 40 HP, no regrow | a) | `DT_KrakenTuning` |
-| B2 | What does destroying a tentacle do? | a) -1 action per turn per 2 tentacles b) -10% damage per tentacle c) Both | b) - always matters, never removes all actions | `FDwKrakenTentacleRules` |
-| B3 | Does damaging tentacles damage the Kraken's 500 HP? | a) No, separate b) Yes, tentacle damage also hits the body c) Destroying a tentacle deals a chunk to the body | a) - makes it a clear choice | `FDwKrakenTentacleRules` |
-| B4 | What can hit the body? | a) Cannons and ranged; melee only hits tentacles b) Everything in range c) Only cannons | a) | Targeting tags |
-| B5 | Arena: player ship only, nothing to board? | a) Yes b) A rock/wreck crew can step onto | a) | `DA_Deck_KrakenArena` |
-| B6 | Telegraphing | a) Show every intent with its target (Slay the Spire style) b) Show only big moves (Slam, Arms of Fury, Eyes of the Sea) c) Show move type, not target | a) - readable, rewards planning; matters more now that a hit on the captain can end the run | `FDwAiIntent.bTelegraph` |
-| B7 | Phase change at 30%: immediately or next turn? | a) On its next turn, with a banner b) Immediately mid-turn | a) | Brain rule |
-| B8 | Do Kranky Swipe / Arms of Fury hit the ship too? ("Whole team deals 20" reads as "takes 20") | a) Crew only b) Crew and ship | a) | Ability targeting |
-| B9 | Kraken immunities | See K10 | - | Unit tags |
+B1-B8 answered 2026-11-17 (recommended defaults, DW-301); B9 = K10 - see Resolved.
 
 ## UI and shell (needed by Nov 2)
 
@@ -204,3 +190,18 @@ U1-U5 answered - see Resolved. Follow-up U3a above.
 | K11 | Smoke and Fire / Six Pistols | a) Damage from tuning; Six Pistols: enemies in LOS, repeats allowed | `DT_AbilityTuning`, targeting |
 | K12 | Charge / Eye of the Tiger | a) Charge: straight line, stops at obstacles; Eye ignores range and LOS | `UDwGA_Charge`, Eye of the Tiger BP |
 | N4 (partial) | The 10-12 events | The 12 content-pipeline drafts go in as they are (`Tuning/Events.json`); the critic's open findings in `Docs/ContentPipeline/out/*/report.md` still need Brandon before DW-306 closes | `Tuning/Events.json`, `DA_Event_*` |
+
+### Answered 2026-11-17 (DW-301 Kraken, DW-304 content)
+
+| # | Question | Decision | Where it lives now |
+|---|---|---|---|
+| B1 | Tentacles: how many, HP, regrow? | a) 4 tentacles, 60 HP, no regrow | `KrakenTuning.json` `TentacleCount`; `UnitTuning.json` `KrakenTentacle.MaxHealth`; four `T` slots in `DA_Deck_KrakenArena` |
+| B2 | What destroying a tentacle does | b) -10% damage per tentacle, on every Kraken hit (crew and ship) | `DA_Kraken.TentacleRules.Effect = ReduceDamage`, `KrakenTuning.json` `DamageMultiplierPerMissingTentacle`, `FDwKrakenRules` |
+| B3 | Does tentacle damage hurt the body? | a) No, separate | Tentacles are separate units (the unused `bTentacleDamageHitsBody` flag was removed) |
+| B4 | What can hit the body | a) Cannons and ranged; melee only hits tentacles | `Unit.Immune.Melee` + `Unit.CannonTarget` on `DA_Unit_KrakenBody`; `UDwGameplayAbility::IsUnitTargetable`, `UDwGA_FireCannon` |
+| B5 | Arena | a) Player ship only, nothing to board | `DA_Deck_KrakenArena` (water, `B` anchor, `T` slots) |
+| B6 | Telegraphing | a) Every intent with its target | Intent storage `UDwCombatSubsystem::DeclareIntents` (DW-301); declaring them is DW-302, showing them DW-303 |
+| B7 | Phase change at 30% | a) At the start of its next turn, with a banner | `UDwCombatSubsystem::UpdateKrakenTurn`, `PhaseChanged` event (banner: DW-303) |
+| B8 | Do Swipe / Arms of Fury hit the ship? | a) Crew only | `GA_Kraken_KrankySwipe` / `GA_Kraken_ArmsOfFury` targeting |
+| N1 | The ~12 crew abilities | Set A "Cutlass and Musket" from `Docs/Balance/N1-AbilityDrafts.md` (balance-designer draft, numbers are placeholders for DW-401); crew only, captains don't learn them | DW-304: `DA_Ability_*`, `AbilityTuning.json`, ability pools |
+| P2 | Perk pools | a) Shared pool + a few archetype perks, 3 choices | DW-304: `UDwPerkPool`, `RunTuning.json` `PerkChoices` |

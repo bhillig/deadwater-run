@@ -9,7 +9,8 @@
 /**
  * Ability.Cannon (Docs/Architecture/06-Ship-Cannons.md, C7): the unit stands on or 4-way next to an unused cannon of
  * its own ship, spends its action, and the enemy ship takes the firing ship's CannonDamage. Each cannon fires once per
- * side turn; crew can't use the other side's cannons; cannons never hit units (C8).
+ * side turn; crew can't use the other side's cannons; cannons never hit crew (C8). With no enemy ship (the Kraken fight,
+ * B4) they aim at the enemy's Unit.CannonTarget units - the Kraken body - for the same flat CannonDamage.
  */
 UCLASS(Blueprintable)
 class DEADWATERRUN_API UDwGA_FireCannon : public UDwGA_EffectPayload

@@ -59,10 +59,14 @@ void UDwDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	const bool bTargetIsUnit = Target && Target->GetSet<UDwUnitAttributeSet>() != nullptr;
 	const bool bTargetIsShip = !bTargetIsUnit && Target && Target->GetSet<UDwShipAttributeSet>() != nullptr;
 	// Unit-only terms: a ship takes flat ship damage (cannon = the firing ship's CannonDamage), never the gunner's bonus.
+	// A flat-damage spec (a cannon shot at the Kraken body) skips the gunner's bonus on a unit too.
 	if (bTargetIsUnit)
 	{
 		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Defs.DamageReduction, Params, Input.DamageReduction);
-		ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Defs.DamageBonus, Params, Input.DamageBonus);
+		if (!Spec.GetDynamicAssetTags().HasTagExact(DwTags::Effect_Damage_Flat))
+		{
+			ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(Defs.DamageBonus, Params, Input.DamageBonus);
+		}
 	}
 
 	const FDwDamageOutput Output = FDwDamageRules::Compute(Input);

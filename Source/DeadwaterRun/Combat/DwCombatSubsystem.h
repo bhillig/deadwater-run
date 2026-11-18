@@ -119,6 +119,19 @@ public:
 	/** Cower check and skip rules at an enemy's turn start. False = the unit does not act this turn. */
 	bool BeginEnemyUnitTurn(FDwUnitHandle Unit);
 
+	// --- Intents (Docs/Architecture/08 "Intents"; the brain declares, the HUD shows) -------------------------------
+
+	/**
+	 * Replaces Unit's declared moves for its next turn and emits one IntentDeclared per intent (Source = the unit,
+	 * Tag = the move, Target / Tile = what it will hit, Magnitude = its index). An empty list clears them.
+	 * Intents of a unit that dies are dropped.
+	 */
+	void DeclareIntents(FDwUnitHandle Unit, const TArray<FDwAiIntent>& Intents);
+	const TArray<FDwAiIntent>* GetIntents(FDwUnitHandle Unit) const { return Intents.Find(Unit); }
+
+	/** The Kraken fight's rule state (unset in other fights). Also in every snapshot. */
+	const FDwKrakenSnapshot& GetKrakenState() const { return KrakenState; }
+
 	// --- Events ----------------------------------------------------------------------------------------------------
 
 	UPROPERTY(BlueprintAssignable, Category = "Deadwater|Combat") FDwOnCombatEvent OnCombatEvent;
@@ -145,6 +158,13 @@ private:
 	void HandleUnitDied(ADwCombatUnit& Victim, AActor* Instigator);
 	/** Replaces the captain's kill-bonus GE_DamageBonus with one for KillBonusPct (none at 0). */
 	void RefreshKillBonus(UDwAbilitySystemComponent& CaptainAsc);
+	/** Kraken fight: finds the body and tentacles and sets the initial phase. */
+	void InitKrakenState();
+	/** At the start of the Kraken's side turn: phase change (B7, with its cue and a PhaseChanged event) and its action count. */
+	void UpdateKrakenTurn();
+	void SetKrakenPhase(int32 PhaseIndex);
+	/** After a tentacle dies: damage multiplier (B2). */
+	void RefreshKrakenTentacles();
 	void HandleShipSunk(ADwShip& Ship);
 	void HandleUnitHealthChanged(const FOnAttributeChangeData& Data, FDwUnitHandle Unit);
 	void HandleUnitFearChanged(const FOnAttributeChangeData& Data, FDwUnitHandle Unit);
@@ -192,6 +212,9 @@ private:
 	/** Conqueror kill bonus in this fight (starts at Setup.CaptainRules.KillBonusPct) and the captain's GE_DamageBonus for it. */
 	float KillBonusPct = 0.f;
 	FActiveGameplayEffectHandle KillBonusEffect;
+	/** Kraken fight state (08); Body is invalid in every other fight. */
+	FDwKrakenSnapshot KrakenState;
+	TMap<FDwUnitHandle, TArray<FDwAiIntent>> Intents;
 
 	bool bActive = false;
 	bool bResolving = false;

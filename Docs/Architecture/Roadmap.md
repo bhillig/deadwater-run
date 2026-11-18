@@ -566,8 +566,8 @@ Out of scope: Uploading, submitting
 
 | ID | Agent | Goal | Context | Acceptance / Proof | Out of scope |
 |---|---|---|---|---|---|
-| DW-301 | gameplay-engineer | Kraken gameplay: definition, arena, body + tentacles, 5 moves, intent storage | 08 | Kraken tests; clip of both phases | AI choice logic |
-| DW-302 | ai-engineer | Kraken brain: phases, action count, tentacle scaling, intents | 08, 07 | Kraken AI tests; simulator boss win rate | New moves |
+| DW-301 | gameplay-engineer | Kraken gameplay: definition, arena, body + tentacles, 5 moves, intent storage, Kraken rules (phase change, action count, tentacle scaling, phase move gate) | 08 | Kraken tests; clip of both phases | AI choice logic |
+| DW-302 | ai-engineer | Kraken brain: weighted move pick per phase, targets, declaring intents (the rules are DW-301's) | 08, 07 | Kraken AI tests; simulator boss win rate | New moves |
 | DW-303 | ui-engineer | Kraken HUD: boss bar, phase banner, intents, tentacle bars, danger tiles hookup | 14, 08 | Screenshots | Juice |
 | DW-304 | gameplay-engineer | Content: ~12 crew abilities, final perk pools, 2 items, ship upgrades (from Brandon's lists N1, P2, P9) | 02, 12, 06 | Each ability tested; validation clean | New ability classes unless approved |
 | DW-305 | gameplay-engineer | Content: 4-5 enemy crews (decks, units, profiles, tiers) from N2/N3 | 07, 13 | Quick-launch clip of each crew | AI code |

@@ -38,6 +38,7 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(Effect_Buff, "Effect.Buff");
 	UE_DEFINE_GAMEPLAY_TAG(Effect_Debuff, "Effect.Debuff");
 	UE_DEFINE_GAMEPLAY_TAG(Effect_Perk, "Effect.Perk");
+	UE_DEFINE_GAMEPLAY_TAG(Effect_Damage_Flat, "Effect.Damage.Flat");
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Role_Captain, "Unit.Role.Captain");
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Archetype_Swordsman, "Unit.Archetype.Swordsman");
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Archetype_Sniper, "Unit.Archetype.Sniper");
@@ -46,6 +47,8 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Immune_Fear, "Unit.Immune.Fear");
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Immune_Grapple, "Unit.Immune.Grapple");
 	UE_DEFINE_GAMEPLAY_TAG(Unit_Immune_Freeze, "Unit.Immune.Freeze");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_Immune_Melee, "Unit.Immune.Melee");
+	UE_DEFINE_GAMEPLAY_TAG(Unit_CannonTarget, "Unit.CannonTarget");
 	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Synergy, "Rule.Captain.Synergy");
 	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Defend, "Rule.Captain.Defend");
 	UE_DEFINE_GAMEPLAY_TAG(Rule_Captain_Surrender, "Rule.Captain.Surrender");

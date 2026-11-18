@@ -78,7 +78,7 @@ All derive from `UDwDefinitionBase : UPrimaryDataAsset` (Core/), which provides 
 | `DT_CombatTuning` | `FDwCombatTuningRow` | `Default` | Grid numbers (`04`: BoardingMoveCost, ClimbMoveCost, RangeBonusPerElevation), MaxFear, FearCowerPolicy |
 
 - Changed 2026-10-25: `bRefillManaOnFightStart`, `ManaRegenPerTurn`, the grid rule flags and the outcome toggles are gone - Brandon answered C1-C4, C9, C10 and C12, so those rules are fixed code, not tuning. Only numbers a balance pass would change stay in tables.
-| `DT_KrakenTuning` | `FDwKrakenTuningRow` | Kraken id | TentacleCount, TentacleHealth, actions per phase, tentacle scaling |
+| `DT_KrakenTuning` | `FDwKrakenTuningRow` | Kraken id | TentacleCount, actions per phase, tentacle scaling (tentacle HP: `DT_UnitTuning` KrakenTentacle) |
 | `DT_AiTuning` | `FDwAiTuningRow` (owner ai-engineer) | profile id | Weights, Temperature, MaxMoveCandidates |
 
 - **Prices** (Brandon, 2026-11-11, DW-204): each lives only on the offered thing's own row - `DT_ItemTuning.Price`, `DT_AbilityTuning.ShopPrice`, `DT_UnitTuning.RecruitCost`, `DT_ShipUpgradeTuning.Price`. Repair has no row of its own, so `DT_EconomyTuning.RepairCost` is its home. `AbilityUnlockCost`, `ItemCost` and `RecruitCostDefault` are gone from the economy row. Data validation fails for anything in `DA_Shop_Default` or a learnable pool without a price above 0.

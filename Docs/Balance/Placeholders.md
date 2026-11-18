@@ -69,7 +69,7 @@ Captain abilities (`AbilityTuning.json` `Captain_*`) still have `ManaCost` 0 (K1
 
 ## Set by DW-209 (placeholder Kraken), 2026-11-11
 
-The placeholder boss (`DA_Encounter_KrakenPlaceholder`, Docs/Architecture/08 "Placeholder boss"): the body only, no tentacles, one phase with Tentacle Slam. DW-301/302 replace it with the real Kraken.
+The placeholder boss (`DA_Encounter_KrakenPlaceholder`, Docs/Architecture/08 "Placeholder boss"): the body only, no tentacles, one phase with Tentacle Slam. **Superseded by DW-301 (below)**; kept as history.
 
 | File | Row | Field | Placeholder | Why this number |
 |---|---|---|---|---|
@@ -125,3 +125,17 @@ Rally Cry (heal 15 + cleanse), Grapple Hook (range 10, LOS), Defend are real now
 | `AbilityTuning.json` | `Captain_Charge` | `Damage` | 40 | "Heavy damage": more than a basic swing, kills a 30 HP pirate; K13 sets the real number |
 
 Charge and Eye of the Tiger are real now; their `ManaCost` stays 0 until K13. The Conqueror keeps the design doc's 100 HP / 20 MP ("a pirate crew of three (100 HP/20 MP)"): his strength is the second action (K1) and the kill bonus.
+
+## Set by DW-301 (Kraken), 2026-11-17
+
+The real Kraken (`DA_Encounter_Kraken`, Docs/Architecture/08). Tentacle count, HP and the -10% per tentacle are Brandon's B1/B2 answers; the move numbers are the design doc's. Nothing here has been balanced yet: the Kraken's win rate per captain is a DW-401 simulator target.
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `KrakenTuning.json` | `Kraken` | `BaseActionsPerTurn` | [1, 1] | One move a turn in both phases; the design doc gives the enraged Kraken its extra actions through Eyes of the Sea, not a higher base |
+| `KrakenTuning.json` | `Kraken` | `ActionsLostPerTentacle` | 0 | B2 = damage only; the field is ready if `TentacleRules.Effect` ever becomes `ReduceActions` or `Both` |
+| `UnitTuning.json` | `KrakenBody` | `MaxActionPoints` | 1 | Now overwritten each Kraken turn from `BaseActionsPerTurn`; kept at 1 for the first turn's display |
+| `UnitTuning.json` | `KrakenTentacle` | `XpOnKill` | 0 | P1 is open: cutting a tentacle gives no kill XP yet |
+| `DA_Kraken` (data asset) | phases | move `Weight` | 1 each | Even odds until DW-302's brain uses them |
+| `DA_Deck_KrakenArena` (layout) | - | body anchor | 3 tiles from the rail | Muskets (range 6) reach it from the rail and from the nest; from the back row (8 tiles) they don't, so snipers have to advance |
+| Ship cannons vs the body | - | damage | 70 per cannon, flat | The ship's `CannonDamage`, unchanged: two cannons take 140 of 500 a turn. Likely too strong once balanced (DW-401) |

@@ -241,6 +241,12 @@ bool UDwGameplayAbility::IsUnitTargetable(const FDwTargetingContext& Context, co
 	{
 		return Fail(LOCTEXT("Tags", "Can't target this unit"));
 	}
+	// B4: melee (a sword's reach: can't target the nest) never hits the Kraken body - cut the tentacles instead.
+	const bool bMelee = !Rules.bCanTargetElevated || (Context.Ability && Context.Ability->AbilityTags.HasTag(DwTags::Ability_Attack_Melee));
+	if (bMelee && Candidate.Tags.HasTagExact(DwTags::Unit_Immune_Melee))
+	{
+		return Fail(LOCTEXT("MeleeImmune", "Out of reach (melee hits only the tentacles)"));
+	}
 	if (!Rules.bCanTargetElevated)
 	{
 		const FDwTile* TargetTile = Grid.GetTile(Candidate.Tile);
@@ -494,6 +500,11 @@ float UDwGameplayAbility::GetHitDamageMultiplier(const FDwTargetingContext& Cont
 	{
 		Multiplier *= FDwSynergyRules::GetMultiplier(*Context.Snapshot, Context.Source, Context.Ability);
 		Multiplier *= Hit.bGuarded ? Context.Snapshot->CaptainRules.GuardDamageMultiplier : 1.f;
+		// B2: each cut tentacle weakens every Kraken hit, on crew and ship alike.
+		if (Context.Snapshot->Kraken.IsSet() && Context.Source == Context.Snapshot->Kraken.Body)
+		{
+			Multiplier *= Context.Snapshot->Kraken.DamageMultiplier;
+		}
 	}
 	return Multiplier;
 }

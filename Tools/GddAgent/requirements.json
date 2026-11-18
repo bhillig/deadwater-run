@@ -39,13 +39,13 @@
     "DW-208": { "gdd": "The Conqueror" },
     "DW-209": {
       "gdd": "At The Final Boss Node",
-      "note": "Ticket acceptance names no identifiers; probes come from 08-Kraken-Boss.md (placeholder section)",
+      "note": "Ticket acceptance names no identifiers; probes come from 08-Kraken-Boss.md (placeholder section; DW-301 renamed the encounter to DA_Encounter_Kraken)",
       "probes": [
         { "kind": "text", "name": "BuildKrakenArena\\s*\\(" },
         { "kind": "text", "name": "EDwCombatOutcome::VictoryBoss" },
         { "kind": "asset", "name": "DA_Deck_KrakenArena" },
         { "kind": "asset", "name": "DA_Unit_KrakenBody" },
-        { "kind": "asset", "name": "DA_Encounter_KrakenPlaceholder" },
+        { "kind": "asset", "name": "DA_Encounter_Kraken" },
         { "kind": "asset", "name": "GA_Kraken_TentacleSlam" },
         { "kind": "test", "name": "DeadwaterRun.Run.Kraken" }
       ]

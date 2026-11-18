@@ -17,6 +17,7 @@ class UDwAbilityDefinition;
 class UDwAiProfile;
 class UDwEncounterDefinition;
 class UDwItemDefinition;
+class UDwKrakenDefinition;
 class UDwPerkDefinition;
 class UDwUnitDefinition;
 class UGameplayEffect;
@@ -111,7 +112,9 @@ enum class EDwCombatEventType : uint8
 	UnitTurnSkipped,
 	AbilityUsed,
 	IntentDeclared,
-	OutcomeReached
+	OutcomeReached,
+	/** Kraken phase change (B7): Source = the body, Magnitude = the new phase index, Tag = the phase's music state. */
+	PhaseChanged
 };
 
 /** Docs/Architecture/03 "FDwCombatEvent". Consumers: floating text, combat log, run stats, simulator report, replays. */
@@ -224,6 +227,9 @@ struct DEADWATERRUN_API FDwCombatantSetup
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") TSubclassOf<ADwCombatUnit> UnitClassOverride;
 	/** Enemies: the crew AI profile (slot override, else the encounter's). Any enemy with one puts the side under UDwAiSideController (DW-106). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") TObjectPtr<const UDwAiProfile> AiProfile;
+	/** Start on SpawnTile instead of the side's next spawn tile (the Kraken body on its anchor, tentacles on their slots). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant") bool bUseSpawnTile = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combatant", meta = (EditCondition = "bUseSpawnTile")) FIntPoint SpawnTile = FIntPoint::ZeroValue;
 };
 
 /** A ship to spawn. MaxHealth and CannonDamage are tuning (+ upgrades); Health is run state. */
@@ -281,6 +287,8 @@ struct DEADWATERRUN_API FDwEncounterSetup
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") FDwShipSetup PlayerShip;
 	/** False in the Kraken fight. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") bool bHasEnemyShip = true;
+	/** The Kraken fight: phases, tentacle rules and tuning. Its body is the enemy with Unit.Kraken.Body. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") TObjectPtr<const UDwKrakenDefinition> Kraken;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup") FDwShipSetup EnemyShip;
 
 	/** Ability.Move, Ability.Cannon, Ability.Item: granted to every unit (UDwGameData::CommonAbilities). */

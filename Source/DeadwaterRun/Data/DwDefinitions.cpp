@@ -3,6 +3,7 @@
 // Tuning-row bindings and data validation for every definition class in Data/.
 // Kept in one translation unit so the rules are reviewable side by side; behaviour arrives with each system's ticket.
 
+#include "Board/DwDeckLayout.h"
 #include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwCaptainDefinition.h"
@@ -244,11 +245,41 @@ EDataValidationResult UDwKrakenDefinition::IsDataValid(FDataValidationContext& C
 	{
 		DwValidation::Error(Context, Result, LOCTEXT("KrakenParts", "Body and Arena must both be set."));
 	}
-	// The DW-209 placeholder has no tentacles; a Kraken that has some (DW-301) needs their unit.
 	const FDwKrakenTuningRow* KrakenTuning = GetTuningRow<FDwKrakenTuningRow>();
 	if (KrakenTuning && KrakenTuning->TentacleCount > 0 && !Tentacle)
 	{
 		DwValidation::Error(Context, Result, LOCTEXT("KrakenTentacle", "DT_KrakenTuning asks for tentacles, so Tentacle must be set."));
+	}
+	if (Tentacle && !Tentacle->UnitTags.HasTagExact(DwTags::Unit_Kraken_Tentacle))
+	{
+		DwValidation::Error(Context, Result, LOCTEXT("KrakenTentacleTag", "Tentacle must carry Unit.Kraken.Tentacle (tentacles never act and weaken the Kraken when cut)."));
+	}
+	if (KrakenTuning && Arena)
+	{
+		const int32 Slots = Arena->Tiles.FilterByPredicate([](const FDwTile& T) { return T.Tags.HasTagExact(DwTags::Tile_Kraken_Tentacle); }).Num();
+		if (Slots < KrakenTuning->TentacleCount)
+		{
+			DwValidation::Error(Context, Result, FText::Format(LOCTEXT("KrakenSlots", "The arena has {0} tentacle slots (T) for {1} tentacles."),
+				Slots, KrakenTuning->TentacleCount));
+		}
+	}
+	if (KrakenTuning && KrakenTuning->BaseActionsPerTurn.Num() != Phases.Num())
+	{
+		DwValidation::Error(Context, Result, FText::Format(LOCTEXT("KrakenActions", "DT_KrakenTuning.BaseActionsPerTurn needs one entry per phase ({0}), has {1}."),
+			Phases.Num(), KrakenTuning->BaseActionsPerTurn.Num()));
+	}
+	// Every phase move must be one the body has: the phase only filters what it may use.
+	for (const FDwKrakenPhase& Phase : Phases)
+	{
+		for (const FDwWeightedAbility& Move : Phase.Moves)
+		{
+			const bool bOnBody = Body && Move.Ability && (Body->BasicAttack == Move.Ability || Body->DefaultAbilities.Contains(Move.Ability));
+			if (!bOnBody)
+			{
+				DwValidation::Error(Context, Result, FText::Format(LOCTEXT("KrakenMove", "Phase {0}: move {1} is not one of the body's abilities."),
+					FText::FromName(Phase.PhaseId), FText::FromString(GetNameSafe(Move.Ability))));
+			}
+		}
 	}
 	if (Body && !Body->UnitTags.HasTagExact(DwTags::Unit_Kraken_Body))
 	{

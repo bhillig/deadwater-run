@@ -99,10 +99,20 @@ TArray<FString> UDwDeckLayout::Validate() const
 		{
 			Errors.Add(TEXT("A Kraken arena has nothing to board: no boarding edge tiles (E)."));
 		}
+		// Tentacles curl over the rail: their slots are in the column that faces the player deck, so cutlasses reach them.
+		for (int32 Index = 0; Index < Tiles.Num(); ++Index)
+		{
+			const FIntPoint P(Index % Size.X, Index / Size.X);
+			if (Tiles[Index].Tags.HasTagExact(DwTags::Tile_Kraken_Tentacle) && P.X != Size.X - 1)
+			{
+				Errors.Add(FString::Printf(TEXT("Tentacle slot (%d, %d) is not in the rail column (x = %d)."), P.X, P.Y, Size.X - 1));
+			}
+		}
 	}
 
-	// Every walkable tile reachable from the first one (the nest only through its ladder).
-	if (Standable.Num() > 0)
+	// Every walkable tile reachable from the first one (the nest only through its ladder). Not in an arena: nobody walks
+	// there - the body and the tentacles stay where they spawn.
+	if (!bArena && Standable.Num() > 0)
 	{
 		const TMap<FIntPoint, int32> Reached = FDwPathfinder::ComputeReachable(Grid, Rules, Standable[0], MAX_int32 - 1, EDwSide::Player);
 		for (int32 Index = 1; Index < Standable.Num(); ++Index)

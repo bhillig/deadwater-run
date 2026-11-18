@@ -36,7 +36,7 @@ Cannon slots: a deck layout tile carrying a `Ship.Upgrade.*` tag (ASCII `U`, `04
 `UDwGA_FireCannon : UDwGA_EffectPayload` (Abilities/)
 - Requires the source unit on or 4-way adjacent to an unused `Tile.Cannon` tile whose `Owner` equals the unit's side - this is "player crew cannot use enemy cannons". Pure helper: `FDwCannonRules::FindUsableCannon(Grid, UnitTile, Side, UsedCannons) -> TOptional<FIntPoint>`; if more than one qualifies it picks the unit's own tile first, then the lowest board index (all cannons on a ship deal the same damage, so the choice never matters to the outcome and the player never has to pick).
 - Each cannon tile fires at most once per side turn (tracked by `UDwCombatSubsystem::CannonsUsedThisTurn`, cleared at side-turn start). Costs 1 `ActionPoints`; a unit with no action left can't fire.
-- Target pattern `EnemyShip` only (or `Unit.Kraken.Body` in the Kraken fight, pending B4). Damage = firing ship's `CannonDamage` through `GE_Damage`.
+- Target pattern `EnemyShip`; with no enemy ship (the Kraken fight, B4) the enemy's `Unit.CannonTarget` units - the Kraken body - for the same flat damage (the gunner's DamageBonus never applies: `Effect.Damage.Flat`). Damage = firing ship's `CannonDamage` through `GE_Damage`.
 - `GatherValidTargets` returns nothing when no usable cannon is in reach, so the action bar shows "Stand next to a cannon" as the disabled reason.
 - Cues: `GameplayCue.Cannon.Fire` on the source cannon tile, `GameplayCue.Cannon.Impact` on the target ship.
 

@@ -51,6 +51,8 @@ namespace DwTags
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Buff);
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Debuff);
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Perk);
+	/** Damage spec tag: flat damage, the source's DamageBonus is ignored (cannon shots at the Kraken body, like at a ship). */
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Flat);
 
 	// Units (targeting filters, rules)
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Role_Captain);
@@ -63,6 +65,10 @@ namespace DwTags
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Immune_Grapple);
 	/** K10: the Kraken body can't be frozen (tentacles can). */
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Immune_Freeze);
+	/** B4: melee can't reach the Kraken body (cannons and ranged can; melee cuts tentacles). */
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_Immune_Melee);
+	/** B4: a unit cannons can aim at when the fight has no enemy ship (the Kraken body). */
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Unit_CannonTarget);
 
 	// Captain run rules (data on UDwCaptainDefinition::RuleTags)
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Rule_Captain_Synergy);

@@ -25,7 +25,7 @@ struct FDwDeckSource
  *   U  deck + cannon slot that needs Ship.Upgrade.ExtraCannon (a cannon only once the ship has that upgrade, DW-204)
  *   L  ladder (deck)     N  nest (elevation 1)    c  crate (low blocker) M  mast/cabin (high blocker)
  *   ~  water             -  not on the board      B  Kraken body anchor (walkable water + spawn, Kraken arenas only)
- * Tentacle slots ('T' in Docs/Architecture/04) come with the tentacles in DW-301.
+ *   T  Kraken tentacle slot (walkable water, Kraken arenas only, in the rail column)
  */
 struct DEADWATERRUN_API FDwDeckAscii
 {

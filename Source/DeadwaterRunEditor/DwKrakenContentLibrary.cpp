@@ -15,6 +15,7 @@
 #include "Data/DwUnitDefinition.h"
 #include "DwCombatContentLibrary.h"
 #include "DwContentAssetUtils.h"
+#include "EditorAssetLibrary.h"
 #include "Misc/DataValidation.h"
 
 namespace DwKrakenContent
@@ -43,14 +44,68 @@ namespace DwKrakenContent
 		}
 		return false;
 	}
+
+	/** One Kraken move: a GA_Kraken_* payload Blueprint and its DA_Ability_Kraken_* definition (Docs/Architecture/08 "Moves"). */
+	struct FMoveSpec
+	{
+		const TCHAR* Name;        // GA_Kraken_<Name>, DA_Ability_Kraken_<Name>, DT_AbilityTuning row Kraken_<Name>
+		const TCHAR* DisplayName;
+		const TCHAR* Description;
+		FGameplayTag AbilityTag;
+		EDwTargetPattern Pattern;
+		TSubclassOf<UGameplayEffect> Effect;
+	};
+
+	UDwAbilityDefinition* MakeMove(const FMoveSpec& Spec, UDataTable* AbilityTable, TArray<FString>& Log, bool& bOk)
+	{
+		using namespace DwContentAssets;
+		UBlueprint* Bp = FindOrCreateBlueprint(Abilities, FString(TEXT("GA_Kraken_")) + Spec.Name, UDwGA_EffectPayload::StaticClass(), Log);
+		UDwGA_EffectPayload* Move = Defaults<UDwGA_EffectPayload>(Bp);
+		if (!Move)
+		{
+			bOk = false;
+			return nullptr;
+		}
+		FDwEffectApplication Application;
+		Application.Effect = Spec.Effect;
+		Move->Targeting = FDwTargetingRules();
+		Move->Targeting.Pattern = Spec.Pattern;
+		Move->Targeting.Side = Spec.Pattern == EDwTargetPattern::Self ? EDwTargetSide::Ally : EDwTargetSide::Enemy;
+		Move->Targeting.bIgnoreRange = true; // it reaches the whole ship from the water
+		Move->Applications = { Application };
+		Move->HitCue = DwTags::GameplayCue_Hit_Melee; // Kraken cues and art are DW-307
+		Move->PlaceholderSeconds = 0.5f;
+		bOk &= Save(Bp, Log);
+
+		UDwAbilityDefinition* Def = FindOrCreate<UDwAbilityDefinition>(AbilityData, FString(TEXT("DA_Ability_Kraken_")) + Spec.Name, Log);
+		Def->DisplayName = FText::FromString(Spec.DisplayName);
+		Def->Description = FText::FromString(Spec.Description);
+		Def->AbilityClass = TSubclassOf<UDwGameplayAbility>(Bp->GeneratedClass.Get());
+		Def->AbilityTag = Spec.AbilityTag;
+		Def->AbilityTags = FGameplayTagContainer();
+		Def->Tuning = Row(AbilityTable, *(FString(TEXT("Kraken_")) + Spec.Name), Log, bOk);
+		bOk &= Validate(Def, Log) && Save(Def, Log);
+		return Def;
+	}
+
+	/** Removes a DW-209 placeholder asset the real Kraken replaced, if it is still there. */
+	void DeleteIfPresent(const FString& Folder, const TCHAR* Name, TArray<FString>& Log)
+	{
+		const FString Path = Folder / Name;
+		if (UEditorAssetLibrary::DoesAssetExist(Path))
+		{
+			Log.Add(UEditorAssetLibrary::DeleteAsset(Path) ? FString::Printf(TEXT("Deleted %s"), *Path)
+				: FString::Printf(TEXT("ERROR could not delete %s"), *Path));
+		}
+	}
 }
 
-TArray<FString> UDwKrakenContentLibrary::PlaceholderArenaRows()
+TArray<FString> UDwKrakenContentLibrary::ArenaRows()
 {
-	// PLACEHOLDER (DW-209): open water with the body right beside the rail, so cutlasses, muskets and every captain can
-	// reach it while there are no tentacles to cut (what may hit the body is Open-Questions B4; DW-301 lays out the
-	// real arena with tentacle slots).
-	return { TEXT("~~~~"), TEXT("~~~~"), TEXT("~~~B"), TEXT("~~~~") };
+	// Authored facing right: the rightmost column lies against the player's rail. Four tentacle slots along the rail
+	// (melee reach, B4), the body three tiles out in the water: muskets and cannons reach it, cutlasses don't, and the
+	// sniper's nest is just in range. Open-Questions B1 (4 tentacles) and B5 (player ship only, nothing to board).
+	return { TEXT("~~~~T"), TEXT("~~~~T"), TEXT("~~B~T"), TEXT("~~~~T") };
 }
 
 TArray<FString> UDwKrakenContentLibrary::CreateKrakenContent()
@@ -78,81 +133,110 @@ TArray<FString> UDwKrakenContentLibrary::CreateKrakenContent()
 	// 2. The arena layout.
 	UDwDeckLayout* Arena = FindOrCreate<UDwDeckLayout>(Boards, TEXT("DA_Deck_KrakenArena"), Log);
 	TArray<FString> ParseErrors;
-	const FDwDeckSource Source = FDwDeckAscii::Parse(PlaceholderArenaRows(), &ParseErrors);
+	const FDwDeckSource Source = FDwDeckAscii::Parse(ArenaRows(), &ParseErrors);
 	for (const FString& Error : ParseErrors)
 	{
 		Log.Add(TEXT("ERROR DA_Deck_KrakenArena: ") + Error);
 		bOk = false;
 	}
-	Arena->DisplayName = FText::FromString(TEXT("Kraken arena (placeholder)"));
+	Arena->DisplayName = FText::FromString(TEXT("Kraken arena"));
 	Arena->Size = Source.Size;
 	Arena->Tiles = Source.Tiles;
 	Arena->BoardingRowOffset = 0;
 	bOk &= Validate(Arena, Log) && Save(Arena, Log);
 
-	// 3. Tentacle Slam: one crew member or the ship, anywhere (Docs/Architecture/08 "Moves"); damage from DT_AbilityTuning.
-	UBlueprint* SlamBp = FindOrCreateBlueprint(Abilities, TEXT("GA_Kraken_TentacleSlam"), UDwGA_EffectPayload::StaticClass(), Log);
-	UDwGA_EffectPayload* Slam = Defaults<UDwGA_EffectPayload>(SlamBp);
-	if (!Slam)
+	// 3. The five moves (08 "Moves"); numbers from DT_AbilityTuning. B8: Swipe and Arms of Fury hit crew only.
+	const FDwSharedEffects& Shared = DwGas::GetSharedEffects();
+	const FMoveSpec Moves[] = {
+		{ TEXT("TentacleSlam"), TEXT("Tentacle Slam"), TEXT("Slams one crew member or the ship."),
+			DwTags::Ability_Kraken_TentacleSlam, EDwTargetPattern::SingleUnitOrShip, Shared.Damage },
+		{ TEXT("KrankySwipe"), TEXT("Kranky Swipe"), TEXT("Sweeps the deck: every crew member is hit."),
+			DwTags::Ability_Kraken_KrankySwipe, EDwTargetPattern::AllEnemies, Shared.Damage },
+		{ TEXT("TentacleGrab"), TEXT("Tentacle Grab"), TEXT("Grabs one crew member: they can't move next turn."),
+			DwTags::Ability_Kraken_TentacleGrab, EDwTargetPattern::SingleUnit, Shared.Rooted },
+		{ TEXT("ArmsOfFury"), TEXT("Arms of Fury"), TEXT("Lashes out 3-5 times at random crew."),
+			DwTags::Ability_Kraken_ArmsOfFury, EDwTargetPattern::RandomEnemies, Shared.Damage },
+		{ TEXT("EyesOfTheSea"), TEXT("Eyes of the Sea"), TEXT("Gathers itself: two actions next turn."),
+			DwTags::Ability_Kraken_EyesOfTheSea, EDwTargetPattern::Self, UDwGE_ExtraActionNextTurn::StaticClass() },
+	};
+	TMap<FGameplayTag, UDwAbilityDefinition*> MoveDefs;
+	for (const FMoveSpec& Spec : Moves)
+	{
+		if (UDwAbilityDefinition* Def = MakeMove(Spec, AbilityTable, Log, bOk))
+		{
+			MoveDefs.Add(Spec.AbilityTag, Def);
+		}
+	}
+	if (MoveDefs.Num() != UE_ARRAY_COUNT(Moves))
 	{
 		return Fail();
 	}
-	FDwEffectApplication Damage;
-	Damage.Effect = DwGas::GetSharedEffects().Damage;
-	Slam->Targeting = FDwTargetingRules();
-	Slam->Targeting.Pattern = EDwTargetPattern::SingleUnitOrShip;
-	Slam->Targeting.Side = EDwTargetSide::Enemy;
-	Slam->Targeting.bIgnoreRange = true;
-	Slam->Applications = { Damage };
-	Slam->HitCue = DwTags::GameplayCue_Hit_Melee; // no Kraken cues or art until DW-307
-	Slam->PlaceholderSeconds = 0.5f;
-	bOk &= Save(SlamBp, Log);
 
-	UDwAbilityDefinition* SlamDef = FindOrCreate<UDwAbilityDefinition>(AbilityData, TEXT("DA_Ability_Kraken_TentacleSlam"), Log);
-	SlamDef->DisplayName = FText::FromString(TEXT("Tentacle Slam"));
-	SlamDef->Description = FText::FromString(TEXT("Slams one crew member or the ship."));
-	SlamDef->AbilityClass = TSubclassOf<UDwGameplayAbility>(SlamBp->GeneratedClass.Get());
-	SlamDef->AbilityTag = DwTags::Ability_Kraken_TentacleSlam;
-	SlamDef->AbilityTags = FGameplayTagContainer();
-	SlamDef->Tuning = Row(AbilityTable, TEXT("Kraken_TentacleSlam"), Log, bOk);
-	bOk &= Validate(SlamDef, Log) && Save(SlamDef, Log);
-
-	// 4. The body: 500 HP (DT_UnitTuning KrakenBody), Tentacle Slam as its one move. Placeholder look: the plain unit
-	//    actor (Kraken visuals are DW-307). Immunities: K10 a) (Brandon 2026-11-17) - no Fear, no grapple, no freeze.
+	// 4. The body: 500 HP (DT_UnitTuning KrakenBody), all five moves (the phase decides which it may use).
+	//    Immunities: K10 a) - no Fear, no grapple, no freeze. B4: melee can't reach it; cannons aim at it.
 	UDwUnitDefinition* Body = FindOrCreate<UDwUnitDefinition>(UnitData, TEXT("DA_Unit_KrakenBody"), Log);
 	Body->DisplayName = FText::FromString(TEXT("Kraken"));
 	Body->UnitTags = FGameplayTagContainer(DwTags::Unit_Kraken_Body);
 	Body->UnitTags.AddTag(DwTags::Unit_Immune_Fear);
 	Body->UnitTags.AddTag(DwTags::Unit_Immune_Grapple);
 	Body->UnitTags.AddTag(DwTags::Unit_Immune_Freeze); // freeze works on tentacles only
-	Body->BasicAttack = SlamDef;
-	Body->DefaultAbilities.Reset();
+	Body->UnitTags.AddTag(DwTags::Unit_Immune_Melee);
+	Body->UnitTags.AddTag(DwTags::Unit_CannonTarget);
+	Body->BasicAttack = MoveDefs[DwTags::Ability_Kraken_TentacleSlam];
+	Body->DefaultAbilities = { MoveDefs[DwTags::Ability_Kraken_KrankySwipe], MoveDefs[DwTags::Ability_Kraken_TentacleGrab],
+		MoveDefs[DwTags::Ability_Kraken_ArmsOfFury], MoveDefs[DwTags::Ability_Kraken_EyesOfTheSea] };
 	Body->Tuning = Row(UnitTable, TEXT("KrakenBody"), Log, bOk);
 	bOk &= Validate(Body, Log) && Save(Body, Log);
 
-	// 5. The Kraken: one phase from full health with Tentacle Slam only, no tentacles (08 "Placeholder boss").
-	UDwKrakenDefinition* Kraken = FindOrCreate<UDwKrakenDefinition>(KrakenData, TEXT("DA_Kraken_Placeholder"), Log);
-	Kraken->DisplayName = FText::FromString(TEXT("Kraken (placeholder)"));
+	// 5. A tentacle: a target with HP (DT_UnitTuning KrakenTentacle), no moves of its own, never takes a turn.
+	//    K10 a): no Fear, no grapple; it can be frozen (harmless: it never acts). Placeholder look until DW-307.
+	UDwUnitDefinition* Tentacle = FindOrCreate<UDwUnitDefinition>(UnitData, TEXT("DA_Unit_KrakenTentacle"), Log);
+	Tentacle->DisplayName = FText::FromString(TEXT("Tentacle"));
+	Tentacle->UnitTags = FGameplayTagContainer(DwTags::Unit_Kraken_Tentacle);
+	Tentacle->UnitTags.AddTag(DwTags::Unit_Immune_Fear);
+	Tentacle->UnitTags.AddTag(DwTags::Unit_Immune_Grapple);
+	Tentacle->BasicAttack = nullptr;
+	Tentacle->DefaultAbilities.Reset();
+	Tentacle->Tuning = Row(UnitTable, TEXT("KrakenTentacle"), Log, bOk);
+	bOk &= Validate(Tentacle, Log) && Save(Tentacle, Log);
+
+	// 6. The Kraken: the initial phase from full health, enraged below 30% (08 "Phases"). Move weights are
+	//    placeholders for DW-302's brain (Docs/Balance/Placeholders.md).
+	UDwKrakenDefinition* Kraken = FindOrCreate<UDwKrakenDefinition>(KrakenData, TEXT("DA_Kraken"), Log);
+	Kraken->DisplayName = FText::FromString(TEXT("The Kraken"));
 	Kraken->Body = Body;
-	Kraken->Tentacle = nullptr;
+	Kraken->Tentacle = Tentacle;
 	Kraken->Arena = Arena;
+	Kraken->TentacleRules.Effect = EDwTentacleEffect::ReduceDamage; // B2
 	Kraken->Phases.Reset();
-	FDwKrakenPhase& Phase = Kraken->Phases.AddDefaulted_GetRef();
-	Phase.PhaseId = TEXT("Placeholder");
-	Phase.EnterBelowHealthPct = 1.f;
-	FDwWeightedAbility& Move = Phase.Moves.AddDefaulted_GetRef();
-	Move.Ability = SlamDef;
-	Move.Weight = 1.f;
-	Phase.MusicState = DwTags::Music_Boss;
+	auto AddPhase = [&](const TCHAR* Id, float EnterBelow, FGameplayTag Music, FGameplayTag Cue,
+		std::initializer_list<TPair<FGameplayTag, float>> PhaseMoves)
+	{
+		FDwKrakenPhase& Phase = Kraken->Phases.AddDefaulted_GetRef();
+		Phase.PhaseId = Id;
+		Phase.EnterBelowHealthPct = EnterBelow;
+		Phase.MusicState = Music;
+		Phase.EnterCue = Cue;
+		for (const TPair<FGameplayTag, float>& Move : PhaseMoves)
+		{
+			FDwWeightedAbility& Entry = Phase.Moves.AddDefaulted_GetRef();
+			Entry.Ability = MoveDefs[Move.Key];
+			Entry.Weight = Move.Value;
+		}
+	};
+	AddPhase(TEXT("Initial"), 1.f, DwTags::Music_Boss, FGameplayTag(), {
+		{ DwTags::Ability_Kraken_TentacleSlam, 1.f }, { DwTags::Ability_Kraken_KrankySwipe, 1.f }, { DwTags::Ability_Kraken_TentacleGrab, 1.f } });
+	AddPhase(TEXT("Enraged"), 0.3f, DwTags::Music_Boss_Enraged, DwTags::GameplayCue_Kraken_Enrage, {
+		{ DwTags::Ability_Kraken_ArmsOfFury, 1.f }, { DwTags::Ability_Kraken_EyesOfTheSea, 1.f } });
 	Kraken->Tuning = Row(KrakenTable, TEXT("Kraken"), Log, bOk);
 	bOk &= Validate(Kraken, Log) && Save(Kraken, Log);
 
-	// 6. The boss encounter, played by the boss node (never in the fight pool: kind Kraken).
-	UDwEncounterDefinition* Encounter = FindOrCreate<UDwEncounterDefinition>(EncounterData, TEXT("DA_Encounter_KrakenPlaceholder"), Log);
+	// 7. The boss encounter, played by the boss node (never in the fight pool: kind Kraken).
+	UDwEncounterDefinition* Encounter = FindOrCreate<UDwEncounterDefinition>(EncounterData, TEXT("DA_Encounter_Kraken"), Log);
 	Encounter->DisplayName = FText::FromString(TEXT("The Kraken"));
 	Encounter->Kind = EDwEncounterKind::Kraken;
 	Encounter->Kraken = Kraken;
-	Encounter->AiProfile = AiProfile;
+	Encounter->AiProfile = AiProfile; // the crew brain drives the body until UDwKrakenAiBrain (DW-302)
 	Encounter->Units.Reset();
 	Encounter->ShipDeck = nullptr;
 	Encounter->ShipClass.Reset();
@@ -160,10 +244,14 @@ TArray<FString> UDwKrakenContentLibrary::CreateKrakenContent()
 	Encounter->Tuning = Row(EncounterTable, TEXT("Kraken"), Log, bOk);
 	bOk &= Validate(Encounter, Log) && Save(Encounter, Log);
 
-	// 7. DA_GameData: the boss node's encounter and the Kraken tuning table.
+	// 8. DA_GameData: the boss node's encounter and the Kraken tuning table.
 	GameData->KrakenEncounter = Encounter;
 	GameData->TuningTables.Kraken = KrakenTable;
 	bOk &= Save(GameData, Log);
+
+	// 9. The DW-209 placeholders this replaces (nothing references them once DA_GameData points at the real one).
+	DeleteIfPresent(EncounterData, TEXT("DA_Encounter_KrakenPlaceholder"), Log);
+	DeleteIfPresent(KrakenData, TEXT("DA_Kraken_Placeholder"), Log);
 
 	Log.Add(TEXT("DA_Deck_KrakenArena:"));
 	for (const FString& Line : FDwDeckAscii::Export(FDwDeckSource::FromLayout(*Arena)))

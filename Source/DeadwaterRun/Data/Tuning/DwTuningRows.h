@@ -205,12 +205,12 @@ struct DEADWATERRUN_API FDwKrakenTuningRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
+	/** Tentacles spawned on the arena's tentacle slots. Their HP is DT_UnitTuning "KrakenTentacle"; they never regrow (B1). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tentacles") int32 TentacleCount = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tentacles") int32 TentacleHealth = 0;
-	/** Actions per turn, one entry per phase in UDwKrakenDefinition::Phases order. */
+	/** Actions per turn, one entry per phase in UDwKrakenDefinition::Phases order (missing entry = 1). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Actions") TArray<int32> BaseActionsPerTurn;
+	/** Used when the Kraken's TentacleRules.Effect reduces actions (ReduceActions, Both). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tentacles") float ActionsLostPerTentacle = 0.f;
+	/** Used when TentacleRules.Effect reduces damage (ReduceDamage, Both): each cut tentacle takes this off every hit (B2). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tentacles") float DamageMultiplierPerMissingTentacle = 0.f;
-	/** 0 = tentacles never regrow. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tentacles") int32 TentacleRegrowTurns = 0;
 };

@@ -7,6 +7,7 @@
 #include "Board/DwGridModel.h"
 #include "Combat/DwCombatTypes.h"
 #include "Core/DwTypes.h"
+#include "AI/DwAiTypes.h"
 #include "Data/DwItemDefinition.h"
 #include "DwCombatSnapshot.generated.h"
 
@@ -65,6 +66,40 @@ struct DEADWATERRUN_API FDwShipSnapshot
 	UPROPERTY(BlueprintReadOnly, Category = "Ship") TArray<FIntPoint> CannonTiles;
 };
 
+/**
+ * The Kraken fight's rule state (Docs/Architecture/08-Kraken-Boss.md). Unset (Body invalid) in every other fight.
+ * Phase and tentacle numbers are what the combat rules apply; the brain (DW-302) and the boss HUD (DW-303) read them.
+ */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwKrakenSnapshot
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Kraken") FDwUnitHandle Body;
+	/** Index into UDwKrakenDefinition::Phases of the phase in force (changes at the start of the Kraken's turn, B7). */
+	UPROPERTY(BlueprintReadOnly, Category = "Kraken") int32 PhaseIndex = 0;
+	UPROPERTY(BlueprintReadOnly, Category = "Kraken") FName PhaseId;
+	/** AbilityTag of every move the current phase allows. The body may use nothing else. */
+	UPROPERTY(BlueprintReadOnly, Category = "Kraken") FGameplayTagContainer PhaseMoves;
+	UPROPERTY(BlueprintReadOnly, Category = "Kraken") int32 TentaclesTotal = 0;
+	UPROPERTY(BlueprintReadOnly, Category = "Kraken") int32 TentaclesDead = 0;
+	/** Multiplier on every hit the Kraken deals (B2: missing tentacles weaken it). 1 = full strength. */
+	UPROPERTY(BlueprintReadOnly, Category = "Kraken") float DamageMultiplier = 1.f;
+
+	bool IsSet() const { return Body.IsValid(); }
+};
+
+/** One unit's declared moves for its next turn (Docs/Architecture/03 "intent storage"; the Kraken always declares, B6). */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwUnitIntents
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") FDwUnitHandle Unit;
+	/** In execution order. */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") TArray<FDwAiIntent> Intents;
+};
+
 /** The whole fight as plain data, built on demand by UDwCombatSubsystem::GetSnapshot (cheap: fewer than 20 units). */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwCombatSnapshot
@@ -89,6 +124,15 @@ struct DEADWATERRUN_API FDwCombatSnapshot
 	/** Definition of every item id the fight knows (pure item targeting and previews). */
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") TMap<FName, TObjectPtr<const UDwItemDefinition>> ItemDefinitions;
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") EDwCombatOutcome Outcome = EDwCombatOutcome::None;
+	/** Kraken fight only. */
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") FDwKrakenSnapshot Kraken;
+	/** Declared intents, one entry per unit that has any. */
+	UPROPERTY(BlueprintReadOnly, Category = "Combat") TArray<FDwUnitIntents> Intents;
+
+	const FDwUnitIntents* FindIntents(FDwUnitHandle Handle) const
+	{
+		return Intents.FindByPredicate([Handle](const FDwUnitIntents& I) { return I.Unit == Handle; });
+	}
 
 	const FDwUnitSnapshot* FindUnit(FDwUnitHandle Handle) const
 	{

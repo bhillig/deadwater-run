@@ -19,28 +19,32 @@
 `UDwKrakenDefinition : UDwDefinitionBase` (Data/)
 | Field | Notes |
 |---|---|
-| `TObjectPtr<UDwUnitDefinition> Body` | `BP_Unit_KrakenBody`, tags `Unit.Kraken.Body`, `Unit.Immune.Fear` (pending B9) |
-| `TObjectPtr<UDwUnitDefinition> Tentacle` | `BP_Unit_KrakenTentacle`, tag `Unit.Kraken.Tentacle` |
-| `TObjectPtr<UDwDeckLayout> Arena` | Water tiles, `Tile.Kraken.Tentacle` slots, `Tile.Kraken.Body` anchor |
+| `TObjectPtr<UDwUnitDefinition> Body` | `DA_Unit_KrakenBody`: all five moves; tags `Unit.Kraken.Body`, `Unit.Immune.Fear/Grapple/Freeze` (K10), `Unit.Immune.Melee` and `Unit.CannonTarget` (B4) |
+| `TObjectPtr<UDwUnitDefinition> Tentacle` | `DA_Unit_KrakenTentacle`: no moves, 60 HP (`DT_UnitTuning` KrakenTentacle); tags `Unit.Kraken.Tentacle`, `Unit.Immune.Fear/Grapple` (freeze works) |
+| `TObjectPtr<UDwDeckLayout> Arena` | `DA_Deck_KrakenArena`: water, four `T` slots (`Tile.Kraken.Tentacle`) in the rail column, the `B` anchor (`Tile.Kraken.Body`) three tiles out: muskets and cannons reach it, cutlasses don't |
 | `TArray<FDwKrakenPhase> Phases` | Ordered; each: `FName PhaseId`, `float EnterBelowHealthPct` (1.0, 0.3), `TArray<FDwWeightedAbility> Moves`, `FGameplayTag MusicState`, `FGameplayTag EnterCue` |
-| `FDwKrakenTentacleRules` | `EDwTentacleEffect` (`ReduceActions`, `ReduceDamage`, `Both`), and whether tentacle damage also hits the body (B2, B3) |
-| `FDataTableRowHandle Tuning` | `DT_KrakenTuning`: TentacleCount, TentacleHealth, BaseActionsPerTurn per phase, ActionsLostPerTentacle, DamageMultiplierPerMissingTentacle, regrow turns (0 = never) |
+| `FDwKrakenTentacleRules` | `EDwTentacleEffect` (`ReduceActions`, `ReduceDamage`, `Both`); `ReduceDamage` (B2). Tentacle damage never reaches the body (B3) |
+| `FDataTableRowHandle Tuning` | `DT_KrakenTuning`: TentacleCount (4), BaseActionsPerTurn per phase ([1, 1]), ActionsLostPerTentacle (0), DamageMultiplierPerMissingTentacle (0.1). Tentacle HP is the tentacle unit's row; no regrow (B1) |
 
 Moves (BP subclasses of `UDwGA_EffectPayload`, numbers in `DT_AbilityTuning`):
 | Move | Pattern | Effects |
 |---|---|---|
 | `GA_Kraken_TentacleSlam` | `SingleUnitOrShip` (player side) | `GE_Damage` 50 |
-| `GA_Kraken_KrankySwipe` | `AllEnemies` from the Kraken's view (ship included pending B8) | `GE_Damage` 20 |
+| `GA_Kraken_KrankySwipe` | `AllEnemies`: every crew member, not the ship (B8) | `GE_Damage` 20 |
 | `GA_Kraken_TentacleGrab` | `SingleUnit` | `GE_Rooted` 1 turn |
 | `GA_Kraken_ArmsOfFury` | `RandomEnemies`, hits 3-5 from tuning | `GE_Damage` 40 per hit |
-| `GA_Kraken_EyesOfTheSea` | `Self` | `GE_KrakenExtraAction`: +1 `MaxActionPoints` next turn (turn duration 1, tick `OwnerSideTurnEnd`; applied on its own turn, so the same-turn skip rule in `02-GAS-Foundation.md` keeps it alive for the next turn) |
+| `GA_Kraken_EyesOfTheSea` | `Self` | `UDwGE_ExtraActionNextTurn`: +1 `MaxActionPoints` next turn (turn duration 1, tick `OwnerSideTurnEnd`; applied on its own turn, so the same-turn skip rule in `02-GAS-Foundation.md` keeps it alive for the next turn) |
 
 ## Behaviour
 
-`UDwKrakenAiBrain : UDwAiBrain` (AI/, ai-engineer)
-- Phase = first phase whose `EnterBelowHealthPct` is above current body Health %. Phase change emits `IntentDeclared` with the phase's `EnterCue` and asks `UDwMusicSubsystem` (via the combat event) for the enraged music state.
-- Actions this turn = phase `BaseActionsPerTurn` + extra (Eyes of the Sea) - tentacle reduction; minimum 1 while the body lives. Damage multiplier from missing tentacles is applied as a `GE_DamageBonus` (negative) refreshed whenever a tentacle dies.
-- Move choice: weighted pick from the phase's move list using the combat random stream, then a target with `FDwAiScoring` (lowest Health, clustered crew for Swipe, ship when it's low).
+Rules (combat, DW-301) - the same for the player's view, the brain and the simulator:
+- `FDwKrakenRules` (pure, `Combat/DwCombatRules.h`): phase = the deepest phase whose `EnterBelowHealthPct` the body's Health % is *below* (30% exactly is still initial); actions = phase `BaseActionsPerTurn` - tentacle reduction (`ReduceActions`/`Both`), minimum 1; damage multiplier = 1 - cut tentacles x `DamageMultiplierPerMissingTentacle` (`ReduceDamage`/`Both`, B2).
+- `UDwCombatSubsystem` keeps `FDwKrakenSnapshot` (body, phase, the phase's moves, tentacles total/cut, damage multiplier), also in every `FDwCombatSnapshot`. At the start of the Kraken's side turn it changes phase if the body crossed a threshold (B7: never mid-turn) - executing the phase's `EnterCue` on the body and emitting `PhaseChanged` (Tag = the phase's `MusicState`, for the banner and music) - then sets the body's `MaxActionPoints` base from the rules; Eyes of the Sea's +1 comes on top as an effect.
+- The body may only use its current phase's moves (`FDwCombatQueries::CanActivate`; it never moves, fires or uses items). Its hits are scaled by the damage multiplier through `GetHitDamageMultiplier`, so previews show the weakened numbers and ship hits are reduced too.
+- Tentacles never act: they have no AI profile and no turn in the enemy sequence.
+
+`UDwKrakenAiBrain : UDwAiBrain` (AI/, ai-engineer, DW-302) - decisions only:
+- Move choice: weighted pick from the phase's move list (`FDwKrakenSnapshot.PhaseMoves`, weights on `DA_Kraken`) using the combat random stream, then a target with `FDwAiScoring` (lowest Health, clustered crew for Swipe, ship when it's low). Until DW-302 the crew brain (`DA_AiProfile_Default`) drives the body within the phase gate.
 - Intents: at combat start (for its first turn) and at the end of each of its turns the brain calls `DeclareIntent` for next turn's moves; `UDwCombatSubsystem` stores them and emits `IntentDeclared`. On its turn the Kraken executes stored intents, re-targeting only if the target died or left range. UI shows intents above the Kraken and danger highlights on target tiles (B6 decides how much is shown).
 - Tentacles never act on their own; they are targets with Health. A dead tentacle frees its slot (regrow per tuning).
 - Tentacle kills don't count for the Conqueror's kill bonus (K3: `KillBonusIgnoredUnitTags = Unit.Kraken.Tentacle`). Kill XP for a tentacle is its `DT_UnitTuning.XpOnKill` row (placeholder 0 until P1).
@@ -49,7 +53,7 @@ Moves (BP subclasses of `UDwGA_EffectPayload`, numbers in `DT_AbilityTuning`):
 Arena build: `FDwBoardBuilder::BuildKrakenArena(PlayerDeck, Arena)`; encounter kind `Kraken` sets the outcome config to `VictoryBoss` on body death (tentacles don't need to die) and disables the enemy-ship rules.
 
 ## Placeholder boss (week 2, DW-209)
-- `DA_Encounter_KrakenPlaceholder`: Kind `Kraken`, body with 500 HP, 0 tentacles, one phase with `GA_Kraken_TentacleSlam` only. Lets the full run reach a boss and the summary screen before week 3.
+- `DA_Encounter_KrakenPlaceholder`: Kind `Kraken`, body with 500 HP, 0 tentacles, one phase with `GA_Kraken_TentacleSlam` only. Lets the full run reach a boss and the summary screen before week 3. Replaced by `DA_Encounter_Kraken` / `DA_Kraken` in DW-301 (the content script deletes the placeholder assets).
 
 ## Connections
 - `02-GAS-Foundation.md`: payload abilities, `GE_Rooted`, extra action GE.
@@ -63,14 +67,15 @@ Arena build: `FDwBoardBuilder::BuildKrakenArena(PlayerDeck, Arena)`; encounter k
 
 ## Build order
 1. DW-209 (gameplay-engineer): placeholder Kraken encounter.
-2. DW-301 (gameplay-engineer): definition, arena layout, body and tentacle units, five move BPs, intent storage in the combat subsystem.
-3. DW-302 (ai-engineer): `UDwKrakenAiBrain` phases, action count, tentacle scaling, intents.
+2. DW-301 (gameplay-engineer, done 2026-11-17): definition, arena layout, body and tentacle units, five move BPs, intent storage in the combat subsystem, and the Kraken rules (phase change, action count, tentacle damage scaling, phase move gate) - moved here from DW-302 because they are combat rules, not decisions.
+3. DW-302 (ai-engineer): `UDwKrakenAiBrain`: weighted move pick per phase, targets, declaring intents for its next turn (`DeclareIntents`, B6: every intent with its target).
 4. DW-303 (ui-engineer): boss HUD and intents.
 5. DW-307 (gameplay-engineer): Synty-based Kraken visuals and cues (art source via asset-scraper if Synty lacks a Kraken).
 
 ## How it's tested
-- Pure (`DeadwaterRun.AI.Kraken.*`): phase selection at 100%, 31%, 30%, 29%; action count with 0..N tentacles and Eyes of the Sea; never below 1 action; weighted move pick stable per seed.
-- Test world: Arms of Fury hits within 3-5 times at 40; Grab roots for exactly one player turn; killing a tentacle reduces next turn's actions or damage per the rule flag; body death -> `VictoryBoss` even with tentacles alive.
+- `DeadwaterRun.Run.Kraken` (DW-301, 24 tests): arena layout and validation; the content (valid, numbers, tags, phases); setup placement; `FDwKrakenRules` (phase at 100%, 31%, 30%, 29%; actions with 0..4 cut, never below 1; damage multiplier); B4 targeting (cutlass refused at the body, accepted at a tentacle; musket and flat cannon at the body); each move (Slam 50 crew or ship, Swipe 20 crew only, Grab roots one player turn, Arms of Fury 3-5 x 40 over 12 seeds, Eyes of the Sea 1-2-1 actions); cut tentacles weaken hits and previews; the phase gate and the B7 timing with its event; intents; body death -> `VictoryBoss` with tentacles alive; the run's boss node.
+- DW-302 (`DeadwaterRun.AI.Kraken.*`): weighted move pick stable per seed; intents declared each turn.
+- Proof: `Tools/Capture.ps1 -Demo boss` - sniper aiming at the body, swordsman aiming at a tentacle, the initial-phase turn, the enraged turn, Victory.
 - Simulator: Kraken win rate per captain and average rounds reported (balance target set by Brandon).
 
 ## What the player sees

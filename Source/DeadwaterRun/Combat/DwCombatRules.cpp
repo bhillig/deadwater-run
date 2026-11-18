@@ -6,8 +6,58 @@
 #include "Combat/DwCombatSnapshot.h"
 #include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
+#include "Data/DwKrakenDefinition.h"
+#include "Data/Tuning/DwTuningRows.h"
 
 #define LOCTEXT_NAMESPACE "DwCombatRules"
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Kraken
+
+int32 FDwKrakenRules::GetPhaseIndex(TConstArrayView<FDwKrakenPhase> Phases, float HealthPct)
+{
+	int32 Result = 0;
+	for (int32 Index = 0; Index < Phases.Num(); ++Index)
+	{
+		if (Phases[Index].EnterBelowHealthPct >= 1.f || HealthPct < Phases[Index].EnterBelowHealthPct)
+		{
+			Result = Index;
+		}
+	}
+	return Result;
+}
+
+int32 FDwKrakenRules::GetActionsPerTurn(const FDwKrakenTuningRow& Tuning, EDwTentacleEffect Effect, int32 PhaseIndex, int32 DeadTentacles)
+{
+	int32 Actions = Tuning.BaseActionsPerTurn.IsValidIndex(PhaseIndex) ? Tuning.BaseActionsPerTurn[PhaseIndex] : 1;
+	if (Effect == EDwTentacleEffect::ReduceActions || Effect == EDwTentacleEffect::Both)
+	{
+		Actions -= FMath::FloorToInt(FMath::Max(0, DeadTentacles) * FMath::Max(0.f, Tuning.ActionsLostPerTentacle) + KINDA_SMALL_NUMBER);
+	}
+	return FMath::Max(1, Actions);
+}
+
+float FDwKrakenRules::GetDamageMultiplier(const FDwKrakenTuningRow& Tuning, EDwTentacleEffect Effect, int32 DeadTentacles)
+{
+	if (Effect != EDwTentacleEffect::ReduceDamage && Effect != EDwTentacleEffect::Both)
+	{
+		return 1.f;
+	}
+	return FMath::Max(0.f, 1.f - FMath::Max(0, DeadTentacles) * Tuning.DamageMultiplierPerMissingTentacle);
+}
+
+FGameplayTagContainer FDwKrakenRules::GetPhaseMoves(const FDwKrakenPhase& Phase)
+{
+	FGameplayTagContainer Moves;
+	for (const FDwWeightedAbility& Move : Phase.Moves)
+	{
+		if (Move.Ability && Move.Ability->AbilityTag.IsValid())
+		{
+			Moves.AddTag(Move.Ability->AbilityTag);
+		}
+	}
+	return Moves;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Outcome
@@ -181,6 +231,11 @@ EDwCommandResult FDwCombatQueries::CanActivate(const FDwCombatSnapshot& Snapshot
 	{
 		return Fail(EDwCommandResult::Blocked, Unit.Tags.HasTag(DwTags::Status_Rooted) && !Unit.Tags.HasTag(DwTags::Status_Incapacitated)
 			? LOCTEXT("Rooted", "Rooted") : LOCTEXT("Incapacitated", "Can't act this turn"));
+	}
+	// The Kraken body only has its current phase's moves (08 "Phases"); it never moves, fires or uses items.
+	if (Snapshot.Kraken.IsSet() && Unit.Handle == Snapshot.Kraken.Body && !Snapshot.Kraken.PhaseMoves.HasTagExact(Ability->AbilityTag))
+	{
+		return Fail(EDwCommandResult::Blocked, LOCTEXT("KrakenPhase", "Not in this phase"));
 	}
 	if (Ability->AbilityTag == DwTags::Ability_Item && !ItemId.IsNone() && Snapshot.Items.FindRef(ItemId) <= 0)
 	{

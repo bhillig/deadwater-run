@@ -19,6 +19,7 @@
 #include "Core/DwGameplayTags.h"
 #include "Core/DwLog.h"
 #include "Data/DwAbilityDefinition.h"
+#include "Data/DwKrakenDefinition.h"
 #include "Data/DwPerkDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
@@ -94,6 +95,8 @@ bool UDwCombatSubsystem::StartEncounter(const FDwEncounterSetup& InSetup)
 	CoweringEffects.Reset();
 	KillBonusPct = Setup.CaptainRules.KillBonusPct;
 	KillBonusEffect = FActiveGameplayEffectHandle();
+	KrakenState = FDwKrakenSnapshot();
+	Intents.Reset();
 	bResolving = false;
 	SubmitDepth = 0;
 	bEndTurnSuggested = false;
@@ -115,6 +118,12 @@ bool UDwCombatSubsystem::StartEncounter(const FDwEncounterSetup& InSetup)
 	}
 	// Enemies with an AI profile are driven by the crew AI (DW-106); without one the side stays passive.
 	AiEnemyController = UDwAiSideController::CreateForEncounter(this, Setup, EnemyOrder);
+	// Kraken tentacles are targets, never actors (08 "Behaviour"): they get no turn in the sequence.
+	EnemyOrder.RemoveAll([this](FDwUnitHandle Handle)
+	{
+		const ADwCombatUnit* Unit = FindUnit(Handle);
+		return Unit && Unit->GetDwAbilitySystem()->HasMatchingGameplayTag(DwTags::Unit_Kraken_Tentacle);
+	});
 	TurnManager = NewObject<UDwTurnManager>(this);
 	TurnManager->Init(*this, MoveTemp(EnemyOrder));
 	if (!DefaultEnemyController)
@@ -216,11 +225,27 @@ bool UDwCombatSubsystem::SpawnFight()
 		if (Tile.Tags.HasTagExact(DwTags::Tile_Spawn_Player)) { PlayerSpawns.Add(Grid.ToTile(Index)); }
 		if (Tile.Tags.HasTagExact(DwTags::Tile_Spawn_Enemy)) { EnemySpawns.Add(Grid.ToTile(Index)); }
 	}
-	if (PlayerSpawns.Num() < Setup.Crew.Num() || EnemySpawns.Num() < Setup.Enemies.Num())
+	// Combatants with their own SpawnTile (the Kraken body and tentacles) don't use up the side's spawn tiles.
+	auto CountAuto = [](const TArray<FDwCombatantSetup>& Side) { return Side.FilterByPredicate([](const FDwCombatantSetup& C) { return !C.bUseSpawnTile; }).Num(); };
+	const int32 AutoCrew = CountAuto(Setup.Crew);
+	const int32 AutoEnemies = CountAuto(Setup.Enemies);
+	if (PlayerSpawns.Num() < AutoCrew || EnemySpawns.Num() < AutoEnemies)
 	{
 		UE_LOG(LogDwCombat, Error, TEXT("StartEncounter: %d crew need %d player spawn tiles (%d), %d enemies need enemy spawn tiles (%d)."),
-			Setup.Crew.Num(), Setup.Crew.Num(), PlayerSpawns.Num(), Setup.Enemies.Num(), EnemySpawns.Num());
+			Setup.Crew.Num(), AutoCrew, PlayerSpawns.Num(), Setup.Enemies.Num(), EnemySpawns.Num());
 		return false;
+	}
+	for (const TArray<FDwCombatantSetup>* Side : { &Setup.Crew, &Setup.Enemies })
+	{
+		for (const FDwCombatantSetup& Combatant : *Side)
+		{
+			if (Combatant.bUseSpawnTile && !Grid.IsStandable(Combatant.SpawnTile))
+			{
+				UE_LOG(LogDwCombat, Error, TEXT("StartEncounter: spawn tile (%d, %d) of %s is not standable."), Combatant.SpawnTile.X,
+					Combatant.SpawnTile.Y, *GetNameSafe(Combatant.Definition));
+				return false;
+			}
+		}
 	}
 
 	UWorld* World = GetWorld();
@@ -249,21 +274,24 @@ bool UDwCombatSubsystem::SpawnFight()
 		EnemyShip = SpawnShip(EDwSide::Enemy, Setup.EnemyShip);
 	}
 
-	for (int32 Index = 0; Index < Setup.Crew.Num(); ++Index)
+	int32 NextSpawn = 0;
+	for (const FDwCombatantSetup& Member : Setup.Crew)
 	{
-		if (!SpawnUnit(Setup.Crew[Index], EDwSide::Player, PlayerSpawns[Index]))
+		if (!SpawnUnit(Member, EDwSide::Player, Member.bUseSpawnTile ? Member.SpawnTile : PlayerSpawns[NextSpawn++]))
 		{
 			return false;
 		}
 	}
 	PlayerCrewCount = Setup.Crew.Num();
-	for (int32 Index = 0; Index < Setup.Enemies.Num(); ++Index)
+	NextSpawn = 0;
+	for (const FDwCombatantSetup& Enemy : Setup.Enemies)
 	{
-		if (!SpawnUnit(Setup.Enemies[Index], EDwSide::Enemy, EnemySpawns[Index]))
+		if (!SpawnUnit(Enemy, EDwSide::Enemy, Enemy.bUseSpawnTile ? Enemy.SpawnTile : EnemySpawns[NextSpawn++]))
 		{
 			return false;
 		}
 	}
+	InitKrakenState();
 	return true;
 }
 
@@ -586,6 +614,10 @@ void UDwCombatSubsystem::HandleSideTurnBegin(EDwSide Side)
 {
 	bEndTurnSuggested = false;
 	CannonsUsed.Reset();
+	if (Side == EDwSide::Enemy)
+	{
+		UpdateKrakenTurn(); // before the budget refresh: its action count is part of this turn
+	}
 	const TSubclassOf<UGameplayEffect> Refresh = DwGas::GetSharedEffects().TurnBudgetRefresh;
 	for (ADwCombatUnit* Unit : Units)
 	{
@@ -737,8 +769,14 @@ void UDwCombatSubsystem::HandleUnitDied(ADwCombatUnit& Victim, AActor* Instigato
 	FGameplayCueParameters Cue;
 	Cue.Location = Victim.GetActorLocation();
 	Victim.GetDwAbilitySystem()->ExecuteGameplayCue(DwTags::GameplayCue_Unit_Death, Cue);
+	Intents.Remove(Victim.GetHandle());
 	Emit(Died);
 	Victim.OnDied();
+	if (KrakenState.IsSet() && Victim.GetDwAbilitySystem()->HasMatchingGameplayTag(DwTags::Unit_Kraken_Tentacle))
+	{
+		RefreshKrakenTentacles(); // B2: the Kraken's next hit is already weaker
+		UE_LOG(LogDwCombat, Log, TEXT("Tentacle cut: %d/%d, Kraken damage x%.2f"), KrakenState.TentaclesDead, KrakenState.TentaclesTotal, KrakenState.DamageMultiplier);
+	}
 }
 
 void UDwCombatSubsystem::RefreshKillBonus(UDwAbilitySystemComponent& CaptainAsc)
@@ -758,6 +796,128 @@ void UDwCombatSubsystem::RefreshKillBonus(UDwAbilitySystemComponent& CaptainAsc)
 	{
 		Spec.Data->SetSetByCallerMagnitude(DwTags::Data_DamageBonus, KillBonusPct);
 		KillBonusEffect = CaptainAsc.ApplyGameplayEffectSpecToSelf(*Spec.Data);
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Kraken (Docs/Architecture/08-Kraken-Boss.md)
+
+void UDwCombatSubsystem::InitKrakenState()
+{
+	KrakenState = FDwKrakenSnapshot();
+	if (!Setup.Kraken)
+	{
+		return;
+	}
+	for (const ADwCombatUnit* Unit : Units)
+	{
+		const UDwAbilitySystemComponent* Asc = Unit->GetDwAbilitySystem();
+		if (Unit->GetSide() != EDwSide::Enemy)
+		{
+			continue;
+		}
+		if (Asc->HasMatchingGameplayTag(DwTags::Unit_Kraken_Body) && !KrakenState.Body.IsValid())
+		{
+			KrakenState.Body = Unit->GetHandle();
+		}
+		else if (Asc->HasMatchingGameplayTag(DwTags::Unit_Kraken_Tentacle))
+		{
+			++KrakenState.TentaclesTotal;
+		}
+	}
+	if (!KrakenState.Body.IsValid())
+	{
+		UE_LOG(LogDwCombat, Warning, TEXT("Kraken fight without a Unit.Kraken.Body enemy: no phases or tentacle rules."));
+		return;
+	}
+	SetKrakenPhase(FDwKrakenRules::GetPhaseIndex(Setup.Kraken->Phases, 1.f));
+	RefreshKrakenTentacles();
+}
+
+void UDwCombatSubsystem::SetKrakenPhase(int32 PhaseIndex)
+{
+	KrakenState.PhaseIndex = PhaseIndex;
+	const FDwKrakenPhase* Phase = Setup.Kraken && Setup.Kraken->Phases.IsValidIndex(PhaseIndex) ? &Setup.Kraken->Phases[PhaseIndex] : nullptr;
+	KrakenState.PhaseId = Phase ? Phase->PhaseId : NAME_None;
+	KrakenState.PhaseMoves = Phase ? FDwKrakenRules::GetPhaseMoves(*Phase) : FGameplayTagContainer();
+}
+
+void UDwCombatSubsystem::UpdateKrakenTurn()
+{
+	ADwCombatUnit* Body = KrakenState.IsSet() ? FindUnit(KrakenState.Body) : nullptr;
+	if (!Body || !Body->IsAlive() || !Setup.Kraken)
+	{
+		return;
+	}
+	UDwAbilitySystemComponent* Asc = Body->GetDwAbilitySystem();
+	const UDwUnitAttributeSet* A = Body->GetAttributes();
+	const float HealthPct = A->GetMaxHealth() > 0.f ? A->GetHealth() / A->GetMaxHealth() : 0.f;
+
+	// B7: the phase changes at the start of its turn, never mid-turn; the banner and music follow the event.
+	const int32 NewPhase = FDwKrakenRules::GetPhaseIndex(Setup.Kraken->Phases, HealthPct);
+	if (NewPhase != KrakenState.PhaseIndex)
+	{
+		SetKrakenPhase(NewPhase);
+		const FDwKrakenPhase& Phase = Setup.Kraken->Phases[NewPhase];
+		UE_LOG(LogDwCombat, Log, TEXT("Kraken enters phase %s at %.0f%% health"), *Phase.PhaseId.ToString(), HealthPct * 100.f);
+		if (Phase.EnterCue.IsValid())
+		{
+			FGameplayCueParameters Cue;
+			Cue.Location = Body->GetActorLocation();
+			Asc->ExecuteGameplayCue(Phase.EnterCue, Cue);
+		}
+		FDwCombatEvent Changed;
+		Changed.Type = EDwCombatEventType::PhaseChanged;
+		Changed.Source = Body->GetHandle();
+		Changed.Magnitude = static_cast<float>(NewPhase);
+		Changed.Tag = Phase.MusicState;
+		Emit(Changed);
+	}
+
+	// Actions this turn (Eyes of the Sea's extra action is an effect on top of this base).
+	if (const FDwKrakenTuningRow* Tuning = Setup.Kraken->GetTuningRow<FDwKrakenTuningRow>())
+	{
+		const int32 Actions = FDwKrakenRules::GetActionsPerTurn(*Tuning, Setup.Kraken->TentacleRules.Effect, KrakenState.PhaseIndex, KrakenState.TentaclesDead);
+		Asc->SetNumericAttributeBase(UDwUnitAttributeSet::GetMaxActionPointsAttribute(), static_cast<float>(Actions));
+	}
+}
+
+void UDwCombatSubsystem::RefreshKrakenTentacles()
+{
+	int32 Dead = 0;
+	for (const ADwCombatUnit* Unit : Units)
+	{
+		if (Unit->GetSide() == EDwSide::Enemy && !Unit->IsAlive() && Unit->GetDwAbilitySystem()->HasMatchingGameplayTag(DwTags::Unit_Kraken_Tentacle))
+		{
+			++Dead;
+		}
+	}
+	KrakenState.TentaclesDead = Dead;
+	const FDwKrakenTuningRow* Tuning = Setup.Kraken ? Setup.Kraken->GetTuningRow<FDwKrakenTuningRow>() : nullptr;
+	KrakenState.DamageMultiplier = Tuning ? FDwKrakenRules::GetDamageMultiplier(*Tuning, Setup.Kraken->TentacleRules.Effect, Dead) : 1.f;
+}
+
+void UDwCombatSubsystem::DeclareIntents(FDwUnitHandle Unit, const TArray<FDwAiIntent>& NewIntents)
+{
+	const ADwCombatUnit* Owner = FindUnit(Unit);
+	if (!Owner || !Owner->IsAlive() || NewIntents.IsEmpty())
+	{
+		Intents.Remove(Unit);
+		return;
+	}
+	Intents.Add(Unit, NewIntents);
+	for (int32 Index = 0; Index < NewIntents.Num(); ++Index)
+	{
+		const FDwAiIntent& Intent = NewIntents[Index];
+		FDwCombatEvent Declared;
+		Declared.Type = EDwCombatEventType::IntentDeclared;
+		Declared.Source = Unit;
+		Declared.Target = Intent.Target.Unit;
+		Declared.Side = Intent.Target.bShip ? Intent.Target.ShipSide : EDwSide::Neutral;
+		Declared.Tile = Intent.Target.Tile;
+		Declared.Tag = Intent.AbilityTag;
+		Declared.Magnitude = static_cast<float>(Index);
+		Emit(Declared);
 	}
 }
 
@@ -955,6 +1115,14 @@ FDwCombatSnapshot UDwCombatSubsystem::GetSnapshot() const
 	Snapshot.Items = Items;
 	Snapshot.ItemDefinitions = ItemDefinitions;
 	Snapshot.Outcome = Outcome;
+	Snapshot.Kraken = KrakenState;
+	Snapshot.Intents.Reserve(Intents.Num());
+	for (const TPair<FDwUnitHandle, TArray<FDwAiIntent>>& Pair : Intents)
+	{
+		FDwUnitIntents& Entry = Snapshot.Intents.AddDefaulted_GetRef();
+		Entry.Unit = Pair.Key;
+		Entry.Intents = Pair.Value;
+	}
 
 	const FGameplayEffectQuery GuardQuery = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(DwTags::Status_Guarded));
 	Snapshot.Units.Reserve(Units.Num());

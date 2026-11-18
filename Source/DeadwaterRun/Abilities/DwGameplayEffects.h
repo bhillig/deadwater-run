@@ -154,6 +154,19 @@ public:
 	UDwGE_ConquerorExtraMove();
 };
 
+/**
+ * Eyes of the Sea (08 "Moves"): MaxActionPoints + 1 for the owner's next turn. One turn, ticking at OwnerSideTurnEnd;
+ * applied on the Kraken's own turn, so the same-turn skip rule keeps it through the next turn (the budget is refilled
+ * from MaxActionPoints at turn start, so it never adds an action to the turn it was used in).
+ */
+UCLASS()
+class DEADWATERRUN_API UDwGE_ExtraActionNextTurn : public UDwGameplayEffect
+{
+	GENERATED_BODY()
+public:
+	UDwGE_ExtraActionNextTurn();
+};
+
 /** Infinite: grants Rule.Turn.SingleChoice - the Conqueror's crew make one choice per turn, move or act (05). */
 UCLASS()
 class DEADWATERRUN_API UDwGE_SingleChoice : public UDwGameplayEffect

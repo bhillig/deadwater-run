@@ -9,6 +9,7 @@
 #include "Combat/DwCombatUnit.h"
 #include "Combat/DwShip.h"
 #include "Core/DwGameData.h"
+#include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwEncounterDefinition.h"
 #include "Data/DwKrakenDefinition.h"
@@ -153,17 +154,47 @@ bool FDwEncounterSetupBuilder::BuildKraken(const UDwGameData& GameData, const UD
 		Out.Grid = FDwBoardBuilder::BuildKrakenArena(*GameData.DefaultPlayerDeck, *Kraken->Arena);
 	}
 	const FDwKrakenTuningRow* Tuning = Kraken->GetTuningRow<FDwKrakenTuningRow>();
-	if (Tuning && Tuning->TentacleCount > 0)
+	const int32 TentacleCount = Tuning ? Tuning->TentacleCount : 0;
+	if (TentacleCount > 0 && !Kraken->Tentacle)
 	{
-		OutErrors.Add(FString::Printf(TEXT("%s: %d tentacles in DT_KrakenTuning, but tentacles are not built yet (DW-301)."),
-			*Kraken->GetName(), Tuning->TentacleCount));
+		OutErrors.Add(FString::Printf(TEXT("%s: %d tentacles in DT_KrakenTuning but no Tentacle unit."), *Kraken->GetName(), TentacleCount));
+	}
+
+	// The body on its anchor, tentacles on the slots by the rail in board order (Docs/Architecture/08 "Arena build").
+	TOptional<FIntPoint> Anchor;
+	TArray<FIntPoint> Slots;
+	for (int32 Index = 0; Index < Out.Grid.Tiles.Num(); ++Index)
+	{
+		const FDwTile& Tile = Out.Grid.Tiles[Index];
+		if (Tile.Tags.HasTagExact(DwTags::Tile_Kraken_Body) && !Anchor.IsSet()) { Anchor = Out.Grid.ToTile(Index); }
+		if (Tile.Tags.HasTagExact(DwTags::Tile_Kraken_Tentacle)) { Slots.Add(Out.Grid.ToTile(Index)); }
+	}
+	if (!Anchor.IsSet())
+	{
+		OutErrors.Add(FString::Printf(TEXT("%s: the arena has no body anchor (B)."), *Kraken->Arena->GetName()));
+	}
+	if (Slots.Num() < TentacleCount)
+	{
+		OutErrors.Add(FString::Printf(TEXT("%s: %d tentacles need %d tentacle slots (T), the arena has %d."), *Kraken->GetName(), TentacleCount,
+			TentacleCount, Slots.Num()));
 	}
 
 	// No enemy ship: no cannons to aim at a hull and no sinking win (Docs/Architecture/08 "Arena build").
 	Out.bHasEnemyShip = false;
+	Out.Kraken = Kraken;
 	FDwCombatantSetup& Body = Out.Enemies.AddDefaulted_GetRef();
 	Body.Definition = Kraken->Body;
-	Body.AiProfile = Encounter.AiProfile;
+	Body.AiProfile = Encounter.AiProfile; // the crew brain until DW-302's Kraken brain
+	Body.bUseSpawnTile = Anchor.IsSet();
+	Body.SpawnTile = Anchor.Get(FIntPoint::ZeroValue);
+	for (int32 Index = 0; Index < TentacleCount && Index < Slots.Num() && Kraken->Tentacle; ++Index)
+	{
+		FDwCombatantSetup& Tentacle = Out.Enemies.AddDefaulted_GetRef();
+		Tentacle.Definition = Kraken->Tentacle;
+		Tentacle.bUseSpawnTile = true;
+		Tentacle.SpawnTile = Slots[Index];
+		// No AI profile: tentacles never act; they are targets (08 "Behaviour").
+	}
 	Out.OutcomeConfig.bIsBossFight = true;
 	return OutErrors.Num() == ErrorsBefore;
 }

@@ -151,6 +151,12 @@ FDwDeckSource FDwDeckAscii::Parse(const TArray<FString>& Rows, TArray<FString>* 
 				Tile.Tags.AddTag(DwTags::Tile_Kraken_Body);
 				Tile.Tags.AddTag(DwTags::Tile_Spawn_Player); // rewritten to the side by the builder
 				break;
+			case TEXT('T'):
+				// A tentacle slot: walkable water by the rail, where a tentacle stands (no spawn tag: the setup places tentacles).
+				Tile = DwBoard::MakeTile(EDwTileKind::Water, true);
+				Tile.Tags.AddTag(DwTags::Tile_Water);
+				Tile.Tags.AddTag(DwTags::Tile_Kraken_Tentacle);
+				break;
 			case TEXT('-'): Tile = DwBoard::MakeTile(EDwTileKind::None, false); break;
 			default:
 				if (OutErrors)
@@ -194,7 +200,9 @@ TArray<FString> FDwDeckAscii::Export(const FDwDeckSource& Deck)
 			case EDwTileKind::Ladder: Ch = TEXT('L'); break;
 			case EDwTileKind::Nest: Ch = TEXT('N'); break;
 			case EDwTileKind::Obstacle: Ch = T.BlockerHeight >= 2 ? TEXT('M') : TEXT('c'); break;
-			case EDwTileKind::Water: Ch = T.Tags.HasTagExact(DwTags::Tile_Kraken_Body) ? TEXT('B') : TEXT('~'); break;
+			case EDwTileKind::Water:
+				Ch = T.Tags.HasTagExact(DwTags::Tile_Kraken_Body) ? TEXT('B') : T.Tags.HasTagExact(DwTags::Tile_Kraken_Tentacle) ? TEXT('T') : TEXT('~');
+				break;
 			default: break;
 			}
 			Row.AppendChar(Ch);
