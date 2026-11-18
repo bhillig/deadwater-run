@@ -1,6 +1,6 @@
 # Deadwater Run - Voice Sheet
 
-**Status: draft for Brandon's approval.** Taken from `DeadwaterRun.md` (GDD), the store page drafts
+**Status: approved by Brandon (2026-11-17).** Taken from `DeadwaterRun.md` (GDD), the store page drafts
 (`Docs/Release/StorePage.md` L2/S3) and `context/`. The content critic scores against this, so change it here
 and every later review follows.
 
