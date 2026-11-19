@@ -1,0 +1,15 @@
+// Win64 depot (18-Packaging-Release.md "Steam"). Copy to depot_build_win64.vdf (gitignored) and fill <DEPOTID>.
+// Paths are relative to app_build.vdf's ContentRoot (the Shipping archive's Windows folder).
+"DepotBuild"
+{
+	"DepotID" "<DEPOTID>"
+	"FileMapping"
+	{
+		"LocalPath" "*"
+		"DepotPath" "."
+		"Recursive" "1"
+	}
+	// Never ship debug symbols or crash-report leftovers.
+	"FileExclusion" "*.pdb"
+	"FileExclusion" "Manifest_*.txt"
+}

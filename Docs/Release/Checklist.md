@@ -44,17 +44,17 @@ Schedule moved one week later on 2026-11-11 (Brandon): launch Dec 3 -> **Dec 10*
 - [ ] Submit for review (by Nov 19) - Brandon
 - [ ] Publish Coming Soon (by Nov 26) - Brandon
 
-## 5. Build and packaging (open - not done yet)
+## 5. Build and packaging
 
-These are still open; this ticket did not touch them (out of scope).
+First package made 2026-11-19 (DW-218 packaging part); results in `Docs/Release/BuildNotes.md`.
 
-- [ ] **`Build/Package.ps1`** (DW-006 packaging part / DW-218): not written. The `Build/` folder does not exist. No Shipping package of the project has been made by the release engineer yet.
-- [ ] `Config/DefaultGame.ini` packaging section (MapsToCook, `DirectoriesToNeverCook`, pak/IoStore) per doc 18: not applied (only the asset manager and UI input settings are in the file today)
-- [ ] `Build/Steam/app_build.vdf.template`, `depot_build_win64.vdf.template` (no credentials in git)
-- [ ] `Docs/Release/BuildNotes.md`
-- [ ] Verify the staged build has no `ModelContextProtocol` / `Terminal` / editor binaries
-- [ ] Logging decision (Open-Questions O3): Shipping without logs, plus a Test build on a `beta` branch?
-- [ ] Smoke test per build (doc 18): package Shipping, exit code 0, launch to main menu, screenshot; autoplay run on Development; QA manual pass, one run per captain
+- [x] **`Build/Package.ps1`**: `RunUAT BuildCookRun` (Win64, Shipping/Development/Test, cook, stage, pak + IoStore, compressed, archive to `Build/Out/<version>-<config>`); first line `PACKAGE PASS/FAIL`; fails if an editor-only plugin file is staged
+- [x] `Config/DefaultGame.ini` packaging section (MapsToCook `L_MainMenu` + `L_Sea`, `DirectoriesToNeverCook`, pak/IoStore, compression, shared shader code, `ProjectVersion=0.1.0`)
+- [x] `Build/Steam/app_build.vdf.template`, `depot_build_win64.vdf.template` (placeholders only; filled copies are gitignored)
+- [x] `Docs/Release/BuildNotes.md`
+- [x] Staged build has no `ModelContextProtocol` / `Terminal` / `AllToolsets` / modelling-tools files, no `.pdb` (checked by `Package.ps1`)
+- [ ] Logging decision (Open-Questions O3): Shipping without logs (default, what 0.1.0 is), plus a Test build on a `beta` branch? - Brandon
+- [ ] Smoke test per build (doc 18): ~~package Shipping, exit code 0, launch to main menu, screenshot~~ done for 0.1.0; full seeded run on a Development package; QA manual pass, one run per captain
 
 Content that must be real before the Dec 2 build (so copy and screenshots are true): captain abilities for Fearmongerer and Conqueror (DW-207/208 - placeholder text visible today), shop (DW-204), events (DW-205), Kraken (DW-209 in progress), Synty/UI art pass (DW-307), audio decision/integration.
 

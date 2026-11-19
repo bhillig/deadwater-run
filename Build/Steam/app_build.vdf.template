@@ -1,0 +1,16 @@
+// SteamPipe app build script (18-Packaging-Release.md "Steam"). Copy to app_build.vdf (gitignored), fill <APPID> and
+// <DEPOTID>, then Brandon runs: steamcmd +login <account> +run_app_build <full path>\app_build.vdf +quit
+// SetLive stays empty: Brandon sets the build live (beta, then default) in Steamworks by hand.
+"AppBuild"
+{
+	"AppID" "<APPID>"
+	"Desc" "Deadwater Run <VERSION>"
+	"ContentRoot" "..\Out\<VERSION>-Shipping\Windows\"
+	"BuildOutput" "..\..\Saved\SteamBuildOutput\"
+	"SetLive" ""
+	"Preview" "0"
+	"Depots"
+	{
+		"<DEPOTID>" "depot_build_win64.vdf"
+	}
+}

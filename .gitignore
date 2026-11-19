@@ -62,6 +62,10 @@ Build/*/**
 # Don't ignore icon files in Build
 !Build/**/*.ico
 
+# Release scripts and Steam templates (18-Packaging-Release.md); archives in Build/Out and filled .vdf files stay local
+!Build/Package.ps1
+!Build/Steam/*.vdf.template
+
 # Built data for maps
 *_BuiltData.uasset
 
