@@ -11,6 +11,7 @@
 #include "Core/DwGameplayTags.h"
 #include "Rendering/DrawElements.h"
 #include "UI/DwUIJuice.h"
+#include "UI/DwUIManagerSubsystem.h"
 
 #define LOCTEXT_NAMESPACE "DwRunScreens"
 
@@ -29,11 +30,33 @@ void UDwChoiceButtonWidget::NativeOnInitialized()
 
 void UDwChoiceButtonWidget::HandleClicked()
 {
-	if (UDwChoiceViewModel* Choice = GetViewModel<UDwChoiceViewModel>())
+	UDwChoiceViewModel* Choice = GetViewModel<UDwChoiceViewModel>();
+	if (!Choice)
 	{
-		PlayJuice(DwJuice::Press);
-		PlayUISound(Choice->Select() ? DwTags::UI_Sound_Click : DwTags::UI_Sound_Error);
+		return;
 	}
+	PlayJuice(DwJuice::Press);
+	// Read before Select: the intent usually refreshes the view model, which replaces the view.
+	const FDwChoiceView View = Choice->GetView();
+	const FGameplayTag Accepted = View.SelectSound.IsValid() ? View.SelectSound : DwTags::UI_Sound_Click;
+	UDwUIManagerSubsystem* Manager = UDwUIManagerSubsystem::Get(GetOwningLocalPlayer());
+	if (View.bEnabled && !View.ConfirmTitle.IsEmpty() && Manager)
+	{
+		// Can't be undone: ask first (WBP_Confirm). The button may be rebuilt before the answer, so hold both weakly.
+		PlayUISound(DwTags::UI_Sound_Click);
+		const TWeakObjectPtr<UDwChoiceViewModel> WeakChoice = Choice;
+		const TWeakObjectPtr<UDwChoiceButtonWidget> WeakThis = this;
+		Manager->Confirm(View.ConfirmTitle, View.ConfirmBody, View.ConfirmYes, [WeakChoice, WeakThis, Accepted]()
+		{
+			const bool bOk = WeakChoice.IsValid() && WeakChoice->Select();
+			if (WeakThis.IsValid())
+			{
+				WeakThis->PlayUISound(bOk ? Accepted : DwTags::UI_Sound_Error);
+			}
+		});
+		return;
+	}
+	PlayUISound(Choice->Select() ? Accepted : DwTags::UI_Sound_Error);
 }
 
 void UDwChoiceButtonWidget::HandleHovered()
@@ -191,7 +214,7 @@ void UDwMapScreen::NativeOnViewModelChanged()
 		return;
 	}
 	TitleText->SetText(Map->GetTitle());
-	GoldText->SetText(FText::Format(LOCTEXT("Gold", "{0} gold"), Map->GetGold()));
+	GoldText->SetText(FText::Format(LOCTEXT("GoldCount", "{0} gold"), Map->GetGold()));
 	ShipText->SetText(Map->GetShipText());
 	TArray<FText> Crew;
 	for (const FDwCrewLineView& Line : Map->GetCrew())
@@ -326,6 +349,62 @@ void UDwLevelUpScreen::NativeOnViewModelChanged()
 	{
 		PlayJuice(DwJuice::Highlight); // OnLevelUpShown hook (doc 14)
 	}
+}
+
+void UDwShopScreen::FillSection(UWidget* Label, UPanelWidget* Panel, TConstArrayView<TObjectPtr<UDwChoiceViewModel>> Choices)
+{
+	FillChoices(Panel, Choices);
+	if (Label)
+	{
+		Label->SetVisibility(Choices.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+	}
+}
+
+void UDwShopScreen::NativeOnViewModelChanged()
+{
+	UDwShopViewModel* Shop = GetViewModel<UDwShopViewModel>();
+	if (!Shop)
+	{
+		return;
+	}
+	GoldText->SetText(FText::Format(LOCTEXT("GoldCount", "{0} gold"), Shop->GetGold()));
+	ShipText->SetText(Shop->GetShipText());
+	HoldText->SetText(Shop->GetHoldText());
+	TArray<FText> Crew;
+	for (const FDwCrewLineView& Line : Shop->GetCrew())
+	{
+		Crew.Add(FText::Format(LOCTEXT("CrewLine", "{0}{1}   {2}"), Line.Name, Line.bIsCaptain ? LOCTEXT("Captain", " (captain)") : FText::GetEmpty(), Line.Detail));
+	}
+	FillLines(CrewList, Crew, 16, FLinearColor(0.95f, 0.92f, 0.85f));
+
+	FillSection(SupplyLabel, SupplyList, Shop->GetSupplies());
+	MoveHintText->SetText(Shop->GetMoveHint());
+	FillChoices(MoveList, Shop->GetMoves());
+	FillChoices(LearnerList, Shop->GetLearners());
+	FillChoices(ForgetList, Shop->GetForget());
+	TArray<TObjectPtr<UDwChoiceViewModel>> Buy;
+	if (UDwChoiceViewModel* BuyMove = Shop->GetBuyMove())
+	{
+		Buy.Add(BuyMove);
+	}
+	FillChoices(BuyMoveSlot, Buy);
+	FillSection(RecruitLabel, RecruitList, Shop->GetRecruits());
+	FillSection(UpgradeLabel, UpgradeList, Shop->GetUpgrades());
+	FillSection(DisbandLabel, DisbandList, Shop->GetDisbands());
+	const TArray<TObjectPtr<UDwChoiceViewModel>> Leave = { Shop->GetLeave() };
+	FillChoices(LeaveSlot, Leave);
+
+	// Juice hooks: the gold counter and the purchase (the buttons already played the purchase / error sound).
+	if (ShownGold != INDEX_NONE && ShownGold != Shop->GetGold())
+	{
+		OnGoldChanged(ShownGold, Shop->GetGold());
+	}
+	ShownGold = Shop->GetGold();
+	if (Shop->GetPurchaseCount() > ShownPurchases)
+	{
+		OnPurchase(Shop->GetLastResult());
+	}
+	ShownPurchases = Shop->GetPurchaseCount();
 }
 
 void UDwNodeShellScreen::NativeOnViewModelChanged()

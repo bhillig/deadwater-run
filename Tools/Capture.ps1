@@ -14,7 +14,7 @@
   ./Tools/Capture.ps1 -Demo run             # a run (DW-201/203): map readout, fight 1, rewards, level-up, back on the map, fight 2 (frames -01..-05)
   ./Tools/Capture.ps1 -Demo voyage          # a whole chart through the run screens (DW-202/211): map at every stop, first rewards/level-up/shop, the first event's choices and its result (DW-205), the Kraken fight; ends on the Victory summary
   ./Tools/Capture.ps1 -Demo boss            # DW-301: the same voyage, frames from the last stop only: map with only the Kraken, sniper aiming at the body, swordsman aiming at a tentacle, the initial-phase turn (one tentacle cut), the enraged turn (body staged at 28%); ends on the Victory summary
-  ./Tools/Capture.ps1 -Demo shop            # DW-204: fights until there is gold to shop, then a shop with the run readout: arrival, after buying (repair, recruit, upgrade, item), the map; ends in the next fight (recruit aboard, third cannon)
+  ./Tools/Capture.ps1 -Demo shop            # DW-204: fights until there is gold to shop, then the shop screen: arrival, after buying (repair, recruit, upgrade, item), a move being taught on the shop screen (learner picked), the map; ends in the next fight (recruit aboard, third cannon)
   ./Tools/Capture.ps1 -Demo captain -Captain Fearmongerer   # DW-206..208: the captain's showcase in fight 1, a frame per turn; Fearmongerer: Smoke and Fire until the crew surrenders
   ./Tools/Capture.ps1 -Demo shell           # DW-210 from the main menu: menu, settings, captain select, Set Sail, map, pause, abandon, summary, New Run
   ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p

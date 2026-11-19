@@ -55,10 +55,10 @@ private:
 	 */
 	void ShellDemoStep();
 	/**
-	 * Demo "shop" (needs -DwCaptain=; DW-204), with the dev run readout on so gold, hull, crew, items and every offer show:
+	 * Demo "shop" (needs -DwCaptain=; DW-204) on WBP_Shop, which shows gold, hull, hold, crew and every offer:
 	 * fights are won by the captain (the hull is knocked to 60% each time, so repair matters) until there is gold for a
 	 * repair, a recruit, an upgrade (the third cannon if offered) and an item; then the next shop. -01 the shop on arrival,
-	 * -02 after buying them (one purchase per step), -03 the map after leaving; final frame the next fight, with the
+	 * -02 after buying them (one purchase per step), -03 a move being taught (move, learner and Buy picked through the shop view model), -04 the map after leaving; final frame the next fight, with the
 	 * recruit on deck and the third cannon.
 	 */
 	void ShopDemoStep();
@@ -84,9 +84,10 @@ private:
 	bool bVoyageCaptured = false;
 	bool bVoyageFightStaged = false;
 	int32 BossStep = 0;
-	/** Demo "shop": 0 sailing to the shop, 1 arrival captured (buying), 3 after captured, 4 left (map), 5 map captured. */
+	/** Demo "shop": 0 sailing to the shop, 1 arrival captured (buying), 2 after captured (pick a move), 3 pick captured (teach it), 4 leaving / left (map), 5 map captured. */
 	int32 ShopStage = 0;
 	bool bShopFightStaged = false;
+	bool bShopMoveCaptured = false;
 	TSet<uint8> VoyageScreensSeen;
 	/** Demo "voyage": the first event's result screen has had its frame (after its choices). */
 	bool bVoyageEventResultShown = false;

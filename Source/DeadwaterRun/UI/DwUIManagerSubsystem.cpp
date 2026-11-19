@@ -251,7 +251,7 @@ void UDwUIManagerSubsystem::ShowRunScreen(EDwRunPhase Phase)
 	case EDwRunPhase::Map:     ViewModel = MapViewModel ? MapViewModel.Get() : (MapViewModel = NewObject<UDwMapViewModel>(this)).Get(); break;
 	case EDwRunPhase::Rewards: ViewModel = RewardsViewModel ? RewardsViewModel.Get() : (RewardsViewModel = NewObject<UDwRewardsViewModel>(this)).Get(); break;
 	case EDwRunPhase::LevelUp: ViewModel = LevelUpViewModel ? LevelUpViewModel.Get() : (LevelUpViewModel = NewObject<UDwLevelUpViewModel>(this)).Get(); break;
-	case EDwRunPhase::Shop:
+	case EDwRunPhase::Shop:    ViewModel = ShopViewModel ? ShopViewModel.Get() : (ShopViewModel = NewObject<UDwShopViewModel>(this)).Get(); break;
 	case EDwRunPhase::Event:   ViewModel = ShellViewModel ? ShellViewModel.Get() : (ShellViewModel = NewObject<UDwNodeShellViewModel>(this)).Get(); break;
 	default: return;
 	}

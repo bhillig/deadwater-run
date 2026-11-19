@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Run/DwRunTypes.h"
 #include "UI/DwViewModelBase.h"
 #include "DwRunViewModels.generated.h"
@@ -10,9 +11,9 @@
 class UDwRun;
 
 /*
- * View models of the run screens (Docs/Architecture/14-UI.md "Screens", DW-211): map, rewards, level-up, and the shop /
- * event shells. Each copies what UDwRun says and sends intents to UDwRun (ChooseNode, ClaimRewards, ChoosePerk,
- * LeaveShop, LeaveEvent) - nothing else. Disabled reasons repeat the checks UDwRun makes, so a disabled button never
+ * View models of the run screens (Docs/Architecture/14-UI.md "Screens", DW-211): map, rewards, level-up, shop and the
+ * event shell. Each copies what UDwRun says and sends intents to UDwRun (ChooseNode, ClaimRewards, ChoosePerk,
+ * TryPurchase, LeaveShop, ChooseEventOption, LeaveEvent) - nothing else. Disabled reasons repeat the checks UDwRun makes, so a disabled button never
  * gets a refusal and an enabled one never does either. They refresh on UDwRun::OnStateChanged.
  */
 
@@ -28,6 +29,15 @@ struct DEADWATERRUN_API FDwChoiceView
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") bool bSelected = false;
 	/** Why it can't be clicked; empty when enabled. */
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText DisabledReason;
+	/**
+	 * Set for choices that can't be undone (disband): WBP_ChoiceButton asks first with WBP_Confirm and only then calls
+	 * Select. Empty = select on click. The view model's Select itself never asks (tests and dev commands call it).
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText ConfirmTitle;
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText ConfirmBody;
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText ConfirmYes;
+	/** The UI sound of an accepted click (UI.Sound.Purchase for purchases); unset = UI.Sound.Click. */
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") FGameplayTag SelectSound;
 };
 
 /** A choice as its own small view model, so a WBP_ChoiceButton binds it like any other widget. */
@@ -231,10 +241,101 @@ private:
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Shop and event shells
+// Shop
 
 /**
- * WBP_NodeShell: phase Shop until the shop screen lands (just the gold and Leave), and phase Event (DW-205):
+ * WBP_Shop (phase Shop; Docs/Architecture/10-Economy-Shop-Loot.md "The shop screen's read model"): one card per
+ * FDwShopOffer, grouped as the screen shows them. Every card's enabled state and reason come from UDwRun::CanPurchase,
+ * so an enabled card is always a purchase the run accepts.
+ * - Supplies (repair, items), recruits and upgrades buy on click; disbands ask first (FDwChoiceView::ConfirmTitle).
+ * - A move (ability offer) is picked first, then who learns it (picked for you when only one can), then, if their slots
+ *   are full, the move they forget; "Buy" stays disabled with the reason until the pick is complete. A second click on
+ *   the picked move drops the pick.
+ */
+UCLASS(BlueprintType)
+class DEADWATERRUN_API UDwShopViewModel : public UDwRunScreenViewModel
+{
+	GENERATED_BODY()
+
+public:
+	int32 GetGold() const { return Gold; }
+	FText GetShipText() const { return ShipText; }
+	/** "Hold 3 / 6" (P10), or "Hold 3" with no cap. */
+	FText GetHoldText() const { return HoldText; }
+	const TArray<FDwCrewLineView>& GetCrew() const { return Crew; }
+
+	/** Repair, then items. */
+	const TArray<TObjectPtr<UDwChoiceViewModel>>& GetSupplies() const { return Supplies; }
+	/** Ability offers. */
+	const TArray<TObjectPtr<UDwChoiceViewModel>>& GetMoves() const { return Moves; }
+	/** Once a move is picked: who can learn it. */
+	const TArray<TObjectPtr<UDwChoiceViewModel>>& GetLearners() const { return Learners; }
+	/** Once a full learner is picked: the move to forget (P4). */
+	const TArray<TObjectPtr<UDwChoiceViewModel>>& GetForget() const { return Forget; }
+	/** "Buy <move> for <learner>", or null while no move is picked. */
+	UDwChoiceViewModel* GetBuyMove() const { return bMovePicked ? BuyMove.Get() : nullptr; }
+	/** The next step of the move pick, or what the moves are for when none is picked. */
+	FText GetMoveHint() const { return MoveHint; }
+	const TArray<TObjectPtr<UDwChoiceViewModel>>& GetRecruits() const { return Recruits; }
+	const TArray<TObjectPtr<UDwChoiceViewModel>>& GetUpgrades() const { return Upgrades; }
+	const TArray<TObjectPtr<UDwChoiceViewModel>>& GetDisbands() const { return Disbands; }
+	UDwChoiceViewModel* GetLeave() const { return Leave; }
+
+	/** The latest purchase attempt and how many there were this visit (the screen plays OnPurchase when it moves). */
+	EDwPurchaseResult GetLastResult() const { return LastResult; }
+	int32 GetPurchaseCount() const { return PurchaseCount; }
+
+	/** Intents. Buy: any offer but a move (TryPurchase). Moves go through SelectMove / SelectLearner / SelectForget / BuySelectedMove. */
+	bool Buy(int32 OfferId);
+	bool SelectMove(int32 OfferId);
+	bool SelectLearner(int32 Index);
+	bool SelectForget(int32 Index);
+	bool BuySelectedMove();
+
+	/** The disabled reason for a refused purchase (empty for Ok). Crew = the learner of a move. */
+	static FText DescribeResult(EDwPurchaseResult Result, const UDwRun& Run, const FDwShopOffer* Offer, const FGuid& Crew);
+
+protected:
+	virtual void Refresh() override;
+
+private:
+	const FDwShopOffer* FindOffer(int32 OfferId) const;
+	/** The move's purchase as picked so far: Ok, or the first thing missing. */
+	EDwPurchaseResult CheckMove(FText& OutReason) const;
+	/** Enabled state of a move card: Ok if some eligible learner (with any slot to forget) can buy it, else the first refusal. */
+	EDwPurchaseResult CheckMoveCard(const FDwShopOffer& Offer, FGuid& OutCrew) const;
+	bool Purchase(int32 OfferId, const FGuid& Crew, int32 Slot);
+	void ClearPick();
+
+	int32 Gold = 0;
+	FText ShipText;
+	FText HoldText;
+	FText MoveHint;
+	TArray<FDwCrewLineView> Crew;
+	int32 SelectedMove = INDEX_NONE;
+	FGuid SelectedCrew;
+	int32 SelectedSlot = INDEX_NONE;
+	bool bMovePicked = false;
+	/** The shop these selections belong to (a new shop resets them). */
+	int32 ShopNode = INDEX_NONE;
+	EDwPurchaseResult LastResult = EDwPurchaseResult::Ok;
+	int32 PurchaseCount = 0;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwChoiceViewModel>> Supplies;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwChoiceViewModel>> Moves;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwChoiceViewModel>> Learners;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwChoiceViewModel>> Forget;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwChoiceViewModel>> Recruits;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwChoiceViewModel>> Upgrades;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwChoiceViewModel>> Disbands;
+	UPROPERTY(Transient) TObjectPtr<UDwChoiceViewModel> BuyMove;
+	UPROPERTY(Transient) TObjectPtr<UDwChoiceViewModel> Leave;
+};
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Event shell
+
+/**
+ * WBP_NodeShell: phase Event (DW-205):
  * 1. The event's title and body, one button per choice ("you will ..." line, disabled with the failing requirement).
  * 2. A choice that lands on a crew member the player picks: one button per crew member who can be picked, and Back.
  * 3. After the choice: the result text and every change, and Continue (UDwRun::LeaveEvent).

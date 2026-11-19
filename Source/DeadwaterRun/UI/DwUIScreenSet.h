@@ -43,11 +43,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phases")
 	TSoftClassPtr<UDwActivatableScreen> LevelUp;
 
-	/** Phase Shop: WBP_NodeShell until DW-204 brings WBP_Shop. */
+	/** Phase Shop: WBP_Shop (UDwShopScreen). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phases")
 	TSoftClassPtr<UDwActivatableScreen> Shop;
 
-	/** Phase Event: WBP_NodeShell until DW-205 brings WBP_Event. */
+	/** Phase Event: WBP_NodeShell (the event flow) until a dedicated WBP_Event. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Phases")
 	TSoftClassPtr<UDwActivatableScreen> Event;
 

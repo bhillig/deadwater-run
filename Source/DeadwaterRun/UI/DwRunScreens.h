@@ -12,10 +12,11 @@ class UButton;
 class UCanvasPanel;
 class UPanelWidget;
 class UTextBlock;
+class UWidget;
 
 /*
- * Run screens (Docs/Architecture/14-UI.md "Screens", DW-211): WBP_Map, WBP_Rewards, WBP_LevelUp and WBP_NodeShell (shop
- * and event until DW-204/205). Structure and logic here; the WBPs (UDwUIContentLibrary) only lay out and style. Every
+ * Run screens (Docs/Architecture/14-UI.md "Screens", DW-211): WBP_Map, WBP_Rewards, WBP_LevelUp, WBP_Shop and WBP_NodeShell
+ * (event). Structure and logic here; the WBPs (UDwUIContentLibrary) only lay out and style. Every
  * click goes to a view model intent; nothing here reads UDwRun.
  */
 
@@ -187,7 +188,50 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> CardList;
 };
 
-/** WBP_NodeShell (phases Shop and Event until DW-204 / DW-205). */
+/**
+ * WBP_Shop (phase Shop): header (gold, hull, hold, crew), supplies, moves (with the learner / forget pick and Buy),
+ * crew for hire, ship upgrades, disbands, Leave. Empty sections collapse with their label.
+ * Juice hooks (doc 14): OnGoldChanged after every gold change, OnPurchase after every purchase attempt.
+ */
+UCLASS(Abstract)
+class DEADWATERRUN_API UDwShopScreen : public UDwRunScreen
+{
+	GENERATED_BODY()
+
+protected:
+	virtual void NativeOnViewModelChanged() override;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Deadwater|UI|Juice") void OnGoldChanged(int32 OldGold, int32 NewGold);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Deadwater|UI|Juice") void OnPurchase(EDwPurchaseResult Result);
+
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> GoldText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> ShipText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> HoldText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> CrewList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> SupplyLabel;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> SupplyList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> MoveHintText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> MoveList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> LearnerList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> ForgetList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> BuyMoveSlot;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> RecruitLabel;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> RecruitList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> UpgradeLabel;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> UpgradeList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> DisbandLabel;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> DisbandList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> LeaveSlot;
+
+private:
+	/** Fills a section and shows its label only when it has cards. */
+	void FillSection(UWidget* Label, UPanelWidget* Panel, TConstArrayView<TObjectPtr<UDwChoiceViewModel>> Choices);
+
+	int32 ShownGold = INDEX_NONE;
+	int32 ShownPurchases = 0;
+};
+
+/** WBP_NodeShell (phase Event until WBP_Event). */
 UCLASS(Abstract)
 class DEADWATERRUN_API UDwNodeShellScreen : public UDwRunScreen
 {

@@ -15,6 +15,7 @@ class UDwLevelUpViewModel;
 class UDwMapViewModel;
 class UDwNodeShellViewModel;
 class UDwRewardsViewModel;
+class UDwShopViewModel;
 class UDwCombatSubsystem;
 class UDwRun;
 class UDwRunSubsystem;
@@ -51,6 +52,8 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Deadwater|UI") UDwPrimaryLayoutWidget* GetLayout() const { return Layout; }
 	UFUNCTION(BlueprintPure, Category = "Deadwater|UI") UDwCombatHudViewModel* GetCombatHudViewModel() const { return CombatHud; }
+	/** The shop screen's view model (dev captures drive the move pick through it, like a click). */
+	UDwShopViewModel* GetShopViewModel() const { return ShopViewModel; }
 	UFUNCTION(BlueprintPure, Category = "Deadwater|UI") UDwActivatableScreen* GetCombatHudScreen() const { return CombatHudScreen; }
 	/** The map, rewards, level-up or shop/event screen on top, if any (DW-211). */
 	UFUNCTION(BlueprintPure, Category = "Deadwater|UI") UDwActivatableScreen* GetRunScreen() const { return RunScreen; }
@@ -114,6 +117,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UDwMapViewModel> MapViewModel;
 	UPROPERTY(Transient) TObjectPtr<UDwRewardsViewModel> RewardsViewModel;
 	UPROPERTY(Transient) TObjectPtr<UDwLevelUpViewModel> LevelUpViewModel;
+	UPROPERTY(Transient) TObjectPtr<UDwShopViewModel> ShopViewModel;
 	UPROPERTY(Transient) TObjectPtr<UDwNodeShellViewModel> ShellViewModel;
 	UPROPERTY(Transient) TObjectPtr<UDwFloatingTextManager> FloatingText;
 	TWeakObjectPtr<UDwCombatSubsystem> Combat;

@@ -5,7 +5,10 @@
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwEventDefinition.h"
 #include "Data/DwItemDefinition.h"
+#include "Core/DwGameplayTags.h"
 #include "Data/DwPerkDefinition.h"
+#include "Data/DwShipUpgradeDefinition.h"
+#include "Data/DwUnitDefinition.h"
 #include "Run/DwRun.h"
 #include "Run/Events/DwEventOutcome.h"
 #include "Run/Events/DwEventResolver.h"
@@ -89,6 +92,34 @@ namespace DwRunScreens
 	{
 		return Definition ? Definition->DisplayName : LOCTEXT("Unknown", "?");
 	}
+
+	/** The run header's crew lines (map and shop). */
+	static void CrewLines(const FDwRunState& State, TArray<FDwCrewLineView>& Out)
+	{
+		Out.Reset();
+		for (const FDwCrewMemberState& Member : State.Crew)
+		{
+			FDwCrewLineView& Line = Out.AddDefaulted_GetRef();
+			Line.Name = Member.GetDisplayName();
+			Line.bAlive = Member.bAlive;
+			Line.bIsCaptain = Member.bIsCaptain;
+			Line.Detail = Member.bAlive
+				? FText::Format(LOCTEXT("CrewDetail", "L{0}   {1} / {2} HP"), Member.Level, FMath::RoundToInt(Member.Health), FMath::RoundToInt(Member.GetMaxHealth()))
+				: LOCTEXT("CrewLost", "lost");
+		}
+	}
+
+	static FText ShipLine(const FDwRunState& State)
+	{
+		return FText::Format(LOCTEXT("Ship", "Hull {0} / {1}"), FMath::RoundToInt(State.Ship.Health), FMath::RoundToInt(State.Ship.MaxHealth));
+	}
+
+	/** "<price> gold" and, when there is one, the description on the next line. */
+	static FText PriceAndText(int32 Price, const FText& Text)
+	{
+		return Text.IsEmpty() ? FText::Format(LOCTEXT("Price", "{0} gold"), Price)
+			: FText::Format(LOCTEXT("PriceText", "{0} gold\n{1}"), Price, Text);
+	}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -139,20 +170,11 @@ void UDwMapViewModel::Refresh()
 	}
 
 	Gold = S.Gold;
-	ShipText = FText::Format(LOCTEXT("Ship", "Hull {0} / {1}"), FMath::RoundToInt(S.Ship.Health), FMath::RoundToInt(S.Ship.MaxHealth));
+	ShipText = DwRunScreens::ShipLine(S);
 	Title = Current
 		? FText::Format(LOCTEXT("TitleAt", "Sea chart - {0} of {1} stops behind you"), S.Stats.NodesCleared, S.Map.LayerCount)
 		: LOCTEXT("TitleStart", "Sea chart - choose your first heading");
-	for (const FDwCrewMemberState& Member : S.Crew)
-	{
-		FDwCrewLineView& Line = Crew.AddDefaulted_GetRef();
-		Line.Name = Member.GetDisplayName();
-		Line.bAlive = Member.bAlive;
-		Line.bIsCaptain = Member.bIsCaptain;
-		Line.Detail = Member.bAlive
-			? FText::Format(LOCTEXT("CrewDetail", "L{0}   {1} / {2} HP"), Member.Level, FMath::RoundToInt(Member.Health), FMath::RoundToInt(Member.GetMaxHealth()))
-			: LOCTEXT("CrewLost", "lost");
-	}
+	DwRunScreens::CrewLines(S, Crew);
 	NotifyChanged();
 }
 
@@ -438,22 +460,394 @@ void UDwLevelUpViewModel::Refresh()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Shop and event shells
+// Shop
+
+FText UDwShopViewModel::DescribeResult(EDwPurchaseResult Result, const UDwRun& Run, const FDwShopOffer* Offer, const FGuid& Crew)
+{
+	const FDwRunState& S = Run.GetState();
+	const FText Who = DwRunScreens::CrewName(S, Crew);
+	switch (Result)
+	{
+	case EDwPurchaseResult::Ok:            return FText::GetEmpty();
+	case EDwPurchaseResult::NoOffer:       return LOCTEXT("NoOffer", "Not for sale here.");
+	case EDwPurchaseResult::SoldOut:       return Offer && Offer->Type == EDwShopOfferType::Disband ? LOCTEXT("Gone", "Already gone.") : LOCTEXT("SoldOut", "Sold out.");
+	case EDwPurchaseResult::InvalidTarget: return Who.IsEmpty() ? LOCTEXT("NoLearner", "Nobody aboard can learn it.") : FText::Format(LOCTEXT("CantLearn", "{0} can't learn it."), Who);
+	case EDwPurchaseResult::AlreadyKnown:  return FText::Format(LOCTEXT("Known", "{0} knows it already."), Who);
+	case EDwPurchaseResult::NoSlot:        return FText::Format(LOCTEXT("NoSlot", "{0} knows {1} moves already: pick one to forget."), Who, Run.GetMaxAbilitySlots());
+	case EDwPurchaseResult::CantDisband:   return LOCTEXT("CantDisband", "The captain keeps at least one crew member.");
+	case EDwPurchaseResult::CrewFull:      return LOCTEXT("CrewFull", "No room aboard: the crew is full.");
+	case EDwPurchaseResult::ShipFull:      return LOCTEXT("ShipFull", "The hull is already sound.");
+	case EDwPurchaseResult::InventoryFull: return FText::Format(LOCTEXT("HoldFull", "The hold is full ({0} / {1})."), S.CountItems(), Run.GetMaxInventory());
+	case EDwPurchaseResult::NotEnoughGold: return FText::Format(LOCTEXT("NeedsGold", "Needs {0} gold - you have {1}."), Offer ? Offer->Price : 0, S.Gold);
+	}
+	return LOCTEXT("Refused", "Can't buy this now.");
+}
+
+const FDwShopOffer* UDwShopViewModel::FindOffer(int32 OfferId) const
+{
+	const UDwRun* TheRun = GetRun();
+	return TheRun ? TheRun->GetShop().Offers.FindByPredicate([OfferId](const FDwShopOffer& Offer) { return Offer.OfferId == OfferId; }) : nullptr;
+}
+
+void UDwShopViewModel::ClearPick()
+{
+	SelectedMove = INDEX_NONE;
+	SelectedCrew.Invalidate();
+	SelectedSlot = INDEX_NONE;
+	bMovePicked = false;
+}
+
+EDwPurchaseResult UDwShopViewModel::CheckMoveCard(const FDwShopOffer& Offer, FGuid& OutCrew) const
+{
+	const UDwRun* TheRun = GetRun();
+	OutCrew.Invalidate();
+	if (!TheRun)
+	{
+		return EDwPurchaseResult::NoOffer;
+	}
+	if (Offer.EligibleCrew.IsEmpty())
+	{
+		return TheRun->CanPurchase(Offer.OfferId, FGuid()); // sold out / nobody can learn it, in the rules' order
+	}
+	// Any slot will do for the card: which move to forget is picked later.
+	const int32 Slots = TheRun->GetMaxAbilitySlots();
+	EDwPurchaseResult First = EDwPurchaseResult::InvalidTarget;
+	for (int32 Index = 0; Index < Offer.EligibleCrew.Num(); ++Index)
+	{
+		const FDwCrewMemberState* Member = TheRun->GetState().FindCrew(Offer.EligibleCrew[Index]);
+		const int32 Slot = Member && Slots > 0 && Member->Abilities.Num() >= Slots ? 0 : INDEX_NONE;
+		const EDwPurchaseResult Result = TheRun->CanPurchase(Offer.OfferId, Offer.EligibleCrew[Index], Slot);
+		if (Result == EDwPurchaseResult::Ok)
+		{
+			OutCrew = Offer.EligibleCrew[Index];
+			return Result;
+		}
+		if (Index == 0)
+		{
+			First = Result;
+			OutCrew = Offer.EligibleCrew[Index];
+		}
+	}
+	return First;
+}
+
+EDwPurchaseResult UDwShopViewModel::CheckMove(FText& OutReason) const
+{
+	const UDwRun* TheRun = GetRun();
+	const FDwShopOffer* Offer = bMovePicked ? FindOffer(SelectedMove) : nullptr;
+	if (!TheRun || !Offer)
+	{
+		OutReason = LOCTEXT("PickMove", "Pick a move.");
+		return EDwPurchaseResult::NoOffer;
+	}
+	const FDwCrewMemberState* Learner = SelectedCrew.IsValid() ? TheRun->GetState().FindCrew(SelectedCrew) : nullptr;
+	if (!Learner)
+	{
+		OutReason = FText::Format(LOCTEXT("PickShopLearner", "Pick who learns {0}."), DwRunScreens::NameOf(Offer->Ability));
+		return EDwPurchaseResult::InvalidTarget;
+	}
+	const EDwPurchaseResult Result = TheRun->CanPurchase(Offer->OfferId, SelectedCrew, SelectedSlot);
+	OutReason = DescribeResult(Result, *TheRun, Offer, SelectedCrew);
+	return Result;
+}
+
+bool UDwShopViewModel::Purchase(int32 OfferId, const FGuid& CrewId, int32 Slot)
+{
+	UDwRun* TheRun = GetRun();
+	if (!TheRun)
+	{
+		return false;
+	}
+	// Checked first so a refusal never reaches TryPurchase (it would log); the count moves before TryPurchase's
+	// broadcast so the screen sees this purchase in the refresh it triggers.
+	LastResult = TheRun->CanPurchase(OfferId, CrewId, Slot);
+	++PurchaseCount;
+	if (LastResult != EDwPurchaseResult::Ok)
+	{
+		NotifyChanged();
+		return false;
+	}
+	return TheRun->TryPurchase(OfferId, CrewId, Slot) == EDwPurchaseResult::Ok;
+}
+
+bool UDwShopViewModel::Buy(int32 OfferId)
+{
+	const FDwShopOffer* Offer = FindOffer(OfferId);
+	return Offer && Offer->Type != EDwShopOfferType::Ability && Purchase(OfferId, FGuid(), INDEX_NONE);
+}
+
+bool UDwShopViewModel::SelectMove(int32 OfferId)
+{
+	const FDwShopOffer* Offer = FindOffer(OfferId);
+	FGuid Learner;
+	if (!Offer || Offer->Type != EDwShopOfferType::Ability || CheckMoveCard(*Offer, Learner) != EDwPurchaseResult::Ok)
+	{
+		return false;
+	}
+	const bool bDrop = bMovePicked && SelectedMove == OfferId; // a second click drops the pick
+	ClearPick();
+	if (!bDrop)
+	{
+		bMovePicked = true;
+		SelectedMove = OfferId;
+		if (Offer->EligibleCrew.Num() == 1)
+		{
+			SelectedCrew = Offer->EligibleCrew[0]; // nobody else can learn it
+		}
+	}
+	Refresh();
+	return true;
+}
+
+bool UDwShopViewModel::SelectLearner(int32 Index)
+{
+	const FDwShopOffer* Offer = bMovePicked ? FindOffer(SelectedMove) : nullptr;
+	if (!Offer || !Offer->EligibleCrew.IsValidIndex(Index))
+	{
+		return false;
+	}
+	SelectedCrew = Offer->EligibleCrew[Index];
+	SelectedSlot = INDEX_NONE;
+	Refresh();
+	return true;
+}
+
+bool UDwShopViewModel::SelectForget(int32 Index)
+{
+	const UDwRun* TheRun = GetRun();
+	const FDwCrewMemberState* Learner = TheRun && bMovePicked && SelectedCrew.IsValid() ? TheRun->GetState().FindCrew(SelectedCrew) : nullptr;
+	if (!Learner || !Learner->Abilities.IsValidIndex(Index))
+	{
+		return false;
+	}
+	SelectedSlot = Index;
+	Refresh();
+	return true;
+}
+
+bool UDwShopViewModel::BuySelectedMove()
+{
+	FText Reason;
+	if (CheckMove(Reason) != EDwPurchaseResult::Ok)
+	{
+		return false;
+	}
+	// Bought: the offer sells out, and the refresh TryPurchase triggers drops the pick.
+	return Purchase(SelectedMove, SelectedCrew, SelectedSlot);
+}
+
+void UDwShopViewModel::Refresh()
+{
+	UDwRun* TheRun = GetRun();
+	const bool bActive = TheRun && TheRun->GetPhase() == EDwRunPhase::Shop && TheRun->GetShop().IsOpen();
+	const FDwShopInventory* Shop = bActive ? &TheRun->GetShop() : nullptr;
+	if (!bActive || ShopNode != Shop->Node)
+	{
+		ClearPick();
+		LastResult = EDwPurchaseResult::Ok;
+		PurchaseCount = 0;
+		ShopNode = bActive ? Shop->Node : INDEX_NONE;
+	}
+
+	int32 SupplyCount = 0, MoveCount = 0, LearnerCount = 0, ForgetCount = 0, RecruitCount = 0, UpgradeCount = 0, DisbandCount = 0;
+	Crew.Reset();
+	MoveHint = FText::GetEmpty();
+	if (bActive)
+	{
+		const FDwRunState& S = TheRun->GetState();
+		Gold = S.Gold;
+		ShipText = DwRunScreens::ShipLine(S);
+		const int32 MaxInventory = TheRun->GetMaxInventory();
+		HoldText = MaxInventory > 0 ? FText::Format(LOCTEXT("Hold", "Hold {0} / {1}"), S.CountItems(), MaxInventory)
+			: FText::Format(LOCTEXT("HoldNoCap", "Hold {0}"), S.CountItems());
+		DwRunScreens::CrewLines(S, Crew);
+
+		// A picked move that sold out, or a learner who can no longer learn it, is dropped.
+		if (bMovePicked)
+		{
+			const FDwShopOffer* Picked = FindOffer(SelectedMove);
+			FGuid Unused;
+			if (!Picked || Picked->Type != EDwShopOfferType::Ability || CheckMoveCard(*Picked, Unused) != EDwPurchaseResult::Ok)
+			{
+				ClearPick();
+			}
+			else if (SelectedCrew.IsValid() && !Picked->EligibleCrew.Contains(SelectedCrew))
+			{
+				SelectedCrew.Invalidate();
+				SelectedSlot = INDEX_NONE;
+			}
+		}
+
+		auto Priced = [this, TheRun](FDwChoiceView& View, const FDwShopOffer& Offer, EDwPurchaseResult Result)
+		{
+			View.bEnabled = Result == EDwPurchaseResult::Ok;
+			View.DisabledReason = DescribeResult(Result, *TheRun, &Offer, FGuid());
+			View.SelectSound = DwTags::UI_Sound_Purchase;
+		};
+		for (const FDwShopOffer& Offer : Shop->Offers)
+		{
+			const int32 Id = Offer.OfferId;
+			FDwChoiceView View;
+			switch (Offer.Type)
+			{
+			case EDwShopOfferType::Repair:
+				View.Title = LOCTEXT("Repair", "Repair the hull");
+				View.Body = FText::Format(LOCTEXT("RepairBody", "{0} gold\n+{1} hull"), Offer.Price, Offer.Amount);
+				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
+				Choice(Supplies, SupplyCount++)->Set(View, [this, Id]() { return Buy(Id); });
+				break;
+			case EDwShopOfferType::Item:
+				View.Title = DwRunScreens::NameOf(Offer.Item);
+				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Item ? Offer.Item->Description : FText::GetEmpty());
+				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
+				Choice(Supplies, SupplyCount++)->Set(View, [this, Id]() { return Buy(Id); });
+				break;
+			case EDwShopOfferType::Ability:
+			{
+				FGuid Learner;
+				const EDwPurchaseResult Result = CheckMoveCard(Offer, Learner);
+				TArray<FString> Names;
+				for (const FGuid& Eligible : Offer.EligibleCrew)
+				{
+					Names.Add(DwRunScreens::CrewName(S, Eligible).ToString());
+				}
+				const FText Who = Names.IsEmpty() ? LOCTEXT("Nobody", "nobody aboard can learn it")
+					: FText::Format(LOCTEXT("WhoLearns", "for {0}"), FText::FromString(FString::Join(Names, TEXT(", "))));
+				View.Title = DwRunScreens::NameOf(Offer.Ability);
+				View.Body = FText::Format(LOCTEXT("MoveBody", "{0} gold, {1}\n{2}"), Offer.Price, Who, Offer.Ability ? Offer.Ability->Description : FText::GetEmpty());
+				View.bSelected = bMovePicked && Id == SelectedMove;
+				View.bEnabled = Result == EDwPurchaseResult::Ok;
+				View.DisabledReason = DescribeResult(Result, *TheRun, &Offer, Offer.EligibleCrew.Num() == 1 ? Learner : FGuid());
+				Choice(Moves, MoveCount++)->Set(View, [this, Id]() { return SelectMove(Id); });
+				break;
+			}
+			case EDwShopOfferType::Recruit:
+				View.Title = FText::Format(LOCTEXT("Recruit", "{0}, level {1}"), DwRunScreens::NameOf(Offer.Unit), Offer.Level);
+				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Unit ? Offer.Unit->Description : FText::GetEmpty());
+				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
+				Choice(Recruits, RecruitCount++)->Set(View, [this, Id]() { return Buy(Id); });
+				break;
+			case EDwShopOfferType::ShipUpgrade:
+				View.Title = DwRunScreens::NameOf(Offer.Upgrade);
+				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Upgrade ? Offer.Upgrade->GetFormattedDescription() : FText::GetEmpty());
+				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
+				Choice(Upgrades, UpgradeCount++)->Set(View, [this, Id]() { return Buy(Id); });
+				break;
+			case EDwShopOfferType::Disband:
+			{
+				if (Offer.bSoldOut)
+				{
+					break; // they left: nothing to show
+				}
+				const FText Name = DwRunScreens::CrewName(S, Offer.CrewId);
+				View.Title = FText::Format(LOCTEXT("Disband", "Disband {0}"), Name);
+				View.Body = Offer.Amount > 0 ? FText::Format(LOCTEXT("Refund", "Refund {0} gold"), Offer.Amount) : LOCTEXT("NoRefund", "No refund");
+				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
+				View.SelectSound = DwTags::UI_Sound_Confirm;
+				View.ConfirmTitle = FText::Format(LOCTEXT("DisbandTitle", "Disband {0}?"), Name);
+				View.ConfirmBody = LOCTEXT("DisbandBody", "They leave the crew for good, with their level and their moves.");
+				View.ConfirmYes = LOCTEXT("DisbandYes", "Disband");
+				Choice(Disbands, DisbandCount++)->Set(View, [this, Id]() { return Buy(Id); });
+				break;
+			}
+			}
+		}
+
+		// The move pick: who learns it, then what they forget.
+		const FDwShopOffer* Picked = bMovePicked ? FindOffer(SelectedMove) : nullptr;
+		const int32 Slots = TheRun->GetMaxAbilitySlots();
+		if (Picked)
+		{
+			for (int32 Index = 0; Index < Picked->EligibleCrew.Num(); ++Index)
+			{
+				const FGuid& Id = Picked->EligibleCrew[Index];
+				const FDwCrewMemberState* Member = S.FindCrew(Id);
+				const bool bFull = Member && Slots > 0 && Member->Abilities.Num() >= Slots;
+				FDwChoiceView View;
+				View.Title = DwRunScreens::CrewName(S, Id);
+				View.Body = Member ? (Slots > 0 ? FText::Format(LOCTEXT("LearnerSlots", "L{0}, knows {1} / {2} moves"), Member->Level, Member->Abilities.Num(), Slots)
+					: FText::Format(LOCTEXT("ShopLearnerBody", "L{0}, knows {1} moves"), Member->Level, Member->Abilities.Num())) : FText::GetEmpty();
+				View.bSelected = Id == SelectedCrew;
+				const EDwPurchaseResult Result = TheRun->CanPurchase(Picked->OfferId, Id, bFull ? 0 : INDEX_NONE);
+				View.bEnabled = Result == EDwPurchaseResult::Ok;
+				View.DisabledReason = DescribeResult(Result, *TheRun, Picked, Id);
+				Choice(Learners, LearnerCount++)->Set(View, [this, Index]() { return SelectLearner(Index); });
+			}
+			const FDwCrewMemberState* Learner = SelectedCrew.IsValid() ? S.FindCrew(SelectedCrew) : nullptr;
+			if (Learner && Slots > 0 && Learner->Abilities.Num() >= Slots)
+			{
+				for (int32 Index = 0; Index < Learner->Abilities.Num(); ++Index)
+				{
+					FDwChoiceView View;
+					View.Title = FText::Format(LOCTEXT("ShopForget", "Forget {0}"), DwRunScreens::NameOf(Learner->Abilities[Index]));
+					View.bSelected = Index == SelectedSlot;
+					Choice(Forget, ForgetCount++)->Set(View, [this, Index]() { return SelectForget(Index); });
+				}
+			}
+		}
+
+		if (!BuyMove)
+		{
+			BuyMove = NewObject<UDwChoiceViewModel>(this);
+		}
+		FDwChoiceView BuyView;
+		FText Blocker;
+		const EDwPurchaseResult MoveResult = CheckMove(Blocker);
+		if (Picked)
+		{
+			const FDwCrewMemberState* Learner = SelectedCrew.IsValid() ? S.FindCrew(SelectedCrew) : nullptr;
+			BuyView.Title = Learner
+				? FText::Format(LOCTEXT("Teach", "Teach {0}"), DwRunScreens::NameOf(Picked->Ability))
+				: FText::Format(LOCTEXT("BuyMove", "Buy {0}"), DwRunScreens::NameOf(Picked->Ability));
+			BuyView.Body = Learner && Learner->Abilities.IsValidIndex(SelectedSlot)
+				? FText::Format(LOCTEXT("TeachForget", "To {0}, {1} gold, forgets {2}"), Learner->GetDisplayName(), Picked->Price, DwRunScreens::NameOf(Learner->Abilities[SelectedSlot]))
+				: Learner ? FText::Format(LOCTEXT("TeachTo", "To {0}, {1} gold"), Learner->GetDisplayName(), Picked->Price)
+				: FText::Format(LOCTEXT("Price", "{0} gold"), Picked->Price);
+			MoveHint = MoveResult == EDwPurchaseResult::Ok ? LOCTEXT("ReadyToTeach", "Ready: buy to teach it now.") : Blocker;
+		}
+		else
+		{
+			MoveHint = MoveCount > 0 ? LOCTEXT("MovesHint", "Pick a move, then who learns it.") : LOCTEXT("NoMoves", "No new moves for sale here.");
+		}
+		BuyView.bEnabled = MoveResult == EDwPurchaseResult::Ok;
+		BuyView.DisabledReason = BuyView.bEnabled ? FText::GetEmpty() : Blocker;
+		BuyView.SelectSound = DwTags::UI_Sound_Purchase;
+		BuyMove->Set(BuyView, [this]() { return BuySelectedMove(); });
+	}
+	else
+	{
+		Gold = 0;
+		ShipText = HoldText = FText::GetEmpty();
+	}
+	Supplies.SetNum(SupplyCount);
+	Moves.SetNum(MoveCount);
+	Learners.SetNum(LearnerCount);
+	Forget.SetNum(ForgetCount);
+	Recruits.SetNum(RecruitCount);
+	Upgrades.SetNum(UpgradeCount);
+	Disbands.SetNum(DisbandCount);
+
+	if (!Leave)
+	{
+		Leave = NewObject<UDwChoiceViewModel>(this);
+	}
+	FDwChoiceView LeaveView;
+	LeaveView.Title = LOCTEXT("LeaveShop", "Leave the shop");
+	LeaveView.bEnabled = bActive;
+	LeaveView.DisabledReason = bActive ? FText::GetEmpty() : LOCTEXT("NoShop", "No shop here.");
+	Leave->Set(LeaveView, [this]() { UDwRun* R = GetRun(); return R && R->GetPhase() == EDwRunPhase::Shop && R->LeaveShop(); });
+	NotifyChanged();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Event shell
 
 void UDwNodeShellViewModel::Refresh()
 {
 	UDwRun* TheRun = GetRun();
 	const EDwRunPhase Phase = TheRun ? TheRun->GetPhase() : EDwRunPhase::Map;
 	int32 Count = 0;
-	if (Phase == EDwRunPhase::Shop)
-	{
-		Headline = LOCTEXT("ShopTitle", "Shop");
-		Body = FText::Format(LOCTEXT("ShopBody", "You have {0} gold.\nThe shopkeeper is still unpacking (shop screen: next UI ticket)."), TheRun->GetState().Gold);
-		FDwChoiceView View;
-		View.Title = LOCTEXT("LeaveShop", "Leave the shop");
-		Choice(Actions, Count++)->Set(View, [this]() { UDwRun* R = GetRun(); return R && R->LeaveShop(); });
-	}
-	else if (Phase == EDwRunPhase::Event)
+	if (Phase == EDwRunPhase::Event)
 	{
 		RefreshEvent(*TheRun, Count);
 	}

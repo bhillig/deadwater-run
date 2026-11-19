@@ -400,7 +400,9 @@ namespace DwUIContent
 			Slot->SetHorizontalAlignment(HAlign_Fill);
 			Slot->SetVerticalAlignment(VAlign_Top);
 		}
-		AddRow(*Rows, B.Text(TEXT("TitleText"), TEXT("Sea Legs"), 20, Light), FMargin(0.f, 0.f, 0.f, 3.f));
+		UTextBlock* Title = B.Text(TEXT("TitleText"), TEXT("Sea Legs"), 20, Light);
+		Title->SetAutoWrapText(true); // long names (and "Teach <move>") wrap instead of leaving the card
+		AddRow(*Rows, Title, FMargin(0.f, 0.f, 0.f, 3.f));
 		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("Moves 1 more tile each turn."), 15, Dim, /*bBold*/ false);
 		Body->SetAutoWrapText(true);
 		AddRow(*Rows, Body);
@@ -501,13 +503,68 @@ namespace DwUIContent
 		return B.Finish(Root);
 	}
 
+	/** A titled shop section: label, then its cards in a wrap row (both named, so the screen can collapse them). */
+	void ShopSection(FTreeBuilder& B, UVerticalBox& Column, const TCHAR* LabelName, const TCHAR* Label, const TCHAR* ListName)
+	{
+		AddRow(Column, B.Text(LabelName, Label, 20, Gold), FMargin(0.f, 0.f, 0.f, 8.f));
+		AddRow(Column, ChoiceRow(B, ListName), FMargin(0.f, 0.f, 0.f, 18.f));
+	}
+
+	bool BuildShopScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UWidget* Root = nullptr;
+		UVerticalBox* Column = ScreenColumn(B, Root, 1780.f);
+
+		// Header: title, gold, hull, hold; then the crew.
+		UHorizontalBox* Header = B.Make<UHorizontalBox>();
+		AddColumn(*Header, B.Text(nullptr, TEXT("Shop"), 34, Gold), FMargin(0.f), /*bFill*/ true);
+		AddColumn(*Header, B.Text(TEXT("GoldText"), TEXT("240 gold"), 24, Gold), FMargin(28.f, 0.f));
+		AddColumn(*Header, B.Text(TEXT("ShipText"), TEXT("Hull 180 / 250"), 22, Light), FMargin(0.f, 0.f, 28.f, 0.f));
+		AddColumn(*Header, B.Text(TEXT("HoldText"), TEXT("Hold 1 / 6"), 22, Light));
+		AddRow(*Column, Header, FMargin(0.f, 0.f, 0.f, 8.f));
+		UWrapBox* Crew = B.Make<UWrapBox>(TEXT("CrewList"));
+		Crew->SetInnerSlotPadding(FVector2D(36.f, 4.f));
+		AddRow(*Column, Crew, FMargin(0.f, 0.f, 0.f, 22.f));
+
+		// Two columns: things bought on a click (left), new moves with their pick (right).
+		UHorizontalBox* Body = B.Make<UHorizontalBox>();
+		UVerticalBox* Left = B.Make<UVerticalBox>();
+		ShopSection(B, *Left, TEXT("SupplyLabel"), TEXT("Repairs and supplies"), TEXT("SupplyList"));
+		ShopSection(B, *Left, TEXT("RecruitLabel"), TEXT("Crew for hire"), TEXT("RecruitList"));
+		ShopSection(B, *Left, TEXT("UpgradeLabel"), TEXT("Ship upgrades"), TEXT("UpgradeList"));
+		ShopSection(B, *Left, TEXT("DisbandLabel"), TEXT("Disband crew"), TEXT("DisbandList"));
+		USizeBox* LeftBox = B.Make<USizeBox>();
+		LeftBox->SetWidthOverride(880.f);
+		LeftBox->SetContent(Left);
+		AddColumn(*Body, LeftBox, FMargin(0.f, 0.f, 20.f, 0.f), /*bFill*/ false, VAlign_Top);
+
+		UVerticalBox* Right = B.Make<UVerticalBox>();
+		AddRow(*Right, B.Text(nullptr, TEXT("New moves"), 20, Gold), FMargin(0.f, 0.f, 0.f, 4.f));
+		UTextBlock* Hint = B.Text(TEXT("MoveHintText"), TEXT("Pick a move, then who learns it."), 16, Dim, /*bBold*/ false);
+		Hint->SetAutoWrapText(true);
+		AddRow(*Right, Hint, FMargin(0.f, 0.f, 0.f, 8.f));
+		AddRow(*Right, ChoiceRow(B, TEXT("MoveList")), FMargin(0.f, 0.f, 0.f, 12.f));
+		AddRow(*Right, ChoiceRow(B, TEXT("LearnerList")), FMargin(0.f, 0.f, 0.f, 12.f));
+		AddRow(*Right, ChoiceRow(B, TEXT("ForgetList")), FMargin(0.f, 0.f, 0.f, 12.f));
+		AddRow(*Right, B.Make<UHorizontalBox>(TEXT("BuyMoveSlot")), FMargin(0.f));
+		USizeBox* RightBox = B.Make<USizeBox>();
+		RightBox->SetWidthOverride(880.f);
+		RightBox->SetContent(Right);
+		AddColumn(*Body, RightBox, FMargin(0.f), /*bFill*/ false, VAlign_Top);
+		AddRow(*Column, Body, FMargin(0.f, 0.f, 0.f, 12.f));
+
+		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("LeaveSlot")), FMargin(0.f, 8.f, 0.f, 0.f), HAlign_Center);
+		return B.Finish(Root);
+	}
+
 	bool BuildNodeShellScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
 		UVerticalBox* Column = ScreenColumn(B, Root, 800.f);
-		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Shop"), 36, Gold), FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
-		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("You have 100 gold."), 20, Light, false);
+		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Calm water"), 36, Gold), FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
+		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("The sea is quiet."), 20, Light, false);
 		Body->SetAutoWrapText(true);
 		Body->SetJustification(ETextJustify::Center);
 		AddRow(*Column, Body, FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
@@ -850,6 +907,7 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		{ TEXT("WBP_Map"), UDwMapScreen::StaticClass(), &BuildMapScreen },
 		{ TEXT("WBP_Rewards"), UDwRewardsScreen::StaticClass(), &BuildRewardsScreen },
 		{ TEXT("WBP_LevelUp"), UDwLevelUpScreen::StaticClass(), &BuildLevelUpScreen },
+		{ TEXT("WBP_Shop"), UDwShopScreen::StaticClass(), &BuildShopScreen },
 		{ TEXT("WBP_NodeShell"), UDwNodeShellScreen::StaticClass(), &BuildNodeShellScreen },
 		{ TEXT("WBP_StepButton"), UDwChoiceButtonWidget::StaticClass(), &BuildStepButton },
 		{ TEXT("WBP_SettingRow"), UDwSettingRowWidget::StaticClass(), &BuildSettingRow }, // after WBP_StepButton
@@ -888,7 +946,7 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 	{
 		SettingsScreen->RowClass = ClassOf(TEXT("WBP_SettingRow"));
 	}
-	for (const TCHAR* Name : { TEXT("WBP_Map"), TEXT("WBP_Rewards"), TEXT("WBP_LevelUp"), TEXT("WBP_NodeShell"), TEXT("WBP_Menu"),
+	for (const TCHAR* Name : { TEXT("WBP_Map"), TEXT("WBP_Rewards"), TEXT("WBP_LevelUp"), TEXT("WBP_Shop"), TEXT("WBP_NodeShell"), TEXT("WBP_Menu"),
 		TEXT("WBP_CaptainSelect"), TEXT("WBP_Settings") })
 	{
 		if (UDwRunScreen* Screen = Built[Name]->GeneratedClass->GetDefaultObject<UDwRunScreen>())
@@ -917,8 +975,8 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 	Screens->Menu = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Menu")));
 	Screens->CaptainSelect = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_CaptainSelect")));
 	Screens->Settings = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Settings")));
-	Screens->Shop = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_NodeShell"))); // WBP_Shop: DW-204
-	Screens->Event = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_NodeShell"))); // WBP_Event: DW-205
+	Screens->Shop = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_Shop")));
+	Screens->Event = TSoftClassPtr<UDwActivatableScreen>(ClassOf(TEXT("WBP_NodeShell"))); // the event flow; a dedicated WBP_Event later
 	bool bSoundMapCreated = false;
 	UDwUISoundMap* SoundMap = FindOrCreate<UDwUISoundMap>(UIData, TEXT("DA_UISoundMap"), OutLog, &bSoundMapCreated);
 	if (bSoundMapCreated)

@@ -31,6 +31,7 @@
 #include "Run/DwRun.h"
 #include "Run/DwRunSubsystem.h"
 #include "UI/DwActivatableScreen.h"
+#include "UI/DwRunViewModels.h"
 #include "UI/DwShellViewModels.h"
 #include "UI/DwUIManagerSubsystem.h"
 #include "HighResScreenshot.h"
@@ -181,10 +182,7 @@ void UDwDevCaptureSubsystem::StageDemo()
 	}
 	if (Demo == TEXT("shop"))
 	{
-		if (IConsoleVariable* Readout = IConsoleManager::Get().FindConsoleVariable(TEXT("dw.Run.Readout")))
-		{
-			Readout->Set(true, ECVF_SetByCode);
-		}
+		// No dev readout: WBP_Shop shows gold, hull, hold, crew and every offer itself (the readout bled through it).
 		ShopDemoStep();
 		return;
 	}
@@ -1027,6 +1025,7 @@ void UDwDevCaptureSubsystem::ShopDemoStep()
 		Next(0.6f);
 		return;
 	case EDwRunPhase::Shop:
+	{
 		if (ShopStage >= 4)
 		{
 			Run->LeaveShop(); // a later shop on the way to the next fight
@@ -1077,14 +1076,73 @@ void UDwDevCaptureSubsystem::ShopDemoStep()
 			}
 			LogState(TEXT("after shopping"));
 			Frame(TEXT("shop after buying"));
-			ShopStage = 3;
+			ShopStage = 2;
 			Next(0.5f);
 			return;
 		}
-		UE_CLOG(!Run->LeaveShop(), LogDw, Error, TEXT("Dev capture 'shop': could not leave the shop."));
-		ShopStage = 4;
-		Next(0.6f);
+		// Stages 2-3: teach a move through the shop screen's view model, the way the clicks do: the move (one with two
+		// learners if offered), a learner, a move to forget if they're full, then Buy.
+		const ULocalPlayer* Player = World->GetFirstLocalPlayerFromController();
+		UDwShopViewModel* ShopView = Player ? UDwUIManagerSubsystem::Get(Player)->GetShopViewModel() : nullptr;
+		if (ShopStage == 2)
+		{
+			if (ShopView)
+			{
+				int32 Card = INDEX_NONE, Index = 0;
+				for (const FDwShopOffer& Offer : Run->GetShop().Offers)
+				{
+					if (Offer.Type != EDwShopOfferType::Ability)
+					{
+						continue;
+					}
+					const bool bEnabled = ShopView->GetMoves().IsValidIndex(Index) && ShopView->GetMoves()[Index]->GetView().bEnabled;
+					if (bEnabled && (Card == INDEX_NONE || Offer.EligibleCrew.Num() > 1))
+					{
+						Card = Index;
+						if (Offer.EligibleCrew.Num() > 1) { break; }
+					}
+					++Index;
+				}
+				if (Card != INDEX_NONE && ShopView->GetMoves()[Card]->Select())
+				{
+					if (!ShopView->GetLearners().IsEmpty() && !ShopView->GetLearners().ContainsByPredicate([](const TObjectPtr<UDwChoiceViewModel>& L) { return L->GetView().bSelected; }))
+					{
+						ShopView->GetLearners().Last()->Select();
+					}
+					if (!ShopView->GetForget().IsEmpty())
+					{
+						ShopView->GetForget()[0]->Select();
+					}
+				}
+			}
+			UE_CLOG(!ShopView || !ShopView->GetBuyMove(), LogDw, Warning, TEXT("Dev capture 'shop': no move to teach at this shop."));
+			ShopStage = 3; // captured next step: screenshots are taken at the end of a frame, after layout settles
+			Next(0.5f);
+			return;
+		}
+		if (ShopStage == 3)
+		{
+			if (!bShopMoveCaptured)
+			{
+				Frame(TEXT("shop: teaching a move"));
+				bShopMoveCaptured = true;
+				Next(0.5f);
+				return;
+			}
+			if (ShopView && ShopView->GetBuyMove())
+			{
+				const FText Title = ShopView->GetBuyMove()->GetView().Title;
+				UE_CLOG(!ShopView->GetBuyMove()->Select(), LogDw, Error, TEXT("Dev capture 'shop': could not teach the move (%s)."),
+					*ShopView->GetBuyMove()->GetView().DisabledReason.ToString());
+				UE_LOG(LogDw, Log, TEXT("Dev capture 'shop': %s."), *Title.ToString());
+			}
+			ShopStage = 4; // the next step leaves (the branch above), then the map frame
+			Next(0.5f);
+			return;
+		}
+		Next(0.5f);
 		return;
+	}
 	default:
 		Next(0.5f);
 		return;
