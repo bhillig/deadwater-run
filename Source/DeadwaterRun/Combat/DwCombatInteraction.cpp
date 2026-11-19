@@ -437,6 +437,22 @@ void UDwCombatInteraction::UpdateHover(const FDwCombatSnapshot& Snapshot)
 	}
 }
 
+TArray<FIntPoint> UDwCombatInteraction::GatherDangerTiles(const FDwCombatSnapshot& Snapshot)
+{
+	TArray<FIntPoint> Danger;
+	for (const FDwUnitIntents& Entry : Snapshot.Intents)
+	{
+		for (const FDwAiIntent& Intent : Entry.Intents)
+		{
+			for (const FIntPoint& Tile : FDwCombatQueries::GetIntentDangerTiles(Snapshot, Entry.Unit, Intent))
+			{
+				Danger.AddUnique(Tile);
+			}
+		}
+	}
+	return Danger;
+}
+
 void UDwCombatInteraction::ClearHighlights()
 {
 	if (ADwBoard* Board = GetBoard())
@@ -463,6 +479,7 @@ void UDwCombatInteraction::DrawHighlights(const FDwCombatSnapshot& Snapshot)
 		Hover.AddUnique(Unit->Tile); // the selected pirate's tile
 	}
 	Board->ShowHighlights(EDwHighlightLayer::Hover, Hover);
+	Board->ShowHighlights(EDwHighlightLayer::Danger, GatherDangerTiles(Snapshot));
 	if (!CanAct() || Mode == EDwInteractionMode::Idle)
 	{
 		return;

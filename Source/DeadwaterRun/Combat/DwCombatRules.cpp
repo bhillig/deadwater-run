@@ -380,6 +380,56 @@ bool FDwCombatQueries::SideHasAvailableAction(const FDwCombatSnapshot& Snapshot,
 	return false;
 }
 
+TArray<FIntPoint> FDwCombatQueries::GetIntentDangerTiles(const FDwCombatSnapshot& Snapshot, FDwUnitHandle Unit, const FDwAiIntent& Intent)
+{
+	TArray<FIntPoint> Tiles;
+	const FDwUnitSnapshot* Source = Snapshot.FindUnit(Unit);
+	const UDwAbilityDefinition* Ability = Source ? FindAbility(*Source, Intent.AbilityTag) : nullptr;
+	const UDwGameplayAbility* CDO = GetAbilityCDO(Ability);
+	if (!CDO || !Source->bAlive || Intent.Target.bShip)
+	{
+		return Tiles;
+	}
+	FDwTargetingContext Context;
+	Context.Snapshot = &Snapshot;
+	Context.Ability = Ability;
+	Context.Source = Unit;
+	switch (CDO->GetTargetingRules(Context).Pattern)
+	{
+	case EDwTargetPattern::Self:
+	case EDwTargetPattern::AllAllies:
+	case EDwTargetPattern::EnemyShip:
+		return Tiles;
+	case EDwTargetPattern::AllEnemies:
+	case EDwTargetPattern::RandomEnemies:
+	{
+		TArray<FDwAbilityTarget> Valid;
+		CDO->GatherValidTargets(Context, Valid);
+		for (const FDwAbilityTarget& Target : Valid)
+		{
+			if (Target.IsUnit())
+			{
+				Tiles.AddUnique(Target.Tile);
+			}
+		}
+		return Tiles;
+	}
+	default:
+		break;
+	}
+	if (Intent.Target.IsUnit())
+	{
+		const FDwUnitSnapshot* Victim = Snapshot.FindUnit(Intent.Target.Unit);
+		if (Victim && Victim->bAlive)
+		{
+			Tiles.Add(Victim->Tile);
+		}
+		return Tiles;
+	}
+	Tiles.Add(Intent.Target.Tile); // a tile aim: the tile itself, occupied or not
+	return Tiles;
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Cannons

@@ -90,6 +90,9 @@ public:
 	bool IsEndTurnSuggested() const { return bEndTurnSuggested; }
 	/** Player turn, nothing resolving, no outcome. */
 	bool CanAct() const;
+
+	/** Every tile the enemy's declared intents threaten (the Danger layer, DW-303; doc 08 "Intents"). */
+	static TArray<FIntPoint> GatherDangerTiles(const FDwCombatSnapshot& Snapshot);
 	TArray<FDwActionSlot> GetActionBar() const;
 
 	UPROPERTY(BlueprintAssignable, Category = "Deadwater|Interaction") FDwOnInteractionChanged OnChanged;

@@ -32,6 +32,9 @@ struct DEADWATERRUN_API FDwFloatingTextRequest
 	UPROPERTY(BlueprintReadOnly, Category = "FloatingText") FDwUnitHandle Unit;
 	/** Ship events: the ship it floats over. */
 	UPROPERTY(BlueprintReadOnly, Category = "FloatingText") EDwSide ShipSide = EDwSide::Neutral;
+	/** Tile events (a dodged Kraken hit, DW-303): floats over this tile when set. */
+	UPROPERTY(BlueprintReadOnly, Category = "FloatingText") bool bAtTile = false;
+	UPROPERTY(BlueprintReadOnly, Category = "FloatingText") FIntPoint Tile = FIntPoint::ZeroValue;
 };
 
 /**

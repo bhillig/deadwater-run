@@ -105,6 +105,67 @@ private:
 };
 
 /**
+ * WBP_Intent: one telegraphed enemy move in the HUD's intent list (DW-303, B6): "1  Tentacle Slam", the target
+ * ("Swordsman's tile") and the effect ("50 damage"). The frame turns red when it would kill (gold for the captain:
+ * the run is at stake) and grey when it will miss.
+ */
+UCLASS(Abstract)
+class DEADWATERRUN_API UDwIntentWidget : public UDwUserWidget
+{
+	GENERATED_BODY()
+
+public:
+	void SetView(const FDwIntentView& View);
+	const FDwIntentView& GetShownView() const { return Shown; }
+
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor NormalColor = FLinearColor(0.35f, 0.12f, 0.1f, 0.92f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor LethalColor = FLinearColor(0.85f, 0.12f, 0.08f, 0.95f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor CaptainColor = FLinearColor(0.85f, 0.62f, 0.1f, 0.95f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor MissColor = FLinearColor(0.25f, 0.27f, 0.3f, 0.9f);
+
+protected:
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UBorder> Frame;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> OrderText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> MoveText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> TargetText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> EffectText;
+
+private:
+	FDwIntentView Shown;
+};
+
+/**
+ * WBP_IntentMarker: the Kraken's next move floating above its body (B6b), so the threat reads where the player is
+ * looking. Added to the player screen by WBP_CombatHud and positioned every frame from the anchor actor.
+ */
+UCLASS(Abstract)
+class DEADWATERRUN_API UDwIntentMarkerWidget : public UDwUserWidget
+{
+	GENERATED_BODY()
+
+public:
+	/** Shows Text above Anchor (nullptr or empty text hides it). */
+	void SetMarker(AActor* InAnchor, const FText& Text, bool bLethal);
+	bool IsShowingMarker() const;
+	FText GetMarkerText() const;
+
+	/** World units above the anchor actor's origin. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Marker") float HeightAboveAnchor = 320.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor NormalColor = FLinearColor(1.f, 0.82f, 0.45f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor LethalColor = FLinearColor(1.f, 0.3f, 0.25f);
+
+protected:
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> MarkerText;
+
+private:
+	void UpdatePosition();
+
+	TWeakObjectPtr<AActor> Anchor;
+};
+
+/**
  * WBP_CombatHud on UI.Layer.Game (Docs/Architecture/14 "Screens"): both ship bars with numbers, crew cards, enemy bars,
  * the selected pirate's action bar, End Turn with the non-modal "End turn?" prompt (C14), the hint / damage preview /
  * message lines (C13), the turn banner on every side change and the outcome banner.
@@ -121,23 +182,37 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|HUD") TSubclassOf<UDwUnitCardWidget> UnitCardClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|HUD") TSubclassOf<UDwActionButtonWidget> ActionButtonClass;
+	/** Kraken fight (DW-303): one per declared intent in IntentList, and the marker above the body. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|HUD") TSubclassOf<UDwIntentWidget> IntentClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|HUD") TSubclassOf<UDwIntentMarkerWidget> IntentMarkerClass;
 	/** Gap between crew cards, enemy bars and action buttons (Slate units). */
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|HUD") float EntrySpacing = 8.f;
 	/** How long the turn banner stays up. */
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|HUD", meta = (ClampMin = "0.1")) float TurnBannerSeconds = 1.5f;
+	/** How long the Kraken's phase banner ("The Kraken is ENRAGED!") stays up. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|HUD", meta = (ClampMin = "0.1")) float PhaseBannerSeconds = 2.5f;
 
 	bool IsTurnBannerVisible() const;
+	bool IsPhaseBannerVisible() const;
+	/** The marker above the Kraken (null outside the Kraken fight until first needed). */
+	const UDwIntentMarkerWidget* GetIntentMarker() const { return IntentMarker; }
+	int32 GetIntentRowCount() const;
 
 protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnViewModelChanged() override;
 	virtual void NativeDestruct() override;
+	virtual void NativeOnActivated() override;
+	virtual void NativeOnDeactivated() override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Deadwater|UI|Juice")
 	void OnTurnBannerShown(EDwSide Side);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Deadwater|UI|Juice")
 	void OnShipHealthChanged(EDwSide Side, float OldHealth, float NewHealth);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Deadwater|UI|Juice")
+	void OnPhaseBannerShown(int32 PhaseIndex);
 
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> TurnText;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UProgressBar> PlayerShipBar;
@@ -161,6 +236,17 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> OutcomeBanner;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> OutcomeText;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> ControlsText;
+	// Kraken fight (DW-303): the boss bar where the enemy ship bar sits, the intent list under the enemy row, the phase banner.
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> BossPanel;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> BossNameText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> BossPhaseText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> BossTentacleText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UProgressBar> BossHealthBar;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> BossHealthText;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> IntentPanel;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UVerticalBox> IntentList;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> PhaseBanner;
+	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> PhaseBannerText;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor AllyColor = FLinearColor(0.25f, 0.55f, 1.f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor EnemyColor = FLinearColor(0.95f, 0.3f, 0.25f);
@@ -173,14 +259,21 @@ protected:
 private:
 	UFUNCTION() void HandleEndTurnClicked();
 	UFUNCTION() void HandleTurnBanner(EDwSide Side, int32 Round);
+	UFUNCTION() void HandlePhaseBanner(const FText& Text, int32 PhaseIndex);
 
 	template <typename TWidget, typename TViewModel>
 	void SyncList(UPanelWidget& Panel, TSubclassOf<TWidget> EntryClass, const TArray<TObjectPtr<TViewModel>>& ViewModels);
 	void RefreshShips(const UDwCombatHudViewModel& Hud);
 	void RefreshPrompt(const UDwCombatHudViewModel& Hud);
 	void HideTurnBanner();
+	void HidePhaseBanner();
+	void RefreshBoss(const UDwCombatHudViewModel& Hud);
+	void RefreshIntentMarker(const UDwCombatHudViewModel& Hud);
 
 	TWeakObjectPtr<UDwCombatHudViewModel> BoundHud;
 	FTimerHandle BannerTimer;
+	FTimerHandle PhaseBannerTimer;
+	UPROPERTY(Transient) TObjectPtr<UDwIntentMarkerWidget> IntentMarker;
+	UPROPERTY(Transient) TArray<TObjectPtr<UDwIntentWidget>> IntentRows;
 	float LastShipHealth[2] = { -1.f, -1.f };
 };

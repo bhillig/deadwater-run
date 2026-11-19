@@ -562,7 +562,7 @@ TArray<FString> UDwArtContentLibrary::CreateArtContent()
 			{ EDwHighlightLayer::Path, FLinearColor(1.f, 0.85f, 0.15f, 0.5f) },
 			{ EDwHighlightLayer::Target, FLinearColor(1.f, 0.1f, 0.6f, 0.35f) },
 			{ EDwHighlightLayer::AreaOfEffect, FLinearColor(1.f, 0.45f, 0.05f, 0.35f) },
-			{ EDwHighlightLayer::Danger, FLinearColor(0.7f, 0.05f, 0.35f, 0.35f) },
+			{ EDwHighlightLayer::Danger, FLinearColor(0.9f, 0.08f, 0.05f, 0.45f) },
 			{ EDwHighlightLayer::Hover, FLinearColor(1.f, 1.f, 1.f, 0.2f) },
 			{ EDwHighlightLayer::Preview, FLinearColor(0.3f, 0.8f, 0.3f, 0.3f) } };
 		bOk &= Save(BoardBp, Log);

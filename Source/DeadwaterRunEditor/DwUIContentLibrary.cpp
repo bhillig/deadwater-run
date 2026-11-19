@@ -611,6 +611,50 @@ namespace DwUIContent
 		return B.Finish(Root);
 	}
 
+	// -----------------------------------------------------------------------------------------------------------------
+	// Kraken HUD (DW-303)
+
+	/** "1  Tentacle Slam" over "Swordsman's tile (step off to dodge)" and "50 damage", on a dark red card. */
+	bool BuildIntent(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
+		Root->SetWidthOverride(400.f);
+		Root->SetVisibility(ESlateVisibility::HitTestInvisible);
+		UBorder* Frame = B.Make<UBorder>(TEXT("Frame"));
+		Frame->SetBrushColor(FLinearColor(0.35f, 0.12f, 0.1f, 0.92f));
+		Frame->SetPadding(FMargin(10.f, 6.f));
+		Root->SetContent(Frame);
+
+		UHorizontalBox* Columns = B.Make<UHorizontalBox>();
+		Frame->SetContent(Columns);
+		AddColumn(*Columns, B.Text(TEXT("OrderText"), TEXT("1"), 26, Gold), FMargin(0.f, 0.f, 10.f, 0.f), false, VAlign_Top);
+		UVerticalBox* Rows = B.Make<UVerticalBox>();
+		AddColumn(*Columns, Rows, FMargin(0.f), /*bFill*/ true, VAlign_Top);
+		AddRow(*Rows, B.Text(TEXT("MoveText"), TEXT("Tentacle Slam"), 20, Light));
+		UTextBlock* Target = B.Text(TEXT("TargetText"), TEXT("Swordsman's tile  (step off to dodge)"), 16, Gold, /*bBold*/ false);
+		Target->SetAutoWrapText(true);
+		AddRow(*Rows, Target, FMargin(0.f, 1.f, 0.f, 0.f));
+		UTextBlock* Effect = B.Text(TEXT("EffectText"), TEXT("50 damage"), 16, Light, /*bBold*/ false);
+		Effect->SetAutoWrapText(true);
+		AddRow(*Rows, Effect, FMargin(0.f, 1.f, 0.f, 0.f));
+		return B.Finish(Root);
+	}
+
+	/** The intent text that floats above the Kraken's body. */
+	bool BuildIntentMarker(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		UBorder* Root = B.Make<UBorder>(TEXT("Root"));
+		Root->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, 0.6f));
+		Root->SetPadding(FMargin(10.f, 4.f));
+		Root->SetVisibility(ESlateVisibility::HitTestInvisible);
+		UTextBlock* Text = B.Text(TEXT("MarkerText"), TEXT("Tentacle Slam: Swordsman's tile"), 18, Gold);
+		Text->SetJustification(ETextJustify::Center);
+		Root->SetContent(Text);
+		return B.Finish(Root);
+	}
+
 	bool BuildCombatHud(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
@@ -623,6 +667,27 @@ namespace DwUIContent
 		Place(*Root, ShipPanel(B, TEXT("EnemyShipPanel"), TEXT("ENEMY SHIP"), TEXT("EnemyShipBar"), TEXT("EnemyShipText"),
 			FLinearColor(1.f, 0.5f, 0.42f), HAlign_Right), FVector2D(1.f, 0.f), FVector2D(-24.f, 16.f));
 		Place(*Root, B.Text(TEXT("TurnText"), TEXT("Round 1  -  YOUR TURN"), 26, Gold), FVector2D(0.5f, 0.f), FVector2D(0.f, 20.f));
+
+		// Kraken fight (DW-303): the boss bar takes the enemy ship bar's place (there is no enemy ship), title and
+		// phase over a 420 px bar, tentacles and their damage cut on the title row.
+		UVerticalBox* BossBox = B.Make<UVerticalBox>(TEXT("BossPanel"));
+		BossBox->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		UHorizontalBox* BossTitle = B.Make<UHorizontalBox>();
+		AddColumn(*BossTitle, B.Text(TEXT("BossPhaseText"), TEXT("ENRAGED"), 18, FLinearColor(1.f, 0.25f, 0.2f)), FMargin(0.f, 0.f, 10.f, 0.f));
+		AddColumn(*BossTitle, B.Text(TEXT("BossTentacleText"), TEXT("Tentacles 3/4   -10% damage"), 16, Dim, /*bBold*/ false), FMargin(0.f, 0.f, 12.f, 0.f));
+		AddColumn(*BossTitle, B.Text(TEXT("BossNameText"), TEXT("The Kraken"), 18, FLinearColor(1.f, 0.5f, 0.42f)));
+		AddRow(*BossBox, BossTitle, FMargin(0.f, 0.f, 0.f, 4.f), HAlign_Right);
+		AddRow(*BossBox, B.Bar(TEXT("BossHealthBar"), TEXT("BossHealthText"), 28.f, 18, 420.f), FMargin(0.f), HAlign_Right);
+		Place(*Root, BossBox, FVector2D(1.f, 0.f), FVector2D(-24.f, 16.f));
+
+		// Its telegraphed moves (B6), in the open water under the enemy row; filled at runtime from IntentClass.
+		UVerticalBox* IntentBox = B.Make<UVerticalBox>(TEXT("IntentPanel"));
+		IntentBox->SetVisibility(ESlateVisibility::HitTestInvisible);
+		AddRow(*IntentBox, B.Text(nullptr, TEXT("NEXT KRAKEN TURN"), 16, Bad), FMargin(0.f, 0.f, 0.f, 4.f), HAlign_Right);
+		UVerticalBox* IntentRows = B.Make<UVerticalBox>(TEXT("IntentList"));
+		IntentRows->SetVisibility(ESlateVisibility::HitTestInvisible);
+		AddRow(*IntentBox, IntentRows, FMargin(0.f), HAlign_Right);
+		Place(*Root, IntentBox, FVector2D(1.f, 0.f), FVector2D(-24.f, 230.f));
 
 		// Crew cards in a row under our ship, enemy bars under theirs: the board below stays uncovered
 		// (placeholder placement, open question for Brandon). Filled at runtime from UnitCardClass.
@@ -691,6 +756,14 @@ namespace DwUIContent
 		Outcome->SetVisibility(ESlateVisibility::HitTestInvisible);
 		Outcome->SetContent(B.Text(TEXT("OutcomeText"), TEXT("VICTORY"), 36, Gold));
 		Place(*Root, Outcome, FVector2D(0.5f, 0.42f), FVector2D::ZeroVector, 11);
+
+		// B7: "The Kraken is ENRAGED!" between the turn banner and the outcome banner.
+		UBorder* Phase = B.Make<UBorder>(TEXT("PhaseBanner"));
+		Phase->SetBrushColor(FLinearColor(0.25f, 0.f, 0.f, 0.8f));
+		Phase->SetPadding(FMargin(44.f, 14.f));
+		Phase->SetVisibility(ESlateVisibility::HitTestInvisible);
+		Phase->SetContent(B.Text(TEXT("PhaseBannerText"), TEXT("The Kraken is ENRAGED!"), 44, FLinearColor(1.f, 0.3f, 0.22f)));
+		Place(*Root, Phase, FVector2D(0.5f, 0.36f), FVector2D::ZeroVector, 10);
 
 		return B.Finish(Root);
 	}
@@ -768,6 +841,8 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		{ TEXT("WBP_UnitCard"), UDwUnitCardWidget::StaticClass(), &BuildUnitCard },
 		{ TEXT("WBP_ActionButton"), UDwActionButtonWidget::StaticClass(), &BuildActionButton },
 		{ TEXT("WBP_FloatingText"), UDwFloatingTextWidget::StaticClass(), &BuildFloatingText },
+		{ TEXT("WBP_Intent"), UDwIntentWidget::StaticClass(), &BuildIntent },
+		{ TEXT("WBP_IntentMarker"), UDwIntentMarkerWidget::StaticClass(), &BuildIntentMarker },
 		{ TEXT("WBP_PrimaryLayout"), UDwPrimaryLayoutWidget::StaticClass(), &BuildPrimaryLayout },
 		{ TEXT("WBP_CombatHud"), UDwCombatHudScreen::StaticClass(), &BuildCombatHud },
 		{ TEXT("WBP_ChoiceButton"), UDwChoiceButtonWidget::StaticClass(), &BuildChoiceButton },
@@ -806,6 +881,8 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 	{
 		Hud->UnitCardClass = ClassOf(TEXT("WBP_UnitCard"));
 		Hud->ActionButtonClass = ClassOf(TEXT("WBP_ActionButton"));
+		Hud->IntentClass = ClassOf(TEXT("WBP_Intent"));
+		Hud->IntentMarkerClass = ClassOf(TEXT("WBP_IntentMarker"));
 	}
 	if (UDwSettingsScreen* SettingsScreen = Built[TEXT("WBP_Settings")]->GeneratedClass->GetDefaultObject<UDwSettingsScreen>())
 	{

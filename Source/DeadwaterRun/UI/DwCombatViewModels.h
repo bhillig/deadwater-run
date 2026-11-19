@@ -189,6 +189,58 @@ struct DEADWATERRUN_API FDwHudKeys
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDwOnTurnBanner, EDwSide, Side, int32, Round);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FDwOnPhaseBanner, const FText&, Text, int32, PhaseIndex);
+
+/** The Kraken's bar (Docs/Architecture/14 "Kraken HUD additions", DW-303). bPresent only in the Kraken fight. */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwBossView
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") bool bPresent = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") FDwUnitHandle Body;
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") FText Name;
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") float Health = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") float MaxHealth = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") int32 PhaseIndex = 0;
+	/** Past its first phase (B7: below 30%). */
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") bool bEnraged = false;
+	/** "ENRAGED"; empty in the first phase. */
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") FText PhaseText;
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") int32 TentaclesAlive = 0;
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") int32 TentaclesTotal = 0;
+	/** Multiplier on its hits (B2). */
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") float DamageMultiplier = 1.f;
+	/** "Tentacles 3/4  -10% damage". */
+	UPROPERTY(BlueprintReadOnly, Category = "Boss") FText TentacleText;
+};
+
+/** One telegraphed move (B6: every intent with its target), in the order the Kraken will make them. */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwIntentView
+{
+	GENERATED_BODY()
+
+	/** 1-based execution order. */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") int32 Order = 1;
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") FDwUnitHandle Source;
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") FGameplayTag AbilityTag;
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") FText MoveName;
+	/** "Swordsman's tile", "Your ship", "Every pirate", "Random pirates", "Itself", "Empty tile". */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") FText TargetText;
+	/** "50 damage", "20 to each pirate", "3-5 hits of 40", or the move's description when it deals none. */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") FText EffectText;
+	/** Aimed at a tile: stepping off it dodges (B6a). */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") bool bDodgeable = false;
+	/** A tile aim at a tile nobody stands on: it will miss as things stand. */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") bool bWillMiss = false;
+	/** Would kill someone as things stand. */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") bool bLethal = false;
+	/** ...and that someone is the captain (captain death = defeat, C10). */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") bool bThreatensCaptain = false;
+	/** FDwCombatQueries::GetIntentDangerTiles. */
+	UPROPERTY(BlueprintReadOnly, Category = "Intent") TArray<FIntPoint> DangerTiles;
+};
 
 /**
  * The combat HUD (WBP_CombatHud). Owned by UDwUIManagerSubsystem for the length of a fight.
@@ -231,6 +283,17 @@ public:
 	/** The interaction's last rejection or hint (red). */
 	UFUNCTION(BlueprintPure, Category = "Deadwater|UI") const FText& GetMessage() const { return Message; }
 	UFUNCTION(BlueprintPure, Category = "Deadwater|UI") UDwUnitViewModel* FindUnit(FDwUnitHandle Handle) const;
+	/** The Kraken's bar; bPresent only in the Kraken fight (its body is then left out of GetEnemies()). */
+	UFUNCTION(BlueprintPure, Category = "Deadwater|UI") const FDwBossView& GetBoss() const { return Boss; }
+	/** Every declared enemy intent, in execution order (the Kraken's, B6). */
+	UFUNCTION(BlueprintPure, Category = "Deadwater|UI") const TArray<FDwIntentView>& GetIntents() const { return Intents; }
+
+	/**
+	 * Intent views for every declared intent in Snapshot, in order. Names come from NameOf (crew names). Pure: the HUD
+	 * and tests share it.
+	 */
+	static TArray<FDwIntentView> BuildIntentViews(const FDwCombatSnapshot& Snapshot, TFunctionRef<FText(FDwUnitHandle)> NameOf);
+	static FDwBossView BuildBossView(const FDwCombatSnapshot& Snapshot, const FText& BodyName);
 
 	// Intents (all through UDwCombatInteraction)
 	UFUNCTION(BlueprintCallable, Category = "Deadwater|UI") void SelectUnit(FDwUnitHandle Handle);
@@ -240,6 +303,8 @@ public:
 
 	/** A side's turn began (TurnStarted): show the turn banner. Juice: OnTurnBannerShown(Side). */
 	UPROPERTY(BlueprintAssignable, Category = "Deadwater|UI") FDwOnTurnBanner OnTurnBanner;
+	/** The Kraken changed phase (B7): "The Kraken is ENRAGED!". Juice: the HUD's OnPhaseBannerShown(PhaseIndex). */
+	UPROPERTY(BlueprintAssignable, Category = "Deadwater|UI") FDwOnPhaseBanner OnPhaseBanner;
 
 private:
 	UFUNCTION() void HandleCombatEvent(const FDwCombatEvent& Event);
@@ -249,6 +314,7 @@ private:
 	UFUNCTION() void HandleInteractionChanged();
 
 	void RefreshUnits(const FDwCombatSnapshot& Snapshot);
+	void RefreshBoss(const FDwCombatSnapshot& Snapshot);
 	void RefreshActions(const FDwCombatSnapshot& Snapshot);
 	void RefreshPrompt(const FDwCombatSnapshot& Snapshot);
 	TArray<FDwStatusView> GatherStatuses(const FDwUnitSnapshot& Unit) const;
@@ -263,6 +329,8 @@ private:
 
 	FDwShipView PlayerShip;
 	FDwShipView EnemyShip;
+	FDwBossView Boss;
+	TArray<FDwIntentView> Intents;
 	FDwHudKeys Keys;
 	int32 Round = 0;
 	EDwSide ActiveSide = EDwSide::Player;

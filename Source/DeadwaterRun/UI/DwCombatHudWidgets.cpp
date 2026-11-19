@@ -3,6 +3,8 @@
 #include "UI/DwCombatHudWidgets.h"
 
 #include "Blueprint/WidgetTree.h"
+#include "Combat/DwCombatSubsystem.h"
+#include "Combat/DwCombatUnit.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
 #include "Components/HorizontalBox.h"
@@ -14,6 +16,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Core/DwGameplayTags.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
 #include "UI/DwUIJuice.h"
 
@@ -275,6 +278,10 @@ void UDwCombatHudScreen::NativeOnInitialized()
 	{
 		TurnBanner->SetVisibility(ESlateVisibility::Collapsed);
 	}
+	if (PhaseBanner)
+	{
+		PhaseBanner->SetVisibility(ESlateVisibility::Collapsed);
+	}
 }
 
 void UDwCombatHudScreen::NativeDestruct()
@@ -282,10 +289,17 @@ void UDwCombatHudScreen::NativeDestruct()
 	if (UDwCombatHudViewModel* Hud = BoundHud.Get())
 	{
 		Hud->OnTurnBanner.RemoveAll(this);
+		Hud->OnPhaseBanner.RemoveAll(this);
+	}
+	if (IntentMarker)
+	{
+		IntentMarker->RemoveFromParent();
+		IntentMarker = nullptr;
 	}
 	if (const UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(BannerTimer);
+		World->GetTimerManager().ClearTimer(PhaseBannerTimer);
 	}
 	Super::NativeDestruct();
 }
@@ -369,11 +383,13 @@ void UDwCombatHudScreen::NativeOnViewModelChanged()
 		if (UDwCombatHudViewModel* Old = BoundHud.Get())
 		{
 			Old->OnTurnBanner.RemoveAll(this);
+			Old->OnPhaseBanner.RemoveAll(this);
 		}
 		BoundHud = Hud;
 		if (Hud)
 		{
 			Hud->OnTurnBanner.AddDynamic(this, &ThisClass::HandleTurnBanner);
+			Hud->OnPhaseBanner.AddDynamic(this, &ThisClass::HandlePhaseBanner);
 		}
 	}
 	if (!Hud)
@@ -384,6 +400,7 @@ void UDwCombatHudScreen::NativeOnViewModelChanged()
 	TurnText->SetText(Hud->GetTurnText());
 	TurnText->SetColorAndOpacity(FSlateColor(Hud->IsPlayerTurn() ? AllyColor : EnemyColor));
 	RefreshShips(*Hud);
+	RefreshBoss(*Hud);
 	SyncList<UDwUnitCardWidget, UDwUnitViewModel>(*CrewList, UnitCardClass, Hud->GetCrew());
 	SyncList<UDwUnitCardWidget, UDwUnitViewModel>(*EnemyList, UnitCardClass, Hud->GetEnemies());
 	SyncList<UDwActionButtonWidget, UDwActionViewModel>(*ActionBar, ActionButtonClass, Hud->GetActions());
@@ -452,6 +469,201 @@ void UDwCombatHudScreen::RefreshPrompt(const UDwCombatHudViewModel& Hud)
 		PreviewList->AddChildToVerticalBox(Text);
 	}
 	PreviewList->SetVisibility(Hud.GetPreview().IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The Kraken HUD (DW-303)
+
+void UDwIntentWidget::SetView(const FDwIntentView& View)
+{
+	Shown = View;
+	OrderText->SetText(FText::AsNumber(View.Order));
+	MoveText->SetText(View.MoveName);
+	TargetText->SetText(View.bDodgeable && !View.bWillMiss
+		? FText::Format(LOCTEXT("IntentDodge", "{0}  (step off to dodge)"), View.TargetText)
+		: View.TargetText);
+	EffectText->SetText(View.bThreatensCaptain
+		? FText::Format(LOCTEXT("IntentCaptain", "{0} - kills your captain!"), View.EffectText)
+		: View.bLethal ? FText::Format(LOCTEXT("IntentLethal", "{0} - lethal"), View.EffectText) : View.EffectText);
+	Frame->SetBrushColor(View.bWillMiss ? MissColor : View.bThreatensCaptain ? CaptainColor : View.bLethal ? LethalColor : NormalColor);
+}
+
+void UDwIntentMarkerWidget::SetMarker(AActor* InAnchor, const FText& Text, bool bLethal)
+{
+	Anchor = InAnchor;
+	MarkerText->SetText(Text);
+	MarkerText->SetColorAndOpacity(FSlateColor(bLethal ? LethalColor : NormalColor));
+	const bool bShow = InAnchor && !Text.IsEmpty();
+	SetVisibility(bShow ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (bShow)
+	{
+		UpdatePosition();
+	}
+}
+
+bool UDwIntentMarkerWidget::IsShowingMarker() const
+{
+	return GetVisibility() != ESlateVisibility::Collapsed && Anchor.IsValid();
+}
+
+FText UDwIntentMarkerWidget::GetMarkerText() const
+{
+	return MarkerText ? MarkerText->GetText() : FText::GetEmpty();
+}
+
+void UDwIntentMarkerWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+	UpdatePosition();
+}
+
+void UDwIntentMarkerWidget::UpdatePosition()
+{
+	const AActor* Target = Anchor.Get();
+	const APlayerController* PC = GetOwningPlayer();
+	FVector2D Screen;
+	if (Target && PC && PC->ProjectWorldLocationToScreen(Target->GetActorLocation() + FVector(0.f, 0.f, HeightAboveAnchor), Screen, true))
+	{
+		SetAlignmentInViewport(FVector2D(0.5f, 1.f));
+		SetPositionInViewport(Screen, /*bRemoveDPIScale*/ true);
+	}
+}
+
+bool UDwCombatHudScreen::IsPhaseBannerVisible() const
+{
+	return PhaseBanner && PhaseBanner->GetVisibility() != ESlateVisibility::Collapsed;
+}
+
+int32 UDwCombatHudScreen::GetIntentRowCount() const
+{
+	int32 Count = 0;
+	for (const UDwIntentWidget* Row : IntentRows)
+	{
+		Count += Row && Row->GetVisibility() != ESlateVisibility::Collapsed ? 1 : 0;
+	}
+	return Count;
+}
+
+void UDwCombatHudScreen::NativeOnActivated()
+{
+	Super::NativeOnActivated();
+	if (const UDwCombatHudViewModel* Hud = GetViewModel<UDwCombatHudViewModel>())
+	{
+		RefreshIntentMarker(*Hud);
+	}
+}
+
+void UDwCombatHudScreen::NativeOnDeactivated()
+{
+	if (IntentMarker)
+	{
+		IntentMarker->SetMarker(nullptr, FText::GetEmpty(), false); // nothing floats over a pause menu or the summary
+	}
+	Super::NativeOnDeactivated();
+}
+
+void UDwCombatHudScreen::HandlePhaseBanner(const FText& Text, int32 PhaseIndex)
+{
+	PhaseBannerText->SetText(Text);
+	PhaseBanner->SetVisibility(ESlateVisibility::HitTestInvisible);
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(PhaseBannerTimer, FTimerDelegate::CreateUObject(this, &ThisClass::HidePhaseBanner), PhaseBannerSeconds, false);
+	}
+	PlayUISound(DwTags::UI_Sound_TurnStart);
+	OnPhaseBannerShown(PhaseIndex);
+}
+
+void UDwCombatHudScreen::HidePhaseBanner()
+{
+	PhaseBanner->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UDwCombatHudScreen::RefreshBoss(const UDwCombatHudViewModel& Hud)
+{
+	using namespace DwHudWidgets;
+	const FDwBossView& Boss = Hud.GetBoss();
+	BossPanel->SetVisibility(Boss.bPresent ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	if (Boss.bPresent)
+	{
+		BossNameText->SetText(Boss.Name);
+		BossPhaseText->SetText(Boss.PhaseText);
+		BossPhaseText->SetVisibility(Boss.PhaseText.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+		BossTentacleText->SetText(Boss.TentacleText);
+		BossHealthBar->SetPercent(Percent(Boss.Health, Boss.MaxHealth));
+		BossHealthBar->SetFillColorAndOpacity(Boss.bEnraged ? FLinearColor(1.f, 0.12f, 0.08f) : EnemyColor);
+		BossHealthText->SetText(Fraction(Boss.Health, Boss.MaxHealth));
+	}
+
+	// Intent rows: pooled, one per declared intent, in execution order.
+	const TArray<FDwIntentView>& Intents = Hud.GetIntents();
+	if (IntentClass)
+	{
+		while (IntentRows.Num() < Intents.Num())
+		{
+			UDwIntentWidget* Row = CreateWidget<UDwIntentWidget>(this, IntentClass);
+			if (!Row)
+			{
+				break;
+			}
+			if (UVerticalBoxSlot* RowSlot = IntentList->AddChildToVerticalBox(Row))
+			{
+				RowSlot->SetPadding(FMargin(0.f, 0.f, 0.f, 6.f));
+				RowSlot->SetHorizontalAlignment(HAlign_Fill);
+			}
+			IntentRows.Add(Row);
+		}
+	}
+	for (int32 Index = 0; Index < IntentRows.Num(); ++Index)
+	{
+		const bool bUsed = Intents.IsValidIndex(Index);
+		if (bUsed)
+		{
+			IntentRows[Index]->SetView(Intents[Index]);
+		}
+		IntentRows[Index]->SetVisibility(bUsed ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	}
+	const bool bShowIntents = Boss.bPresent && !Intents.IsEmpty() && Hud.GetOutcome() == EDwCombatOutcome::None;
+	IntentPanel->SetVisibility(bShowIntents ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	RefreshIntentMarker(Hud);
+}
+
+void UDwCombatHudScreen::RefreshIntentMarker(const UDwCombatHudViewModel& Hud)
+{
+	const FDwBossView& Boss = Hud.GetBoss();
+	const TArray<FDwIntentView>& Intents = Hud.GetIntents();
+	const bool bShow = Boss.bPresent && !Intents.IsEmpty() && Hud.GetOutcome() == EDwCombatOutcome::None && IsActivated();
+	if (!bShow)
+	{
+		if (IntentMarker)
+		{
+			IntentMarker->SetMarker(nullptr, FText::GetEmpty(), false);
+		}
+		return;
+	}
+	if (!IntentMarker && IntentMarkerClass)
+	{
+		IntentMarker = CreateWidget<UDwIntentMarkerWidget>(GetOwningPlayer(), IntentMarkerClass);
+		if (IntentMarker && GetOwningLocalPlayer())
+		{
+			IntentMarker->AddToPlayerScreen(1050); // above the HUD layout, under floating numbers (1100)
+		}
+	}
+	if (!IntentMarker)
+	{
+		return;
+	}
+	const UWorld* World = GetWorld();
+	const UDwCombatSubsystem* Combat = World ? World->GetSubsystem<UDwCombatSubsystem>() : nullptr;
+	AActor* Body = Combat ? Combat->FindUnit(Boss.Body) : nullptr;
+	TArray<FString> Lines;
+	bool bLethal = false;
+	for (const FDwIntentView& Intent : Intents)
+	{
+		Lines.Add(FText::Format(LOCTEXT("MarkerLine", "{0}: {1}"), Intent.MoveName, Intent.TargetText).ToString());
+		bLethal |= Intent.bLethal && !Intent.bWillMiss;
+	}
+	IntentMarker->SetMarker(Body, FText::FromString(FString::Join(Lines, TEXT("\n"))), bLethal);
 }
 
 #undef LOCTEXT_NAMESPACE

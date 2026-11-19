@@ -19,5 +19,12 @@ public:
 		Banners.Add(TPair<EDwSide, int32>(Side, Round));
 	}
 
+	/** UDwCombatHudViewModel::OnPhaseBanner (DW-303). */
+	UFUNCTION() void HandlePhaseBanner(const FText& Text, int32 PhaseIndex)
+	{
+		PhaseBanners.Add(TPair<FString, int32>(Text.ToString(), PhaseIndex));
+	}
+
 	TArray<TPair<EDwSide, int32>> Banners;
+	TArray<TPair<FString, int32>> PhaseBanners;
 };

@@ -6,6 +6,8 @@
 #include "Combat/DwCombatTypes.h"
 #include "Data/DwDataTypes.h"
 
+struct FDwAiIntent;
+
 class UDwAbilityDefinition;
 class UDwGameplayAbility;
 struct FDwCombatSnapshot;
@@ -80,6 +82,12 @@ struct DEADWATERRUN_API FDwCombatQueries
 	 * Same checks as ValidateCommand, so the "End turn?" prompt never appears while a legal action exists (C14).
 	 */
 	static bool SideHasAvailableAction(const FDwCombatSnapshot& Snapshot, EDwSide Side);
+
+	/**
+	 * The tiles a declared intent of Unit threatens right now (danger highlights and the intent HUD, DW-303): a tile aim's
+	 * tile, a unit aim's current tile, every opponent a group move could hit; nothing for self moves and ship hits.
+	 */
+	static TArray<FIntPoint> GetIntentDangerTiles(const FDwCombatSnapshot& Snapshot, FDwUnitHandle Unit, const FDwAiIntent& Intent);
 };
 
 /**

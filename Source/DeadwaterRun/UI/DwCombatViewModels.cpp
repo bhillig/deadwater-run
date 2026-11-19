@@ -13,6 +13,7 @@
 #include "Core/DwGameplayTags.h"
 #include "Data/DwAbilityDefinition.h"
 #include "Data/DwItemDefinition.h"
+#include "Data/DwKrakenDefinition.h"
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 #include "GameplayEffect.h"
@@ -282,6 +283,7 @@ void UDwCombatHudViewModel::Refresh()
 	EnemyShip = ShipView(EDwSide::Enemy);
 
 	RefreshUnits(Snapshot);
+	RefreshBoss(Snapshot);
 	RefreshActions(Snapshot);
 	RefreshPrompt(Snapshot);
 	NotifyChanged();
@@ -323,6 +325,10 @@ void UDwCombatHudViewModel::RefreshUnits(const FDwCombatSnapshot& Snapshot)
 			{
 				continue;
 			}
+			if (Unit.Handle == Snapshot.Kraken.Body && Snapshot.Kraken.IsSet())
+			{
+				continue; // the boss bar shows the body (DW-303); its tentacles stay in the enemy row
+			}
 			if (!List.IsValidIndex(Index))
 			{
 				UDwUnitViewModel* Created = NewObject<UDwUnitViewModel>(this);
@@ -355,6 +361,154 @@ void UDwCombatHudViewModel::RefreshUnits(const FDwCombatSnapshot& Snapshot)
 	};
 	Sync(EDwSide::Player, Crew);
 	Sync(EDwSide::Enemy, Enemies);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The Kraken HUD (DW-303)
+
+FDwBossView UDwCombatHudViewModel::BuildBossView(const FDwCombatSnapshot& Snapshot, const FText& BodyName)
+{
+	FDwBossView View;
+	const FDwKrakenSnapshot& Kraken = Snapshot.Kraken;
+	const FDwUnitSnapshot* Body = Kraken.IsSet() ? Snapshot.FindUnit(Kraken.Body) : nullptr;
+	if (!Body)
+	{
+		return View;
+	}
+	View.bPresent = true;
+	View.Body = Body->Handle;
+	View.Name = BodyName.IsEmpty() ? LOCTEXT("Kraken", "The Kraken") : BodyName;
+	View.Health = Body->bAlive ? Body->Health : 0.f;
+	View.MaxHealth = Body->MaxHealth;
+	View.PhaseIndex = Kraken.PhaseIndex;
+	View.bEnraged = Kraken.PhaseIndex > 0;
+	View.PhaseText = View.bEnraged ? FText::FromString(Kraken.PhaseId.ToString().ToUpper()) : FText::GetEmpty();
+	View.TentaclesTotal = Kraken.TentaclesTotal;
+	View.TentaclesAlive = FMath::Max(0, Kraken.TentaclesTotal - Kraken.TentaclesDead);
+	View.DamageMultiplier = Kraken.DamageMultiplier;
+	const int32 Weaker = FMath::RoundToInt((1.f - Kraken.DamageMultiplier) * 100.f);
+	View.TentacleText = Weaker > 0
+		? FText::Format(LOCTEXT("TentaclesWeaker", "Tentacles {0}/{1}   -{2}% damage"), View.TentaclesAlive, View.TentaclesTotal, Weaker)
+		: FText::Format(LOCTEXT("Tentacles", "Tentacles {0}/{1}"), View.TentaclesAlive, View.TentaclesTotal);
+	return View;
+}
+
+TArray<FDwIntentView> UDwCombatHudViewModel::BuildIntentViews(const FDwCombatSnapshot& Snapshot, TFunctionRef<FText(FDwUnitHandle)> NameOf)
+{
+	TArray<FDwIntentView> Views;
+	TArray<const FDwUnitIntents*> Owners;
+	for (const FDwUnitIntents& Entry : Snapshot.Intents)
+	{
+		Owners.Add(&Entry);
+	}
+	Owners.Sort([](const FDwUnitIntents& A, const FDwUnitIntents& B) { return A.Unit.Id < B.Unit.Id; });
+
+	for (const FDwUnitIntents* Entry : Owners)
+	{
+		const FDwUnitSnapshot* Source = Snapshot.FindUnit(Entry->Unit);
+		if (!Source || !Source->bAlive)
+		{
+			continue;
+		}
+		for (int32 Index = 0; Index < Entry->Intents.Num(); ++Index)
+		{
+			const FDwAiIntent& Intent = Entry->Intents[Index];
+			const UDwAbilityDefinition* Ability = FDwCombatQueries::FindAbility(*Source, Intent.AbilityTag);
+			const UDwGameplayAbility* CDO = FDwCombatQueries::GetAbilityCDO(Ability);
+			FDwIntentView& View = Views.AddDefaulted_GetRef();
+			View.Order = Index + 1;
+			View.Source = Entry->Unit;
+			View.AbilityTag = Intent.AbilityTag;
+			View.MoveName = Ability ? Ability->DisplayName : FText::FromName(Intent.AbilityTag.GetTagName());
+			View.DangerTiles = FDwCombatQueries::GetIntentDangerTiles(Snapshot, Entry->Unit, Intent);
+			if (!CDO)
+			{
+				continue;
+			}
+
+			FDwTargetingContext Context;
+			Context.Snapshot = &Snapshot;
+			Context.Ability = Ability;
+			Context.Source = Entry->Unit;
+			const FDwTargetingRules& Rules = CDO->GetTargetingRules(Context);
+			const FDwAbilityPreview Preview = CDO->PreviewOutcome(Context, Intent.Target);
+			const bool bTileAim = !Intent.Target.IsUnit() && !Intent.Target.bShip;
+
+			switch (Rules.Pattern)
+			{
+			case EDwTargetPattern::Self:          View.TargetText = LOCTEXT("TargetSelf", "Itself"); break;
+			case EDwTargetPattern::AllEnemies:    View.TargetText = LOCTEXT("TargetAll", "Every pirate"); break;
+			case EDwTargetPattern::RandomEnemies: View.TargetText = LOCTEXT("TargetRandom", "Random pirates"); break;
+			default:
+				if (Intent.Target.bShip)
+				{
+					View.TargetText = Intent.Target.ShipSide == EDwSide::Player ? LOCTEXT("TargetOurShip", "Your ship") : LOCTEXT("TargetTheirShip", "Its ship");
+				}
+				else if (bTileAim)
+				{
+					View.bDodgeable = Rules.bAimAtTile;
+					const FDwOccupant Occupant = Snapshot.Grid.GetOccupant(Intent.Target.Tile);
+					View.TargetText = Occupant.IsSet()
+						? FText::Format(LOCTEXT("TargetTile", "{0}'s tile"), NameOf(Occupant.Unit))
+						: LOCTEXT("TargetEmptyTile", "Empty tile");
+				}
+				else
+				{
+					View.TargetText = NameOf(Intent.Target.Unit);
+				}
+				break;
+			}
+
+			int32 Damage = 0;
+			for (const FDwTargetPreview& Hit : Preview.Targets)
+			{
+				Damage = FMath::Max(Damage, Hit.Damage);
+				if (Hit.bLethal)
+				{
+					View.bLethal = true;
+					const FDwUnitSnapshot* Victim = Snapshot.FindUnit(Hit.Target.Unit);
+					View.bThreatensCaptain |= Victim && Victim->Tags.HasTagExact(DwTags::Unit_Role_Captain);
+				}
+			}
+			View.bWillMiss = View.bDodgeable && Preview.bValid && Preview.Targets.IsEmpty();
+			if (View.bWillMiss)
+			{
+				View.EffectText = LOCTEXT("WillMiss", "Nobody there - it will miss");
+			}
+			else if (Damage > 0 && Rules.Pattern == EDwTargetPattern::RandomEnemies)
+			{
+				View.EffectText = FText::Format(LOCTEXT("RandomHits", "{0}-{1} hits of {2}"), Preview.MinHits, Preview.MaxHits, Damage);
+			}
+			else if (Damage > 0 && Rules.Pattern == EDwTargetPattern::AllEnemies)
+			{
+				View.EffectText = FText::Format(LOCTEXT("EachHit", "{0} to each pirate"), Damage);
+			}
+			else if (Damage > 0)
+			{
+				View.EffectText = FText::Format(LOCTEXT("SingleHit", "{0} damage"), Damage);
+			}
+			else
+			{
+				View.EffectText = Ability->Description;
+			}
+		}
+	}
+	return Views;
+}
+
+void UDwCombatHudViewModel::RefreshBoss(const FDwCombatSnapshot& Snapshot)
+{
+	const UDwCombatSubsystem* Fight = Combat.Get();
+	const UDwKrakenDefinition* Kraken = Fight ? Fight->GetSetup().Kraken.Get() : nullptr;
+	Boss = BuildBossView(Snapshot, Kraken ? Kraken->DisplayName : FText::GetEmpty()); // "The Kraken"
+	Intents = BuildIntentViews(Snapshot, [this](FDwUnitHandle Handle)
+	{
+		if (const UDwUnitViewModel* Unit = FindUnit(Handle))
+		{
+			return Unit->GetView().Name;
+		}
+		return Handle == Boss.Body ? Boss.Name : LOCTEXT("SomeUnit", "Someone");
+	});
 }
 
 TArray<FDwStatusView> UDwCombatHudViewModel::GatherStatuses(const FDwUnitSnapshot& Unit) const
@@ -555,6 +709,11 @@ void UDwCombatHudViewModel::HandleCombatEvent(const FDwCombatEvent& Event)
 		return;
 	}
 	Refresh();
+	if (Event.Type == EDwCombatEventType::PhaseChanged && Boss.bPresent)
+	{
+		// B7: the banner, e.g. "The Kraken is ENRAGED!" (doc 14).
+		OnPhaseBanner.Broadcast(FText::Format(LOCTEXT("PhaseBanner", "{0} is {1}!"), Boss.Name, Boss.PhaseText), Boss.PhaseIndex);
+	}
 }
 
 void UDwCombatHudViewModel::HandleCommandResolved(const FDwCombatCommand& /*Command*/)

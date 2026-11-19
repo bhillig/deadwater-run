@@ -71,7 +71,7 @@ Arena build: `FDwBoardBuilder::BuildKrakenArena(PlayerDeck, Arena)`; encounter k
 1. DW-209 (gameplay-engineer): placeholder Kraken encounter.
 2. DW-301 (gameplay-engineer, done 2026-11-17): definition, arena layout, body and tentacle units, five move BPs, intent storage in the combat subsystem, and the Kraken rules (phase change, action count, tentacle damage scaling, phase move gate) - moved here from DW-302 because they are combat rules, not decisions.
 3. DW-302 (done 2026-11-19): `UDwKrakenAiBrain` and `DA_AiProfile_Kraken`: weighted move pick per phase, targets, tile aims for Slam and Grab (B6a), declaring intents for its next turn, re-planning on a phase change.
-4. DW-303 (ui-engineer): boss HUD and intents.
+4. DW-303 (done 2026-11-19): boss bar (health, phase, tentacles and their damage cut), intent panel with target, numbers, dodge and lethal read-outs, red danger tiles, the intent marker above the body, the ENRAGED banner and "Missed!" (doc 14 "Kraken HUD additions").
 5. DW-307 (gameplay-engineer): Synty-based Kraken visuals and cues (art source via asset-scraper if Synty lacks a Kraken).
 
 ## How it's tested

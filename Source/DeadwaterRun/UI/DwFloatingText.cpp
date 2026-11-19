@@ -3,6 +3,7 @@
 #include "UI/DwFloatingText.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Board/DwBoard.h"
 #include "Combat/DwCombatSubsystem.h"
 #include "Combat/DwCombatUnit.h"
 #include "Combat/DwShip.h"
@@ -184,6 +185,14 @@ bool UDwFloatingTextManager::Describe(const FDwCombatEvent& Event, FDwFloatingTe
 		}
 		return Event.Tag.IsValid();
 	}
+	case EDwCombatEventType::AttackMissed:
+		// A dodged tile-aimed Kraken hit (B6a): over the tile the pirate left.
+		OutRequest.Kind = EDwFloatingTextKind::Status;
+		OutRequest.Unit = FDwUnitHandle();
+		OutRequest.bAtTile = true;
+		OutRequest.Tile = Event.Tile;
+		OutRequest.Text = LOCTEXT("Missed", "Missed!");
+		return true;
 	default:
 		return false;
 	}
@@ -194,6 +203,14 @@ TOptional<FVector> UDwFloatingTextManager::AnchorFor(const FDwFloatingTextReques
 	const UDwCombatSubsystem* Fight = Combat.Get();
 	if (!Fight)
 	{
+		return TOptional<FVector>();
+	}
+	if (Request.bAtTile)
+	{
+		if (const ADwBoard* Board = Fight->GetBoard())
+		{
+			return Board->TileToWorld(Request.Tile) + FVector(0.f, 0.f, DwFloatingText::UnitHeight);
+		}
 		return TOptional<FVector>();
 	}
 	if (Request.Unit.IsValid())
@@ -259,7 +276,8 @@ void UDwFloatingTextManager::HandleCombatEvent(const FDwCombatEvent& Event)
 	for (const UDwFloatingTextWidget* Other : Pool)
 	{
 		const FDwFloatingTextRequest& Shown = Other->GetRequest();
-		Stack += Other->IsShowing() && Shown.Unit == Request.Unit && Shown.ShipSide == Request.ShipSide ? 1 : 0;
+		Stack += Other->IsShowing() && Shown.Unit == Request.Unit && Shown.ShipSide == Request.ShipSide
+			&& Shown.bAtTile == Request.bAtTile && (!Request.bAtTile || Shown.Tile == Request.Tile) ? 1 : 0;
 	}
 	if (UDwFloatingTextWidget* Widget = Acquire())
 	{
