@@ -7,8 +7,7 @@
 
 ## Top open questions (they shape the most work)
 1. **C8a** - Explosive barrels: new in your C8 answer, not in the design doc or Scope. In v1 or post-launch?
-2. **N2-N3** - the 4-5 enemy crews and where they appear (DW-305 is waiting on them).
-3. **E1** - events: one result text per gamble branch, so a gamble shows what actually happened (the critic's top finding on the drafts).
+2. **E1** - events: one result text per gamble branch, so a gamble shows what actually happened (the critic's top finding on the drafts).
 
 ## Follow-ups from the 2026-10-25 answers
 
@@ -17,13 +16,12 @@
 | C5a | C5 | Your answer listed "ladder tile, climb cost 2, 1 unit, melee can't target the nest" but left out option a's "+2 range from it". Is there a range bonus from the nest? And can a unit in the nest use melee on the deck? | a) +2 range from the nest; melee blocked both ways (can't hit into or out of the nest) b) No range bonus (nest = LOS over crates + melee protection); melee blocked both ways c) +2 range; a nest unit can melee the ladder tile | a) - the nest is the sniper's spot; built as placeholder now | `DT_CombatTuning.RangeBonusPerElevation`, melee `bCanTargetElevated` | Oct 27 |
 | C6a | C6 | Do units block line of sight? | a) No, only masts/cabins and crates/rails b) Enemy units block c) All units block | a) - easiest to read; placeholder now | `FDwLineOfSight` **(code)** | Oct 27 |
 | C8a | C8 | Explosive barrels are new: not in `DeadwaterRun.md` and not in Scope (Scope rule: new ideas go on the post-launch list). In v1? | a) Post-launch; v1 ship damage = cannons + ship-targeting abilities only b) v1: barrels are 1-HP neutral prop units placed in deck layouts; destroying one deals X to that ship and Y to adjacent units (needs numbers, how many per ship, whether either side can shoot them, whether it counts as a kill, VFX/SFX, AI awareness - about 3-4 agent-days across gameplay, AI, art) c) v1, ship damage only, no splash | a) - protects Dec 3; b) fits the architecture cleanly if you want it (no new systems, just a unit definition + a death effect) | Scope; if b: `DA_Unit_ExplosiveBarrel`, deck layout slots, `DT_UnitTuning` | Nov 2 |
-| C10b | C10 | Should enemies hunt the captain? | a) Every crew has a moderate captain-pressure weight b) Only some crews (e.g. an "assassin" crew) hunt the captain; others ignore him c) No captain preference | b) - a personality you can see; ties to N2 | `UDwAiProfile` captain-pressure weight | Nov 8 |
 | C13a | C13 | With no undo, how is a move confirmed? | a) Hover shows the path, one click on a highlighted tile moves b) First click previews, second click confirms c) a) with a setting for b) | a) - keeps the pace; the hover path is the preview | `UDwCombatInteraction` | Oct 27 |
 | U3a | U3 | Colourblind-friendly highlights: one palette or several? | a) One colourblind-safe palette, plus distinct patterns per highlight type in both palettes b) Three palettes (deuteranopia, protanopia, tritanopia) | a) | `DA_HighlightPalette_*`, `UDwGameUserSettings.HighlightPalette` | Nov 2 |
 
 ## Combat and board (needed by Oct 27)
 
-All answered - see Resolved. Follow-ups C5a, C6a, C8a, C10a, C10b, C13a above.
+All answered - see Resolved. Follow-ups C5a, C6a, C8a, C10a, C13a above (C10b answered 2026-11-19).
 
 ## Captains (needed by Nov 2; K1 by Oct 27)
 
@@ -54,11 +52,8 @@ K1-K4 answered - see Resolved. Follow-ups K1a, K2a, K4a above.
 
 | ID | Question | Options | Recommendation | Where it lives |
 |---|---|---|---|---|
-| N2 | 4-5 enemy crews: names, units, ship layouts, personalities | e.g. gunners / boarders / snipers / mixed / elite (see C10b for a captain-hunting crew) | Drafts on request | `DA_Encounter_*`, `DA_AiProfile_*` |
-| N3 | Difficulty by depth: which crews appear where | a) Tier 1 layers 1-3, tier 2 layers 4-6, tier 3 layers 7-9 b) Any crew anywhere, scaled by level | a) | Encounter `MinLayer`/`MaxLayer` |
 | N4 | The 10-12 events (text, choices, outcomes) | Use the event format in `Editor-Tools.md` | - | `DA_Event_*` |
 | E1 | A gamble (`RandomOf`) has one result text for all its branches, so the text can't say which way it went (the critic flagged it on several drafts) | a) Optional `ResultText` per branch, shown after the choice's text b) Keep one text; writers stay branch-neutral and the change lines say what happened | a) - small code change, much better writing | `FDwEventRandomOption` **(code)** |
-| N5 | Any recruit archetypes beyond Swordsman and Sniper? | a) None in v1 b) 1-2 more (e.g. gunner, surgeon) | Your call; each adds abilities and art | Unit definitions |
 | N6 | Crew names: fixed, random from a list, or none? | a) Random from a name list b) Archetype names only | a) adds attachment to permadeath | Name list DataAsset |
 
 ## Map (needed by Nov 2)
@@ -205,10 +200,14 @@ U1-U5 answered - see Resolved. Follow-up U3a above.
 | B8 | Do Swipe / Arms of Fury hit the ship? | a) Crew only | `GA_Kraken_KrankySwipe` / `GA_Kraken_ArmsOfFury` targeting |
 | N1 | The ~12 crew abilities | Set A "Cutlass and Musket" from `Docs/Balance/N1-AbilityDrafts.md` (balance-designer draft, numbers are placeholders for DW-401); crew only, captains don't learn them | `GA/DA_Ability_Crew_*`, `AbilityTuning.json` `Crew_*`, `DA_AbilityPool_Swordsman` / `_Sniper` (built in DW-304) |
 
-### Answered 2026-11-19 (DW-302 Kraken AI, DW-303 Kraken HUD)
+### Answered 2026-11-19 (DW-302 Kraken AI, DW-303 Kraken HUD, DW-305 enemy crews)
 
 | # | Question | Decision | Where it lives now |
 |---|---|---|---|
 | B6a | Slam / Grab intents: follow the unit, or hit the declared tile? | Hit the tile: aimed at the victim's tile when declared, whoever stands there when it lands is hit, an empty tile is a miss (moving off dodges). Swipe and Arms of Fury can't be dodged | `FDwTargetingRules::bAimAtTile` on `GA_Kraken_TentacleSlam` / `_TentacleGrab`; `UDwKrakenAiBrain`; `AttackMissed` event |
 | B6b | Where intents show | HUD intent panel by the boss bar, red danger tiles on the board, and a world-space intent marker above the Kraken | DW-303: `WBP_BossBar`, `WBP_Intent`, `EDwHighlightLayer::Danger`, the Kraken's world widget |
 | P2 | Perk pools | a) Shared pool + a few archetype perks, 3 choices; perk list (Brandon): shared Sea Legs, Hardened, Cutthroat, Thick Skin, Rum Ration; Swordsman Iron Hide, Brawler; Sniper Steady Hand, Deep Breath | `DA_PerkPool_Shared` (archetype perks by `RequiredUnitTags`), `PerkTuning.json` (built in DW-304) |
+| N2 | 4-5 enemy crews | Five crews (Brandon took the strawman), all on one shared enemy deck, Swordsman/Sniper only: **Deckhands** - 3 low-level Swordsmen, boards straight away (tier 1); **Powder Monkeys** - 2 Swordsmen + 1 Sniper, cannon-heavy, stays back (tier 1-2); **Sharpshooters** - 3 Snipers, keeps its distance and uses the nest (tier 2); **Cutthroats** - 2 Swordsmen + 1 Sniper, hunts the captain (tier 2-3); **Dread Crew** - 4 higher-level mixed, balanced elite (tier 3). Levels, AI weights and gold/XP are placeholders for DW-401 | DW-305: `DA_Encounter_*`, `DA_AiProfile_*` |
+| N3 | Difficulty by depth | a) Tier 1 layers 1-3, tier 2 layers 4-6, tier 3 layers 7-9 | Encounter `MinLayer`/`MaxLayer` (DW-305) |
+| C10b | Should enemies hunt the captain? | b) Only the Cutthroats hunt the captain; the other crews ignore him | `UDwAiProfile` captain-pressure weight on `DA_AiProfile_Cutthroats` (DW-305) |
+| N5 | Recruit archetypes beyond Swordsman and Sniper? | a) None in v1 (implied by the N2 strawman) | Unit definitions |
