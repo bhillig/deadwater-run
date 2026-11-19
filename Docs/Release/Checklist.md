@@ -54,7 +54,7 @@ First package made 2026-11-19 (DW-218 packaging part); results in `Docs/Release/
 - [x] `Docs/Release/BuildNotes.md`
 - [x] Staged build has no `ModelContextProtocol` / `Terminal` / `AllToolsets` / modelling-tools files, no `.pdb` (checked by `Package.ps1`)
 - [ ] Logging decision (Open-Questions O3): Shipping without logs (default, what 0.1.0 is), plus a Test build on a `beta` branch? - Brandon
-- [ ] Smoke test per build (doc 18): ~~package Shipping, exit code 0, launch to main menu, screenshot~~ done for 0.1.0; full seeded run on a Development package; QA manual pass, one run per captain
+- [ ] Smoke test per build (doc 18): ~~package Shipping, exit code 0, launch to main menu, screenshot; full seeded run on a Development package~~ done for 0.1.0; QA manual pass, one run per captain
 
 Content that must be real before the Dec 2 build (so copy and screenshots are true): captain abilities for Fearmongerer and Conqueror (DW-207/208 - placeholder text visible today), shop (DW-204), events (DW-205), Kraken (DW-209 in progress), Synty/UI art pass (DW-307), audio decision/integration.
 

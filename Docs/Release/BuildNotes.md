@@ -19,4 +19,18 @@ content in `Windows/DeadwaterRun/Content/Paks` (`.pak` + IoStore `.ucas/.utoc`).
 
 Logs: Shipping has none with the launcher engine (O3 still open: ship a Test build on `beta` for diagnostics?).
 
-Still to do for this build: a full seeded run on a Development package (the cooked data, not just the menu).
+### Full seeded run on a Development package (cooked data)
+
+Built from this branch + the shop screen + the snapshot fix (`gameplay-engineer/fix-snapshot-dangling`), the state
+after merging all three.
+
+| Step | Command | Result |
+|---|---|---|
+| Development package | `./Build/Package.ps1 -Config Development` | `PACKAGE PASS 0.1.0 Development (1113 MB)`, exit 0 |
+| Voyage | `Build/Out/0.1.0-Development/Windows/DeadwaterRun.exe /Game/DeadwaterRun/Maps/L_Sea -windowed -ResX=1600 -ResY=900 -ForceRes -DwCapture=<png> -DwCaptureDemo=voyage -DwSeed=7 -DwCaptain=TeamLeader -DwMood=Day` | Exit 0 in 102 s: map, fight, rewards, level-up, shop, events, the Kraken in both phases, Victory after 10 stops. 20 frames in `Saved/Captures/DW-218/packaged-voyage-*.png` |
+
+First attempt crashed at the Kraken fight (`FDwCombatQueries::FindAbility`, access violation): the dev capture held
+pointers into a temporary `FDwCombatSnapshot` (`GetSnapshot().FindUnit(...)`). The editor build survived the undefined
+behaviour by luck; the packaged build did not. Fixed on `gameplay-engineer/fix-snapshot-dangling` (the lookups are now
+lvalue-only, so the pattern doesn't compile). Dev-only code, so Shipping was never affected, but it shows why packaged
+runs belong in every RC check.
