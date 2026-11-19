@@ -7,6 +7,8 @@
 #include "Data/Tuning/DwAiTuningRow.h"
 #include "DwAiProfile.generated.h"
 
+class UDwAiBrain;
+
 /**
  * A crew personality for the utility AI (Docs/Architecture/07-Enemy-AI.md). Owned by ai-engineer.
  * What the crew is (switches) lives here; every number (weights, Temperature, MaxMoveCandidates) lives in its
@@ -26,6 +28,10 @@ public:
 	/** Boarders: the opponent's deck attracts the crew (FDwAiWeights::Boarding applies). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
 	bool bBoarders = false;
+
+	/** The brain that plays units with this profile. Empty = UDwCrewAiBrain; DA_AiProfile_Kraken uses UDwKrakenAiBrain. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	TSubclassOf<UDwAiBrain> BrainClass;
 
 	/** The DT_AiTuning row, or an all-zero row (and an error in the log) if the link is broken. */
 	FDwAiTuningRow GetTuningValues() const;

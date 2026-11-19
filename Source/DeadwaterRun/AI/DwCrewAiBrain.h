@@ -34,6 +34,8 @@ public:
 	/** Uses this tuning instead of the profile's row (tests and the simulator's what-if runs). */
 	void SetTuningOverride(const FDwAiTuningRow& Tuning) { TuningOverride = Tuning; }
 
+	virtual void Configure(const UDwAiProfile* InProfile, const FDwEncounterSetup& Setup) override { Profile = InProfile; }
+
 	virtual FDwCombatCommand ChooseNextCommand(const FDwCombatSnapshot& Snapshot, FDwUnitHandle Unit, FDwAiTurnContext& Context,
 		FRandomStream& Rng) const override;
 

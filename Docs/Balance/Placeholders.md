@@ -140,6 +140,19 @@ The real Kraken (`DA_Encounter_Kraken`, Docs/Architecture/08). Tentacle count, H
 | `DA_Deck_KrakenArena` (layout) | - | body anchor | 3 tiles from the rail | Muskets (range 6) reach it from the rail and from the nest; from the back row (8 tiles) they don't, so snipers have to advance |
 | Ship cannons vs the body | - | damage | 70 per cannon, flat | The ship's `CannonDamage`, unchanged: two cannons take 140 of 500 a turn. Likely too strong once balanced (DW-401) |
 
+## Set by DW-302 (Kraken AI), 2026-11-19
+
+The Kraken brain (`UDwKrakenAiBrain`, `DA_AiProfile_Kraken`). Its move draw uses `DA_Kraken`'s phase weights (still 1 each, above); these are its target-scoring weights.
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `AiTuning.json` | `Kraken` | `Damage` / `Kill` / `Win` / `LowHealthFocus` | 1 / 40 / 1000 / 20 | The crew AI's defaults: finish the wounded, always take a run-ending hit |
+| `AiTuning.json` | `Kraken` | `CaptainPressure` | 0.5 | A mild lean towards the captain (captain death = defeat, C10); C10b left crews at 0, the boss is the one enemy meant to threaten the captain |
+| `AiTuning.json` | `Kraken` | `ShipDamage` / `ShipLowHull` | 0.25 / 1 | Slams the ship mostly when the hull is low; a sinking hit scores as `Win` |
+| `AiTuning.json` | `Kraken` | position terms, `Temperature`, `MaxMoveCandidates` | 0 | The body never moves; target ties are drawn from the AI stream |
+| `UDwKrakenAiBrain` (code rule) | - | Grab target | hardest hitter (`AttackDamage`) not already rooted | Pins the pirate who would cut tentacles fastest; no weight in `FDwAiWeights` for control yet |
+| `UDwKrakenAiBrain` (code rule) | - | Eyes of the Sea | never while its extra action is pending | Otherwise it could chain double turns forever |
+
 ## Set by DW-304 (crew abilities and perks), 2026-11-17
 
 The numbers of Set A (`Docs/Balance/N1-AbilityDrafts.md`, chosen by Brandon) and of Brandon's perk list are all placeholders for the DW-401 simulator pass.

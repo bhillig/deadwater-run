@@ -28,7 +28,8 @@ class DEADWATERRUN_API UDwAiSideController : public UObject, public IDwCombatSid
 
 public:
 	/**
-	 * A controller for every enemy whose FDwCombatantSetup carries an AI profile (one UDwCrewAiBrain per profile).
+	 * A controller for every enemy whose FDwCombatantSetup carries an AI profile: one brain per profile, of the profile's BrainClass
+	 * (UDwCrewAiBrain when empty), configured with the setup.
 	 * EnemyHandles are the enemies' handles in Setup.Enemies order. Null if no enemy has a profile.
 	 */
 	static UDwAiSideController* CreateForEncounter(UObject* Outer, const FDwEncounterSetup& Setup, TConstArrayView<FDwUnitHandle> EnemyHandles);
@@ -41,6 +42,8 @@ public:
 	void SetSeed(int32 EncounterSeed);
 
 	// IDwCombatSideController
+	virtual void OnCombatStarted(UDwCombatSubsystem& Combat) override;
+	virtual void OnSideTurnEnded(UDwCombatSubsystem& Combat, EDwSide Side) override;
 	virtual void BeginSideTurn(UDwCombatSubsystem& Combat, EDwSide Side) override {}
 	virtual void BeginUnitTurn(UDwCombatSubsystem& Combat, FDwUnitHandle Unit) override;
 	virtual void OnCommandResolved(UDwCombatSubsystem& Combat) override;
@@ -52,6 +55,10 @@ private:
 	/** Submits the acting unit's commands until it ends, the fight ends, or an ability resolves latently. */
 	void ActForUnit(UDwCombatSubsystem& Combat);
 	void FinishUnit(UDwCombatSubsystem& Combat, FDwUnitHandle Unit);
+	/** Asks Unit's brain for its next-turn intents and stores them (only touches storage if there is something to store or clear). */
+	void DeclareIntentsFor(UDwCombatSubsystem& Combat, FDwUnitHandle Unit);
+	/** DeclareIntentsFor every unit with a brain, in handle order (the AI stream is drawn in a fixed order). */
+	void DeclareAllIntents(UDwCombatSubsystem& Combat);
 
 	UPROPERTY() TMap<FDwUnitHandle, TObjectPtr<UDwAiBrain>> BrainsByUnit;
 

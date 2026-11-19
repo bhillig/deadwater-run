@@ -32,7 +32,9 @@ classDiagram
     class UDwAiBrain {
         <<abstract>>
         +ChooseNextCommand(Snapshot, Unit, Context, Rng) FDwCombatCommand
-        +DeclareIntent(Snapshot, Unit, Rng) FDwAiIntent
+        +Configure(Profile, Setup)
+        +DeclareIntents(Snapshot, Unit, Rng) TArray~FDwAiIntent~
+        +ShouldRedeclare(Snapshot, Unit) bool
     }
     class UDwCrewAiBrain {
         +TObjectPtr~UDwAiProfile~ Profile
@@ -71,7 +73,7 @@ classDiagram
 - `FDwAiScoring` (pure) terms: expected unit damage, kill bonus, ship damage (cannons), healing/cleansing value, Fear and status value, danger at the destination (threat from player units next turn), boarding preference, sinking-risk avoidance (don't stand on a ship about to sink), focus on low-Health targets, MP conservation, captain pressure (damage to the player captain, since captain death = defeat, C10 - weighted per profile so not every crew hunts the captain; the default weight is a balance call, see Open-Questions C10b).
 - Candidate moves respect the board rules: 4-way, one move per turn, pass through allies (C1-C3). Because the move is single, the brain picks one destination per turn and never plans a second step after acting.
 - `UDwAiProfile : UDwDefinitionBase` - `FDwAiWeights` (one float per term), `Temperature`, `MaxMoveCandidates`, `bPreferCannons`, `bBoarders`; numbers come from `DT_AiTuning` rows so the Balance Designer tunes them in JSON. Each `UDwEncounterDefinition` (crew) and each enemy slot can reference a profile - this is how 4-5 crews get distinct personalities (e.g. "gunners" vs "boarders"; the actual personalities are Brandon's call, Open-Questions N2).
-- `FDwAiIntent` - `AbilityTag`, target, `bTelegraph`. Crews may declare intents (optional); the Kraken always does.
+- `FDwAiIntent` - `AbilityTag`, target, `bTelegraph`. Crews may declare intents (optional); the Kraken always does. Declared through the side controller at combat start and after each enemy side turn (`OnCombatStarted` / `OnSideTurnEnded`); a profile picks its brain with `BrainClass` (empty = `UDwCrewAiBrain`, `DA_AiProfile_Kraken` = `UDwKrakenAiBrain`, doc 08).
 
 ## Rules the AI must respect
 - Only actions a player could take; no hidden information beyond what the HUD shows (the AI does not read the combat random stream's future).

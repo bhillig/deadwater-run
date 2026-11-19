@@ -36,6 +36,8 @@ struct DEADWATERRUN_API FDwUnitSnapshot
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float Fear = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float MaxFear = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float ActionPoints = 0.f;
+	/** Actions the unit gets at its next turn start, effects included (Eyes of the Sea: the Kraken brain plans that many, DW-302). */
+	UPROPERTY(BlueprintReadOnly, Category = "Stats") float MaxActionPoints = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float MovePoints = 0.f;
 	/** MovePoints at the start of the unit's next turn (the AI reads it to judge next-turn threat, DW-106). */
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float MoveRange = 0.f;
@@ -85,6 +87,8 @@ struct DEADWATERRUN_API FDwKrakenSnapshot
 	UPROPERTY(BlueprintReadOnly, Category = "Kraken") int32 TentaclesDead = 0;
 	/** Multiplier on every hit the Kraken deals (B2: missing tentacles weaken it). 1 = full strength. */
 	UPROPERTY(BlueprintReadOnly, Category = "Kraken") float DamageMultiplier = 1.f;
+	/** Actions per turn the current phase and tentacles give, before effects (MaxActionPoints above this = Eyes of the Sea pending). */
+	UPROPERTY(BlueprintReadOnly, Category = "Kraken") int32 BaseActions = 1;
 
 	bool IsSet() const { return Body.IsValid(); }
 };

@@ -3,6 +3,7 @@
 #include "DwKrakenContentLibrary.h"
 
 #include "AI/DwAiProfile.h"
+#include "AI/DwKrakenAiBrain.h"
 #include "Abilities/DwGA_EffectPayload.h"
 #include "Abilities/DwGameplayEffects.h"
 #include "Board/DwBoardBuilder.h"
@@ -54,6 +55,8 @@ namespace DwKrakenContent
 		FGameplayTag AbilityTag;
 		EDwTargetPattern Pattern;
 		TSubclassOf<UGameplayEffect> Effect;
+		/** Telegraphed at a tile: moving off it dodges (Brandon, DW-302). */
+		bool bAimAtTile = false;
 	};
 
 	UDwAbilityDefinition* MakeMove(const FMoveSpec& Spec, UDataTable* AbilityTable, TArray<FString>& Log, bool& bOk)
@@ -72,6 +75,7 @@ namespace DwKrakenContent
 		Move->Targeting.Pattern = Spec.Pattern;
 		Move->Targeting.Side = Spec.Pattern == EDwTargetPattern::Self ? EDwTargetSide::Ally : EDwTargetSide::Enemy;
 		Move->Targeting.bIgnoreRange = true; // it reaches the whole ship from the water
+		Move->Targeting.bAimAtTile = Spec.bAimAtTile;
 		Move->Applications = { Application };
 		Move->HitCue = DwTags::GameplayCue_Hit_Melee; // Kraken cues and art are DW-307
 		Move->PlaceholderSeconds = 0.5f;
@@ -148,12 +152,12 @@ TArray<FString> UDwKrakenContentLibrary::CreateKrakenContent()
 	// 3. The five moves (08 "Moves"); numbers from DT_AbilityTuning. B8: Swipe and Arms of Fury hit crew only.
 	const FDwSharedEffects& Shared = DwGas::GetSharedEffects();
 	const FMoveSpec Moves[] = {
-		{ TEXT("TentacleSlam"), TEXT("Tentacle Slam"), TEXT("Slams one crew member or the ship."),
-			DwTags::Ability_Kraken_TentacleSlam, EDwTargetPattern::SingleUnitOrShip, Shared.Damage },
+		{ TEXT("TentacleSlam"), TEXT("Tentacle Slam"), TEXT("Slams the tile a crew member stands on (step off it to dodge), or the ship."),
+			DwTags::Ability_Kraken_TentacleSlam, EDwTargetPattern::SingleUnitOrShip, Shared.Damage, true },
 		{ TEXT("KrankySwipe"), TEXT("Kranky Swipe"), TEXT("Sweeps the deck: every crew member is hit."),
 			DwTags::Ability_Kraken_KrankySwipe, EDwTargetPattern::AllEnemies, Shared.Damage },
-		{ TEXT("TentacleGrab"), TEXT("Tentacle Grab"), TEXT("Grabs one crew member: they can't move next turn."),
-			DwTags::Ability_Kraken_TentacleGrab, EDwTargetPattern::SingleUnit, Shared.Rooted },
+		{ TEXT("TentacleGrab"), TEXT("Tentacle Grab"), TEXT("Grabs whoever stands on a tile (step off it to dodge): they can't move next turn."),
+			DwTags::Ability_Kraken_TentacleGrab, EDwTargetPattern::SingleUnit, Shared.Rooted, true },
 		{ TEXT("ArmsOfFury"), TEXT("Arms of Fury"), TEXT("Lashes out 3-5 times at random crew."),
 			DwTags::Ability_Kraken_ArmsOfFury, EDwTargetPattern::RandomEnemies, Shared.Damage },
 		{ TEXT("EyesOfTheSea"), TEXT("Eyes of the Sea"), TEXT("Gathers itself: two actions next turn."),
@@ -231,12 +235,23 @@ TArray<FString> UDwKrakenContentLibrary::CreateKrakenContent()
 	Kraken->Tuning = Row(KrakenTable, TEXT("Kraken"), Log, bOk);
 	bOk &= Validate(Kraken, Log) && Save(Kraken, Log);
 
+	// 6b. Its brain (DW-302): UDwKrakenAiBrain, target weights in DT_AiTuning row Kraken (Tuning/AiTuning.json).
+	UDataTable* AiTable = Load<UDataTable>(Tuning, TEXT("DT_AiTuning"));
+	UDwAiProfile* KrakenProfile = FindOrCreate<UDwAiProfile>(AiData, TEXT("DA_AiProfile_Kraken"), Log);
+	KrakenProfile->DisplayName = FText::FromString(TEXT("Kraken"));
+	KrakenProfile->Description = FText::FromString(TEXT("Telegraphs every move; slams the wounded, the captain when the hit would kill, the ship when its hull is low."));
+	KrakenProfile->BrainClass = UDwKrakenAiBrain::StaticClass();
+	KrakenProfile->bPreferCannons = false;
+	KrakenProfile->bBoarders = false;
+	KrakenProfile->Tuning = Row(AiTable, TEXT("Kraken"), Log, bOk);
+	bOk &= Validate(KrakenProfile, Log) && Save(KrakenProfile, Log);
+
 	// 7. The boss encounter, played by the boss node (never in the fight pool: kind Kraken).
 	UDwEncounterDefinition* Encounter = FindOrCreate<UDwEncounterDefinition>(EncounterData, TEXT("DA_Encounter_Kraken"), Log);
 	Encounter->DisplayName = FText::FromString(TEXT("The Kraken"));
 	Encounter->Kind = EDwEncounterKind::Kraken;
 	Encounter->Kraken = Kraken;
-	Encounter->AiProfile = AiProfile; // the crew brain drives the body until UDwKrakenAiBrain (DW-302)
+	Encounter->AiProfile = KrakenProfile;
 	Encounter->Units.Reset();
 	Encounter->ShipDeck = nullptr;
 	Encounter->ShipClass.Reset();

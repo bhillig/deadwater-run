@@ -313,6 +313,22 @@ void UDwGameplayAbility::GatherValidTargets(const FDwTargetingContext& Context, 
 		{
 			OutTargets.Add(FDwAbilityTarget::MakeShip(EnemySide));
 		}
+		if (Rules.bAimAtTile && Rules.Side == EDwTargetSide::Enemy
+			&& (Rules.Pattern == EDwTargetPattern::SingleUnit || Rules.Pattern == EDwTargetPattern::SingleUnitOrShip))
+		{
+			// Tile aims (Kraken telegraphs): every standable tile of the opposing deck in reach, occupied or not.
+			for (int32 Index = 0; Index < Grid.Tiles.Num(); ++Index)
+			{
+				const FIntPoint Tile = Grid.ToTile(Index);
+				const FDwTile* Data = Grid.GetTile(Tile);
+				if (Data && Data->Owner == EnemySide && Grid.IsStandable(Tile)
+					&& FDwTargetingQuery::IsInRange(Grid, Context.Snapshot->GridRules, SourceTile.GetValue(), Tile, Range)
+					&& (!Rules.bRequiresLineOfSight || FDwLineOfSight::HasLineOfSight(Grid, SourceTile.GetValue(), Tile)))
+				{
+					OutTargets.Add(FDwAbilityTarget::MakeTile(Tile));
+				}
+			}
+		}
 		break;
 
 	case EDwTargetPattern::EnemyShip:
@@ -417,10 +433,25 @@ void UDwGameplayAbility::ResolveTargets(const FDwTargetingContext& Context, cons
 		return;
 	}
 
-	// Defend redirect: a single-target enemy hit on a guarded unit goes to its guardian, if alive and next to it.
 	const bool bSingle = Rules.Pattern == EDwTargetPattern::SingleUnit || Rules.Pattern == EDwTargetPattern::SingleUnitOrShip;
 	const FDwUnitSnapshot* Source = Context.Snapshot->FindUnit(Context.Source);
-	const FDwUnitSnapshot* Victim = Context.Snapshot->FindUnit(Target.Unit);
+
+	// A tile aim hits whoever stands there now; an empty tile (or one with nobody it may hit) is a miss.
+	FDwAbilityTarget Aimed = Target;
+	if (Rules.bAimAtTile && bSingle && !Target.IsUnit() && !Target.bShip)
+	{
+		const FDwOccupant Occupant = Context.Snapshot->Grid.GetOccupant(Target.Tile);
+		const FDwUnitSnapshot* Standing = Occupant.IsSet() ? Context.Snapshot->FindUnit(Occupant.Unit) : nullptr;
+		const TOptional<FIntPoint> SourceTile = Context.GetSourceTile();
+		if (!Standing || !Source || !SourceTile.IsSet() || !IsUnitTargetable(Context, *Source, SourceTile.GetValue(), *Standing, GetRange(Context), nullptr))
+		{
+			return;
+		}
+		Aimed = FDwAbilityTarget::MakeUnit(Standing->Handle, Standing->Tile);
+	}
+
+	// Defend redirect: a single-target enemy hit on a guarded unit goes to its guardian, if alive and next to it.
+	const FDwUnitSnapshot* Victim = Context.Snapshot->FindUnit(Aimed.Unit);
 	if (bSingle && Source && Victim && Victim->Side != Source->Side && Victim->Tags.HasTagExact(DwTags::Status_Guarded))
 	{
 		const FDwUnitSnapshot* Guardian = Context.Snapshot->FindUnit(Victim->GuardedBy);
@@ -432,7 +463,7 @@ void UDwGameplayAbility::ResolveTargets(const FDwTargetingContext& Context, cons
 			return;
 		}
 	}
-	OutTargets.Add(Target);
+	OutTargets.Add(Aimed);
 }
 
 FDwAbilityPreview UDwGameplayAbility::PreviewOutcome(const FDwTargetingContext& Context, const FDwAbilityTarget& Target) const

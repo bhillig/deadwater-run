@@ -22,5 +22,29 @@
 		},
 		"Temperature": 0.0,
 		"MaxMoveCandidates": 16
+	},
+	{
+		"Name": "Kraken",
+		"Weights": {
+			"Damage": 1.0,
+			"Kill": 40.0,
+			"Win": 1000.0,
+			"ShipDamage": 0.25,
+			"ShipLowHull": 1.0,
+			"FriendlyFire": 0.0,
+			"Heal": 0.0,
+			"Fear": 0.0,
+			"LowHealthFocus": 20.0,
+			"CaptainPressure": 0.5,
+			"ManaCost": 0.0,
+			"Danger": 0.0,
+			"SinkingRisk": 0.0,
+			"Approach": 0.0,
+			"HighGround": 0.0,
+			"Boarding": 0.0,
+			"CannonAffinity": 0.0
+		},
+		"Temperature": 0.0,
+		"MaxMoveCandidates": 0
 	}
 ]

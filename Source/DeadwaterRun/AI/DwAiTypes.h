@@ -63,6 +63,8 @@ struct DEADWATERRUN_API FDwAiTurnContext
 	UPROPERTY(BlueprintReadOnly, Category = "AI") FDwAiCandidate Plan;
 	/** Commands chosen for this unit this turn (a safety bound for the controller). */
 	UPROPERTY(BlueprintReadOnly, Category = "AI") int32 Commands = 0;
+	/** Ability commands chosen this turn (the Kraken brain: which declared intent comes next). */
+	UPROPERTY(BlueprintReadOnly, Category = "AI") int32 Actions = 0;
 
 	void Reset() { *this = FDwAiTurnContext(); }
 };

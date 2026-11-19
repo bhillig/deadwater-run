@@ -114,7 +114,9 @@ enum class EDwCombatEventType : uint8
 	IntentDeclared,
 	OutcomeReached,
 	/** Kraken phase change (B7): Source = the body, Magnitude = the new phase index, Tag = the phase's music state. */
-	PhaseChanged
+	PhaseChanged,
+	/** A tile-aimed hit landed on a tile nobody stood on (the player dodged): Source = the user, Tile, Tag = the ability. */
+	AttackMissed
 };
 
 /** Docs/Architecture/03 "FDwCombatEvent". Consumers: floating text, combat log, run stats, simulator report, replays. */

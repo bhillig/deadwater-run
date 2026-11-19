@@ -16,7 +16,7 @@ namespace DwAiSideController
 UDwAiSideController* UDwAiSideController::CreateForEncounter(UObject* Outer, const FDwEncounterSetup& Setup, TConstArrayView<FDwUnitHandle> EnemyHandles)
 {
 	UDwAiSideController* Controller = nullptr;
-	TMap<const UDwAiProfile*, UDwCrewAiBrain*> BrainsByProfile;
+	TMap<const UDwAiProfile*, UDwAiBrain*> BrainsByProfile;
 	for (int32 Index = 0; Index < Setup.Enemies.Num() && Index < EnemyHandles.Num(); ++Index)
 	{
 		const UDwAiProfile* Profile = Setup.Enemies[Index].AiProfile;
@@ -29,11 +29,13 @@ UDwAiSideController* UDwAiSideController::CreateForEncounter(UObject* Outer, con
 			Controller = NewObject<UDwAiSideController>(Outer);
 			Controller->SetSeed(Setup.Seed);
 		}
-		UDwCrewAiBrain*& Brain = BrainsByProfile.FindOrAdd(Profile);
+		UDwAiBrain*& Brain = BrainsByProfile.FindOrAdd(Profile);
 		if (!Brain)
 		{
-			Brain = NewObject<UDwCrewAiBrain>(Controller);
-			Brain->Profile = Profile;
+			// The profile names its brain (the Kraken's); crews use the utility planner.
+			const TSubclassOf<UDwAiBrain> BrainClass = Profile->BrainClass ? Profile->BrainClass : TSubclassOf<UDwAiBrain>(UDwCrewAiBrain::StaticClass());
+			Brain = NewObject<UDwAiBrain>(Controller, BrainClass);
+			Brain->Configure(Profile, Setup);
 		}
 		Controller->SetBrain(EnemyHandles[Index], Brain);
 	}
@@ -62,10 +64,41 @@ void UDwAiSideController::SetSeed(int32 EncounterSeed)
 	Random.Initialize(static_cast<int32>(HashCombineFast(GetTypeHash(EncounterSeed), DwAiSideController::StreamSalt)));
 }
 
+void UDwAiSideController::OnCombatStarted(UDwCombatSubsystem& Combat)
+{
+	// First intents, so the player sees the Kraken's opening moves before their first turn (08 "Intents").
+	DeclareAllIntents(Combat);
+}
+
+void UDwAiSideController::OnSideTurnEnded(UDwCombatSubsystem& Combat, EDwSide Side)
+{
+	// After the enemy turn's durations ticked: next turn's budget is known (Eyes of the Sea's extra action included).
+	if (Side == EDwSide::Enemy)
+	{
+		DeclareAllIntents(Combat);
+	}
+}
+
+void UDwAiSideController::DeclareAllIntents(UDwCombatSubsystem& Combat)
+{
+	TArray<FDwUnitHandle> Handles;
+	BrainsByUnit.GetKeys(Handles);
+	Handles.Sort([](const FDwUnitHandle& A, const FDwUnitHandle& B) { return A.Id < B.Id; }); // stream order = unit order
+	for (const FDwUnitHandle Unit : Handles)
+	{
+		DeclareIntentsFor(Combat, Unit);
+	}
+}
+
 void UDwAiSideController::BeginUnitTurn(UDwCombatSubsystem& Combat, FDwUnitHandle Unit)
 {
 	ActingUnit = Unit;
 	TurnContext.Reset();
+	if (const UDwAiBrain* Brain = GetBrain(Unit); Brain && Brain->ShouldRedeclare(Combat.GetSnapshot(), Unit))
+	{
+		UE_LOG(LogDwAI, Log, TEXT("Unit %d re-declares its intents at turn start"), Unit.Id);
+		DeclareIntentsFor(Combat, Unit);
+	}
 	ActForUnit(Combat);
 }
 
@@ -74,6 +107,21 @@ void UDwAiSideController::OnCommandResolved(UDwCombatSubsystem& Combat)
 	if (ActingUnit.IsValid())
 	{
 		ActForUnit(Combat);
+	}
+}
+
+void UDwAiSideController::DeclareIntentsFor(UDwCombatSubsystem& Combat, FDwUnitHandle Unit)
+{
+	const UDwAiBrain* Brain = GetBrain(Unit);
+	if (!Brain || !Combat.IsActive())
+	{
+		return;
+	}
+	const TArray<FDwAiIntent> Declared = Brain->DeclareIntents(Combat.GetSnapshot(), Unit, Random);
+	// Crews declare nothing: don't touch storage (or emit events) for them.
+	if (!Declared.IsEmpty() || Combat.GetIntents(Unit))
+	{
+		Combat.DeclareIntents(Unit, Declared);
 	}
 }
 

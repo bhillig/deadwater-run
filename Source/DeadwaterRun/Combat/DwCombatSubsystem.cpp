@@ -134,6 +134,13 @@ bool UDwCombatSubsystem::StartEncounter(const FDwEncounterSetup& InSetup)
 	RefreshDerivedState();
 	UE_LOG(LogDwCombat, Log, TEXT("Encounter started: %d crew vs %d enemies, seed %d"), PlayerCrewCount, Units.Num() - PlayerCrewCount, Setup.Seed);
 	OnCombatStarted.Broadcast();
+	for (const EDwSide Side : { EDwSide::Player, EDwSide::Enemy })
+	{
+		if (IDwCombatSideController* Controller = GetSideController(Side))
+		{
+			Controller->OnCombatStarted(*this); // e.g. the Kraken's first intents, shown before the player's first turn
+		}
+	}
 	TurnManager->BeginCombat();
 	return true;
 }
@@ -686,6 +693,16 @@ void UDwCombatSubsystem::HandleSideTurnEnd(EDwSide Side)
 		It.RemoveCurrent();
 	}
 	CheckOutcome();
+	if (bActive && Outcome == EDwCombatOutcome::None)
+	{
+		for (const EDwSide ControllerSide : { EDwSide::Player, EDwSide::Enemy })
+		{
+			if (IDwCombatSideController* Controller = GetSideController(ControllerSide))
+			{
+				Controller->OnSideTurnEnded(*this, Side);
+			}
+		}
+	}
 }
 
 bool UDwCombatSubsystem::BeginEnemyUnitTurn(FDwUnitHandle Handle)
@@ -887,6 +904,7 @@ void UDwCombatSubsystem::UpdateKrakenTurn()
 	if (const FDwKrakenTuningRow* Tuning = Setup.Kraken->GetTuningRow<FDwKrakenTuningRow>())
 	{
 		const int32 Actions = FDwKrakenRules::GetActionsPerTurn(*Tuning, Setup.Kraken->TentacleRules.Effect, KrakenState.PhaseIndex, KrakenState.TentaclesDead);
+		KrakenState.BaseActions = Actions;
 		Asc->SetNumericAttributeBase(UDwUnitAttributeSet::GetMaxActionPointsAttribute(), static_cast<float>(Actions));
 	}
 }
@@ -904,6 +922,7 @@ void UDwCombatSubsystem::RefreshKrakenTentacles()
 	KrakenState.TentaclesDead = Dead;
 	const FDwKrakenTuningRow* Tuning = Setup.Kraken ? Setup.Kraken->GetTuningRow<FDwKrakenTuningRow>() : nullptr;
 	KrakenState.DamageMultiplier = Tuning ? FDwKrakenRules::GetDamageMultiplier(*Tuning, Setup.Kraken->TentacleRules.Effect, Dead) : 1.f;
+	KrakenState.BaseActions = Tuning ? FDwKrakenRules::GetActionsPerTurn(*Tuning, Setup.Kraken->TentacleRules.Effect, KrakenState.PhaseIndex, Dead) : 1;
 }
 
 void UDwCombatSubsystem::DeclareIntents(FDwUnitHandle Unit, const TArray<FDwAiIntent>& NewIntents)
@@ -1153,6 +1172,7 @@ FDwCombatSnapshot UDwCombatSubsystem::GetSnapshot() const
 		S.Fear = A->GetFear();
 		S.MaxFear = A->GetMaxFear();
 		S.ActionPoints = A->GetActionPoints();
+		S.MaxActionPoints = A->GetMaxActionPoints();
 		S.MovePoints = A->GetMovePoints();
 		S.MoveRange = A->GetMoveRange();
 		S.AttackDamage = A->GetAttackDamage();
@@ -1269,6 +1289,17 @@ bool UDwCombatSubsystem::ConsumeItem(FName ItemId)
 	--*Count;
 	++ItemsUsed.FindOrAdd(ItemId);
 	return true;
+}
+
+void UDwCombatSubsystem::ReportMiss(FDwUnitHandle Source, FIntPoint Tile, FGameplayTag AbilityTag)
+{
+	UE_LOG(LogDwCombat, Log, TEXT("Unit %d's %s hit empty tile (%d,%d): missed"), Source.Id, *AbilityTag.ToString(), Tile.X, Tile.Y);
+	FDwCombatEvent Missed;
+	Missed.Type = EDwCombatEventType::AttackMissed;
+	Missed.Source = Source;
+	Missed.Tile = Tile;
+	Missed.Tag = AbilityTag;
+	Emit(Missed);
 }
 
 FActiveGameplayEffectHandle UDwCombatSubsystem::ApplyEffectToSelf(UDwAbilitySystemComponent& Target, TSubclassOf<UGameplayEffect> EffectClass, bool bNoInstigator)

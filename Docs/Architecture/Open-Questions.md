@@ -3,7 +3,7 @@
 - Every creative or design call the architecture needs. Agents never pick; they build the recommended default behind a data flag, clearly marked as a placeholder, until you answer.
 - **Where it lives** = the data field that holds your answer. Almost all answers are data, not code. Questions marked **(code)** change behaviour that data can't express.
 - **Needed by** follows the critical path in `Roadmap.md`.
-- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-17 (B1-B8 answered for DW-301 and N1 + P2 for DW-304: recommended defaults, N1 = the balance-designer's Set A, crew only; earlier that day: C10a, K1a, K2a, K4a, K5, K6, K8-K12 answered for DW-205..DW-208: recommended defaults, K5 with reduced redirected damage; 2026-11-11: P4, P7-P10, C9a and the DW-204 price questions answered; P12-P18 raised by DW-204. 2026-11-10: K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
+- Answered questions move to **Resolved** at the bottom with the decision and the docs that now carry it. Last update: 2026-11-19 (B6a + B6b answered for DW-302/303: Slam and Grab hit the declared tile; intents shown in the HUD, on the board and above the Kraken; earlier, 2026-11-17: B1-B8 answered for DW-301 and N1 + P2 for DW-304: recommended defaults, N1 = the balance-designer's Set A, crew only; earlier that day: C10a, K1a, K2a, K4a, K5, K6, K8-K12 answered for DW-205..DW-208: recommended defaults, K5 with reduced redirected damage; 2026-11-11: P4, P7-P10, C9a and the DW-204 price questions answered; P12-P18 raised by DW-204. 2026-11-10: K7, P6, P11, M1-M6 answered during DW-201..DW-211; earlier: C1-C15, K1-K4, U1-U5 from `AnswersToOpenQuestions.md`).
 
 ## Top open questions (they shape the most work)
 1. **C8a** - Explosive barrels: new in your C8 answer, not in the design doc or Scope. In v1 or post-launch?
@@ -204,4 +204,11 @@ U1-U5 answered - see Resolved. Follow-up U3a above.
 | B7 | Phase change at 30% | a) At the start of its next turn, with a banner | `UDwCombatSubsystem::UpdateKrakenTurn`, `PhaseChanged` event (banner: DW-303) |
 | B8 | Do Swipe / Arms of Fury hit the ship? | a) Crew only | `GA_Kraken_KrankySwipe` / `GA_Kraken_ArmsOfFury` targeting |
 | N1 | The ~12 crew abilities | Set A "Cutlass and Musket" from `Docs/Balance/N1-AbilityDrafts.md` (balance-designer draft, numbers are placeholders for DW-401); crew only, captains don't learn them | `GA/DA_Ability_Crew_*`, `AbilityTuning.json` `Crew_*`, `DA_AbilityPool_Swordsman` / `_Sniper` (built in DW-304) |
+
+### Answered 2026-11-19 (DW-302 Kraken AI, DW-303 Kraken HUD)
+
+| # | Question | Decision | Where it lives now |
+|---|---|---|---|
+| B6a | Slam / Grab intents: follow the unit, or hit the declared tile? | Hit the tile: aimed at the victim's tile when declared, whoever stands there when it lands is hit, an empty tile is a miss (moving off dodges). Swipe and Arms of Fury can't be dodged | `FDwTargetingRules::bAimAtTile` on `GA_Kraken_TentacleSlam` / `_TentacleGrab`; `UDwKrakenAiBrain`; `AttackMissed` event |
+| B6b | Where intents show | HUD intent panel by the boss bar, red danger tiles on the board, and a world-space intent marker above the Kraken | DW-303: `WBP_BossBar`, `WBP_Intent`, `EDwHighlightLayer::Danger`, the Kraken's world widget |
 | P2 | Perk pools | a) Shared pool + a few archetype perks, 3 choices; perk list (Brandon): shared Sea Legs, Hardened, Cutthroat, Thick Skin, Rum Ration; Swordsman Iron Hide, Brawler; Sniper Steady Hand, Deep Breath | `DA_PerkPool_Shared` (archetype perks by `RequiredUnitTags`), `PerkTuning.json` (built in DW-304) |

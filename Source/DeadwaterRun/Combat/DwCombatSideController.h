@@ -29,8 +29,18 @@ class DEADWATERRUN_API IDwCombatSideController
 	GENERATED_BODY()
 
 public:
+	/** The fight is set up and round 1 is about to start (the Kraken declares its first intents here, DW-302). */
+	virtual void OnCombatStarted(UDwCombatSubsystem& Combat) {}
+
 	/** Side's turn started (budgets refreshed, durations ticked). The player side then acts in any order until EndTurn. */
 	virtual void BeginSideTurn(UDwCombatSubsystem& Combat, EDwSide Side) = 0;
+
+	/**
+	 * Side's turn ended and its turn durations have ticked, so every unit's budget for its next turn is known
+	 * (the Kraken declares its next intents here: Eyes of the Sea's extra action is still counted, DW-302).
+	 * Sent to both sides' controllers.
+	 */
+	virtual void OnSideTurnEnded(UDwCombatSubsystem& Combat, EDwSide Side) {}
 
 	/** Enemy-style sides: it is Unit's turn in the fixed sequence; finish it with an EndUnit command. */
 	virtual void BeginUnitTurn(UDwCombatSubsystem& Combat, FDwUnitHandle Unit) {}

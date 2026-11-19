@@ -88,6 +88,8 @@ protected:
 	TArray<float> HitMultipliers;
 	/** Situational damage multiplier passed in with the activation event; 1 = none. Part of every HitMultipliers entry. */
 	float DamageMultiplier = 1.f;
+	/** Set when a tile aim (FDwTargetingRules::bAimAtTile) found nobody to hit: reported as a miss at impact. */
+	TOptional<FIntPoint> MissedTile;
 
 private:
 	UFUNCTION() void HandleImpact();

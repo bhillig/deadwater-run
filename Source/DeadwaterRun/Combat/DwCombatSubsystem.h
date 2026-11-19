@@ -111,6 +111,8 @@ public:
 	void MarkCannonUsed(FIntPoint CannonTile);
 	/** Spends one item from the run inventory view. False if none left. */
 	bool ConsumeItem(FName ItemId);
+	/** A tile-aimed hit found nobody on Tile (FDwTargetingRules::bAimAtTile): emits AttackMissed. */
+	void ReportMiss(FDwUnitHandle Source, FIntPoint Tile, FGameplayTag AbilityTag);
 
 	// --- Called by the turn manager --------------------------------------------------------------------------------
 

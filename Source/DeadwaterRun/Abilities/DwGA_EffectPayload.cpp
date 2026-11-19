@@ -7,6 +7,7 @@
 #include "Abilities/Tasks/DwAT_PlayPresentation.h"
 #include "Combat/DwCombatSubsystem.h"
 #include "Combat/DwCombatUnit.h"
+#include "Data/DwAbilityDefinition.h"
 #include "Core/DwGameplayTags.h"
 
 UDwGA_EffectPayload::UDwGA_EffectPayload()
@@ -45,7 +46,14 @@ void UDwGA_EffectPayload::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	{
 		HitMultipliers.Add(GetHitDamageMultiplier(Context, Hit));
 	}
-	if (ResolvedTargets.IsEmpty() || !PrepareActivation(Context, Aimed))
+	// A tile aim at a tile nobody stands on still lands (and spends the action): a miss the player earned by moving.
+	const FDwTargetingRules& Rules = GetTargetingRules(Context);
+	MissedTile.Reset();
+	if (ResolvedTargets.IsEmpty() && Rules.bAimAtTile && !Aimed.IsUnit() && !Aimed.bShip)
+	{
+		MissedTile = Aimed.Tile;
+	}
+	if ((ResolvedTargets.IsEmpty() && !MissedTile.IsSet()) || !PrepareActivation(Context, Aimed))
 	{
 		CancelActivation();
 		return;
@@ -66,6 +74,15 @@ void UDwGA_EffectPayload::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 void UDwGA_EffectPayload::HandleImpact()
 {
 	ApplyPayload();
+	if (MissedTile.IsSet())
+	{
+		const ADwCombatUnit* Unit = GetOwnerUnit();
+		const UDwAbilityDefinition* Definition = GetDefinition();
+		if (UDwCombatSubsystem* Combat = GetCombat(); Combat && Unit)
+		{
+			Combat->ReportMiss(Unit->GetHandle(), MissedTile.GetValue(), Definition ? Definition->AbilityTag : FGameplayTag());
+		}
+	}
 }
 
 void UDwGA_EffectPayload::HandleCompleted()

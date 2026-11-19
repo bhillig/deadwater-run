@@ -47,6 +47,14 @@ struct DEADWATERRUN_API FDwTargetingRules
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Targeting")
 	bool bIgnoreRange = false;
 
+	/**
+	 * SingleUnit / SingleUnitOrShip only: may also be aimed at a tile of the opposing side's deck. A tile aim hits
+	 * whoever stands there when it lands and misses an empty tile (the Kraken's telegraphed Slam and Grab: move out of
+	 * the danger tile to dodge, Docs/Architecture/08 "Intents"). Unit aims keep working as before.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Targeting")
+	bool bAimAtTile = false;
+
 	/** false for melee: a unit in the nest can't be a melee target (C5). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Targeting")
 	bool bCanTargetElevated = true;
