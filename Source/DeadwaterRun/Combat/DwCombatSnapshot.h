@@ -133,15 +133,22 @@ struct DEADWATERRUN_API FDwCombatSnapshot
 	/** Declared intents, one entry per unit that has any. */
 	UPROPERTY(BlueprintReadOnly, Category = "Combat") TArray<FDwUnitIntents> Intents;
 
-	const FDwUnitIntents* FindIntents(FDwUnitHandle Handle) const
+	/*
+	 * The Find* lookups that return a pointer into this snapshot only exist on a named one: UDwCombatSubsystem::GetSnapshot
+	 * returns by value, and `GetSnapshot().FindUnit(...)` would dangle at the end of the statement (a packaged-build
+	 * crash in the dev captures, 2026-11-19). Keep the snapshot in a local first.
+	 */
+	const FDwUnitIntents* FindIntents(FDwUnitHandle Handle) const&
 	{
 		return Intents.FindByPredicate([Handle](const FDwUnitIntents& I) { return I.Unit == Handle; });
 	}
+	const FDwUnitIntents* FindIntents(FDwUnitHandle Handle) const&& = delete;
 
-	const FDwUnitSnapshot* FindUnit(FDwUnitHandle Handle) const
+	const FDwUnitSnapshot* FindUnit(FDwUnitHandle Handle) const&
 	{
 		return Units.FindByPredicate([Handle](const FDwUnitSnapshot& U) { return U.Handle == Handle; });
 	}
+	const FDwUnitSnapshot* FindUnit(FDwUnitHandle Handle) const&& = delete;
 
 	const UDwItemDefinition* FindItem(FName ItemId) const
 	{
@@ -149,8 +156,9 @@ struct DEADWATERRUN_API FDwCombatSnapshot
 		return Item ? Item->Get() : nullptr;
 	}
 
-	const FDwShipSnapshot* FindShip(EDwSide Side) const
+	const FDwShipSnapshot* FindShip(EDwSide Side) const&
 	{
 		return Ships.FindByPredicate([Side](const FDwShipSnapshot& S) { return S.Side == Side; });
 	}
+	const FDwShipSnapshot* FindShip(EDwSide Side) const&& = delete;
 };

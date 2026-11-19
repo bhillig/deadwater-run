@@ -149,7 +149,9 @@ void FDwCombatSpec::Define()
 			TestEqual(TEXT("Enemy ship 250"), F.ShipHealth(EDwSide::Enemy), 250.f);
 			TestEqual(TEXT("Player ship 250"), F.ShipHealth(EDwSide::Player), 250.f);
 			TestEqual(TEXT("Enemy level 3: 120 HP"), F.Health(F.EnemyHandle(2)), 120.f);
-			TestTrue(TEXT("Common ability granted"), F.Combat->GetSnapshot().FindUnit(F.EnemyHandle(0))->GrantedAbilityTags.HasTagExact(F.Latent->AbilityTag));
+			const FDwCombatSnapshot Snapshot = F.Combat->GetSnapshot();
+			const FDwUnitSnapshot* Enemy = Snapshot.FindUnit(F.EnemyHandle(0));
+			TestTrue(TEXT("Common ability granted"), Enemy && Enemy->GrantedAbilityTags.HasTagExact(F.Latent->AbilityTag));
 		});
 
 		It("reports every missing piece of data", [this]()

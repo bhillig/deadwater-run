@@ -262,7 +262,8 @@ void UDwDevCaptureSubsystem::StageDemo()
 				Combat->MoveUnit(Gunner, Ship->GetCannonTiles()[0], /*bSnapActor*/ true);
 			}
 			Interaction->SelectUnit(Gunner);
-			const FDwUnitSnapshot* Unit = Combat->GetSnapshot().FindUnit(Gunner);
+			const FDwCombatSnapshot Current = Combat->GetSnapshot(); // a local: FindUnit points into it
+			const FDwUnitSnapshot* Unit = Current.FindUnit(Gunner);
 			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Cannon)))
 			{
 				Interaction->HoverTile(Combat->FindUnit(FirstOf(EDwSide::Enemy, FGameplayTag()))->GetTile());
@@ -1220,7 +1221,8 @@ void UDwDevCaptureSubsystem::BossFightStep()
 		{
 			Combat->MoveUnit(Sniper, RailBeside(*TentacleUnit) + FIntPoint(0, 1), /*bSnapActor*/ true);
 			Interaction->SelectUnit(Sniper);
-			const FDwUnitSnapshot* Unit = Combat->GetSnapshot().FindUnit(Sniper);
+			const FDwCombatSnapshot Current = Combat->GetSnapshot(); // a local: FindUnit points into it
+			const FDwUnitSnapshot* Unit = Current.FindUnit(Sniper);
 			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Attack_Ranged)))
 			{
 				Interaction->HoverTile(KrakenUnit->Tile);
@@ -1242,7 +1244,8 @@ void UDwDevCaptureSubsystem::BossFightStep()
 		{
 			Combat->MoveUnit(Swordsman, RailBeside(*TentacleUnit), /*bSnapActor*/ true);
 			Interaction->SelectUnit(Swordsman);
-			const FDwUnitSnapshot* Unit = Combat->GetSnapshot().FindUnit(Swordsman);
+			const FDwCombatSnapshot Current = Combat->GetSnapshot(); // a local: FindUnit points into it
+			const FDwUnitSnapshot* Unit = Current.FindUnit(Swordsman);
 			if (Unit && Interaction->SelectAbility(FDwCombatQueries::FindAbility(*Unit, DwTags::Ability_Attack_Melee)))
 			{
 				Interaction->HoverTile(TentacleUnit->Tile);

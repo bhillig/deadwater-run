@@ -816,7 +816,8 @@ void FDwKrakenSpec::Define()
 				&& Declared[0].Target == Captain() && Declared[0].Magnitude == 0.f && Declared[1].Magnitude == 1.f);
 
 			F.Combat->DeclareIntents(Body(), {});
-			TestNull(TEXT("Cleared"), F.Combat->GetSnapshot().FindIntents(Body()));
+			const FDwCombatSnapshot Cleared = F.Combat->GetSnapshot();
+			TestNull(TEXT("Cleared"), Cleared.FindIntents(Body()));
 			F.Combat->DeclareIntents(Body(), { Slam });
 			F.ApplyEffect(DwGas::GetSharedEffects().Kill, Body(), Captain());
 			TestNull(TEXT("Dropped on death"), F.Combat->GetIntents(Body()));
