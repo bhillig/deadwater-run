@@ -101,6 +101,10 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Unit_Heal, "GameplayCue.Unit.Heal");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Status_Fear, "GameplayCue.Status.Fear");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_Enrage, "GameplayCue.Kraken.Enrage");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_Appear, "GameplayCue.Kraken.Appear");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_Death, "GameplayCue.Kraken.Death");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_TentacleCut, "GameplayCue.Kraken.TentacleCut");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Attack_Miss, "GameplayCue.Attack.Miss");
 	UE_DEFINE_GAMEPLAY_TAG(Music_Menu, "Music.Menu");
 	UE_DEFINE_GAMEPLAY_TAG(Music_Map, "Music.Map");
 	UE_DEFINE_GAMEPLAY_TAG(Music_Combat, "Music.Combat");

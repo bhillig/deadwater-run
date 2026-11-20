@@ -488,6 +488,29 @@ void FDwAudioVfxSpec::Define()
 #endif
 			}
 		});
+
+		It("the sound-only cues (Kraken.Appear/Death/TentacleCut, Attack.Miss) are Dw bursts with their tag and no Niagara or sounds of their own", [this]()
+		{
+			const TPair<const TCHAR*, FGameplayTag> SoundOnly[] = {
+				{ TEXT("GC_Kraken_Appear"), DwTags::GameplayCue_Kraken_Appear }, { TEXT("GC_Kraken_Death"), DwTags::GameplayCue_Kraken_Death },
+				{ TEXT("GC_Kraken_TentacleCut"), DwTags::GameplayCue_Kraken_TentacleCut }, { TEXT("GC_Attack_Miss"), DwTags::GameplayCue_Attack_Miss } };
+			for (const TPair<const TCHAR*, FGameplayTag>& Spec : SoundOnly)
+			{
+				const UClass* Class = DwAudioVfxTest::LoadCue(Spec.Key);
+				const UDwGameplayCueNotify_Burst* Cue = Class ? Cast<UDwGameplayCueNotify_Burst>(Class->GetDefaultObject()) : nullptr;
+				if (!TestNotNull(Spec.Key, Cue))
+				{
+					continue;
+				}
+				TestEqual(FString::Printf(TEXT("%s tag"), Spec.Key), Cue->GameplayCueTag, Spec.Value);
+				TestTrue(FString::Printf(TEXT("%s has no Niagara yet (DW-307)"), Spec.Key), Cue->GetBurstNiagaraSystems().IsEmpty());
+				TestEqual(FString::Printf(TEXT("%s has no asset sounds"), Spec.Key), Cue->GetNumAssetSounds(), 0);
+#if WITH_EDITOR
+				FDataValidationContext Context;
+				TestTrue(FString::Printf(TEXT("%s valid"), Spec.Key), static_cast<const UObject*>(Cue)->IsDataValid(Context) != EDataValidationResult::Invalid);
+#endif
+			}
+		});
 	});
 }
 

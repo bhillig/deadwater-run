@@ -111,8 +111,11 @@ public:
 	void MarkCannonUsed(FIntPoint CannonTile);
 	/** Spends one item from the run inventory view. False if none left. */
 	bool ConsumeItem(FName ItemId);
-	/** A tile-aimed hit found nobody on Tile (FDwTargetingRules::bAimAtTile): emits AttackMissed. */
+	/** A tile-aimed hit found nobody on Tile (FDwTargetingRules::bAimAtTile): emits AttackMissed and GameplayCue.Attack.Miss on the tile. */
 	void ReportMiss(FDwUnitHandle Source, FIntPoint Tile, FGameplayTag AbilityTag);
+
+	/** The death cue for a unit with these tags: Kraken.Death for the body, Kraken.TentacleCut for a tentacle, else Unit.Death. */
+	static FGameplayTag GetDeathCue(const FGameplayTagContainer& VictimTags);
 
 	// --- Called by the turn manager --------------------------------------------------------------------------------
 

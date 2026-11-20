@@ -26,6 +26,10 @@
 #include "Data/DwUnitDefinition.h"
 #include "Data/Tuning/DwTuningRows.h"
 #include "Misc/DataValidation.h"
+#include "Misc/ScopeExit.h"
+#include "Presentation/DwAudioCueMap.h"
+#include "Presentation/DwPresentationSubsystem.h"
+#include "Sound/SoundBase.h"
 #include "Run/DwRun.h"
 #include "Run/DwRunSubsystem.h"
 #include "Tests/Combat/DwCombatTestFixture.h"
@@ -825,6 +829,67 @@ void FDwKrakenSpec::Define()
 			F.Combat->DeclareIntents(Body(), { Slam });
 			TestNull(TEXT("The dead declare nothing"), F.Combat->GetIntents(Body()));
 			TestEqual(TEXT("No event"), F.Listener->Count(EDwCombatEventType::IntentDeclared), 0);
+		});
+	});
+
+
+	Describe("Cues", [this]()
+	{
+		It("picks the death cue from the unit's tags: Kraken.Death for the body, TentacleCut for a tentacle, else Unit.Death", [this]()
+		{
+			TestEqual(TEXT("Body"), UDwCombatSubsystem::GetDeathCue(FGameplayTagContainer(DwTags::Unit_Kraken_Body)), FGameplayTag(DwTags::GameplayCue_Kraken_Death));
+			TestEqual(TEXT("Tentacle"), UDwCombatSubsystem::GetDeathCue(FGameplayTagContainer(DwTags::Unit_Kraken_Tentacle)), FGameplayTag(DwTags::GameplayCue_Kraken_TentacleCut));
+			TestEqual(TEXT("Crew"), UDwCombatSubsystem::GetDeathCue(FGameplayTagContainer()), FGameplayTag(DwTags::GameplayCue_Unit_Death));
+		});
+
+		It("watched: plays Kraken.Appear at the start, TentacleCut and Kraken.Death on those deaths, Attack.Miss on an empty tile", [this]()
+		{
+			// Every cue under test plays one engine click through DA_AudioCueMap's override; the sound-only GC_* notifies
+			// (UDwAudioContentLibrary) must exist for any of them to reach the presentation subsystem.
+			USoundBase* Click = LoadObject<USoundBase>(nullptr, TEXT("/Engine/VREditor/Sounds/VR_click1.VR_click1"));
+			if (!TestNotNull(TEXT("Click"), Click)) { return; }
+			const FGameplayTag Tags[] = { DwTags::GameplayCue_Kraken_Appear, DwTags::GameplayCue_Kraken_Death, DwTags::GameplayCue_Kraken_TentacleCut,
+				DwTags::GameplayCue_Attack_Miss, DwTags::GameplayCue_Unit_Death };
+			UDwAudioCueMap* Map = F.Root(NewObject<UDwAudioCueMap>(GetTransientPackage()));
+			for (const FGameplayTag& Tag : Tags)
+			{
+				Map->Cues.Add(Tag).Start.AddDefaulted_GetRef().Sounds.Add(Click);
+			}
+			UDwPresentationSubsystem* Presentation = F.World->GetSubsystem<UDwPresentationSubsystem>();
+			Presentation->SetCueMapOverride(Map);
+			Presentation->SetInstant(false); // as when a player watches: ASCs are bound unsuppressed
+			TArray<FGameplayTag> Played;
+			const FDelegateHandle Handle = Presentation->OnCueSoundPlayed.AddLambda([&Played](const FGameplayTag& Tag, EDwCueSoundSection, USoundBase*) { Played.Add(Tag); });
+			ON_SCOPE_EXIT { Presentation->OnCueSoundPlayed.Remove(Handle); Presentation->SetCueMapOverride(nullptr); Presentation->SetInstant(true); };
+
+			FDwEncounterSetup Setup;
+			if (!StartFreshKrakenFight(Setup)) { return; }
+			TestEqual(TEXT("Appear on the start, once"), Played, TArray<FGameplayTag>{ DwTags::GameplayCue_Kraken_Appear });
+
+			Played.Reset();
+			F.ApplyEffect(DwGas::GetSharedEffects().Kill, Tentacle(0), Captain());
+			TestEqual(TEXT("A cut tentacle plays TentacleCut, not Unit.Death"), Played, TArray<FGameplayTag>{ DwTags::GameplayCue_Kraken_TentacleCut });
+
+			Played.Reset();
+			F.Combat->ReportMiss(Body(), FIntPoint(0, 0), DwTags::Ability_Kraken_TentacleSlam);
+			TestEqual(TEXT("A miss splashes"), Played, TArray<FGameplayTag>{ DwTags::GameplayCue_Attack_Miss });
+
+			Played.Reset();
+			F.ApplyEffect(DwGas::GetSharedEffects().Kill, Body(), Captain());
+			TestEqual(TEXT("The body plays Kraken.Death, not Unit.Death"), Played, TArray<FGameplayTag>{ DwTags::GameplayCue_Kraken_Death });
+		});
+
+		It("instant (simulator, tests): none of them play", [this]()
+		{
+			UDwPresentationSubsystem* Presentation = F.World->GetSubsystem<UDwPresentationSubsystem>();
+			const int32 Before = Presentation->GetCueSoundsPlayed();
+			FDwEncounterSetup Setup;
+			if (!StartFreshKrakenFight(Setup)) { return; }
+			F.ApplyEffect(DwGas::GetSharedEffects().Kill, Tentacle(0), Captain());
+			F.Combat->ReportMiss(Body(), FIntPoint(0, 0), DwTags::Ability_Kraken_TentacleSlam);
+			F.ApplyEffect(DwGas::GetSharedEffects().Kill, Body(), Captain());
+			TestEqual(TEXT("No cue sounds"), Presentation->GetCueSoundsPlayed(), Before);
+			TestEqual(TEXT("No cue reached a notify"), Presentation->GetCuesPresented(), 0);
 		});
 	});
 

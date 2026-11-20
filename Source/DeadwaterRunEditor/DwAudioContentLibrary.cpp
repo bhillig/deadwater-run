@@ -37,12 +37,17 @@ namespace DwAudioContent
 			{ TEXT("GC_Cannon_Fire"), DwTags::GameplayCue_Cannon_Fire, TEXT("/Game/Synty/PolygonPirateRealm/FX/NS_FX_CannonShot_01.NS_FX_CannonShot_01"), 2.f },
 			{ TEXT("GC_Cannon_Impact"), DwTags::GameplayCue_Cannon_Impact, TEXT("/Game/Synty/PolygonPirateRealm/FX/NS_FX_Canon_Rock_01.NS_FX_Canon_Rock_01"), 2.f },
 			{ TEXT("GC_Unit_Death"), DwTags::GameplayCue_Unit_Death, TEXT("/Game/Synty/PolygonGeneric/FX/NS_Smoke_01.NS_Smoke_01"), 1.5f },
+			// Sound-only (nullptr Niagara) until DW-307: Brandon took sound-wrangler's extra cues on 2026-11-20.
+			{ TEXT("GC_Kraken_Appear"), DwTags::GameplayCue_Kraken_Appear, nullptr, 0.f },
+			{ TEXT("GC_Kraken_Death"), DwTags::GameplayCue_Kraken_Death, nullptr, 0.f },
+			{ TEXT("GC_Kraken_TentacleCut"), DwTags::GameplayCue_Kraken_TentacleCut, nullptr, 0.f },
+			{ TEXT("GC_Attack_Miss"), DwTags::GameplayCue_Attack_Miss, nullptr, 0.f },
 		};
 	}
 
 	/**
-	 * PLACEHOLDER (sound-wrangler owns DA_MusicSet; question for Brandon in the DW-114 report): the design names no
-	 * music for the between-fight screens, so rewards, level-up, shop and events keep the map music.
+	 * Brandon (2026-11-20): rewards, level-up, shop and events keep the map music (sound-wrangler owns DA_MusicSet;
+	 * these are only seeded once).
 	 */
 	TMap<EDwRunPhase, FGameplayTag> DefaultPhaseStates()
 	{
@@ -93,7 +98,7 @@ TArray<FString> UDwAudioContentLibrary::CreateAudioContent()
 	if (bSeedPhases)
 	{
 		MusicSet->PhaseStates = DefaultPhaseStates();
-		Log.Add(TEXT("DA_MusicSet: PLACEHOLDER phase states (rewards, level-up, shop and events keep the map music)"));
+		Log.Add(TEXT("DA_MusicSet: seeded phase states (rewards, level-up, shop and events keep the map music)"));
 	}
 	bOk &= Validate(MusicSet, Log);
 	if (bSeedPhases)
@@ -105,22 +110,26 @@ TArray<FString> UDwAudioContentLibrary::CreateAudioContent()
 	// 3. The placeholder cue notifies.
 	for (const FCueSpec& Spec : CueSpecs())
 	{
-		UNiagaraSystem* System = LoadObject<UNiagaraSystem>(nullptr, Spec.Niagara);
+		const bool bSoundOnly = Spec.Niagara == nullptr;
+		UNiagaraSystem* System = bSoundOnly ? nullptr : LoadObject<UNiagaraSystem>(nullptr, Spec.Niagara);
 		UBlueprint* Blueprint = FindOrCreateBlueprint(CueFolder, Spec.Name, UDwGameplayCueNotify_Burst::StaticClass(), Log);
 		UDwGameplayCueNotify_Burst* Cue = Defaults<UDwGameplayCueNotify_Burst>(Blueprint);
-		if (!System || !Cue)
+		if ((!bSoundOnly && !System) || !Cue)
 		{
-			Log.Add(FString::Printf(TEXT("ERROR %s: %s"), Spec.Name, System ? TEXT("blueprint has no defaults") : *FString::Printf(TEXT("missing %s"), Spec.Niagara)));
+			Log.Add(FString::Printf(TEXT("ERROR %s: %s"), Spec.Name, Cue ? *FString::Printf(TEXT("missing %s"), Spec.Niagara) : TEXT("blueprint has no defaults")));
 			bOk = false;
 			continue;
 		}
 		Cue->GameplayCueTag = Spec.Tag;
 		Cue->MaxEffectSeconds = Spec.MaxEffectSeconds;
-		Cue->SetBurstNiagaraSystems({ System }); // no sounds on the asset: they come from DA_AudioCueMap
+		// No sounds on the asset: they come from DA_AudioCueMap.
+		Cue->SetBurstNiagaraSystems(bSoundOnly ? TArray<UNiagaraSystem*>() : TArray<UNiagaraSystem*>{ System });
 		bOk &= Validate(Cue, Log);
 		bOk &= Save(Blueprint, Log);
-		Log.Add(FString::Printf(TEXT("%s: %s -> %s (cap %.1f s, PLACEHOLDER until DW-307)"), Spec.Name, *Spec.Tag.ToString(), *System->GetName(),
-			Spec.MaxEffectSeconds));
+		Log.Add(bSoundOnly
+			? FString::Printf(TEXT("%s: %s -> sound only (VFX in DW-307)"), Spec.Name, *Spec.Tag.ToString())
+			: FString::Printf(TEXT("%s: %s -> %s (cap %.1f s, PLACEHOLDER until DW-307)"), Spec.Name, *Spec.Tag.ToString(), *System->GetName(),
+				Spec.MaxEffectSeconds));
 	}
 
 	// 4. DA_GameData.Audio.

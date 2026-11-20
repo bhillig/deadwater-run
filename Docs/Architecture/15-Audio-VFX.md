@@ -48,6 +48,8 @@
 | `GameplayCue.Status.Fear`, `.Frozen`, `.Rooted`, `.Guarded`, `.Cowering` | status GEs (looping) | status loop | start/stop |
 | `GameplayCue.Ability.<Name>` | content abilities as needed (Smoke and Fire, Six Pistols, Rally Cry, Charge, Grapple, Eye of the Tiger) | per ability | per ability |
 | `GameplayCue.Kraken.<Move>`, `GameplayCue.Kraken.Enrage` | Kraken abilities, phase change | per move | per move |
+| `GameplayCue.Kraken.Appear`, `.Death`, `.TentacleCut` | `StartEncounter` (fight with a Kraken body); `HandleUnitDied` picks them over `Unit.Death` for the body and tentacles (`UDwCombatSubsystem::GetDeathCue`) | sound only until DW-307 | roar / death wail / cut |
+| `GameplayCue.Attack.Miss` | `ReportMiss` (a tile-aimed attack hits an empty tile), at the tile, from the attacker's ASC | sound only until DW-307 | splash |
 
 - Cues carry the instigator, target and hit location in the effect context; Six Pistols fires one cue per hit.
 - In instant mode ASCs suppress cues (`bSuppressGameplayCues`), so simulator and tests are silent.
@@ -56,6 +58,7 @@
 ## Settings and mix
 - `UDwGameUserSettings` stores Master/Music/SFX/UI volumes (0-1) and applies them with `UGameplayStatics::SetSoundMixClassOverride` on `SM_Base` for each sound class referenced in `UDwGameData` (`16-Shell.md`).
 - Pause: SFX keep their state (world pause stops montages and cue timelines); music ducks via a pause mix (sound-wrangler).
+- Between fights (rewards, level-up, shop, events) the map music keeps playing: `DA_MusicSet.PhaseStates` maps those phases to `Music.Map` (Brandon, 2026-11-20).
 
 ## Connections
 - `02-GAS-Foundation.md`: cue tags on GEs and abilities, instant mode.

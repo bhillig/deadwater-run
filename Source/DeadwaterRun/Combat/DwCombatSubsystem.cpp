@@ -133,6 +133,15 @@ bool UDwCombatSubsystem::StartEncounter(const FDwEncounterSetup& InSetup)
 
 	RefreshDerivedState();
 	UE_LOG(LogDwCombat, Log, TEXT("Encounter started: %d crew vs %d enemies, seed %d"), PlayerCrewCount, Units.Num() - PlayerCrewCount, Setup.Seed);
+	for (ADwCombatUnit* Unit : Units)
+	{
+		if (Unit->GetDwAbilitySystem()->HasMatchingGameplayTag(DwTags::Unit_Kraken_Body))
+		{
+			FGameplayCueParameters Cue;
+			Cue.Location = Unit->GetActorLocation();
+			Unit->GetDwAbilitySystem()->ExecuteGameplayCue(DwTags::GameplayCue_Kraken_Appear, Cue);
+		}
+	}
 	OnCombatStarted.Broadcast();
 	for (const EDwSide Side : { EDwSide::Player, EDwSide::Enemy })
 	{
@@ -794,7 +803,9 @@ void UDwCombatSubsystem::HandleUnitDied(ADwCombatUnit& Victim, AActor* Instigato
 
 	FGameplayCueParameters Cue;
 	Cue.Location = Victim.GetActorLocation();
-	Victim.GetDwAbilitySystem()->ExecuteGameplayCue(DwTags::GameplayCue_Unit_Death, Cue);
+	FGameplayTagContainer VictimCueTags;
+	Victim.GetDwAbilitySystem()->GetOwnedGameplayTags(VictimCueTags);
+	Victim.GetDwAbilitySystem()->ExecuteGameplayCue(GetDeathCue(VictimCueTags), Cue);
 	Intents.Remove(Victim.GetHandle());
 	Emit(Died);
 	Victim.OnDied();
@@ -1300,6 +1311,28 @@ void UDwCombatSubsystem::ReportMiss(FDwUnitHandle Source, FIntPoint Tile, FGamep
 	Missed.Tile = Tile;
 	Missed.Tag = AbilityTag;
 	Emit(Missed);
+
+	// The splash on the empty tile, played from the attacker's ASC (the tile has no actor of its own).
+	ADwCombatUnit* Attacker = FindUnit(Source);
+	if (Attacker && Board)
+	{
+		FGameplayCueParameters Cue;
+		Cue.Location = Board->TileToWorld(Tile);
+		Attacker->GetDwAbilitySystem()->ExecuteGameplayCue(DwTags::GameplayCue_Attack_Miss, Cue);
+	}
+}
+
+FGameplayTag UDwCombatSubsystem::GetDeathCue(const FGameplayTagContainer& VictimTags)
+{
+	if (VictimTags.HasTagExact(DwTags::Unit_Kraken_Body))
+	{
+		return DwTags::GameplayCue_Kraken_Death;
+	}
+	if (VictimTags.HasTagExact(DwTags::Unit_Kraken_Tentacle))
+	{
+		return DwTags::GameplayCue_Kraken_TentacleCut;
+	}
+	return DwTags::GameplayCue_Unit_Death;
 }
 
 FActiveGameplayEffectHandle UDwCombatSubsystem::ApplyEffectToSelf(UDwAbilitySystemComponent& Target, TSubclassOf<UGameplayEffect> EffectClass, bool bNoInstigator)
