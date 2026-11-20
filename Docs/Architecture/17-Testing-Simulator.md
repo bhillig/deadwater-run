@@ -90,6 +90,15 @@ Metrics (balance-designer targets from `Docs/Scope.md` and the ICP): win rate pe
 
 Determinism: the same build, data, seed and policy produce a byte-identical report (tested in `DeadwaterRun.Sim.Determinism`).
 
+### As built (DW-212, 2026-11-19)
+- **Fights run synchronously.** With instant presentation, `StartEncounter` drains the whole turn loop: `UDwSimPlayerSideController` acts on `BeginSideTurn(Player)` and the enemy's own `UDwAiSideController` plays its side. When `StartEncounter` returns, the fight is over. A fight with no outcome by then counts as stuck: either it ran past `MaxRoundsPerFight`, or the turn loop ran dry.
+- **Plain actors.** By default the driver spawns the plain C++ board, ship and unit classes instead of the art Blueprints, which carry no rules. `DeadwaterRun.Sim.Determinism` proves the two give the same report. Use `-Art` to spawn the Blueprints.
+- **Random streams.** Route and perk picks use the policy's own stream; the player AI and the enemy AI each have their own stream from the encounter seed. All are salted, so no stream disturbs another. Same-seed runs of different captains sail the same chart.
+- **Player profile.** `DA_SimPolicy_Default` plays the crew with `DA_AiProfile_Default` until DW-214 delivers `DA_AiProfile_SimPlayer`. The sim content step picks it up automatically once it exists.
+- **`-ImportTuning` is built into the commandlet.** It syncs every `Tuning/*Tuning.json` into its `DT_*Tuning` table. `Events.json` is content, synced by the run content step. `Tools/ImportTuning.ps1` was never built.
+- **What `report.json` holds.** The summary comes first, then one `FDwSimRunReport` per run, with per-fight and per-shop entries. No wall-clock time goes in, so the file stays byte-identical. `summary.csv` has one line per run. The `SIM` line also prints the time, the outcome mix, rounds and levels per fight, and defeats by layer.
+- **`DeadwaterRunEditor` loads in the `Default` phase.** It used to load at `PostEngineInit`, too late for `-run=` to find a commandlet in it.
+
 ## Command-line tools (`Tools/`, tools-engineer)
 | Script | Does | First output line |
 |---|---|---|

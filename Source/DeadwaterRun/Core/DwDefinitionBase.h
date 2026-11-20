@@ -67,6 +67,8 @@ public:
 		static const FPrimaryAssetType AiProfile;
 		static const FPrimaryAssetType Rules;
 		static const FPrimaryAssetType GameData;
+		/** The headless simulator's player types (DW-212); no game rule reads them. */
+		static const FPrimaryAssetType SimPolicy;
 
 		/** Every type above, in a stable order (asset manager loading, tests). */
 		static TConstArrayView<FPrimaryAssetType> All();

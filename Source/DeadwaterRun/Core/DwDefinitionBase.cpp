@@ -23,12 +23,13 @@ const FPrimaryAssetType UDwDefinitionBase::FTypes::DeckLayout(TEXT("DwDeckLayout
 const FPrimaryAssetType UDwDefinitionBase::FTypes::AiProfile(TEXT("DwAiProfile"));
 const FPrimaryAssetType UDwDefinitionBase::FTypes::Rules(TEXT("DwRules"));
 const FPrimaryAssetType UDwDefinitionBase::FTypes::GameData(TEXT("DwGameData"));
+const FPrimaryAssetType UDwDefinitionBase::FTypes::SimPolicy(TEXT("DwSimPolicy"));
 
 TConstArrayView<FPrimaryAssetType> UDwDefinitionBase::FTypes::All()
 {
 	static const FPrimaryAssetType Types[] = {
 		Captain, Unit, Ability, AbilityPool, Item, Perk, PerkPool, Encounter,
-		Kraken, Event, ShipUpgrade, DeckLayout, AiProfile, Rules, GameData
+		Kraken, Event, ShipUpgrade, DeckLayout, AiProfile, Rules, GameData, SimPolicy
 	};
 	return Types;
 }
