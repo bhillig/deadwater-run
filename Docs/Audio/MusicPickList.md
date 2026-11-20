@@ -1,14 +1,12 @@
 # Music Pick List (DW-311)
 
-**Status (2026-11-20): approved by Brandon. The 9 primary cuts and the 2 tavern stopgap loops are imported (11 `SW_Music_*` assets, 60.7 MB). No alternates imported. Licence unconfirmed - Brandon checking.**
+**Status (2026-11-20): approved by Brandon. The 9 primary cuts and the 2 tavern stopgap loops are imported (11 `SW_Music_*` assets, 60.7 MB). No alternates imported. Licence confirmed by Brandon: royalty-free, commercial use (itch page) - see `Docs/Audio/Licences.md`.**
 
 Source: "Epic Battle Orchestral Music Pack" (bought by Brandon), 12 tracks, 50 WAVs, all stereo 44.1 kHz 16-bit, kept outside the repo. Picks are made from file names, cut lengths and the architecture states only: I cannot listen to audio, so please audition the picks (especially loop seams and the long INTRO cuts) before approving.
 
-## Licence caveat (confirm before release)
+## Licence
 
-- **Licence unconfirmed - Brandon checking.**
-- **No licence file came in the download.** The store page says only "royalty-free". That is not a licence: it does not say whether commercial Steam release, redistribution inside a game build, or credit requirements are covered.
-- Brandon must confirm the licence terms (store licence page, or the seller) and keep a copy in `Docs/Audio/` before release. This does not block wiring or testing now. The same check applies to the Pirate Game pack (its README stayed outside the repo).
+- **Confirmed 2026-11-20 (Brandon):** the itch.io page states the music is royalty-free and licensed for commercial use. No licence file came in the download, so keep a saved copy of the page with the receipt. Full record: `Docs/Audio/Licences.md`.
 
 ## States and picks (`Docs/Architecture/15-Audio-VFX.md`, D2)
 
