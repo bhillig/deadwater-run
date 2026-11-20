@@ -6,8 +6,16 @@
   Run Tools/CreateAudioContent.ps1 first (the classes and concurrency assets must exist).
   First output line is "IMPORT PASS ..." or "IMPORT FAIL ...". Exit code 0 only on PASS. Idempotent: existing
   assets are not re-imported (use -Force) but their settings are re-applied.
+.PARAMETER Set
+  Sfx (default): Tools/Content/audio_pick_manifest.csv into /Game/DeadwaterRun/Audio/SFX; PackRoot = the Pirate Game pack.
+  Music: Tools/Content/music_pick_manifest.csv (Docs/Audio/MusicPickList.md) into /Game/DeadwaterRun/Audio/Music as
+  SW_Music_*; PackRoot = the Epic Battle Orchestral Music Pack folder.
 .PARAMETER PackRoot
-  Folder that contains the pack's Designed/ and Source/ folders (read only; nothing is copied into the repo).
+  Folder of the pack for the chosen -Set; searched recursively for the WAV names (read only; nothing is copied into the repo).
+.PARAMETER StopgapRoot
+  Music set only: the Pirate Game pack root, used by the Stopgap rows (tavern loops for Menu and Map).
+.PARAMETER IncludeStopgap
+  Music set only: also import the Stopgap rows (requires -StopgapRoot).
 .PARAMETER IncludeAlternates
   Also import the alternate rows (named SW_<Cue>_Alt_NN). Off by default.
 .PARAMETER Only
@@ -21,11 +29,14 @@
   ./Tools/ImportAudio.ps1 -PackRoot $pack -Only 'Cannon' -ContentRoot /Game/_SW_Throwaway
 #>
 param(
+    [ValidateSet('Sfx', 'Music')] [string] $Set = 'Sfx',
     [Parameter(Mandatory = $true)] [string] $PackRoot,
+    [string] $StopgapRoot = '',
+    [switch] $IncludeStopgap,
     [string] $Manifest = '',
     [switch] $IncludeAlternates,
     [string] $Only = '',
-    [string] $ContentRoot = '/Game/DeadwaterRun/Audio/SFX',
+    [string] $ContentRoot = '',
     [switch] $Force
 )
 $ErrorActionPreference = 'Stop'
@@ -35,8 +46,17 @@ try {
     Assert-DwEditorClosed
     $editor = Get-DwEditorCmd
     if (-not (Test-Path -LiteralPath $PackRoot -PathType Container)) { throw "PackRoot not found: $PackRoot" }
-    if (-not $Manifest) { $Manifest = Join-Path $PSScriptRoot 'Content\audio_pick_manifest.csv' }
+    if (-not $Manifest) {
+        $Manifest = Join-Path $PSScriptRoot $(if ($Set -eq 'Music') { 'Content\music_pick_manifest.csv' } else { 'Content\audio_pick_manifest.csv' })
+    }
+    if (-not $ContentRoot) {
+        $ContentRoot = if ($Set -eq 'Music') { '/Game/DeadwaterRun/Audio/Music' } else { '/Game/DeadwaterRun/Audio/SFX' }
+    }
     if (-not (Test-Path -LiteralPath $Manifest)) { throw "Manifest not found: $Manifest" }
+    if ($IncludeStopgap) {
+        if ($Set -ne 'Music') { throw "-IncludeStopgap applies to -Set Music only" }
+        if (-not $StopgapRoot -or -not (Test-Path -LiteralPath $StopgapRoot -PathType Container)) { throw "-IncludeStopgap needs an existing -StopgapRoot" }
+    }
 } catch {
     Write-Output "IMPORT FAIL ($($_.Exception.Message))"
     exit 2
@@ -45,16 +65,22 @@ try {
 # The pack is data only: this reads file names and nothing else from it.
 $index = @{}
 Get-ChildItem -LiteralPath $PackRoot -Recurse -File -Filter *.wav | ForEach-Object { $index[$_.Name] = $_.FullName }
+$stopIndex = @{}
+if ($IncludeStopgap) {
+    Get-ChildItem -LiteralPath $StopgapRoot -Recurse -File -Filter *.wav | ForEach-Object { $stopIndex[$_.Name] = $_.FullName }
+}
 
 $rows = @(Import-Csv $Manifest | Where-Object {
-    ($_.Import -eq '1' -or ($IncludeAlternates -and $_.Role -eq 'Alternate')) -and
+    ($_.Import -eq '1' -or ($IncludeAlternates -and $_.Role -eq 'Alternate') -or ($IncludeStopgap -and $_.Role -eq 'Stopgap')) -and
     (-not $Only -or $_.AssetName -match $Only -or $_.Cue -match $Only)
 })
 if (-not $rows) { Write-Output "IMPORT FAIL (no manifest rows selected)"; exit 2 }
 
 $items = @(); $missing = @(); $altCounter = @{}
 foreach ($r in $rows) {
-    if (-not $index.ContainsKey($r.Source)) { $missing += $r.Source; continue }
+    # Stopgap rows come from the Pirate Game pack; every other row from -PackRoot.
+    $rowIndex = if ($r.Role -eq 'Stopgap') { $stopIndex } else { $index }
+    if (-not $rowIndex.ContainsKey($r.Source)) { $missing += $r.Source; continue }
     $name = $r.AssetName
     if (-not $name) {
         # Alternates get a stable name from their cue: SW_<CueTail>_Alt_NN
@@ -66,7 +92,7 @@ foreach ($r in $rows) {
         $name = 'SW_{0}_Alt_{1:D2}' -f $stem, $altCounter[$stem]
     }
     $items += [ordered]@{
-        asset = $name; category = $r.Category; source = $index[$r.Source]; loop = [int]$r.Loop
+        asset = $name; category = $r.Category; source = $rowIndex[$r.Source]; loop = [int]$r.Loop
         sound_class = $r.SoundClass; concurrency = $r.Concurrency; quality = [int]$r.Quality; loading = $r.Loading
     }
 }

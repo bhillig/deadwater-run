@@ -66,7 +66,7 @@ imported = existing = reconfigured = 0
 
 for item in plan["items"]:
     name = item["asset"]
-    folder = "%s/%s" % (root, item["category"])
+    folder = "%s/%s" % (root, item["category"]) if item["category"] else root
     path = "%s/%s" % (folder, name)
     sound_class = deps.setdefault(item["sound_class"], load_dep("/Game/DeadwaterRun/Audio/Classes/" + item["sound_class"]))
     concurrency = None
@@ -103,6 +103,15 @@ for item in plan["items"]:
         if not same(wave.get_editor_property(prop), value):
             wave.set_editor_property(prop, value)
             changed = True
+    if item["loading"] == "LoadOnDemand":
+        # Music streams from disk in chunks. LoadOnDemand is the streaming loading behaviour; older engines also
+        # carry a bStreaming flag, set it when the property exists.
+        try:
+            if not wave.get_editor_property("streaming"):
+                wave.set_editor_property("streaming", True)
+                changed = True
+        except Exception:
+            pass
     want_set = {concurrency} if concurrency else set()
     if set(wave.get_editor_property("concurrency_set")) != want_set:
         wave.set_editor_property("concurrency_set", want_set)
