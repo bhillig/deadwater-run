@@ -1,9 +1,12 @@
-# Music Pick List (DW-311 prep, for Brandon's approval)
+# Music Pick List (DW-311)
 
-Source: "Epic Battle Orchestral Music Pack" (bought by Brandon), 12 tracks, 50 WAVs, all stereo 44.1 kHz 16-bit, kept outside the repo. **Nothing from it is imported until you approve this list.** Picks are made from file names, cut lengths and the architecture states only: I cannot listen to audio, so please audition the picks (especially loop seams and the long INTRO cuts) before approving.
+**Status (2026-11-20): approved by Brandon. The 9 primary cuts and the 2 tavern stopgap loops are imported (11 `SW_Music_*` assets, 60.7 MB). No alternates imported. Licence unconfirmed - Brandon checking.**
+
+Source: "Epic Battle Orchestral Music Pack" (bought by Brandon), 12 tracks, 50 WAVs, all stereo 44.1 kHz 16-bit, kept outside the repo. Picks are made from file names, cut lengths and the architecture states only: I cannot listen to audio, so please audition the picks (especially loop seams and the long INTRO cuts) before approving.
 
 ## Licence caveat (confirm before release)
 
+- **Licence unconfirmed - Brandon checking.**
 - **No licence file came in the download.** The store page says only "royalty-free". That is not a licence: it does not say whether commercial Steam release, redistribution inside a game build, or credit requirements are covered.
 - Brandon must confirm the licence terms (store licence page, or the seller) and keep a copy in `Docs/Audio/` before release. This does not block wiring or testing now. The same check applies to the Pirate Game pack (its README stayed outside the repo).
 
@@ -35,7 +38,7 @@ Cut names: INTRO plays once, then LOOP repeats; TAG is a short ending used as a 
 
 ### Menu and Map: uncovered, and what I would use meanwhile
 This pack is all battle music, so Menu and Map are expected to stay open (a shanty pack may be bought). Stopgap options:
-1. **Pirate Game pack tavern loops** (already in your pack folder, `Music_Loops`; **needs your approval, since the SFX approval did not cover them**): `Music.Menu` = Song A "Tavern Exterior" (42.0 s loop), `Music.Map` = Song B "Tavern Exterior" (27.4 s loop). Jaunty folk fits the theme far better than battle music. Both are in the manifest as `Stopgap` rows (`SW_Music_Menu_TavernA_Loop`, `SW_Music_Map_TavernB_Loop`), off by default. The "Interior" versions of both songs are available as alternates. Short loops: a 27 s Map loop will be noticed on a long map screen, so this is a stopgap only.
+1. **Pirate Game pack tavern loops** (already in your pack folder, `Music_Loops`; **needs your approval, since the SFX approval did not cover them**): `Music.Menu` = Song A "Tavern Exterior" (42.0 s loop), `Music.Map` = Song B "Tavern Exterior" (27.4 s loop). Jaunty folk fits the theme far better than battle music. **Approved placeholder - replace with a shanty pack post-launch or if bought.** Imported as `SW_Music_Menu_TavernA_Loop` and `SW_Music_Map_TavernB_Loop` (manifest `Stopgap` rows). The "Interior" versions of both songs are available as alternates. Short loops: a 27 s Map loop will be noticed on a long map screen, so this is a stopgap only.
 2. From this pack, if you prefer one family of sound: Heroic Mission LOOP (77.5 s, by name the least aggressive, not auditioned) for `Music.Map`, and Battlefield LOOP (83.5 s) for `Music.Menu`. I would not choose this over the tavern loops.
 
 **Flag:** until real Menu and Map tracks exist, shipping with the stopgaps (or silence) is a conscious choice. Do you want the asset-scraper to look for a shanty or exploration pack?
