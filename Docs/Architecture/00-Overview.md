@@ -2,7 +2,7 @@
 
 - **Status:** Proposed (2026-10-24), waiting for Brandon's approval
 - **Author:** technical-architect
-- **Scope:** every system in `DeadwaterRun.md` and every "Must ship" item in `Docs/Scope.md` (v1.0, launch 2026-12-10)
+- **Scope:** every system in `DeadwaterRun.md` and every "Must ship" item in `Docs/Scope.md` (v1.0, launch 2026-12-03 on Itch.io)
 - **Fixed decisions (Brandon, 2026-10-24):** 2 combat abilities per captain - 8-9 map nodes plus the boss, 5 fights guaranteed - square tile grid boards (one deck grid per ship, a boarding seam, an elevated nest tile; a separate Kraken arena) - level-up = a stat increase plus a pick of 1 from 2-3 perks taken from data-driven pools
 
 ## Index
@@ -27,7 +27,7 @@
 | 15 | `15-Audio-VFX.md` | GameplayCues for VFX and SFX, audio cue map, music, mix |
 | 16 | `16-Shell.md` | Levels, main menu, settings, pause, run summary, no mid-run saves |
 | 17 | `17-Testing-Simulator.md` | Automation test layers, test world, headless run simulator |
-| 18 | `18-Packaging-Release.md` | Shipping build, cook rules, Steam depots, release checklist |
+| 18 | `18-Packaging-Release.md` | Shipping build, cook rules, Itch.io butler uploads, release checklist |
 | - | `Editor-Tools.md` | Every editor tool, plus "how Brandon adds X" guides |
 | - | `Roadmap.md` | Week 0-6 plan, critical path, tickets |
 | - | `Open-Questions.md` | Creative and design questions for Brandon, doc inconsistencies |
@@ -76,7 +76,7 @@ flowchart LR
     end
 
     Tuning[("Tuning/*.json")]
-    Steam[("Steam depot")]
+    Itch[("Itch.io (butler)")]
 
     Player --> UI
     UI -->|"intents"| Combat
@@ -98,7 +98,7 @@ flowchart LR
     Tuning -->|"import commandlet"| Data
     Sim -->|"drives the real systems"| Run
     Sim --> Combat
-    Game -->|"packaged by release-engineer"| Steam
+    Game -->|"packaged by release-engineer"| Itch
 ```
 
 ## Main class diagram
@@ -453,7 +453,7 @@ Folders are under `Source/DeadwaterRun/` unless noted. "Content" means `Content/
 | `UDwDevSettings`, `UDwCheatManager` | `Dev/` | tools-engineer | Editor-Tools |
 | `FDwTestWorld`, test helpers | `Tests/` | tools-engineer (rule tests: each system owner; regressions: qa-tester) | 17 |
 | Editor module: `FDwEditorMenus`, `FDwDeckLayoutDetails`, `UDwContentValidator`, `UDwContentWizardSubsystem`, `UDwImportTuningCommandlet`, `UDwSimulateCommandlet`, `UDwMapSweepCommandlet`, `UDwMapPreviewLibrary`, `UDwSimReportLibrary`, `EUW_*` | `Source/DeadwaterRunEditor/`, Content `Dev/Tools/` | tools-engineer | Editor-Tools |
-| `Build/`, packaging settings in `Config/DefaultGame.ini`, Steam scripts, `Docs/Release/` | repo | release-engineer | 18 |
+| `Build/`, packaging settings in `Config/DefaultGame.ini`, Itch upload scripts, `Docs/Release/` | repo | release-engineer | 18 |
 | `Docs/Bugs/` | repo | qa-tester | 17 |
 | `Docs/Balance/` | repo | balance-designer | 13, 17 |
 
@@ -515,7 +515,7 @@ Ticket IDs are defined in `Roadmap.md`.
 | Readable combat UI (Scope) | 14 | DW-107, DW-303, DW-402 |
 | Hit and cannon VFX (Scope) | 15 | DW-114, DW-307 |
 | Audio (Scope), audio source decided Nov 8 | 15 | DW-005, DW-113, DW-311, DW-403 |
-| Steam: store page Nov 19, live Nov 26, build Dec 2, launch Dec 10 | 18 | DW-006, DW-116, DW-218, DW-308, DW-406, DW-501, DW-601 |
+| Itch.io: page drafted Nov 27, RC Nov 30, final build Dec 2, launch Dec 3 | 18 | DW-006, DW-116, DW-218, DW-308, DW-406, DW-501, DW-601 |
 | Editor tools so Brandon adds content without AI (this request) | Editor-Tools | DW-108, DW-109, DW-110, DW-111, DW-213, DW-309 |
 | Headless simulator and balance from simulations (Scope week 4) | 17, 13 | DW-212, DW-309, DW-401 |
 

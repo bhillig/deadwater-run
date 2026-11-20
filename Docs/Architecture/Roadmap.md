@@ -1,6 +1,6 @@
 # Roadmap and Tickets
 
-- Timeline from `Docs/Scope.md`. Launch **Thu 2026-12-10** (moved from Dec 3 on 2026-11-11; weeks 3-6 shifted one week later). Steam: store page submitted **~Nov 19**, live **by Nov 26**, build submitted **~Dec 2**.
+- Timeline from `Docs/Scope.md`. Launch **Thu 2026-12-03 on Itch.io** (2026-11-20: Brandon moved the release from Steam to Itch.io and the launch from Dec 10 to Dec 3). Itch has no review, so there are no external deadlines; release candidate **Nov 30**, final build pushed **Dec 2**.
 - Bottleneck is Brandon's review (15 h/week, approvals batched daily), so tickets are sized to review in 30 minutes or less, and every ticket's proof is a test run plus a screenshot or clip.
 - Ticket IDs: `DW-<week><nn>`. Agents are only those in the `DeadwaterRun.md` roster.
 
@@ -75,6 +75,7 @@ gantt
     DW-310 QA content sweep                :w310, 2026-11-20, 3d
     DW-311 Audio import                    :w311, 2026-11-16, 5d
     Content complete                       :milestone, m3, 2026-11-22, 0d
+    Audio source picked                    :milestone, m3a, 2026-11-22, 0d
 
     section Week 4
     DW-401 Balance pass                    :crit, w401, 2026-11-23, 5d
@@ -82,21 +83,20 @@ gantt
     DW-403 Mix pass                        :w403, 2026-11-24, 4d
     DW-404 Playtests and bug bash          :w404, 2026-11-23, 6d
     DW-405 Polish fixes                    :w405, 2026-11-24, 5d
-    DW-406 Store live and RC dry run       :w406, 2026-11-26, 3d
+    DW-406 Itch page and butler dry run    :w406, 2026-11-25, 3d
     DW-407 Autoplay smoke and replays      :w407, 2026-11-23, 3d
-    Store page live                        :milestone, m4, 2026-11-26, 0d
+    Itch page drafted                      :milestone, m4, 2026-11-27, 0d
 
     section Week 5
-    DW-501 Release candidate               :crit, w501, 2026-11-30, 3d
-    DW-502 QA RC regression                :w502, 2026-11-30, 5d
+    DW-501 Release candidate               :crit, w501, 2026-11-30, 1d
+    DW-502 QA RC regression                :w502, 2026-11-30, 3d
     DW-503 Final tuning                    :w503, 2026-11-30, 2d
-    DW-504 RC fixes                        :w504, 2026-12-01, 5d
-    Build submitted                        :milestone, m5, 2026-12-02, 0d
+    DW-504 RC fixes                        :w504, 2026-12-01, 2d
+    DW-601 Launch checklist                :crit, w601, 2026-12-01, 3d
+    DW-602 Launch smoke from itch download :w602, 2026-12-02, 2d
+    Final build pushed                     :milestone, m5, 2026-12-02, 0d
+    Launch on Itch.io                      :milestone, m6, 2026-12-03, 0d
 
-    section Week 6
-    DW-601 Launch checklist                :crit, w601, 2026-12-07, 4d
-    DW-602 Launch smoke                    :w602, 2026-12-09, 2d
-    Launch                                 :milestone, m6, 2026-12-10, 0d
 ```
 
 ## Critical path
@@ -119,14 +119,14 @@ flowchart LR
     J --> L["Full run playable Nov 8"]
     K --> L
     L --> M["DW-307 Synty art pass by Nov 18"]
-    M --> N["DW-308 store page, submitted Nov 19"]
+    M --> N["DW-308 store page package (Steam, superseded by Itch Nov 20)"]
     Q3["Brandon content lists N1-N4, P2, P9, B1-B9 by Nov 8"] --> O["DW-301 to DW-306 content and Kraken"]
     L --> O
     O --> P["Content complete Nov 22"]
     P --> R["DW-401 balance from simulator"]
     R --> S["DW-501 release candidate"]
-    S --> T["Build submitted Dec 2"]
-    T --> U["DW-601 launch Dec 10"]
+    S --> T["Final build pushed to Itch Dec 2"]
+    T --> U["DW-601 launch on Itch Dec 3"]
 ```
 
 Decision deadlines for Brandon (from `Open-Questions.md`) are on the critical path: board/combat basics by **Oct 27**, captain/map/economy rules by **Nov 2**, content lists and Kraken details by **Nov 8**, audio source by **Nov 8**.
@@ -582,11 +582,11 @@ Out of scope: Uploading, submitting
 | DW-403 | sound-wrangler | Mix and loudness pass, concurrency tuning, settings verified | 15 | Clip with sound | New assets |
 | DW-404 | qa-tester | Playtests (with Brandon) and bug bash; calibrate SecondsPerAction for run length | 17 | Bug list, playtest times | Fixes |
 | DW-405 | gameplay-engineer / ai-engineer / ui-engineer | Polish fixes from DW-404 (one ticket per bug batch per owner) | bug reports | Regression tests per bug | New features |
-| DW-406 | release-engineer | Confirm store page live Nov 26; RC dry-run package; beta branch prep | 18 | Checklist ticks, package output | Uploading |
+| DW-406 | release-engineer | Itch page package ready for Brandon to create as Draft by Nov 27; `Build/Itch/Push.ps1` butler wrapper (prints the command, Brandon runs it); remove `Build/Steam`; RC dry-run package | 18 | Checklist ticks, package output, dry-run push command | Pushing or publishing |
 | DW-407 | tools-engineer | Packaged -DwAutoplay smoke and combat replays (Editor-Tools T13) | 17 | Autoplay exits 0; replay reproduces a fight | Gameplay rules |
-| DW-501 | release-engineer | Release candidate build for Brandon to submit Dec 2 | 18 | Shipping package, smoke steps 1-4 | Submitting |
+| DW-501 | release-engineer | Release candidate build (Nov 30) for Brandon to push to the draft Itch page | 18 | Shipping package, smoke steps 1-4 | Submitting |
 | DW-502 | qa-tester | RC full regression (one run per captain, all edge-case lists) | 17 | Signed-off checklist | Fixes |
 | DW-503 | balance-designer | Final tuning from RC simulator runs | 13 | Report | Rules |
 | DW-504 | gameplay-engineer / ai-engineer / ui-engineer | RC fixes only (blockers and majors) | bug reports | Regression tests | Features |
-| DW-601 | release-engineer | Launch checklist and launch-day steps for Dec 10 | 18 | Checklist | Pressing release |
-| DW-602 | qa-tester | Launch smoke on the Steam build (beta branch, then default) | 18 | Smoke report | Fixes |
+| DW-601 | release-engineer | Launch checklist and launch-day steps for Dec 3 | 18 | Checklist | Pressing release |
+| DW-602 | qa-tester | Launch smoke on the build downloaded from the draft Itch page | 18 | Smoke report | Fixes |

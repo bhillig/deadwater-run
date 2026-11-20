@@ -1,58 +1,48 @@
-# Deadwater Run - Steam Store Page Package (DW-308)
+# Deadwater Run - Itch.io Page Package
 
-Prepared 2026-11-11 by the Release Engineer for submission by **2026-11-19** (originally Nov 12; schedule moved one week later on 2026-11-11). Nothing here has been submitted. Brandon presses every button in Steamworks.
+First prepared 2026-11-11 for Steam (DW-308); re-targeted to **Itch.io** on 2026-11-20 (Brandon moved the release to Itch.io, launch **Thu 2026-12-03**). Nothing here has been published. Brandon creates the page and presses every button on itch.io.
 
 Status key: **ready** = can be pasted/uploaded as is. **needs Brandon** = a decision, a fact only he has, or an account action. **blocked** = cannot be done until something else lands.
 
-> Pixel sizes and field names below are from the Steamworks documentation as I know it. The Steamworks "Graphical Assets" and "Store Page" admin screens are the source of truth - the first thing to do before submitting is compare the sizes in section 2 with what the upload slots say, and tell me if any differ. I could not log in to check (out of scope).
+> Field names and image sizes below are from the itch.io "Edit game" page as I know it. That page is the source of truth - compare before uploading and tell me if anything differs.
 
 ---
 
-## 1. Basic info
+## 1. Basic info (itch "Edit game" fields)
 
 | Field | Value | Status |
 |---|---|---|
-| Game name | Deadwater Run | ready |
-| Type | Game | ready |
-| Price | **$5.00 USD** (Steam price point exists). Regional pricing: Steamworks suggests per-region prices from the USD price; accept the suggestion or edit | needs Brandon (accept regional suggestions? launch discount yes/no) |
-| Release date | **2026-12-10** (Thursday). Set as "Coming Soon" with this date | ready (do not change; Brandon sets it) |
-| Early Access | No | ready |
-| Platforms | Windows 64-bit only. No Mac/Linux build exists | ready |
-| Developer / Publisher | Not in the repo beyond `CopyrightNotice=Brandon Hillig 2026`. Use the name on the Steamworks account (individual or studio name) | needs Brandon |
-| Website | Optional. None exists | needs Brandon (leave blank is fine) |
-| Support URL / email | Steam asks for one. Nothing in the repo | needs Brandon |
-| Copyright line | `Brandon Hillig 2026` (from `Config/DefaultGame.ini`) | ready |
-| Languages | Interface: English. Full audio: none (no voice). Subtitles: none | ready (confirm; no localization per Scope) |
-| Controller support | None (cut by Scope). Keyboard + mouse only. Say so in the description if Brandon wants no surprise refunds | ready |
-| Steam features (achievements, cloud, trading cards, workshop, overlay) | None enabled. Architecture doc 18 D1: no Steamworks SDK code in v1.0. Do not tick Achievements / Cloud | ready |
-| Steam Deck | Do not claim anything. Valve rates it themselves; unverified | ready (leave alone) |
+| Title | Deadwater Run | ready |
+| Project URL | `<username>.itch.io/deadwater-run` | needs Brandon (username) |
+| Short description / tagline | One line under the title - see section 4 | needs Brandon (pick) |
+| Classification | Games | ready |
+| Kind of project | Downloadable | ready |
+| Release status | Released | ready |
+| Pricing | **Paid, minimum $5.00 USD**. Optional: "let people pay more" / launch sale | needs Brandon (sale yes/no) |
+| Uploads | One `windows` channel pushed with butler (Shipping zip); tick "Windows" as the platform | blocked on RC (Nov 30) |
+| Genre | Strategy (one only) | needs Brandon |
+| Tags | Up to 10 - section 5 | needs Brandon |
+| AI generation disclosure | Section 6 | needs Brandon |
+| Community | Comments on (recommended for bug reports) or off | needs Brandon |
+| Visibility | **Draft** until launch day, then **Public** | Brandon on Dec 3 |
+| Developer name | Not in the repo beyond `CopyrightNotice=Brandon Hillig 2026`. Shown from the itch account | needs Brandon |
+| Languages / input | English; keyboard and mouse only (controller support cut). Say so in the description | ready |
 | Mid-run saves | None (Scope). Worth one honest line in the description (runs are ~30 min) | ready |
 
-## 2. Required graphical assets
+## 2. Graphical assets
 
-None of the capsule/header/library art exists. **Capsules are required to submit the page for review**, so this is the critical path for tomorrow - see section 7 for how to produce them. No AI-generated art (values.md: only with Brandon's approval; none generated here).
+Itch needs far less than Steam: one cover image plus screenshots. No AI-generated art (values.md: only with Brandon's approval; none generated here).
 
-All store images must show the game logo/title on the capsule types. Valve rules (verify): no review quotes or award text, no price or discount text, no "Coming Soon"/"Now Available"/release-date text on capsule art; keep the logo legible at the small size.
+| Asset | Size | Required? | Status |
+|---|---|---|---|
+| Cover image | **630 x 500** recommended (minimum 315 x 250); shown in browse, collections and embeds | Effectively required (pages without one look broken in browse) | needs art - see section 7 |
+| Screenshots | 3-5 recommended, shown in the page sidebar; any 16:9 size, 1920 x 1080 fine | Recommended | **ready** - 13 captured, see section 3 |
+| Banner / header image | Wide image at the top of the page (theme editor); no fixed size | Optional | optional |
+| Background / theme colours | Theme editor | Optional | optional: deep sea blue to match the game |
+| Trailer | YouTube or Vimeo link | Optional | none exists; not a blocker |
+| Window/exe icon | 256 x 256 .ico for `DeadwaterRun.exe` (project settings) | Optional | still the UE default - small polish item |
 
-| Asset | Required pixel size | Format | Required? | Status |
-|---|---|---|---|---|
-| Header capsule | **920 x 430** | PNG/JPG | Required | needs Brandon (no art) |
-| Small capsule | **462 x 174** | PNG/JPG | Required | needs Brandon (no art) |
-| Main capsule | **1232 x 706** | PNG/JPG | Required | needs Brandon (no art) |
-| Vertical capsule | **748 x 896** | PNG/JPG | Required | needs Brandon (no art) |
-| Library capsule | **600 x 900** | PNG/JPG | Required (Steam library / Deck) | needs Brandon (no art) |
-| Library header | **920 x 430** | PNG/JPG | Required (can reuse header capsule art) | needs Brandon (no art) |
-| Library hero | **3840 x 1240** | PNG/JPG | Required for a good library page (no text/logo on it) | needs Brandon (no art) |
-| Library logo | **1280 x 720 max** (logo scaled to fit, **transparent PNG**) | PNG | Required for a good library page | needs Brandon (no art) |
-| Page background | **1438 x 810** | PNG/JPG | Optional | optional, skip |
-| Community icon | **184 x 184** | JPG | Required | needs Brandon (no art) |
-| Client icon | **32 x 32** (also a Steamworks icon upload; format per slot) | JPG/ICO | Required | needs Brandon (no art) |
-| Screenshots | **min 5, 1920 x 1080 (16:9) recommended**; ticket minimum 1280x720 | PNG/JPG | Required, at least 5 | **ready** - 13 captured, see section 3 |
-| Trailer | 1080p MP4/H.264 recommended | video | **Optional** for submission and launch | optional, none exists. A trailer is a strong wishlist driver; not a blocker |
-
-One master composition at 3840 x 2160 (or the 3840 x 1240 hero crop plus a 1232 x 706 crop) can feed most slots. See option B/C in section 7.
-
-## 3. Screenshots (real, from the current build)
+## 3. Screenshots (real, from the current build; itch shows them in the sidebar, 3-5 recommended)
 
 Captured 2026-11-11 with `Tools/Capture.ps1`, all **1920 x 1080 PNG**, current build on branch `orchestrator/dw-210-shell` (a0437f6). Saved in `Docs/Release/Screenshots/`.
 
@@ -72,26 +62,27 @@ Captured 2026-11-11 with `Tools/Capture.ps1`, all **1920 x 1080 PNG**, current b
 | 12 | `12-shop-shell-NOT-RECOMMENDED.png` | Shop (shell) | **not recommended**: says "The shopkeeper is still unpacking (shop: DW-204)" |
 | 13 | `13-event-placeholder-NOT-RECOMMENDED.png` | Event (shell) | **not recommended**: says "Nothing happens... yet (events: DW-205)" |
 
-Honest read for Brandon: shots 1-6 are the store page. They are six moments of the same screen, so the gallery will look repetitive; the Synty ships and characters are the selling point. If time allows after the Nov 22 art/UI pass, recapture 7-9 and 11 (and the shop/events once built) and swap them in - screenshots can be edited after the page is approved (verify in Steamworks whether edits to an approved page need re-review). Combat HUD polish items I noticed (not mine to fix): hint bar at the bottom touches the bottom edge of the action cards; the top "Round 1 - YOUR TURN" text sits close to the top edge.
+Honest read for Brandon: shots 1-6 are the store page. They are six moments of the same screen, so the gallery will look repetitive; the Synty ships and characters are the selling point. Shop, events and captain abilities are real now (DW-204..208), so recapture 7-13 before launch and swap them in - itch pages can be edited any time, no review. Combat HUD polish items I noticed (not mine to fix): hint bar at the bottom touches the bottom edge of the action cards; the top "Round 1 - YOUR TURN" text sits close to the top edge.
 
 **Order of the gallery is a creative choice - options below:**
 - Lead A: `03-combat-cannon` (shows the unique ship-HP hook first)
 - Lead B: `01-combat-move` (the clearest "what is this game" frame)
 - Lead C: `06-combat-victory` (outcome and plunder; punchy but more text)
 
+
 ## 4. Descriptions (Brandon picks one of each)
 
 Only features in Scope.md "Must ship" (plus the design doc's core loop). Numbers like node counts are left out because `context/offer.md` says 7-8 node runs while Scope.md says 8-9 - **Brandon: which is right?** Captain names are from `DeadwaterRun.md`.
 
-### Short description (limit 300 characters)
+### Opening paragraph (S1-S3; first lines of the itch description)
 
 - **S1 (pitch-led, 285 chars):** Battle out of the Aquadia seas in this exciting and tense turn-based pirate roguelike. Pick a captain, chart a route through fights, shops and events, and choose how to win: sink their ship fast, or slay the crew and plunder. Face the Kraken to escape.
 - **S2 (hook-led, 266 chars):** Every ship has a health bar. Sink your rival's ship to end the fight fast, or cut down the crew to plunder their gold. A 30-minute turn-based pirate roguelike with three captains, a branching sea chart and a Kraken waiting at the end.
 - **S3 (crew-led, 277 chars):** Command a small pirate crew across the seas of Aquadia. Move, fight, fire the cannons, then decide: sink the ship or take the plunder. Lose a pirate and they're gone for good. Survive the sea chart and take on the Kraken. About 30 minutes a run.
 
-(Character counts measured with a shell script on 2026-11-11; Steam limit is 300.)
+(Character counts measured 2026-11-11. Itch shows the tagline as one line, so S1-S3 are better used as the first paragraph of the description; a tagline should be under ~100 characters, e.g. "Sink the ship or slay the crew - a 30-minute pirate roguelike.")
 
-### Long description ("About This Game", Steam BBCode)
+### Long description (itch rich-text editor: paste, then turn [h2] into headings and [list] into bullets)
 
 **L1 - feature list**
 ```
@@ -146,22 +137,20 @@ Deadwater Run is a tense turn-based pirate roguelike with a twist: ships have he
 Battle out of the Aquadia seas.
 ```
 
-Copy claims that depend on unfinished work (do not publish unless true at launch): "three captains... own combat abilities" (the Conqueror/Fearmongerer abilities show placeholder text, DW-207/208), "shops", "events" (shells today, DW-204/205), "Kraken ... two phases / tentacles" (DW-209 in progress), "rival crews with their own tactics" (DW-106 default AI only). Brandon: copy can go in tomorrow, but re-read it against the build on Dec 2.
+Copy claims to re-check against the build on Dec 2 (as of Nov 20 captains, shop, events, Kraken phases/tentacles and five rival crews with their own tactics are all real): anything about **music or sound** - none ships until DW-311 lands; "30 minutes a run" - the simulator estimates ~8 min of actions, so confirm with playtests (DW-404) before using a number.
 
-## 5. Tags, genres, categories
 
-Tags are a creative/marketing choice; two options (Steam allows up to 20; the first few weigh most, I believe - verify):
-- **Tags option 1 (tight, 10):** Roguelike, Turn-Based Strategy, Turn-Based Tactics, Pirates, Strategy, Singleplayer, Indie, Permadeath, Naval, Roguelite
-- **Tags option 2 (broader, 14):** Roguelike, Turn-Based Strategy, Pirates, Turn-Based Tactics, Roguelite, Strategy, Tactical RPG, Singleplayer, Indie, Permadeath, Procedural Generation, Grid-Based Movement, Naval, Difficult
-- Not appropriate (not in the game): Deckbuilding, Card Game, Controller, Co-op, Multiplayer, Early Access.
-- "Difficult" only if Balance (DW-401) lands somewhere hard; ICP wants medium difficulty - Brandon's call.
+## 5. Genre and tags
 
-Genres: Strategy (primary), Indie. Add RPG only if Brandon wants it (crew levels and perks exist). - needs Brandon
-Categories: Single-player. Nothing else.
+Itch allows one genre and up to 10 tags; tags drive itch browse pages.
+- **Genre:** Strategy (alternative: Role Playing if Brandon wants the crew levels/perks to lead)
+- **Tags option 1 (10):** roguelike, turn-based, turn-based-strategy, tactical, pirates, roguelite, permadeath, singleplayer, low-poly, 3d
+- **Tags option 2 (10):** roguelike, turn-based-tactics, pirates, naval, strategy, procedural-generation, grid-based, permadeath, indie, singleplayer
+- Not appropriate (not in the game): deckbuilding, card-game, multiplayer, co-op, controller.
 
-## 6. System requirements (DERIVED - guesses flagged)
+## 5b. System requirements (put in the description; DERIVED - guesses flagged)
 
-Basis: Unreal Engine 5.8 (`DeadwaterRun.uproject`), Win64 only, `Config/DefaultEngine.ini` enables Lumen (`r.DynamicGlobalIlluminationMethod=1`, `r.ReflectionMethod=1`), Virtual Shadow Maps (`r.Shadow.Virtual.Enable=1`) and mesh distance fields, no static lighting. That means a DirectX 12 / Shader Model 6 GPU. **No Shipping package or benchmark has been run yet (Build/Package.ps1 / DW-218 still open), so every number below except the OS family is a GUESS** until measured on real hardware.
+Basis: Unreal Engine 5.8 (`DeadwaterRun.uproject`), Win64 only, `Config/DefaultEngine.ini` enables Lumen (`r.DynamicGlobalIlluminationMethod=1`, `r.ReflectionMethod=1`), Virtual Shadow Maps (`r.Shadow.Virtual.Enable=1`) and mesh distance fields, no static lighting. That means a DirectX 12 / Shader Model 6 GPU. Shipping 0.1.0 packaged on 2026-11-19 is **511 MB** (BuildNotes.md); no benchmark has been run, so CPU/RAM/GPU numbers are still **GUESSES** until measured on real hardware.
 
 | | Minimum (guess) | Recommended (guess) |
 |---|---|---|
@@ -170,57 +159,43 @@ Basis: Unreal Engine 5.8 (`DeadwaterRun.uproject`), Win64 only, `Config/DefaultE
 | Memory | 8 GB RAM - GUESS | 16 GB RAM - GUESS |
 | Graphics | DX12 / SM6 GPU, ~GTX 1060 6 GB / RX 580 - GUESS | ~RTX 2060 / RX 5700 - GUESS |
 | DirectX | Version 12 | Version 12 |
-| Storage | **3 GB** - GUESS. Source `Content/` is 1.0 GB uncooked; the cooked/paked size is unknown until the first package | same |
+| Storage | **1 GB** (Shipping 0.1.0 is 511 MB; headroom for audio) | same |
 | Notes | 1080p target. Keyboard and mouse. | |
 
 To replace guesses with facts (release engineer, after Package.ps1 exists): package Shipping, record disk size, run the smoke test on the weakest available GPU and read frame times via `stat unit` in a Test build, then lower or raise the tiers. Fallback if no time: ship the guesses but keep them conservative (higher), since a wrong low spec causes refunds.
 
-## 7. Content survey (DRAFT answers - Brandon must answer himself in Steamworks)
 
-Valve's questionnaire wording changes; these are my draft positions against the build as of today.
+## 6. AI generation disclosure (Brandon answers on itch)
+
+Itch asks whether the project contains AI-generated content (verify the exact wording and categories on the Edit game page).
 
 | Topic | Draft answer | Basis |
 |---|---|---|
-| Nudity / sexual content | None | None in game |
-| Violence | Yes, stylized and mild: swords, muskets, cannons on low-poly characters. Not frequent graphic violence | Screenshots show no blood. **Brandon: confirm no blood/gore VFX exist or are planned** |
-| Gore | None (confirm per above) | |
-| Mature themes | Piracy, combat, death of crew (permadeath) - nothing beyond that | |
-| Alcohol / drugs | "Grog" is a healing item name; no depiction of drinking beyond an item label | Item list in build |
-| Gambling / loot boxes / real-money | None. Random events use in-game gold only | |
-| In-app purchases / DLC | None | $5 premium |
-| Online / multiplayer | None | |
-| User-generated content / chat | None | |
-| Generative AI disclosure (Steam requires a statement) | **Brandon decides.** Draft: no AI-generated art, audio or text ships in the game; AI was used as a development/coding tool. Valve's guidance (verify wording) separates AI-assisted tooling from pre-generated content shipped to players. Check: the in-game UI and VFX were built with agent help (values.md allows it) - confirm none of it is AI-generated imagery | values.md: AI art only with approval; none approved |
-| Third-party content | Synty Pirate + VFX packs (licensed), Unreal Engine (Epic EULA), engine Roboto font | Confirm Synty licence permits commercial Steam use (it normally does) and keep invoices |
-| Ratings (IARC questionnaire inside Steamworks) | Expect a low age rating (cartoon violence) | Complete once; Brandon answers |
-| Steam "mature content" description / adult-only flag | No | |
+| Graphics | No AI-generated graphics - Synty Pirate + VFX packs and in-engine UI | values.md: AI art only with approval; none approved. **Brandon: confirm** |
+| Sound / music | Depends on the audio pick (asset-scraper options, Nov 22). Confirm the chosen packs are not AI-generated | open |
+| Text / dialogue | **Brandon decides.** Event text was drafted by the event-writer agent and approved/edited by Brandon (Docs/ContentPipeline) - that is AI-generated text by most definitions | Content pipeline, 2026-11-17 |
+| Code | AI was used as a coding tool. Itch's disclosure is about content shipped to players; mention it in the description only if Brandon wants to | |
 
-## 8. Creating the capsule / header art (options - Brandon picks)
+Other content notes (no rating questionnaire on itch, but say it honestly in the description): stylized cartoon violence (swords, muskets, cannons) with no blood; "Grog" is an item name only; no gambling, no in-app purchases, no online features.
 
-No art exists and no AI art was generated. Effort figures are my estimates; commission prices are rough and unverified.
+Third-party content: Synty Pirate + VFX packs (licensed), Unreal Engine (Epic EULA; 5% royalty only above $1M gross), engine Roboto font, audio TBD. Keep invoices.
 
-**A. DIY from an in-game render + a font (fastest, ~4-8 hours for the whole set)**
-- Capture a hero shot of the Synty ships at high res (Capture.ps1 goes up to the desktop size, 2560x1440; a 2x upscale is soft - a purpose-built hero camera in the editor would be better, which is a small gameplay/tools-engineer task and needs your approval since it touches game code).
-- Put the "DEADWATER RUN" logo over it in an open-licence display font. The Asset Scraper can bring 2-3 font options (DW-005 was meant to; UI doc U6 is still open) for your approval - do not use a font before the licence is checked.
-- Compose one 3840x2160 master in Photopea/GIMP/Affinity, crop to all ten sizes in section 2, export the logo as a transparent PNG for the library logo.
-- Pros: done in 1-2 days, consistent with the game, uses real Synty art. Cons: looks like a screenshot with a title; no key-art polish.
+## 7. Making the cover image (options - Brandon picks)
 
-**B. Commission key art (best look, ~1-3 weeks wall-clock, my rough guess $150-$600 for a capsule set)**
-- Brief an illustrator for one key illustration (ship vs Kraken or the two ships) plus logo; they deliver layered files; crop to sizes.
-- Pros: strongest wishlist conversion, reusable for the trailer and the library hero. Cons: **unlikely to land by Nov 19**, and capsules are required to submit. Risks the Nov 26 Coming Soon deadline unless combined with C.
+**A. DIY from an in-game render + a font (recommended, ~1-2 hours)**
+- Capture a hero shot of the Synty ships (Capture.ps1, 2560x1440 desktop size is plenty for 630x500).
+- Put "DEADWATER RUN" over it in an open-licence display font (asset-scraper can bring 2-3 options; check the licence first).
+- Crop to 630 x 500 (and 1260 x 1000 for sharpness on high-DPI screens if itch accepts it - verify).
 
-**C. Hybrid (recommended path to evaluate; ~2-3 hours now, art later)**
-- This week: build a minimal title-card set from option A (solid/gradient sea colour or a screenshot crop + logo) that meets every size so the page can be submitted and reviewed.
-- Commission or polish real key art during Nov 19-Dec 9 and swap it in (Valve allows replacing assets after approval; I believe it does not restart the 2-week Coming Soon clock - verify).
-- Pros: keeps the Nov 19 / Nov 26 dates safe. Cons: the Coming Soon page, where wishlists accrue, is the weak version for the first 2 weeks.
+**B. Commission key art (~1-3 weeks, rough guess $100-$400)**
+- Unlikely before Dec 3; can replace the DIY cover after launch at no cost - itch pages can be edited any time.
 
-## 9. Everything blocking submission (by Nov 19)
+## 8. Everything blocking the Dec 3 launch
 
-1. **Capsule/library art** - none exists (10 sized images). Hard blocker for submit. Decide A/B/C today.
-2. **Developer/publisher name, support email/URL** - needs Brandon.
-3. **Short + long description picks, tags, genre** - needs Brandon (options above).
-4. **Content survey, IARC rating, AI-disclosure** - Brandon answers in Steamworks.
-5. **Steamworks paperwork (tax, bank, identity)** - must be complete before release; check it shows "complete" now. needs Brandon.
-6. **App fee paid date** - Scope says paid but no date is recorded. Release Dec 10 requires payment on or before **Nov 10** (30-day rule). Brandon: confirm the payment date.
-7. System requirements are guesses; acceptable for submission, replace later.
-8. No build is needed to submit the store page, but **no Shipping package has been made yet**; see `Docs/Release/Checklist.md`.
+1. **Cover image** - none exists. Option A above.
+2. **Itch account, developer name, payment mode** - needs Brandon (Checklist section 3).
+3. **Tagline + description picks, genre, tags** - needs Brandon (options above).
+4. **AI disclosure** - Brandon answers (section 6).
+5. **Release candidate build** (Nov 30) and butler push (Brandon).
+6. **Audio** - the game has none yet; description must not promise music until it ships.
+7. Recapture screenshots 7-13 now that shop, events and captain abilities are real.
