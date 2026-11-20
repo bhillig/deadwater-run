@@ -8,6 +8,11 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Abilities/DwAbilitySystemComponent.h"
+#include "Abilities/DwGA_FireCannon.h"
+#include "Abilities/DwGA_UseItem.h"
+#include "Data/DwAbilityDefinition.h"
+#include "Data/DwEncounterDefinition.h"
+#include "Data/DwKrakenDefinition.h"
 #include "Core/DwAssetManager.h"
 #include "Core/DwGameData.h"
 #include "Core/DwGameplayTags.h"
@@ -486,6 +491,86 @@ void FDwAudioVfxSpec::Define()
 				FDataValidationContext Context;
 				TestTrue(FString::Printf(TEXT("%s valid"), Spec.Key), static_cast<const UObject*>(Cue)->IsDataValid(Context) != EDataValidationResult::Invalid);
 #endif
+			}
+		});
+
+		It("DW-311: every cue the game can fire has a GC_* notify and DA_AudioCueMap sounds; every music state has a track", [this]()
+		{
+			const UDwGameData* GameData = UDwAssetManager::Get().GetGameData();
+			const UDwAudioCueMap* CueMap = GameData ? GameData->Audio.CueMap.Get() : nullptr;
+			const UDwMusicSet* MusicSet = GameData ? GameData->Audio.MusicSet.Get() : nullptr;
+			if (!TestNotNull(TEXT("DA_AudioCueMap"), CueMap) || !TestNotNull(TEXT("DA_MusicSet"), MusicSet))
+			{
+				return;
+			}
+
+			// Fired from code (UDwCombatSubsystem) ...
+			TSet<FGameplayTag> Fired = { DwTags::GameplayCue_Unit_Death, DwTags::GameplayCue_Kraken_Death, DwTags::GameplayCue_Kraken_TentacleCut,
+				DwTags::GameplayCue_Kraken_Appear, DwTags::GameplayCue_Ship_Sink, DwTags::GameplayCue_Attack_Miss };
+			// ... and from content: every ability's hit cue, the cannon's fire cue, items, Kraken phase cues.
+			auto AddAbilityCues = [&Fired](const UClass* Class)
+			{
+				if (const UDwGA_EffectPayload* Payload = Class ? Cast<UDwGA_EffectPayload>(Class->GetDefaultObject()) : nullptr)
+				{
+					Fired.Add(Payload->HitCue);
+				}
+				if (const UDwGA_FireCannon* Cannon = Class ? Cast<UDwGA_FireCannon>(Class->GetDefaultObject()) : nullptr)
+				{
+					Fired.Add(Cannon->FireCue);
+				}
+			};
+			AddAbilityCues(UDwGA_FireCannon::StaticClass());
+			AddAbilityCues(UDwGA_UseItem::StaticClass());
+			TArray<FPrimaryAssetId> Abilities;
+			UAssetManager::Get().GetPrimaryAssetIdList(UDwDefinitionBase::FTypes::Ability, Abilities);
+			TestTrue(TEXT("Abilities found"), Abilities.Num() > 10);
+			for (const FPrimaryAssetId& Id : Abilities)
+			{
+				const UDwAbilityDefinition* Def = Cast<UDwAbilityDefinition>(UAssetManager::Get().GetPrimaryAssetPath(Id).TryLoad());
+				AddAbilityCues(Def ? Def->AbilityClass.Get() : nullptr);
+			}
+			const UDwKrakenDefinition* Kraken = GameData->KrakenEncounter ? GameData->KrakenEncounter->Kraken.Get() : nullptr;
+			if (TestNotNull(TEXT("Kraken"), Kraken))
+			{
+				for (const FDwKrakenPhase& Phase : Kraken->Phases)
+				{
+					Fired.Add(Phase.EnterCue);
+				}
+			}
+			Fired.Remove(FGameplayTag());
+			TestTrue(TEXT("Each Kraken move has its own cue"), Fired.Contains(DwTags::GameplayCue_Kraken_TentacleSlam)
+				&& Fired.Contains(DwTags::GameplayCue_Kraken_KrankySwipe) && Fired.Contains(DwTags::GameplayCue_Kraken_TentacleGrab)
+				&& Fired.Contains(DwTags::GameplayCue_Kraken_ArmsOfFury) && Fired.Contains(DwTags::GameplayCue_Kraken_EyesOfTheSea));
+
+			for (const FGameplayTag& Tag : Fired)
+			{
+				// GameplayCue.Hit.Melee -> GC_Hit_Melee
+				FString Name = Tag.ToString();
+				Name.RemoveFromStart(TEXT("GameplayCue."));
+				Name = TEXT("GC_") + Name.Replace(TEXT("."), TEXT("_"));
+				const UClass* Notify = DwAudioVfxTest::LoadCue(*Name);
+				const UGameplayCueNotify_Static* Cue = Notify ? Cast<UGameplayCueNotify_Static>(Notify->GetDefaultObject()) : nullptr;
+				TestTrue(FString::Printf(TEXT("%s has notify %s"), *Tag.ToString(), *Name), Cue && Cue->GameplayCueTag == Tag);
+
+				FGameplayTag Matched;
+				const FDwCueSound* Sound = CueMap->FindCue(Tag, &Matched);
+				const bool bHasSounds = Sound && Matched == Tag && !Sound->Start.IsEmpty()
+					&& !Sound->Start.ContainsByPredicate([](const FDwCueSoundLayer& Layer) { return Layer.Sounds.IsEmpty() || Layer.Sounds.Contains(nullptr); });
+				TestTrue(FString::Printf(TEXT("%s has its own sounds in DA_AudioCueMap"), *Tag.ToString()), bHasSounds);
+			}
+
+			const TPair<FGameplayTag, bool> States[] = { { DwTags::Music_Menu, true }, { DwTags::Music_Map, true }, { DwTags::Music_Combat, true },
+				{ DwTags::Music_Boss, true }, { DwTags::Music_Boss_Enraged, true }, { DwTags::Music_Victory, false }, { DwTags::Music_Defeat, false } };
+			for (const TPair<FGameplayTag, bool>& State : States)
+			{
+				const FDwMusicTrack* Track = MusicSet->FindTrack(State.Key);
+				USoundWave* Wave = Track ? Cast<USoundWave>(Track->Sound.LoadSynchronous()) : nullptr;
+				if (!TestNotNull(*State.Key.ToString(), Wave))
+				{
+					continue;
+				}
+				TestEqual(FString::Printf(TEXT("%s loops"), *State.Key.ToString()), Track->bLoop, State.Value);
+				TestTrue(FString::Printf(TEXT("%s is music"), *State.Key.ToString()), Wave->GetSoundClass() == GameData->Audio.MusicClass);
 			}
 		});
 

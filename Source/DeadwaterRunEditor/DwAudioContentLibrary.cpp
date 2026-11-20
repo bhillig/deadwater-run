@@ -10,7 +10,14 @@
 #include "Presentation/DwAudioCueMap.h"
 #include "Presentation/DwGameplayCueNotify_Burst.h"
 #include "Presentation/DwMusicSet.h"
+#include "Dom/JsonObject.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Sound/SoundBase.h"
 #include "Sound/SoundClass.h"
+#include "Sound/SoundConcurrency.h"
 #include "Sound/SoundMix.h"
 
 namespace DwAudioContent
@@ -42,7 +49,175 @@ namespace DwAudioContent
 			{ TEXT("GC_Kraken_Death"), DwTags::GameplayCue_Kraken_Death, nullptr, 0.f },
 			{ TEXT("GC_Kraken_TentacleCut"), DwTags::GameplayCue_Kraken_TentacleCut, nullptr, 0.f },
 			{ TEXT("GC_Attack_Miss"), DwTags::GameplayCue_Attack_Miss, nullptr, 0.f },
+			// DW-311: every cue the game fires needs a notify for its sounds to play. Sound-only until DW-307.
+			{ TEXT("GC_Hit_Ranged"), DwTags::GameplayCue_Hit_Ranged, nullptr, 0.f },
+			{ TEXT("GC_Unit_Heal"), DwTags::GameplayCue_Unit_Heal, nullptr, 0.f },
+			{ TEXT("GC_Status_Fear"), DwTags::GameplayCue_Status_Fear, nullptr, 0.f },
+			{ TEXT("GC_Ship_Sink"), DwTags::GameplayCue_Ship_Sink, nullptr, 0.f },
+			{ TEXT("GC_Kraken_Enrage"), DwTags::GameplayCue_Kraken_Enrage, nullptr, 0.f },
+			{ TEXT("GC_Kraken_TentacleSlam"), DwTags::GameplayCue_Kraken_TentacleSlam, nullptr, 0.f },
+			{ TEXT("GC_Kraken_KrankySwipe"), DwTags::GameplayCue_Kraken_KrankySwipe, nullptr, 0.f },
+			{ TEXT("GC_Kraken_TentacleGrab"), DwTags::GameplayCue_Kraken_TentacleGrab, nullptr, 0.f },
+			{ TEXT("GC_Kraken_ArmsOfFury"), DwTags::GameplayCue_Kraken_ArmsOfFury, nullptr, 0.f },
+			{ TEXT("GC_Kraken_EyesOfTheSea"), DwTags::GameplayCue_Kraken_EyesOfTheSea, nullptr, 0.f },
 		};
+	}
+
+	/** Tools/Content/audio_cue_map.json (DW-311, sound-wrangler's source of truth for the cue map and music tracks). */
+	FString CueMapJsonPath()
+	{
+		return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("Tools/Content/audio_cue_map.json"));
+	}
+
+	/** "SFX/Combat/SW_MeleeHit_01" -> the asset under /Game/DeadwaterRun/Audio, or null (logged as an error). */
+	template <typename T>
+	T* LoadAudio(const FString& RelativePath, const FString& Where, TArray<FString>& Log, bool& bOk)
+	{
+		const FString Name = FPaths::GetBaseFilename(RelativePath);
+		const FString Path = FString::Printf(TEXT("%s/%s.%s"), AudioFolder, *RelativePath, *Name);
+		T* Asset = LoadObject<T>(nullptr, *Path);
+		if (!Asset)
+		{
+			Log.Add(FString::Printf(TEXT("ERROR %s: no %s at %s"), *Where, *T::StaticClass()->GetName(), *Path));
+			bOk = false;
+		}
+		return Asset;
+	}
+
+	FGameplayTag JsonTag(const FString& Name, TArray<FString>& Log, bool& bOk)
+	{
+		const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(*Name), /*ErrorIfNotFound*/ false);
+		if (!Tag.IsValid())
+		{
+			Log.Add(FString::Printf(TEXT("ERROR audio_cue_map.json: unknown tag %s"), *Name));
+			bOk = false;
+		}
+		return Tag;
+	}
+
+	TArray<FDwCueSoundLayer> ReadLayers(const TSharedPtr<FJsonObject>& Cue, const TCHAR* Section, const FString& CueName,
+		const TMap<FString, USoundConcurrency*>& Concurrency, TArray<FString>& Log, bool& bOk)
+	{
+		TArray<FDwCueSoundLayer> Layers;
+		const TArray<TSharedPtr<FJsonValue>>* Array = nullptr;
+		if (!Cue->TryGetArrayField(Section, Array))
+		{
+			return Layers;
+		}
+		for (const TSharedPtr<FJsonValue>& Value : *Array)
+		{
+			const TSharedPtr<FJsonObject> Object = Value->AsObject();
+			FDwCueSoundLayer& Layer = Layers.AddDefaulted_GetRef();
+			const TArray<TSharedPtr<FJsonValue>>* Sounds = nullptr;
+			if (Object->TryGetArrayField(TEXT("sounds"), Sounds))
+			{
+				for (const TSharedPtr<FJsonValue>& Sound : *Sounds)
+				{
+					if (USoundBase* Loaded = LoadAudio<USoundBase>(Sound->AsString(), CueName, Log, bOk))
+					{
+						Layer.Sounds.Add(Loaded);
+					}
+				}
+			}
+			Object->TryGetNumberField(TEXT("volume"), Layer.Volume);
+			const TArray<TSharedPtr<FJsonValue>>* Pitch = nullptr;
+			if (Object->TryGetArrayField(TEXT("pitch"), Pitch) && Pitch->Num() == 2)
+			{
+				Layer.PitchMin = (*Pitch)[0]->AsNumber();
+				Layer.PitchMax = (*Pitch)[1]->AsNumber();
+			}
+			FString ConcurrencyName;
+			if (Object->TryGetStringField(TEXT("concurrency"), ConcurrencyName))
+			{
+				USoundConcurrency* const* Found = Concurrency.Find(ConcurrencyName);
+				if (!Found)
+				{
+					Log.Add(FString::Printf(TEXT("ERROR %s: unknown concurrency %s"), *CueName, *ConcurrencyName));
+					bOk = false;
+				}
+				else
+				{
+					Layer.Concurrency = *Found;
+				}
+			}
+		}
+		return Layers;
+	}
+
+	/**
+	 * Rebuilds CueMap->Cues and MusicSet->Tracks from the JSON file (the file is the source of truth; the assets are
+	 * regenerated). False with errors in Log if the file is missing, malformed or names a sound or tag that doesn't exist.
+	 */
+	bool FillFromJson(UDwAudioCueMap& CueMap, UDwMusicSet& MusicSet, TArray<FString>& Log)
+	{
+		FString Text;
+		TSharedPtr<FJsonObject> Root;
+		if (!FFileHelper::LoadFileToString(Text, *CueMapJsonPath()) || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) || !Root)
+		{
+			Log.Add(FString::Printf(TEXT("ERROR cannot read %s"), *CueMapJsonPath()));
+			return false;
+		}
+		bool bOk = true;
+
+		TMap<FString, USoundConcurrency*> Concurrency;
+		const TSharedPtr<FJsonObject>* ConcurrencyObject = nullptr;
+		if (Root->TryGetObjectField(TEXT("concurrency"), ConcurrencyObject))
+		{
+			for (const TPair<FString, TSharedPtr<FJsonValue>>& Entry : (*ConcurrencyObject)->Values)
+			{
+				if (USoundConcurrency* Loaded = LoadAudio<USoundConcurrency>(Entry.Value->AsString(), Entry.Key, Log, bOk))
+				{
+					Concurrency.Add(Entry.Key, Loaded);
+				}
+			}
+		}
+
+		CueMap.Cues.Reset();
+		const TSharedPtr<FJsonObject>* Cues = nullptr;
+		if (Root->TryGetObjectField(TEXT("cues"), Cues))
+		{
+			for (const TPair<FString, TSharedPtr<FJsonValue>>& Entry : (*Cues)->Values)
+			{
+				const FGameplayTag Tag = JsonTag(Entry.Key, Log, bOk);
+				const TSharedPtr<FJsonObject> Object = Entry.Value->AsObject();
+				if (!Tag.IsValid() || !Object)
+				{
+					continue;
+				}
+				FDwCueSound& Sound = CueMap.Cues.Add(Tag);
+				Sound.Start = ReadLayers(Object, TEXT("start"), Entry.Key, Concurrency, Log, bOk);
+				Sound.Loop = ReadLayers(Object, TEXT("loop"), Entry.Key, Concurrency, Log, bOk);
+				Sound.Stop = ReadLayers(Object, TEXT("stop"), Entry.Key, Concurrency, Log, bOk);
+			}
+		}
+
+		MusicSet.Tracks.Reset();
+		const TSharedPtr<FJsonObject>* Music = nullptr;
+		if (Root->TryGetObjectField(TEXT("music"), Music))
+		{
+			for (const TPair<FString, TSharedPtr<FJsonValue>>& Entry : (*Music)->Values)
+			{
+				const FGameplayTag Tag = JsonTag(Entry.Key, Log, bOk);
+				const TSharedPtr<FJsonObject> Object = Entry.Value->AsObject();
+				if (!Tag.IsValid() || !Object)
+				{
+					continue;
+				}
+				FDwMusicTrack& Track = MusicSet.Tracks.Add(Tag);
+				FString Path;
+				if (Object->TryGetStringField(TEXT("intro"), Path))
+				{
+					Track.Intro = LoadAudio<USoundBase>(Path, Entry.Key, Log, bOk);
+				}
+				if (Object->TryGetStringField(TEXT("sound"), Path))
+				{
+					Track.Sound = LoadAudio<USoundBase>(Path, Entry.Key, Log, bOk);
+				}
+				Object->TryGetBoolField(TEXT("loop"), Track.bLoop);
+				Object->TryGetNumberField(TEXT("volume"), Track.Volume);
+			}
+		}
+		return bOk;
 	}
 
 	/**
@@ -82,29 +257,19 @@ TArray<FString> UDwAudioContentLibrary::CreateAudioContent()
 	TArray<FString> Log;
 	bool bOk = true;
 
-	// 1. DA_AudioCueMap: empty on creation; sound-wrangler fills it (DW-311), so its entries are never rewritten here.
-	const bool bHadCueMap = Load<UDwAudioCueMap>(AudioFolder, TEXT("DA_AudioCueMap")) != nullptr;
+	// 1-2. DA_AudioCueMap cues and DA_MusicSet tracks, rebuilt from Tools/Content/audio_cue_map.json (DW-311); the
+	// run-phase states are seeded once.
 	UDwAudioCueMap* CueMap = FindOrCreate<UDwAudioCueMap>(AudioFolder, TEXT("DA_AudioCueMap"), Log);
-	bOk &= Validate(CueMap, Log);
-	if (!bHadCueMap)
-	{
-		bOk &= Save(CueMap, Log);
-	}
-	Log.Add(FString::Printf(TEXT("DA_AudioCueMap has %d cue entries"), CueMap->Cues.Num()));
-
-	// 2. DA_MusicSet: no tracks until DW-311; the run-phase states are seeded once.
 	UDwMusicSet* MusicSet = FindOrCreate<UDwMusicSet>(AudioFolder, TEXT("DA_MusicSet"), Log);
-	const bool bSeedPhases = MusicSet->PhaseStates.IsEmpty();
-	if (bSeedPhases)
+	if (MusicSet->PhaseStates.IsEmpty())
 	{
 		MusicSet->PhaseStates = DefaultPhaseStates();
 		Log.Add(TEXT("DA_MusicSet: seeded phase states (rewards, level-up, shop and events keep the map music)"));
 	}
-	bOk &= Validate(MusicSet, Log);
-	if (bSeedPhases)
-	{
-		bOk &= Save(MusicSet, Log);
-	}
+	bOk &= FillFromJson(*CueMap, *MusicSet, Log);
+	bOk &= Validate(CueMap, Log) && Save(CueMap, Log);
+	bOk &= Validate(MusicSet, Log) && Save(MusicSet, Log);
+	Log.Add(FString::Printf(TEXT("DA_AudioCueMap has %d cue entries (from %s)"), CueMap->Cues.Num(), *CueMapJsonPath()));
 	Log.Add(FString::Printf(TEXT("DA_MusicSet has %d tracks, %d phase states"), MusicSet->Tracks.Num(), MusicSet->PhaseStates.Num()));
 
 	// 3. The placeholder cue notifies.

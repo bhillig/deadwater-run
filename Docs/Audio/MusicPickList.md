@@ -25,6 +25,7 @@ Cut names: INTRO plays once, then LOOP repeats; TAG is a short ending used as a 
 | `Music.Map` | **not covered by this pack** | | |
 
 ### Combat variety
+- **v1.0 (Brandon 2026-11-20): Sea Warfare only.** `DA_MusicSet` holds one track per state; the Sword Fight LOOP is imported for a later rotation (needs per-state pools in `UDwMusicSet`). Everything below is the plan for that rotation.
 - Two combat tracks, picked per fight (no repeat of the last one). Sea Warfare and Sword Fight fit the pirate theme by name and their LOOP cuts are long (about 2 min), so a typical fight never repeats the loop.
 - Sea Warfare and Sword Fight have long INTRO cuts (135.6 s and 32.1 s). They are skipped: a fight should start in the music, not 30 s to 2 min of build-up. If your ear says the LOOP cut starts too suddenly, the short intros of Furious Fight (2.4 s) or Epic Clash (4.3 s) are the safe alternates.
 - Combat tracks do not end with their TAG: fights end on the Victory or Defeat stinger, so the combat TAGs are not imported. Crossfade out on the state change.

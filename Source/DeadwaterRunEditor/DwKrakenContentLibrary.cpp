@@ -59,6 +59,20 @@ namespace DwKrakenContent
 		bool bAimAtTile = false;
 	};
 
+	/** GameplayCue.Kraken.<Move> for a move (DW-311): each move sounds like itself, not like a cutlass. */
+	FGameplayTag MoveHitCue(const FString& MoveName)
+	{
+		static const TMap<FString, FGameplayTag> Cues = {
+			{ TEXT("TentacleSlam"), DwTags::GameplayCue_Kraken_TentacleSlam },
+			{ TEXT("KrankySwipe"), DwTags::GameplayCue_Kraken_KrankySwipe },
+			{ TEXT("TentacleGrab"), DwTags::GameplayCue_Kraken_TentacleGrab },
+			{ TEXT("ArmsOfFury"), DwTags::GameplayCue_Kraken_ArmsOfFury },
+			{ TEXT("EyesOfTheSea"), DwTags::GameplayCue_Kraken_EyesOfTheSea },
+		};
+		const FGameplayTag* Cue = Cues.Find(MoveName);
+		return ensureMsgf(Cue, TEXT("No hit cue for Kraken move %s"), *MoveName) ? *Cue : FGameplayTag(DwTags::GameplayCue_Hit_Melee);
+	}
+
 	UDwAbilityDefinition* MakeMove(const FMoveSpec& Spec, UDataTable* AbilityTable, TArray<FString>& Log, bool& bOk)
 	{
 		using namespace DwContentAssets;
@@ -77,7 +91,7 @@ namespace DwKrakenContent
 		Move->Targeting.bIgnoreRange = true; // it reaches the whole ship from the water
 		Move->Targeting.bAimAtTile = Spec.bAimAtTile;
 		Move->Applications = { Application };
-		Move->HitCue = DwTags::GameplayCue_Hit_Melee; // Kraken cues and art are DW-307
+		Move->HitCue = MoveHitCue(Spec.Name); // sound-only until DW-307 gives the Kraken its VFX
 		Move->PlaceholderSeconds = 0.5f;
 		bOk &= Save(Bp, Log);
 

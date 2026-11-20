@@ -105,6 +105,11 @@ namespace DwTags
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_Death, "GameplayCue.Kraken.Death");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_TentacleCut, "GameplayCue.Kraken.TentacleCut");
 	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Attack_Miss, "GameplayCue.Attack.Miss");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_TentacleSlam, "GameplayCue.Kraken.TentacleSlam");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_KrankySwipe, "GameplayCue.Kraken.KrankySwipe");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_TentacleGrab, "GameplayCue.Kraken.TentacleGrab");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_ArmsOfFury, "GameplayCue.Kraken.ArmsOfFury");
+	UE_DEFINE_GAMEPLAY_TAG(GameplayCue_Kraken_EyesOfTheSea, "GameplayCue.Kraken.EyesOfTheSea");
 	UE_DEFINE_GAMEPLAY_TAG(Music_Menu, "Music.Menu");
 	UE_DEFINE_GAMEPLAY_TAG(Music_Map, "Music.Map");
 	UE_DEFINE_GAMEPLAY_TAG(Music_Combat, "Music.Combat");

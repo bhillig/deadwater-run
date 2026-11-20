@@ -1,6 +1,8 @@
-# SFX Pick List (DW-311 prep, for Brandon's approval)
+# SFX Pick List (DW-311)
 
-Source: Epic Stock Media "Pirate Game" (bought 2026-11-20), 16-bit / 44.1 kHz, kept outside the repo. Nothing from the pack is imported until you approve this list. Audio gaps flagged here follow the cue catalogue in `Docs/Architecture/15-Audio-VFX.md`.
+**Status (2026-11-20):** approved and imported (121 primaries). Wired in DW-311 via `Tools/Content/audio_cue_map.json`: every combat, cannon, ship, death, heal, Fear and Kraken cue the game fires. Imported but not wired yet: the `GameplayCue.Ability.*` and Frozen/Rooted/Guarded/Cowering picks (post-launch, Brandon 2026-11-20), the Fear loop (Fear fires as a one-shot), ambience (no player yet), UI sounds (`DA_UISoundMap`, DW-402).
+
+Source: Epic Stock Media "Pirate Game" (bought 2026-11-20), 16-bit / 44.1 kHz, kept outside the repo. Audio gaps flagged here follow the cue catalogue in `Docs/Architecture/15-Audio-VFX.md`.
 
 ## Summary
 

@@ -1,0 +1,84 @@
+{
+  "_about": "DW-311: source of truth for DA_AudioCueMap and DA_MusicSet tracks (sound-wrangler). UDwAudioContentLibrary rebuilds both from this file on every Tools/CreateCombatContent.ps1 run. Sounds are paths under /Game/DeadwaterRun/Audio/ (SFX/<Category>/SW_* and Music/SW_Music_*). Volumes and pitch ranges are first-pass placeholders for the DW-403 mix pass. Not mapped yet (Brandon 2026-11-20, post-launch): GameplayCue.Ability.* and the Frozen/Rooted/Guarded/Cowering status cues - those moves fall back to the generic hit, heal and Fear sounds.",
+
+  "concurrency": {
+    "SCON_Hits": "Concurrency/SCON_Hits",
+    "SCON_Cannon": "Concurrency/SCON_Cannon"
+  },
+
+  "cues": {
+    "GameplayCue.Hit.Melee": { "start": [
+      { "sounds": ["SFX/Combat/SW_MeleeHit_01", "SFX/Combat/SW_MeleeHit_02", "SFX/Combat/SW_MeleeHit_03"], "volume": 1.0, "pitch": [0.95, 1.05], "concurrency": "SCON_Hits" },
+      { "sounds": ["SFX/Combat/SW_MeleePain_01", "SFX/Combat/SW_MeleePain_02", "SFX/Combat/SW_MeleePain_03"], "volume": 0.6, "pitch": [0.95, 1.05], "concurrency": "SCON_Hits" }
+    ] },
+    "GameplayCue.Hit.Ranged": { "start": [
+      { "sounds": ["SFX/Combat/SW_RangedShot_01", "SFX/Combat/SW_RangedShot_02", "SFX/Combat/SW_RangedShot_03", "SFX/Combat/SW_RangedShot_04"], "volume": 1.0, "pitch": [0.95, 1.05], "concurrency": "SCON_Hits" },
+      { "sounds": ["SFX/Combat/SW_RangedImpact_01", "SFX/Combat/SW_RangedImpact_02"], "volume": 0.7, "pitch": [0.95, 1.05], "concurrency": "SCON_Hits" }
+    ] },
+    "GameplayCue.Unit.Death": { "start": [
+      { "sounds": ["SFX/Combat/SW_DeathVoice_01", "SFX/Combat/SW_DeathVoice_02", "SFX/Combat/SW_DeathVoice_03", "SFX/Combat/SW_DeathVoiceShort_01"], "volume": 0.9, "pitch": [0.95, 1.05], "concurrency": "SCON_Hits" },
+      { "sounds": ["SFX/Combat/SW_DeathFall_01", "SFX/Combat/SW_DeathFall_02"], "volume": 0.8, "concurrency": "SCON_Hits" }
+    ] },
+    "GameplayCue.Unit.Heal": { "start": [
+      { "sounds": ["SFX/Combat/SW_Heal_01", "SFX/Combat/SW_Heal_02", "SFX/Combat/SW_Heal_03"], "volume": 0.8 }
+    ] },
+    "GameplayCue.Status.Fear": { "start": [
+      { "sounds": ["SFX/Status/SW_FearStart_01", "SFX/Status/SW_FearStart_02"], "volume": 0.8 }
+    ] },
+    "GameplayCue.Cannon.Fire": { "start": [
+      { "sounds": ["SFX/Cannon/SW_CannonFire_01", "SFX/Cannon/SW_CannonFire_02", "SFX/Cannon/SW_CannonFire_03", "SFX/Cannon/SW_CannonFire_04"], "volume": 1.0, "pitch": [0.95, 1.05], "concurrency": "SCON_Cannon" }
+    ] },
+    "GameplayCue.Cannon.Impact": { "start": [
+      { "sounds": ["SFX/Cannon/SW_CannonImpact_01", "SFX/Cannon/SW_CannonImpact_02", "SFX/Cannon/SW_CannonImpact_03", "SFX/Cannon/SW_CannonImpact_04"], "volume": 1.0, "pitch": [0.95, 1.05], "concurrency": "SCON_Cannon" }
+    ] },
+    "GameplayCue.Attack.Miss": { "start": [
+      { "sounds": ["SFX/Cannon/SW_CannonMiss_01", "SFX/Cannon/SW_CannonMiss_02"], "volume": 0.9, "pitch": [0.95, 1.05], "concurrency": "SCON_Cannon" }
+    ] },
+    "GameplayCue.Ship.Sink": { "start": [
+      { "sounds": ["SFX/Ship/SW_SinkCrash_01", "SFX/Ship/SW_SinkCrash_02"], "volume": 1.0 },
+      { "sounds": ["SFX/Ship/SW_SinkCreak_01", "SFX/Ship/SW_SinkCreak_02"], "volume": 0.8 },
+      { "sounds": ["SFX/Ship/SW_SinkSplash_01"], "volume": 0.9 }
+    ] },
+    "GameplayCue.Kraken.Appear": { "start": [
+      { "sounds": ["SFX/Kraken/SW_KrakenAppear_01"], "volume": 1.0 }
+    ] },
+    "GameplayCue.Kraken.TentacleSlam": { "start": [
+      { "sounds": ["SFX/Kraken/SW_SlamImpact_01"], "volume": 1.0, "pitch": [0.95, 1.05], "concurrency": "SCON_Hits" },
+      { "sounds": ["SFX/Kraken/SW_SlamSplash_01", "SFX/Kraken/SW_SlamSplash_02"], "volume": 0.8, "concurrency": "SCON_Hits" },
+      { "sounds": ["SFX/Kraken/SW_SlamVocal_01", "SFX/Kraken/SW_SlamVocal_02"], "volume": 0.7, "concurrency": "SCON_Hits" }
+    ] },
+    "GameplayCue.Kraken.KrankySwipe": { "start": [
+      { "sounds": ["SFX/Kraken/SW_SwipeWhip_01", "SFX/Kraken/SW_SwipeWhip_02"], "volume": 1.0, "pitch": [0.95, 1.05], "concurrency": "SCON_Hits" },
+      { "sounds": ["SFX/Kraken/SW_SwipeVocal_01"], "volume": 0.6, "concurrency": "SCON_Hits" }
+    ] },
+    "GameplayCue.Kraken.TentacleGrab": { "start": [
+      { "sounds": ["SFX/Kraken/SW_GrabDrag_01"], "volume": 0.9 },
+      { "sounds": ["SFX/Kraken/SW_GrabGrowl_01", "SFX/Kraken/SW_GrabGrowl_02"], "volume": 0.8 }
+    ] },
+    "GameplayCue.Kraken.ArmsOfFury": { "start": [
+      { "sounds": ["SFX/Kraken/SW_FuryHit_01", "SFX/Kraken/SW_FuryHit_02", "SFX/Kraken/SW_FuryHit_03"], "volume": 1.0, "pitch": [0.92, 1.08], "concurrency": "SCON_Hits" }
+    ] },
+    "GameplayCue.Kraken.EyesOfTheSea": { "start": [
+      { "sounds": ["SFX/Kraken/SW_EyesIdle_01", "SFX/Kraken/SW_EyesIdle_02"], "volume": 0.9 }
+    ] },
+    "GameplayCue.Kraken.Enrage": { "start": [
+      { "sounds": ["SFX/Kraken/SW_EnrageRoar_01", "SFX/Kraken/SW_EnrageRoar_02"], "volume": 1.0 }
+    ] },
+    "GameplayCue.Kraken.TentacleCut": { "start": [
+      { "sounds": ["SFX/Kraken/SW_TentacleCut_01"], "volume": 0.9, "pitch": [0.95, 1.05] }
+    ] },
+    "GameplayCue.Kraken.Death": { "start": [
+      { "sounds": ["SFX/Kraken/SW_KrakenDeath_01"], "volume": 1.0 }
+    ] }
+  },
+
+  "music": {
+    "Music.Menu": { "sound": "Music/SW_Music_Menu_TavernA_Loop", "loop": true, "_note": "placeholder (Pirate Game tavern loop) until a shanty pack" },
+    "Music.Map": { "sound": "Music/SW_Music_Map_TavernB_Loop", "loop": true, "_note": "placeholder (Pirate Game tavern loop) until a shanty pack" },
+    "Music.Combat": { "sound": "Music/SW_Music_Combat_SeaWarfare_Loop", "loop": true, "_note": "one track for v1.0 (Brandon 2026-11-20); Sword Fight is imported for a later rotation" },
+    "Music.Boss": { "intro": "Music/SW_Music_Boss_BossBattle_Intro", "sound": "Music/SW_Music_Boss_BossBattle_Loop", "loop": true },
+    "Music.Boss.Enraged": { "intro": "Music/SW_Music_BossEnraged_FrighteningAssault_Intro", "sound": "Music/SW_Music_BossEnraged_FrighteningAssault_Loop", "loop": true },
+    "Music.Victory": { "sound": "Music/SW_Music_Victory_HeroicMission_Tag", "loop": false },
+    "Music.Defeat": { "sound": "Music/SW_Music_Defeat_SubterraneanMonsters_Tag", "loop": false }
+  }
+}

@@ -47,13 +47,14 @@
 | `GameplayCue.Unit.Heal` | `GE_Heal` | heal glow | heal chime |
 | `GameplayCue.Status.Fear`, `.Frozen`, `.Rooted`, `.Guarded`, `.Cowering` | status GEs (looping) | status loop | start/stop |
 | `GameplayCue.Ability.<Name>` | content abilities as needed (Smoke and Fire, Six Pistols, Rally Cry, Charge, Grapple, Eye of the Tiger) | per ability | per ability |
-| `GameplayCue.Kraken.<Move>`, `GameplayCue.Kraken.Enrage` | Kraken abilities, phase change | per move | per move |
+| `GameplayCue.Kraken.<Move>` (`TentacleSlam`, `KrankySwipe`, `TentacleGrab`, `ArmsOfFury`, `EyesOfTheSea`), `GameplayCue.Kraken.Enrage` | each move's `HitCue` (`UDwKrakenContentLibrary`, DW-311), phase change | per move (sound only until DW-307) | per move |
 | `GameplayCue.Kraken.Appear`, `.Death`, `.TentacleCut` | `StartEncounter` (fight with a Kraken body); `HandleUnitDied` picks them over `Unit.Death` for the body and tentacles (`UDwCombatSubsystem::GetDeathCue`) | sound only until DW-307 | roar / death wail / cut |
 | `GameplayCue.Attack.Miss` | `ReportMiss` (a tile-aimed attack hits an empty tile), at the tile, from the attacker's ASC | sound only until DW-307 | splash |
 
 - Cues carry the instigator, target and hit location in the effect context; Six Pistols fires one cue per hit.
 - In instant mode ASCs suppress cues (`bSuppressGameplayCues`), so simulator and tests are silent.
 - UI sounds are not cues; they go through `DA_UISoundMap` (`14-UI.md`).
+- DW-311: `DA_AudioCueMap` cues and `DA_MusicSet` tracks are rebuilt from `Tools/Content/audio_cue_map.json` (sound-wrangler edits that file, never the assets) by `UDwAudioContentLibrary` on every `Tools/CreateCombatContent.ps1` run. Every cue the game fires needs a `GC_*` notify and its own map entry - `DeadwaterRun.Presentation.AudioVfx` fails otherwise. Not mapped for v1.0 (Brandon 2026-11-20): `GameplayCue.Ability.*` and the Frozen/Rooted/Guarded/Cowering status cues (those moves use the generic hit, heal and Fear sounds); ambience (no player for it yet); UI sounds (`DA_UISoundMap`, DW-402).
 
 ## Settings and mix
 - `UDwGameUserSettings` stores Master/Music/SFX/UI volumes (0-1) and applies them with `UGameplayStatics::SetSoundMixClassOverride` on `SM_Base` for each sound class referenced in `UDwGameData` (`16-Shell.md`).

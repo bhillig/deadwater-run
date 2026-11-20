@@ -141,6 +141,12 @@ namespace DwTags
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Kraken_TentacleCut);
 	/** A tile-aimed attack landed on an empty tile (the Kraken's Slam/Grab, B6a). Cannons never miss, so there is no Cannon.Miss. */
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Attack_Miss);
+	// The Kraken moves' hit cues (DW-311; were Hit.Melee): GameplayCue.Kraken.<Move>, 15-Audio-VFX catalogue.
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Kraken_TentacleSlam);
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Kraken_KrankySwipe);
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Kraken_TentacleGrab);
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Kraken_ArmsOfFury);
+	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Kraken_EyesOfTheSea);
 
 	// Music states (UDwMusicSubsystem)
 	DEADWATERRUN_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Music_Menu);
