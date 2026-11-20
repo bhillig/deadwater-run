@@ -134,7 +134,7 @@ Suggested music wiring until the purchase lands: `Music.Menu` and `Music.Map` us
 ## Risks and notes
 
 - **Repo size:** 121 imported waves are about 82 MB of `.uasset` data in git (no LFS rules exist in `.gitattributes`). Say if you want LFS first, or a smaller list.
-- **Licence:** only the sounds on this list are imported; the pack, its CSV and its README stay where they are. Imported assets record only the bare file name, not the local pack path (checked in the saved `.uasset`).
+- **Licence:** Epic Stock Media EULA - see `Docs/Audio/Licences.md`. Only the sounds on this list are imported; the pack, its CSV and its README stay where they are. Imported assets record only the bare file name, not the local pack path (checked in the saved `.uasset`).
 - **Loudness:** the pack is not loudness-matched across categories (stingers and designed hits are louder than foley). The first import gets uniform defaults; the DW-403 pass sets per-entry volume in the cue map.
 - **Long tails:** Kraken roars, Kraken Appear and the Sink layers are 3-6 s. The cue map should use short fades on these.
 - **Tag asks:** Brandon took `Kraken.Appear/Death/TentacleCut` and the miss splash (as `Attack.Miss`) on 2026-11-20 - native tags with sound-only GC_* notifies. Still open: TurnStart player/enemy variants and the extra `UI.Sound.*` tags (Sell, Gold, Reward, LevelUp, PageFlip, PageOpen) are suggestions, not catalogue entries.
