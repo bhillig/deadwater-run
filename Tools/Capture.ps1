@@ -16,6 +16,7 @@
   ./Tools/Capture.ps1 -Demo boss            # DW-301: the same voyage, frames from the last stop only: map with only the Kraken, sniper aiming at the body, swordsman aiming at a tentacle, the initial-phase turn (one tentacle cut), the enraged turn (body staged at 28%); ends on the Victory summary
   ./Tools/Capture.ps1 -Demo shop            # DW-204: fights until there is gold to shop, then the shop screen: arrival, after buying (repair, recruit, upgrade, item), a move being taught on the shop screen (learner picked), the map; ends in the next fight (recruit aboard, third cannon)
   ./Tools/Capture.ps1 -Demo captain -Captain Fearmongerer   # DW-206..208: the captain's showcase in fight 1, a frame per turn; Fearmongerer: Smoke and Fire until the crew surrenders
+  ./Tools/Capture.ps1 -Demo cues -Sound     # DW-114: cannon fire + impact, sword hit, death (frames -01..-03), then Dw.Audio.Dump in the log
   ./Tools/Capture.ps1 -Demo shell           # DW-210 from the main menu: menu, settings, captain select, Set Sail, map, pause, abandon, summary, New Run
   ./Tools/Capture.ps1 -Demo enemy -Encounter Cutthroats   # DW-305: the dev fight against one crew (Deckhands, PowderMonkeys, Sharpshooters, Cutthroats, DreadCrew)
   ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p
@@ -23,7 +24,9 @@
   ./Tools/Capture.ps1 -Zoom 0.3 -Tile "0,1" # close-up of a tile for art review
 #>
 param(
-    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage', 'boss', 'shop', 'shell', 'captain')] [string] $Demo = 'none',
+    [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage', 'boss', 'shop', 'shell', 'captain', 'cues')] [string] $Demo = 'none',
+    # Run with an audio device (drops -nosound): cue sounds and Dw.Audio.Dump reach a real mixer.
+    [switch] $Sound,
     # Start a run with this captain (TeamLeader, Fearmongerer, Conqueror) instead of the dev fight. -Demo run defaults to TeamLeader.
     [string] $Captain = '',
     # Dev fight against this crew (DA_Encounter_<Encounter>) instead of DA_GameData.DevEncounter.
@@ -68,8 +71,9 @@ if (-not $Map) { $Map = $(if ($Demo -eq 'shell') { 'MainMenu' } else { 'Sea' }) 
 $gameArgs = @(
     (Get-DwProject), "/Game/DeadwaterRun/Maps/L_$Map", '-game', '-windowed', "-ResX=$ResX", "-ResY=$ResY", '-ForceRes',
     "-DwCapture=$Out", "-DwCaptureDelay=$Delay", "-DwCaptureDemo=$Demo", "-DwSeed=$Seed",
-    '-nosound', '-nosplash', '-unattended', "-abslog=$log"
+    '-nosplash', '-unattended', "-abslog=$log"
 )
+if (-not $Sound) { $gameArgs += '-nosound' }
 if ($Mood -and $Mood -ne 'Random') { $gameArgs += "-DwMood=$Mood" }
 if ($Demo -in @('run', 'voyage', 'boss', 'shop', 'captain') -and -not $Captain) { $Captain = 'TeamLeader' }
 if ($Captain) { $gameArgs += "-DwCaptain=$Captain" }

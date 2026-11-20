@@ -1,6 +1,6 @@
 # Copyright Brandon Hillig 2026
 # Run by Tools/CreateCombatContent.ps1 inside UnrealEditor-Cmd. All logic lives in C++ (UDwCombatContentLibrary, then
-# UDwRunContentLibrary, UDwAbilityContentLibrary, UDwAiContentLibrary, UDwEnemyCrewContentLibrary, UDwSimContentLibrary, UDwKrakenContentLibrary and UDwArtContentLibrary, which need the combat content); this only calls them and prints their logs
+# UDwRunContentLibrary, UDwAbilityContentLibrary, UDwAiContentLibrary, UDwEnemyCrewContentLibrary, UDwSimContentLibrary, UDwKrakenContentLibrary, UDwArtContentLibrary and UDwAudioContentLibrary, which need the combat content); this only calls them and prints their logs
 # between markers the PowerShell wrapper extracts. The last line is PASS only if every step passed.
 import unreal
 
@@ -13,6 +13,7 @@ steps = [
     unreal.DwSimContentLibrary.create_sim_content,
     unreal.DwKrakenContentLibrary.create_kraken_content,
     unreal.DwArtContentLibrary.create_art_content,
+    unreal.DwAudioContentLibrary.create_audio_content,
 ]
 
 lines = []

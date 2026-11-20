@@ -15,6 +15,7 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "Presentation/DwCameraRig.h"
+#include "Presentation/DwMusicSubsystem.h"
 #include "UI/DwUIManagerSubsystem.h"
 
 ADwPlayerController::ADwPlayerController()
@@ -157,6 +158,16 @@ void ADwPlayerController::OnCommandResolved(UDwCombatSubsystem& /*Combat*/)
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Input
+
+bool ADwPlayerController::SetPause(bool bPause, FCanUnpause CanUnpauseDelegate)
+{
+	const bool bResult = Super::SetPause(bPause, MoveTemp(CanUnpauseDelegate));
+	if (UDwMusicSubsystem* Music = UDwMusicSubsystem::Get(this))
+	{
+		Music->SetPaused(IsPaused());
+	}
+	return bResult;
+}
 
 void ADwPlayerController::PlayerTick(float DeltaTime)
 {

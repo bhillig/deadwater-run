@@ -2,7 +2,9 @@
 
 #include "Core/DwMenuGameMode.h"
 
+#include "Core/DwGameplayTags.h"
 #include "Core/DwPlayerController.h"
+#include "Presentation/DwMusicSubsystem.h"
 #include "Run/DwRunSubsystem.h"
 
 ADwMenuGameMode::ADwMenuGameMode()
@@ -18,5 +20,9 @@ void ADwMenuGameMode::BeginPlay()
 	if (UDwRunSubsystem* Runs = UDwRunSubsystem::Get(this))
 	{
 		Runs->ClearRun();
+	}
+	if (UDwMusicSubsystem* Music = UDwMusicSubsystem::Get(this))
+	{
+		Music->SetMusicState(DwTags::Music_Menu);
 	}
 }

@@ -2,7 +2,8 @@
 .SYNOPSIS
   Creates or updates the placeholder combat content (DW-104) headless: GA_* abilities, DA_* definitions, items, units,
   DA_Encounter_Placeholder, BP_Ship_Placeholder, the three captains (DW-201), DA_GameData slots, and the DT_*Tuning rows
-  they read; then the AI content (DW-106), the placeholder Kraken boss (DW-209) and the Synty art pass (DW-307).
+  they read; then the AI content (DW-106), the placeholder Kraken boss (DW-209), the Synty art pass (DW-307) and the
+  audio wiring (DW-114: DA_AudioCueMap, DA_MusicSet, placeholder GC_* cues, DA_GameData.Audio; needs CreateAudioContent.ps1 first).
   First output line is "CONTENT PASS" or "CONTENT FAIL ...". Exit code 0 only on PASS. Idempotent.
 .EXAMPLE
   ./Tools/CreateCombatContent.ps1

@@ -36,6 +36,9 @@ public:
 
 	virtual void PlayerTick(float DeltaTime) override;
 
+	/** Also ducks the music while paused (SM_Pause, UDwMusicSubsystem). */
+	virtual bool SetPause(bool bPause, FCanUnpause CanUnpauseDelegate = FCanUnpause()) override;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;

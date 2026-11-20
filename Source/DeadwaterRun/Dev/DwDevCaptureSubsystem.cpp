@@ -30,6 +30,7 @@
 #include "Engine/World.h"
 #include "Run/DwRun.h"
 #include "Run/DwRunSubsystem.h"
+#include "Shell/DwGameUserSettings.h"
 #include "UI/DwActivatableScreen.h"
 #include "UI/DwRunViewModels.h"
 #include "UI/DwShellViewModels.h"
@@ -299,6 +300,11 @@ void UDwDevCaptureSubsystem::StageDemo()
 			World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::Capture), 0.8f, false);
 			return;
 		}
+		else if (Demo == TEXT("cues"))
+		{
+			CuesDemoStep();
+			return;
+		}
 		else if (Demo == TEXT("endturn"))
 		{
 			// End the player's turn: the passive enemy side passes, so the banner for the next side is up (DW-107 HUD).
@@ -333,6 +339,111 @@ void UDwDevCaptureSubsystem::CaptureEnemyTurn()
 		return;
 	}
 	GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::CaptureEnemyTurn), 0.7f, false);
+}
+
+void UDwDevCaptureSubsystem::CuesDemoStep()
+{
+	UWorld* World = GetWorld();
+	UDwCombatSubsystem* Combat = World ? World->GetSubsystem<UDwCombatSubsystem>() : nullptr;
+	if (!Combat || !Combat->IsActive())
+	{
+		UE_LOG(LogDw, Error, TEXT("Dev capture 'cues': no fight."));
+		Capture();
+		return;
+	}
+	const FDwCombatSnapshot Snapshot = Combat->GetSnapshot(); // a local: FindUnit points into it
+	auto Alive = [&Snapshot](EDwSide Side, int32 Skip, const FGameplayTag& Tag = FGameplayTag())
+	{
+		for (const FDwUnitSnapshot& Unit : Snapshot.Units)
+		{
+			if (Unit.Side == Side && Unit.bAlive && (!Tag.IsValid() || Unit.Tags.HasTag(Tag)) && Skip-- <= 0)
+			{
+				return &Unit;
+			}
+		}
+		return static_cast<const FDwUnitSnapshot*>(nullptr);
+	};
+	auto Next = [this, World](float Seconds)
+	{
+		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::CuesDemoStep), Seconds, false);
+	};
+	switch (CuesStep++)
+	{
+	case 0:
+	{
+		// The swordsman mans a cannon and fires at the enemy ship.
+		const FDwUnitSnapshot* Gunner = Alive(EDwSide::Player, 0, DwTags::Unit_Archetype_Swordsman);
+		const ADwShip* Ship = Combat->GetShip(EDwSide::Player);
+		if (Gunner && Ship && !Ship->GetCannonTiles().IsEmpty())
+		{
+			Combat->MoveUnit(Gunner->Handle, Ship->GetCannonTiles()[0], /*bSnapActor*/ true);
+			UE_CLOG(Combat->SubmitCommand(FDwCombatCommand::MakeAbility(Gunner->Handle, DwTags::Ability_Cannon,
+				FDwAbilityTarget::MakeShip(EDwSide::Enemy))) != EDwCommandResult::Accepted, LogDw, Error, TEXT("Dev capture 'cues': cannon refused."));
+		}
+		Next(0.35f);
+		return;
+	}
+	case 1:
+		CaptureFrame(1);
+		Next(1.2f); // the shot resolves (one command at a time)
+		return;
+	case 2:
+	{
+		// The captain steps up beside the first enemy and cuts him.
+		const FDwUnitSnapshot* Attacker = Alive(EDwSide::Player, 0, DwTags::Unit_Role_Captain);
+		const FDwUnitSnapshot* Victim = Alive(EDwSide::Enemy, 0);
+		if (Attacker && Victim)
+		{
+			for (const FIntPoint Step : { FIntPoint(-1, 0), FIntPoint(0, 1), FIntPoint(0, -1), FIntPoint(1, 0) })
+			{
+				const FIntPoint Tile = Victim->Tile + Step;
+				if (Snapshot.Grid.IsInBounds(Tile) && Snapshot.Grid.IsStandable(Tile) && !Snapshot.Grid.IsOccupied(Tile))
+				{
+					Combat->MoveUnit(Attacker->Handle, Tile, /*bSnapActor*/ true);
+					break;
+				}
+			}
+			UE_CLOG(Combat->SubmitCommand(FDwCombatCommand::MakeAbility(Attacker->Handle, DwTags::Ability_Attack_Melee,
+				FDwAbilityTarget::MakeUnit(Victim->Handle, Victim->Tile))) != EDwCommandResult::Accepted, LogDw, Error, TEXT("Dev capture 'cues': melee refused."));
+		}
+		Next(0.3f);
+		return;
+	}
+	case 3:
+		CaptureFrame(2);
+		Next(0.2f); // the frame is written before anyone dies
+		return;
+	case 4:
+	{
+		// Another enemy goes down (the shared GE_Kill, as a sinking ship's crew would).
+		const FDwUnitSnapshot* Victim = Alive(EDwSide::Enemy, 1);
+		const ADwCombatUnit* Unit = Victim ? Combat->FindUnit(Victim->Handle) : nullptr;
+		if (Unit && DwGas::GetSharedEffects().Kill)
+		{
+			UDwAbilitySystemComponent* Asc = Unit->GetDwAbilitySystem();
+			Asc->ApplyGameplayEffectToSelf(DwGas::GetSharedEffects().Kill->GetDefaultObject<UGameplayEffect>(), 1.f, Asc->MakeEffectContext());
+		}
+		// Master at 50% for the dump (applied, never saved).
+		if (UDwGameUserSettings* Settings = UDwGameUserSettings::Get())
+		{
+			MasterVolumeBeforeDemo = Settings->GetVolume(EDwVolume::Master);
+			Settings->SetVolume(EDwVolume::Master, 0.5f);
+			Settings->ApplyAudio();
+		}
+		Next(0.4f);
+		return;
+	}
+	default:
+		CaptureFrame(3);
+		GEngine->Exec(World, TEXT("Dw.Audio.Dump"));
+		if (UDwGameUserSettings* Settings = UDwGameUserSettings::Get())
+		{
+			Settings->SetVolume(EDwVolume::Master, MasterVolumeBeforeDemo);
+			Settings->ApplyAudio();
+		}
+		World->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::Capture), 0.3f, false);
+		return;
+	}
 }
 
 void UDwDevCaptureSubsystem::CaptureFrame(int32 Frame) const

@@ -91,9 +91,18 @@ for name, parent, volume, is_music, is_ui in CLASSES:
         parent_asset = class_assets.get(parent)
         if parent_asset is None:
             fail("%s: parent %s missing" % (name, parent))
-        elif asset.get_editor_property("parent_class") != parent_asset:
-            asset.set_editor_property("parent_class", parent_asset)
-            changed = True
+        else:
+            if asset.get_editor_property("parent_class") != parent_asset:
+                asset.set_editor_property("parent_class", parent_asset)
+                changed = True
+            # The audio device walks the tree down through the parent's ChildClasses (FAudioDevice::RecurseIntoSoundClasses
+            # and RecursiveApplyAdjuster); ParentClass alone leaves the child a root, so Master never reaches it (DW-114).
+            children = list(parent_asset.get_editor_property("child_classes"))
+            if asset not in children:
+                children.append(asset)
+                parent_asset.set_editor_property("child_classes", children)
+                eal.save_asset(parent_asset.get_path_name().split(".")[0], only_if_is_dirty=False)
+                log("linked %s as a child of %s" % (name, parent))
     finish(asset, created, changed)
 
 # --- Mixes -----------------------------------------------------------------------------------------------------
@@ -171,6 +180,8 @@ for name, parent, _v, _m, _u in CLASSES:
     actual_name = actual.get_name() if actual else None
     if actual_name != parent:
         fail("%s parent is %s, expected %s" % (name, actual_name, parent))
+    if actual is not None and cls not in list(actual.get_editor_property("child_classes")):
+        fail("%s is not in %s's child classes" % (name, actual_name))
 log("class hierarchy ok: Master > Music, SFX, UI")
 
 print("DWCONTENT-BEGIN")

@@ -70,6 +70,14 @@ private:
 	 * enemy turn.
 	 */
 	void CaptainDemoStep();
+	/**
+	 * Demo "cues" (DW-114): the four placeholder GameplayCues through real play. -01 a cannon shot (Cannon.Fire on the
+	 * cannon tile, Cannon.Impact on the enemy ship), -02 a sword hit (Hit.Melee), -03 an enemy dying (Unit.Death); then
+	 * Dw.Audio.Dump with Master at 50% (not saved) to show the volume reaching every class; final frame after that.
+	 */
+	void CuesDemoStep();
+	int32 CuesStep = 0;
+	float MasterVolumeBeforeDemo = 1.f;
 	/** Kills every living enemy with the player captain as the instigator (kill XP), then ends the player turn. */
 	void WinFightByCaptain() const;
 	void CaptureFrame(int32 Frame) const;

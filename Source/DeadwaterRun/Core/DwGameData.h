@@ -21,6 +21,10 @@ class UGameplayEffect;
 class UDwItemDefinition;
 class UDwUnitDefinition;
 class UDwUIScreenSet;
+class UDwAudioCueMap;
+class UDwMusicSet;
+class USoundClass;
+class USoundMix;
 class UInputAction;
 class UInputMappingContext;
 class UWorld;
@@ -70,6 +74,29 @@ struct DEADWATERRUN_API FDwInputConfig
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input") TArray<TObjectPtr<UInputAction>> Abilities;
 };
 
+/**
+ * Audio wiring (Docs/Architecture/15-Audio-VFX.md, DW-114). The classes and mixes are sound-wrangler's DW-113 assets;
+ * DA_AudioCueMap and DA_MusicSet are filled by sound-wrangler (DW-311).
+ */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwAudioConfig
+{
+	GENERATED_BODY()
+
+	/** GameplayCue tag -> combat sounds, played by the Dw cue notify bases. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio") TObjectPtr<UDwAudioCueMap> CueMap;
+	/** Music state tag -> track, played by UDwMusicSubsystem. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio") TObjectPtr<UDwMusicSet> MusicSet;
+	/** SM_Base: pushed for the whole session; the settings volumes are class overrides on it. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio") TObjectPtr<USoundMix> BaseMix;
+	/** SM_Pause: pushed while the game is paused (ducks the music). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio") TObjectPtr<USoundMix> PauseMix;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio") TObjectPtr<USoundClass> MasterClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio") TObjectPtr<USoundClass> MusicClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio") TObjectPtr<USoundClass> SfxClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio") TObjectPtr<USoundClass> UiClass;
+};
+
 /** Every tuning table, so systems find numbers without asset paths (Docs/Architecture/13 "Tuning tables"). */
 USTRUCT(BlueprintType)
 struct DEADWATERRUN_API FDwTuningTables
@@ -96,7 +123,6 @@ struct DEADWATERRUN_API FDwTuningTables
 
 /**
  * The one global data asset, DA_GameData (Docs/Architecture/13-Data-Layout.md "UDwGameData").
- * Slots for UDwAudioCueMap, UDwMusicSet and UDwUIScreenSet are added by DW-114 and DW-107 with their classes.
  */
 UCLASS(BlueprintType)
 class DEADWATERRUN_API UDwGameData : public UDwDefinitionBase
@@ -163,6 +189,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
 	FDwInputConfig Input;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	FDwAudioConfig Audio;
 
 	/** DA_UIScreenSet: the widget class of every screen (Docs/Architecture/14-UI.md, DW-107). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")

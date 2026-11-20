@@ -2,7 +2,12 @@
 
 #include "Shell/DwGameUserSettings.h"
 
+#include "AudioDevice.h"
+#include "AudioDeviceManager.h"
+#include "Core/DwAssetManager.h"
+#include "Core/DwGameData.h"
 #include "Engine/Engine.h"
+#include "Sound/SoundMix.h"
 #include "Engine/World.h"
 #include "Presentation/DwPresentationSubsystem.h"
 
@@ -75,6 +80,44 @@ void UDwGameUserSettings::ApplyPresentation(UWorld* World) const
 	}
 }
 
+TArray<FDwVolumeOverride> UDwGameUserSettings::GetVolumeOverrides(const FDwAudioConfig& Audio) const
+{
+	// Mix adjusters are applied after the sound class tree has been resolved (FAudioDevice::UpdateSoundClassProperties),
+	// so an adjuster on SC_Master only reaches SC_Music/SFX/UI when it applies to children.
+	const TPair<USoundClass*, EDwVolume> Slots[] = {
+		{ Audio.MasterClass, EDwVolume::Master }, { Audio.MusicClass, EDwVolume::Music },
+		{ Audio.SfxClass, EDwVolume::Sfx }, { Audio.UiClass, EDwVolume::Ui } };
+	TArray<FDwVolumeOverride> Overrides;
+	for (const TPair<USoundClass*, EDwVolume>& Slot : Slots)
+	{
+		if (Slot.Key)
+		{
+			Overrides.Add({ Slot.Key, GetVolume(Slot.Value), Slot.Value == EDwVolume::Master });
+		}
+	}
+	return Overrides;
+}
+
+void UDwGameUserSettings::ApplyAudio() const
+{
+	const UDwGameData* GameData = UDwAssetManager::Get().GetGameData();
+	FAudioDeviceManager* Devices = GEngine ? GEngine->GetAudioDeviceManager() : nullptr;
+	if (!GameData || !GameData->Audio.BaseMix || !Devices)
+	{
+		return; // -nosound, or no audio data yet
+	}
+	USoundMix* Mix = GameData->Audio.BaseMix;
+	const TArray<FDwVolumeOverride> Overrides = GetVolumeOverrides(GameData->Audio);
+	// Every device: PIE runs one per instance. The overrides persist on the device and apply whenever SM_Base is pushed.
+	Devices->IterateOverAllDevices([Mix, &Overrides](Audio::FDeviceId, FAudioDevice* Device)
+	{
+		for (const FDwVolumeOverride& Override : Overrides)
+		{
+			Device->SetSoundMixClassOverride(Mix, Override.Class, Override.Volume, /*Pitch*/ 1.f, /*FadeInTime*/ 0.f, Override.bApplyToChildren);
+		}
+	});
+}
+
 void UDwGameUserSettings::SetToDefaults()
 {
 	Super::SetToDefaults();
@@ -91,4 +134,5 @@ void UDwGameUserSettings::ApplySettings(bool bCheckForCommandLineOverrides)
 {
 	Super::ApplySettings(bCheckForCommandLineOverrides);
 	ApplyPresentation();
+	ApplyAudio();
 }
