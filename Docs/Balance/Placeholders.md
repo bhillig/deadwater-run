@@ -140,6 +140,23 @@ The real Kraken (`DA_Encounter_Kraken`, Docs/Architecture/08). Tentacle count, H
 | `DA_Deck_KrakenArena` (layout) | - | body anchor | 3 tiles from the rail | Muskets (range 6) reach it from the rail and from the nest; from the back row (8 tiles) they don't, so snipers have to advance |
 | Ship cannons vs the body | - | damage | 70 per cannon, flat | The ship's `CannonDamage`, unchanged: two cannons take 140 of 500 a turn. Likely too strong once balanced (DW-401) |
 
+## Set by DW-305 (enemy crews), 2026-11-19
+
+The five crews of N2 (`DA_Encounter_<Crew>`, `DA_AiProfile_<Crew>`, built by `UDwEnemyCrewContentLibrary`). Rosters, tiers (N3) and "only the Cutthroats hunt the captain" (C10b) are Brandon's; every number below is a placeholder for the DW-401 simulator pass. Each AI row is the `Default` row with the listed changes. `DA_Encounter_Placeholder` stays as the L_Sea dev fight with `Weight` 0, so runs never draw it.
+
+| File | Row | Field | Placeholder | Why this number |
+|---|---|---|---|---|
+| `UDwEnemyCrewContentLibrary` | all crews | `MinLayer`-`MaxLayer` | Deckhands 0-2, Powder Monkeys 0-5, Sharpshooters 3-5, Cutthroats 3-99, Dread Crew 6-99 | N3 tiers on 0-based layers (design layers 1-3 / 4-6 / 7-9); the top tier is open-ended so a longer chart never has a fight without a crew |
+| `UDwEnemyCrewContentLibrary` | all crews | enemy `Level` | 1 (Deckhands, Powder Monkeys), 2 (Sharpshooters, Cutthroats), 3 (Dread Crew) | One level per tier; Deckhands are "low-level", the Dread Crew "higher-level" (N2) |
+| `UDwEnemyCrewContentLibrary` | all crews | `Weight` | 1 | Equal odds within a tier |
+| `EncounterTuning.json` | `Deckhands` / `PowderMonkeys` / `Sharpshooters` / `Cutthroats` / `DreadCrew` | `BaseGold` | 150 / 170 / 195 / 215 / 240 | The old placeholder's 150 at tier 1, x1.3 at tier 2, x1.6 at tier 3; crews spanning two tiers sit between |
+| `EncounterTuning.json` | same | `ClearXp` | 80 / 90 / 105 / 115 / 130 | Same scale from the old 80. Tier-1 values keep a fresh crew member under 100 XP from the clear alone |
+| `AiTuning.json` | `Deckhands` | `Boarding` / `Approach` / `Danger` | 25 / 6 / 0.1 | Boards at once and closes in, barely caring about return fire (`bBoarders`) |
+| `AiTuning.json` | `PowderMonkeys` | `CannonAffinity` / `ShipDamage` / `ShipLowHull` / `Approach` / `Danger` | 25 / 0.6 / 2 / 1 / 0.4 | Stays by its guns and shoots the hull; no wish to close in (`bPreferCannons`, not `bBoarders`) |
+| `AiTuning.json` | `Sharpshooters` | `HighGround` / `Approach` / `Danger` | 20 / 1.5 / 0.5 | Values the nest well above the default 8 and keeps its distance |
+| `AiTuning.json` | `Cutthroats` | `CaptainPressure` / `Approach` / `Boarding` | 1.5 / 4 / 15 | C10b: the only crew above 0. 1.5 per point of captain damage outweighs the default wounded-target focus, so it shoots a fresh captain over a scratched mate (`DeadwaterRun.AI.EnemyCrews`) |
+| `AiTuning.json` | `DreadCrew` | all | the `Default` row | The balanced elite: its edge is level 3 and a fourth man, not a quirk; both `bBoarders` and `bPreferCannons` |
+
 ## Set by DW-302 (Kraken AI), 2026-11-19
 
 The Kraken brain (`UDwKrakenAiBrain`, `DA_AiProfile_Kraken`). Its move draw uses `DA_Kraken`'s phase weights (still 1 each, above); these are its target-scoring weights.
@@ -147,7 +164,7 @@ The Kraken brain (`UDwKrakenAiBrain`, `DA_AiProfile_Kraken`). Its move draw uses
 | File | Row | Field | Placeholder | Why this number |
 |---|---|---|---|---|
 | `AiTuning.json` | `Kraken` | `Damage` / `Kill` / `Win` / `LowHealthFocus` | 1 / 40 / 1000 / 20 | The crew AI's defaults: finish the wounded, always take a run-ending hit |
-| `AiTuning.json` | `Kraken` | `CaptainPressure` | 0.5 | A mild lean towards the captain (captain death = defeat, C10); C10b left crews at 0, the boss is the one enemy meant to threaten the captain |
+| `AiTuning.json` | `Kraken` | `CaptainPressure` | 0.5 | A mild lean towards the captain (captain death = defeat, C10); among the crews only the Cutthroats hunt him (C10b, DW-305) |
 | `AiTuning.json` | `Kraken` | `ShipDamage` / `ShipLowHull` | 0.25 / 1 | Slams the ship mostly when the hull is low; a sinking hit scores as `Win` |
 | `AiTuning.json` | `Kraken` | position terms, `Temperature`, `MaxMoveCandidates` | 0 | The body never moves; target ties are drawn from the AI stream |
 | `UDwKrakenAiBrain` (code rule) | - | Grab target | hardest hitter (`AttackDamage`) not already rooted | Pins the pirate who would cut tentacles fastest; no weight in `FDwAiWeights` for control yet |

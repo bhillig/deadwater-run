@@ -16,6 +16,7 @@
 #include "Core/DwGameData.h"
 #include "Data/DwEncounterDefinition.h"
 #include "Data/DwUnitDefinition.h"
+#include "DwEnemyCrewContentLibrary.h"
 #include "EditorAssetLibrary.h"
 #include "Engine/Blueprint.h"
 #include "Engine/BlueprintGeneratedClass.h"
@@ -536,10 +537,16 @@ TArray<FString> UDwArtContentLibrary::CreateArtContent()
 	auto Fail = [&Log]() { Log.Add(TEXT("CONTENT FAIL")); return Log; };
 
 	UDwGameData* GameData = Load<UDwGameData>(Data, UDwGameData::AssetName.ToString());
-	UDwEncounterDefinition* Encounter = Load<UDwEncounterDefinition>(EncounterData, TEXT("DA_Encounter_Placeholder"));
-	if (!GameData || !Encounter)
+	TArray<FString> CrewIds = UDwEnemyCrewContentLibrary::CrewIds();
+	CrewIds.Insert(TEXT("Placeholder"), 0); // the dev fight
+	TArray<UDwEncounterDefinition*> Crews;
+	for (const FString& Id : CrewIds)
 	{
-		Log.Add(TEXT("ERROR DA_GameData or DA_Encounter_Placeholder is missing (run the combat content first)"));
+		Crews.Add(Load<UDwEncounterDefinition>(EncounterData, TEXT("DA_Encounter_") + Id));
+	}
+	if (!GameData || Crews.Contains(nullptr))
+	{
+		Log.Add(TEXT("ERROR DA_GameData or a DA_Encounter_* crew is missing (run the combat and enemy crew content first)"));
 		return Fail();
 	}
 
@@ -609,14 +616,17 @@ TArray<FString> UDwArtContentLibrary::CreateArtContent()
 	SetUnitClass(TEXT("DA_Unit_Swordsman"), TEXT("BP_Unit_Swordsman"));
 	SetUnitClass(TEXT("DA_Unit_Sniper"), TEXT("BP_Unit_Sniper"));
 
-	// 5. The placeholder raiders: their own sloop, and different pirates from your crew's.
-	Encounter->ShipClass = TSoftClassPtr<ADwShip>(EnemyShip->GeneratedClass.Get());
-	for (FDwEnemySlot& Slot : Encounter->Units)
+	// 5. Every enemy crew: its own sloop, and different pirates from your crew's.
+	for (UDwEncounterDefinition* Encounter : Crews)
 	{
-		const bool bSniper = Slot.UnitDefinition && Slot.UnitDefinition->GetName() == TEXT("DA_Unit_Sniper");
-		Slot.UnitClassOverride = UnitClass(bSniper ? TEXT("BP_Unit_Raider_Sniper") : TEXT("BP_Unit_Raider_Swordsman"));
+		Encounter->ShipClass = TSoftClassPtr<ADwShip>(EnemyShip->GeneratedClass.Get());
+		for (FDwEnemySlot& Slot : Encounter->Units)
+		{
+			const bool bSniper = Slot.UnitDefinition && Slot.UnitDefinition->GetName() == TEXT("DA_Unit_Sniper");
+			Slot.UnitClassOverride = UnitClass(bSniper ? TEXT("BP_Unit_Raider_Sniper") : TEXT("BP_Unit_Raider_Swordsman"));
+		}
+		bOk &= Save(Encounter, Log);
 	}
-	bOk &= Save(Encounter, Log);
 
 	// 6. Sea moods. Day is the default look; the storm rolls now and then (weights below) or with -DwMood=Storm.
 	const FString Env = Pirate + TEXT("/Materials/Env");

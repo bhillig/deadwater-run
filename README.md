@@ -130,7 +130,7 @@ Full details: [Docs/Orchestration.md](Docs/Orchestration.md) · Agent definition
 **Architecture gaps for the Technical Architect**
 - **AI ownership overlaps.** DW-004 says "all tuning rows and definitions", but doc 00 gives `FDwAiTuningRow` and `UDwAiProfile` to ai-engineer (DW-106). I only stubbed the profile class so encounters can reference it
 - **`FDwUnitHandle` was never specified.** I made it an `int32` id, where `INDEX_NONE` means invalid
-- **Enemy ship stats aren't in the design doc.** Only the player ship (250 HP, 70 cannon) has numbers. Enemy ships arrive with DW-305
+- **Enemy ship stats aren't in the design doc.** Only the player ship (250 HP, 70 cannon) has numbers. DW-305's five crews share one enemy ship (N2), still on the `EnemyPlaceholder` row that mirrors the player's
 
 **Design questions**
 - **Veteran Crew (K7):** the design text says both "+50% XP" and "levels twice as fast". The JSON has both literally, which is about 3x speed

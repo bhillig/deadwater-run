@@ -17,6 +17,7 @@
   ./Tools/Capture.ps1 -Demo shop            # DW-204: fights until there is gold to shop, then the shop screen: arrival, after buying (repair, recruit, upgrade, item), a move being taught on the shop screen (learner picked), the map; ends in the next fight (recruit aboard, third cannon)
   ./Tools/Capture.ps1 -Demo captain -Captain Fearmongerer   # DW-206..208: the captain's showcase in fight 1, a frame per turn; Fearmongerer: Smoke and Fire until the crew surrenders
   ./Tools/Capture.ps1 -Demo shell           # DW-210 from the main menu: menu, settings, captain select, Set Sail, map, pause, abandon, summary, New Run
+  ./Tools/Capture.ps1 -Demo enemy -Encounter Cutthroats   # DW-305: the dev fight against one crew (Deckhands, PowderMonkeys, Sharpshooters, Cutthroats, DreadCrew)
   ./Tools/Capture.ps1 -Demo aim -ResX 2560 -ResY 1440   # HUD readability at 1440p
   ./Tools/Capture.ps1 -Mood Storm           # the storm look (default Day; Random rolls from the seed)
   ./Tools/Capture.ps1 -Zoom 0.3 -Tile "0,1" # close-up of a tile for art review
@@ -25,6 +26,8 @@ param(
     [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage', 'boss', 'shop', 'shell', 'captain')] [string] $Demo = 'none',
     # Start a run with this captain (TeamLeader, Fearmongerer, Conqueror) instead of the dev fight. -Demo run defaults to TeamLeader.
     [string] $Captain = '',
+    # Dev fight against this crew (DA_Encounter_<Encounter>) instead of DA_GameData.DevEncounter.
+    [string] $Encounter = '',
     # Level to open: Sea (L_Sea) or MainMenu (L_MainMenu). -Demo shell defaults to MainMenu.
     [ValidateSet('', 'Sea', 'MainMenu')] [string] $Map = '',
     [int] $Seed = 7,
@@ -51,7 +54,8 @@ try {
 }
 $editor = Join-Path (Split-Path $editorCmd) 'UnrealEditor.exe'
 $root = Get-DwRepoRoot
-if (-not $Out) { $Out = Join-Path $root "Saved\Captures\combat-$Demo-${ResX}x${ResY}.png" }
+$outStem = $(if ($Encounter) { "combat-$Demo-$Encounter" } else { "combat-$Demo" })
+if (-not $Out) { $Out = Join-Path $root "Saved\Captures\$outStem-${ResX}x${ResY}.png" }
 $Out = [IO.Path]::GetFullPath($Out)
 New-Item -ItemType Directory -Force (Split-Path $Out) | Out-Null
 if (Test-Path $Out) { Remove-Item $Out -Force }
@@ -69,6 +73,7 @@ $gameArgs = @(
 if ($Mood -and $Mood -ne 'Random') { $gameArgs += "-DwMood=$Mood" }
 if ($Demo -in @('run', 'voyage', 'boss', 'shop', 'captain') -and -not $Captain) { $Captain = 'TeamLeader' }
 if ($Captain) { $gameArgs += "-DwCaptain=$Captain" }
+if ($Encounter) { $gameArgs += "-DwEncounter=$Encounter" }
 if ($Zoom -gt 0) { $gameArgs += "-DwCaptureZoom=$Zoom" }
 if ($Tile) { $gameArgs += "-DwCaptureTile=$Tile" }
 if ($ExtraArgs) { $gameArgs += $ExtraArgs }

@@ -281,6 +281,7 @@ TArray<FString> UDwCombatContentLibrary::CreateCombatPlaceholderContent()
 	UDwEncounterDefinition* Encounter = FindOrCreate<UDwEncounterDefinition>(EncounterData, TEXT("DA_Encounter_Placeholder"), OutLog);
 	Encounter->DisplayName = FText::FromString(TEXT("Placeholder Raiders"));
 	Encounter->Kind = EDwEncounterKind::ShipBattle;
+	Encounter->Weight = 0.f; // the L_Sea dev fight and test fixture only; runs draw the DW-305 crews (UDwEnemyCrewContentLibrary)
 	Encounter->ShipDeck = EnemyDeck;
 	if (Encounter->ShipClass.IsNull())
 	{

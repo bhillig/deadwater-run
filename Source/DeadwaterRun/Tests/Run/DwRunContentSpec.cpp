@@ -89,6 +89,13 @@ BEGIN_DEFINE_SPEC(FDwRunContentSpec, "DeadwaterRun.Run.Content",
 		return TestTrue(TEXT("Fight started"), F.Combat->StartEncounter(Setup));
 	}
 
+	/** The current fight's DT_EncounterTuning row: which crew a seed draws is the map's choice (DW-305 tiers). */
+	const FDwEncounterTuningRow* FightTuning() const
+	{
+		const FDwMapNode* Node = Run ? Run->GetCurrentNode() : nullptr;
+		return Node && Node->Encounter ? Node->Encounter->GetTuningRow<FDwEncounterTuningRow>() : nullptr;
+	}
+
 	FDwUnitHandle FindCrewUnit(const FGuid& RosterId) const
 	{
 		for (const ADwCombatUnit* Unit : F.Combat->GetUnits())
@@ -261,7 +268,7 @@ void FDwRunContentSpec::Define()
 
 		const FDwRunState& S = Run->GetState();
 		if (!FinishRewards()) { return; }
-		// Veteran Crew: 80 clear XP x 1.5 = 120, level 2: +10 max HP, and the new 10 HP are usable (12-Progression.md).
+		// Veteran Crew: a tier-1 crew's clear XP (80-90) x 1.5 reaches level 2: +10 max HP, and the new 10 HP are usable (12-Progression.md).
 		TestEqual(TEXT("Captain at level 2"), S.FindCrew(CaptainId)->Level, 2);
 		TestEqual(TEXT("Captain kept 60 HP + 10 from the level"), S.FindCrew(CaptainId)->Health, 70.f);
 		TestFalse(TEXT("Sniper lost"), S.FindCrew(SniperId)->bAlive);
@@ -322,13 +329,16 @@ void FDwRunContentSpec::Define()
 	});
 #endif
 
-	It("pays a real plunder: 225 gold, one item, kill XP to the killer, and Veteran Crew levels everyone up", [this]()
+	It("pays a real plunder: base gold x 1.5, one item, kill XP to the killer, and Veteran Crew levels everyone up", [this]()
 	{
 		if (!StartRun(Captain(TEXT("TeamLeader"))) || !StartNextFight()) { return; }
 		const FDwRunState& S = Run->GetState();
+		const FDwEncounterTuningRow* Fight = FightTuning();
+		if (!TestNotNull(TEXT("Fight 1's DT_EncounterTuning row"), Fight)) { return; }
 		if (!WinBy(S.Crew[1].Id)) { return; } // the swordsman cuts down all three
 		TestEqual(TEXT("Rewards"), S.Phase, EDwRunPhase::Rewards);
-		TestEqual(TEXT("150 x 1.5"), S.PendingRewards.Gold, 225);
+		const int32 Plunder = FMath::RoundToInt(Fight->BaseGold * 1.5f);
+		TestEqual(*FString::Printf(TEXT("%d x 1.5"), Fight->BaseGold), S.PendingRewards.Gold, Plunder);
 		TestEqual(TEXT("One plunder item (P6: always)"), S.PendingRewards.Items.Num(), 1);
 		// N1: abilities from the crew's archetype pools, never for the captain (crew only).
 		TestFalse(TEXT("Ability choices from the crew pools"), S.PendingRewards.AbilityChoices.IsEmpty());
@@ -336,13 +346,14 @@ void FDwRunContentSpec::Define()
 		{
 			TestFalse(TEXT("Never the captain"), Offer.EligibleCrew.Contains(S.Crew[0].Id));
 		}
-		// Clear 80 for all; the swordsman also has 3 x 20 kill XP. Team Leader: x1.5.
-		TestEqual(TEXT("Captain 120 XP"), S.PendingRewards.Xp[0].Xp, 120);
-		TestEqual(TEXT("Swordsman 210 XP"), S.PendingRewards.Xp[1].Xp, 210);
+		// Clear XP for all; the swordsman also has 3 x 20 kill XP (tier 1 crews are three). Team Leader: x1.5.
+		TestEqual(TEXT("Captain: clear x 1.5"), S.PendingRewards.Xp[0].Xp, FMath::RoundToInt(Fight->ClearXp * 1.5f));
+		TestEqual(TEXT("Swordsman: (clear + 60) x 1.5"), S.PendingRewards.Xp[1].Xp, FMath::RoundToInt((Fight->ClearXp + 60) * 1.5f));
 		TestEqual(TEXT("Swordsman level 3 (100 + 110)"), S.Crew[1].Level, 3);
 		TestEqual(TEXT("Four level-ups"), S.PendingLevelUps.Num(), 4);
+		const int32 GoldBefore = S.Gold;
 		if (!FinishRewards()) { return; }
-		TestEqual(TEXT("325 gold"), S.Gold, 325);
+		TestEqual(TEXT("Plunder banked"), S.Gold, GoldBefore + Plunder);
 		TestEqual(TEXT("The item is aboard"), S.Inventory.Num(), 1);
 		TestEqual(TEXT("A perk per level"), S.Crew[0].Perks.Num() + S.Crew[1].Perks.Num() + S.Crew[2].Perks.Num(), 4);
 	});
@@ -456,9 +467,11 @@ void FDwRunContentSpec::Define()
 	It("gives the Conqueror's crew plain XP (no Veteran Crew)", [this]()
 	{
 		if (!StartRun(Captain(TEXT("Conqueror"))) || !StartNextFight()) { return; }
+		const FDwEncounterTuningRow* Fight = FightTuning();
+		if (!TestNotNull(TEXT("Fight 1's DT_EncounterTuning row"), Fight)) { return; }
 		if (!WinBy(Run->GetState().Crew[0].Id)) { return; }
-		TestEqual(TEXT("Captain: 80 + 60"), Run->GetState().PendingRewards.Xp[0].Xp, 140);
-		TestEqual(TEXT("Sniper: 80"), Run->GetState().PendingRewards.Xp[2].Xp, 80);
+		TestEqual(TEXT("Captain: clear + 3 x 20"), Run->GetState().PendingRewards.Xp[0].Xp, Fight->ClearXp + 60);
+		TestEqual(TEXT("Sniper: clear"), Run->GetState().PendingRewards.Xp[2].Xp, Fight->ClearXp);
 		TestEqual(TEXT("Sniper still level 1"), Run->GetState().Crew[2].Level, 1);
 	});
 
@@ -471,7 +484,7 @@ void FDwRunContentSpec::Define()
 		const FGuid CaptainId = Run->GetState().Crew[0].Id;
 		const FGuid SwordsmanId = Run->GetState().Crew[1].Id;
 		if (!WinBy(CaptainId) || !Run->ClaimRewards(INDEX_NONE, FGuid())) { return; }
-		// Captain (80 + 60 = 140) and swordsman (80): only the captain levels. Pick Sea Legs if offered (3 of the 5 perks
+		// Captain (clear + 60, at least 140) and swordsman (clear, under 100 on tier 1): only the captain levels. Pick Sea Legs if offered (3 of the 5 perks
 		// a captain can take); otherwise any perk that leaves move range and damage taken alone, and give Sea Legs by hand.
 		const FDwPendingLevelUp* LevelUp = Run->GetCurrentLevelUp();
 		if (!TestTrue(TEXT("Captain levelled"), LevelUp && LevelUp->CrewId == CaptainId)) { return; }

@@ -203,6 +203,21 @@ bool ADwGameMode::StartDevFight(int32 Seed)
 		UE_LOG(LogDwCombat, Warning, TEXT("No dev fight: DA_GameData needs DevEncounter and DevCrew."));
 		return false;
 	}
+	// -DwEncounter=Cutthroats (or DA_Encounter_Cutthroats) quick-launches any ship battle crew instead of DevEncounter.
+	const UDwEncounterDefinition* Encounter = GameData->DevEncounter;
+	FString EncounterName;
+	if (FParse::Value(FCommandLine::Get(), TEXT("DwEncounter="), EncounterName))
+	{
+		const FString AssetName = EncounterName.StartsWith(TEXT("DA_Encounter_")) ? EncounterName : TEXT("DA_Encounter_") + EncounterName;
+		const TArray<const UDwEncounterDefinition*> Pool = UDwRunSubsystem::GatherEncounterPool();
+		const UDwEncounterDefinition* const* Found = Pool.FindByPredicate([&AssetName](const UDwEncounterDefinition* E) { return E->GetName() == AssetName; });
+		if (!Found)
+		{
+			UE_LOG(LogDwCombat, Error, TEXT("-DwEncounter=%s: no ship battle %s."), *EncounterName, *AssetName);
+			return false;
+		}
+		Encounter = *Found;
+	}
 
 	TArray<FDwCombatantSetup> Crew;
 	for (const UDwUnitDefinition* Unit : GameData->DevCrew)
@@ -221,7 +236,7 @@ bool ADwGameMode::StartDevFight(int32 Seed)
 	}
 	FDwEncounterSetup Setup;
 	TArray<FString> Errors;
-	if (!FDwEncounterSetupBuilder::Build(*GameData, *GameData->DevEncounter, Crew, Seed, Setup, Errors))
+	if (!FDwEncounterSetupBuilder::Build(*GameData, *Encounter, Crew, Seed, Setup, Errors))
 	{
 		UE_LOG(LogDwCombat, Error, TEXT("Dev fight setup failed: %s"), *FString::Join(Errors, TEXT("; ")));
 		return false;
@@ -236,7 +251,7 @@ bool ADwGameMode::StartDevFight(int32 Seed)
 		}
 	}
 	const UDwSeaMood* Mood = ApplySeaMood(Seed);
-	UE_LOG(LogDwCombat, Log, TEXT("Dev fight: %s, seed %d, sea %s (replay with -DwSeed=%d -DwMood=%s)"), *GameData->DevEncounter->GetName(), Seed,
+	UE_LOG(LogDwCombat, Log, TEXT("Dev fight: %s, seed %d, sea %s (replay with -DwSeed=%d -DwMood=%s)"), *Encounter->GetName(), Seed,
 		*GetNameSafe(Mood), Seed, *GetNameSafe(Mood));
 	return Combat->StartEncounter(Setup);
 }
