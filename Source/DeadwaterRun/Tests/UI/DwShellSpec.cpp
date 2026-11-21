@@ -276,7 +276,7 @@ void FDwShellViewModelSpec::Define()
 			TestTrue(TEXT("Down"), Master->GetDecrease()->Select());
 			TestEqual(TEXT("90%"), Master->GetValue().ToString(), FString(TEXT("90%")));
 			TestEqual(TEXT("Stored"), Settings->GetVolume(EDwVolume::Master), 0.9f, 1e-4f);
-			TestFalse(TEXT("Volumes say they're not applied yet"), Master->GetNote().IsEmpty());
+			TestTrue(TEXT("Volumes apply at once (ApplyAudio on every step): no 'not applied yet' note"), Master->GetNote().IsEmpty());
 
 			// Game speed 1x -> 1.5x -> 2x, then stops.
 			TestTrue(TEXT("Faster"), View->Step(ERow::GameSpeed, 1));

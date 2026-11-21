@@ -656,92 +656,192 @@ namespace DwUIContent
 	// -----------------------------------------------------------------------------------------------------------------
 	// Run screens (DW-211)
 
+	/** B row button: parchment strip, optional icon, ink title / body, red reason; red outline while selected. */
 	bool BuildChoiceButton(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
-		Root->SetWidthOverride(280.f);
-		Root->SetMinDesiredHeight(64.f);
+		Root->SetWidthOverride(300.f);
+		Root->SetMinDesiredHeight(66.f);
+		UOverlay* Layers = B.Make<UOverlay>();
+		Root->SetContent(Layers);
 		UButton* Button = B.Make<UButton>(TEXT("ChoiceButton"));
-		Root->SetContent(Button);
-		UVerticalBox* Rows = B.Make<UVerticalBox>();
-		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Rows)))
+		Button->SetStyle(ButtonStyle(PaperStripBrush(), 1.06f, 0.92f));
+		UOverlaySlot* ButtonSlot = Layers->AddChildToOverlay(Button);
+		ButtonSlot->SetHorizontalAlignment(HAlign_Fill);
+		ButtonSlot->SetVerticalAlignment(VAlign_Fill);
+		UHorizontalBox* Row = B.Make<UHorizontalBox>();
+		Row->SetVisibility(ESlateVisibility::HitTestInvisible);
+		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Row)))
 		{
-			Slot->SetPadding(FMargin(10.f, 8.f));
+			Slot->SetPadding(FMargin(16.f, 10.f));
 			Slot->SetHorizontalAlignment(HAlign_Fill);
-			Slot->SetVerticalAlignment(VAlign_Top);
+			Slot->SetVerticalAlignment(VAlign_Center);
 		}
-		UTextBlock* Title = B.Text(TEXT("TitleText"), TEXT("Sea Legs"), 20, Light);
+		AddColumn(*Row, Picture(B, TEXT("ChoiceIcon"), Icon(TEXT("T_ICON_Pirate_Bottle_03")), FVector2D(54.f, 54.f)), FMargin(0.f, 0.f, 12.f, 0.f));
+		UVerticalBox* Rows = B.Make<UVerticalBox>();
+		AddColumn(*Row, Rows, FMargin(0.f), /*bFill*/ true);
+		UTextBlock* Title = B.Text(TEXT("TitleText"), TEXT("Sea Legs"), 21, Ink::Text);
 		Title->SetAutoWrapText(true); // long names (and "Teach <move>") wrap instead of leaving the card
-		AddRow(*Rows, Title, FMargin(0.f, 0.f, 0.f, 3.f));
-		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("Moves 1 more tile each turn."), 15, Dim, /*bBold*/ false);
+		AddRow(*Rows, Title);
+		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("Moves 1 more tile each turn."), 15, Ink::Dim, /*bBold*/ false);
 		Body->SetAutoWrapText(true);
 		AddRow(*Rows, Body);
-		UTextBlock* Reason = B.Text(TEXT("ReasonText"), TEXT("Pick who learns it."), 15, Bad, /*bBold*/ false);
+		UTextBlock* Reason = B.Text(TEXT("ReasonText"), TEXT("Pick who learns it."), 15, Ink::Red, /*bBold*/ false);
 		Reason->SetAutoWrapText(true);
-		AddRow(*Rows, Reason, FMargin(0.f, 3.f, 0.f, 0.f));
+		AddRow(*Rows, Reason, FMargin(0.f, 2.f, 0.f, 0.f));
+		UBorder* Outline = Framed(B, TEXT("SelectedOutline"), RoundedBrush(FLinearColor::Transparent, 6.f, Ink::Red, 3.f), FMargin(0.f));
+		Outline->SetVisibility(ESlateVisibility::HitTestInvisible);
+		UOverlaySlot* OutlineSlot = Layers->AddChildToOverlay(Outline);
+		OutlineSlot->SetHorizontalAlignment(HAlign_Fill);
+		OutlineSlot->SetVerticalAlignment(VAlign_Fill);
 		return B.Finish(Root);
 	}
 
+	/** B tall card for picks (perks, captains, new moves): big icon or portrait, title, italic body. */
+	bool BuildChoiceCard(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
+	{
+		FTreeBuilder B(Blueprint, Log);
+		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
+		Root->SetWidthOverride(280.f);
+		Root->SetHeightOverride(380.f);
+		Root->SetClipping(EWidgetClipping::ClipToBounds);
+		UOverlay* Layers = B.Make<UOverlay>();
+		Root->SetContent(Layers);
+		UButton* Button = B.Make<UButton>(TEXT("ChoiceButton"));
+		Button->SetStyle(ButtonStyle(PaperCardBrush(), 1.06f, 0.92f));
+		UOverlaySlot* ButtonSlot = Layers->AddChildToOverlay(Button);
+		ButtonSlot->SetHorizontalAlignment(HAlign_Fill);
+		ButtonSlot->SetVerticalAlignment(VAlign_Fill);
+		UVerticalBox* Rows = B.Make<UVerticalBox>();
+		Rows->SetVisibility(ESlateVisibility::HitTestInvisible);
+		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Rows)))
+		{
+			Slot->SetPadding(FMargin(20.f, 22.f, 20.f, 14.f));
+			Slot->SetHorizontalAlignment(HAlign_Fill);
+			Slot->SetVerticalAlignment(VAlign_Fill);
+		}
+		UImage* Picture = DwUIContent::Picture(B, TEXT("ChoiceIcon"), Icon(TEXT("T_ICON_Portrait_Captain_01")), FVector2D(150.f, 150.f));
+		AddRow(*Rows, Picture, FMargin(0.f, 0.f, 0.f, 8.f), HAlign_Center);
+		UTextBlock* Title = B.Text(TEXT("TitleText"), TEXT("Team Leader"), 28, Ink::Text);
+		Title->SetJustification(ETextJustify::Center);
+		Title->SetAutoWrapText(true);
+		AddRow(*Rows, Title, FMargin(0.f, 0.f, 0.f, 4.f));
+		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("Rally Cry, Grapple Hook"), 16, Ink::Dim, /*bBold*/ false);
+		Body->SetFont(Font(false, 16, 0.f, /*bItalic*/ true));
+		Body->SetJustification(ETextJustify::Center);
+		Body->SetAutoWrapText(true);
+		AddRow(*Rows, Body);
+		UTextBlock* Reason = B.Text(TEXT("ReasonText"), TEXT(""), 14, Ink::Red, /*bBold*/ false);
+		Reason->SetJustification(ETextJustify::Center);
+		Reason->SetAutoWrapText(true);
+		AddRow(*Rows, Reason, FMargin(0.f, 4.f, 0.f, 0.f));
+		UBorder* Outline = Framed(B, TEXT("SelectedOutline"), RoundedBrush(FLinearColor::Transparent, 10.f, Ink::Red, 4.f), FMargin(0.f));
+		Outline->SetVisibility(ESlateVisibility::HitTestInvisible);
+		UOverlaySlot* OutlineSlot = Layers->AddChildToOverlay(Outline);
+		OutlineSlot->SetHorizontalAlignment(HAlign_Fill);
+		OutlineSlot->SetVerticalAlignment(VAlign_Fill);
+		return B.Finish(Root);
+	}
+
+	/** B chart stamp: an inked circle (state tint at runtime) with the node type's glyph. */
 	bool BuildMapNode(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		UButton* Button = B.Make<UButton>(TEXT("NodeButton"));
-		UTextBlock* Label = B.Text(TEXT("LabelText"), TEXT("Fight"), 19, Light);
-		Label->SetJustification(ETextJustify::Center);
-		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Label)))
+		Button->SetStyle(ButtonStyle(RoundedBrush(FLinearColor::White, 40.f, Ink::Text, 3.f), 1.08f, 0.9f));
+		UOverlay* Layers = B.Make<UOverlay>();
+		Layers->SetVisibility(ESlateVisibility::HitTestInvisible);
+		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Layers)))
 		{
+			Slot->SetPadding(FMargin(0.f));
 			Slot->SetHorizontalAlignment(HAlign_Center);
 			Slot->SetVerticalAlignment(VAlign_Center);
 		}
+		UOverlaySlot* IconSlot = Layers->AddChildToOverlay(Picture(B, TEXT("NodeIcon"), PackTexture(TEXT("Icons_Map/T_ICON_FantasyWarrior_Map_Skull01_Clean")), FVector2D(44.f, 44.f)));
+		IconSlot->SetHorizontalAlignment(HAlign_Center);
+		IconSlot->SetVerticalAlignment(VAlign_Center);
+		UTextBlock* Label = B.Text(TEXT("LabelText"), TEXT("Fight"), 17, Ink::Text);
+		Label->SetJustification(ETextJustify::Center);
+		UOverlaySlot* LabelSlot = Layers->AddChildToOverlay(Label);
+		LabelSlot->SetHorizontalAlignment(HAlign_Center);
+		LabelSlot->SetVerticalAlignment(VAlign_Center);
 		return B.Finish(Button);
 	}
 
-	/** A full-screen dark backdrop around a centred column: the run screens are menus over the sea. */
-	UVerticalBox* ScreenColumn(FTreeBuilder& B, UWidget*& OutRoot, float Width, float Opacity = 0.88f)
+	/** A run screen: the 3D sea dimmed warm behind a parchment page holding a centred column. */
+	UVerticalBox* ScreenColumn(FTreeBuilder& B, UWidget*& OutRoot, float Width, float Opacity = 0.86f)
 	{
 		UBorder* Backdrop = B.Make<UBorder>(TEXT("Backdrop"));
-		Backdrop->SetBrushColor(FLinearColor(0.01f, 0.02f, 0.04f, Opacity));
-		Backdrop->SetPadding(FMargin(48.f, 40.f));
+		Backdrop->SetBrushColor(FLinearColor(0.045f, 0.025f, 0.012f, Opacity));
+		Backdrop->SetPadding(FMargin(40.f, 28.f));
 		Backdrop->SetHorizontalAlignment(HAlign_Center);
 		Backdrop->SetVerticalAlignment(VAlign_Center);
+		UBorder* Page = Framed(B, TEXT("Page"), PaperBrush(), FMargin(72.f, 60.f, 72.f, 64.f));
+		Backdrop->SetContent(Page);
 		USizeBox* Box = B.Make<USizeBox>();
 		Box->SetWidthOverride(Width);
-		Backdrop->SetContent(Box);
+		Page->SetContent(Box);
 		UVerticalBox* Column = B.Make<UVerticalBox>(TEXT("Column"));
 		Box->SetContent(Column);
 		OutRoot = Backdrop;
 		return Column;
 	}
 
-	UWrapBox* ChoiceRow(FTreeBuilder& B, const TCHAR* Name)
+	/** Choices that wrap at WrapWidth (an explicit width: a wrap box under a centred slot would otherwise wrap at its own desired width, one per row). */
+	UWrapBox* ChoiceRow(FTreeBuilder& B, const TCHAR* Name, float WrapWidth, bool bCentre = true)
 	{
 		UWrapBox* Row = B.Make<UWrapBox>(Name);
-		Row->SetInnerSlotPadding(FVector2D(12.f, 12.f));
+		Row->SetInnerSlotPadding(FVector2D(14.f, 14.f));
+		Row->SetExplicitWrapSize(true);
+		Row->SetWrapSize(WrapWidth);
+		Row->SetHorizontalAlignment(bCentre ? HAlign_Center : HAlign_Left);
 		return Row;
+	}
+
+	/** An ink rule under a heading. */
+	UWidget* InkRule(FTreeBuilder& B, float Width)
+	{
+		UImage* Rule = B.Make<UImage>();
+		Rule->SetBrush(RoundedBrush(FLinearColor(Ink::Dim.R, Ink::Dim.G, Ink::Dim.B, 0.55f), 1.f));
+		Rule->SetVisibility(ESlateVisibility::HitTestInvisible);
+		return Sized(B, Rule, Width, 3.f);
+	}
+
+	UTextBlock* Kicker(FTreeBuilder& B, const TCHAR* Text)
+	{
+		UTextBlock* Small = B.Text(nullptr, Text, 16, Ink::Dim, /*bBold*/ false);
+		FSlateFontInfo Info = Small->GetFont();
+		Info.LetterSpacing = 300;
+		Small->SetFont(Info);
+		return Small;
 	}
 
 	bool BuildMapScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
-		UVerticalBox* Column = ScreenColumn(B, Root, 1500.f);
+		UVerticalBox* Column = ScreenColumn(B, Root, 1560.f, 0.7f);
+		AddRow(*Column, Kicker(B, TEXT("CHART OF THE DEADWATER")));
 		UHorizontalBox* Header = B.Make<UHorizontalBox>();
-		AddColumn(*Header, B.Text(TEXT("TitleText"), TEXT("Sea chart - choose your first heading"), 28, Gold), FMargin(0.f), /*bFill*/ true);
-		AddColumn(*Header, B.Text(TEXT("GoldText"), TEXT("100 gold"), 22, Gold), FMargin(24.f, 0.f));
-		AddColumn(*Header, B.Text(TEXT("ShipText"), TEXT("Hull 250 / 250"), 22, Light));
-		AddRow(*Column, Header, FMargin(0.f, 0.f, 0.f, 10.f));
+		AddColumn(*Header, B.Text(TEXT("TitleText"), TEXT("Sea chart - choose your first heading"), 44, Ink::Text), FMargin(0.f), /*bFill*/ true);
+		AddColumn(*Header, Picture(B, nullptr, Icon(TEXT("T_ICON_Pirate_Coin_01")), FVector2D(40.f, 40.f)), FMargin(24.f, 0.f, 6.f, 0.f));
+		AddColumn(*Header, B.Text(TEXT("GoldText"), TEXT("100 gold"), 28, Ink::Text));
+		AddColumn(*Header, B.Text(TEXT("ShipText"), TEXT("Hull 250 / 250"), 24, Ink::Dim, /*bBold*/ false), FMargin(28.f, 0.f, 0.f, 0.f));
+		AddRow(*Column, Header, FMargin(0.f, 0.f, 0.f, 6.f));
 		UWrapBox* Crew = B.Make<UWrapBox>(TEXT("CrewList"));
-		Crew->SetInnerSlotPadding(FVector2D(36.f, 4.f));
-		AddRow(*Column, Crew, FMargin(0.f, 0.f, 0.f, 28.f));
+		Crew->SetInnerSlotPadding(FVector2D(36.f, 2.f));
+		AddRow(*Column, Crew, FMargin(0.f, 0.f, 0.f, 8.f));
+		AddRow(*Column, InkRule(B, 1560.f), FMargin(0.f, 0.f, 0.f, 24.f));
 		USizeBox* ChartBox = B.Make<USizeBox>();
-		ChartBox->SetWidthOverride(1420.f);
-		ChartBox->SetHeightOverride(300.f);
+		ChartBox->SetWidthOverride(1500.f);
+		ChartBox->SetHeightOverride(340.f);
 		ChartBox->SetContent(B.Make<UCanvasPanel>(TEXT("Chart")));
-		AddRow(*Column, ChartBox, FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
-		AddRow(*Column, B.Text(TEXT("HintText"), TEXT(""), 18, Bad), FMargin(0.f, 0.f, 0.f, 6.f), HAlign_Center);
-		AddRow(*Column, B.Text(nullptr, TEXT("Gold: routes you can take     Blue: where you are     ?: an event, good or bad"), 15, Dim, false),
-			FMargin(0.f), HAlign_Center);
+		AddRow(*Column, ChartBox, FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("HintText"), TEXT(""), 18, Ink::Red), FMargin(0.f, 0.f, 0.f, 6.f), HAlign_Center);
+		UTextBlock* Legend = B.Text(nullptr, TEXT("Skull: a fight     Blade: a shop     ?: fortune or folly     Red ink: routes open to us     Black ink: our wake"), 16, Ink::Dim, false);
+		Legend->SetFont(Font(false, 16, 0.f, /*bItalic*/ true));
+		AddRow(*Column, Legend, FMargin(0.f), HAlign_Center);
 		return B.Finish(Root);
 	}
 
@@ -750,14 +850,16 @@ namespace DwUIContent
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
 		UVerticalBox* Column = ScreenColumn(B, Root, 1000.f);
-		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Their crew is beaten - plunder!"), 36, Gold), FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
+		AddRow(*Column, Kicker(B, TEXT("THE TALLY")), FMargin(0.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Their crew is beaten - plunder!"), 52, Ink::Text), FMargin(0.f, 0.f, 0.f, 10.f), HAlign_Center);
+		AddRow(*Column, InkRule(B, 600.f), FMargin(0.f, 0.f, 0.f, 18.f), HAlign_Center);
 		UVerticalBox* Loot = B.Make<UVerticalBox>(TEXT("LootList"));
-		AddRow(*Column, Loot, FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
-		AddRow(*Column, B.Text(TEXT("OfferHintText"), TEXT("Learn a new move? (optional)"), 20, Light), FMargin(0.f, 0.f, 0.f, 10.f), HAlign_Center);
-		AddRow(*Column, ChoiceRow(B, TEXT("OfferList")), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
-		AddRow(*Column, ChoiceRow(B, TEXT("LearnerList")), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
-		AddRow(*Column, ChoiceRow(B, TEXT("ForgetList")), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
-		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ClaimSlot")), FMargin(0.f, 16.f, 0.f, 0.f), HAlign_Center);
+		AddRow(*Column, Loot, FMargin(0.f, 0.f, 0.f, 22.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("OfferHintText"), TEXT("Learn a new move? (optional)"), 24, Ink::Text), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("OfferList"), 1000.f), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("LearnerList"), 1000.f), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("ForgetList"), 1000.f), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
+		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ClaimSlot")), FMargin(0.f, 12.f, 0.f, 0.f), HAlign_Center);
 		return B.Finish(Root);
 	}
 
@@ -765,67 +867,76 @@ namespace DwUIContent
 	{
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
-		UVerticalBox* Column = ScreenColumn(B, Root, 1000.f);
-		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Swordsman reaches level 2!"), 36, Gold), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
-		AddRow(*Column, B.Text(TEXT("StatText"), TEXT("+10 max HP"), 22, Light), FMargin(0.f, 0.f, 0.f, 6.f), HAlign_Center);
-		AddRow(*Column, B.Text(TEXT("QueueText"), TEXT("1 more level-up after this one"), 16, Dim, false), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
-		AddRow(*Column, B.Text(nullptr, TEXT("Choose a perk"), 20, Light), FMargin(0.f, 0.f, 0.f, 10.f), HAlign_Center);
-		AddRow(*Column, ChoiceRow(B, TEXT("CardList")), FMargin(0.f), HAlign_Center);
+		UVerticalBox* Column = ScreenColumn(B, Root, 1100.f);
+		AddRow(*Column, Kicker(B, TEXT("PROMOTION")), FMargin(0.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Swordsman reaches level 2!"), 52, Ink::Text), FMargin(0.f, 0.f, 0.f, 6.f), HAlign_Center);
+		UTextBlock* Stat = B.Text(TEXT("StatText"), TEXT("+10 max HP"), 24, Ink::Text, /*bBold*/ false);
+		Stat->SetFont(Font(false, 24, 0.f, /*bItalic*/ true));
+		AddRow(*Column, Stat, FMargin(0.f, 0.f, 0.f, 4.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("QueueText"), TEXT("1 more level-up after this one"), 17, Ink::Dim, false), FMargin(0.f, 0.f, 0.f, 18.f), HAlign_Center);
+		AddRow(*Column, InkRule(B, 600.f), FMargin(0.f, 0.f, 0.f, 18.f), HAlign_Center);
+		AddRow(*Column, B.Text(nullptr, TEXT("Mark one trait in the log"), 26, Ink::Text), FMargin(0.f, 0.f, 0.f, 14.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("CardList"), 1100.f), FMargin(0.f), HAlign_Center);
 		return B.Finish(Root);
 	}
 
 	/** A titled shop section: label, then its cards in a wrap row (both named, so the screen can collapse them). */
 	void ShopSection(FTreeBuilder& B, UVerticalBox& Column, const TCHAR* LabelName, const TCHAR* Label, const TCHAR* ListName)
 	{
-		AddRow(Column, B.Text(LabelName, Label, 20, Gold), FMargin(0.f, 0.f, 0.f, 8.f));
-		AddRow(Column, ChoiceRow(B, ListName), FMargin(0.f, 0.f, 0.f, 18.f));
+		AddRow(Column, B.Text(LabelName, Label, 24, Ink::Text), FMargin(0.f, 0.f, 0.f, 8.f));
+		AddRow(Column, ChoiceRow(B, ListName, 960.f, /*bCentre*/ false), FMargin(0.f, 0.f, 0.f, 16.f));
 	}
 
 	bool BuildShopScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
-		UVerticalBox* Column = ScreenColumn(B, Root, 1780.f);
+		UVerticalBox* Column = ScreenColumn(B, Root, 1700.f);
 
-		// Header: title, gold, hull, hold; then the crew.
+		// Header: the ledger's title, gold, hull, hold; then the crew.
 		UHorizontalBox* Header = B.Make<UHorizontalBox>();
-		AddColumn(*Header, B.Text(nullptr, TEXT("Shop"), 34, Gold), FMargin(0.f), /*bFill*/ true);
-		AddColumn(*Header, B.Text(TEXT("GoldText"), TEXT("240 gold"), 24, Gold), FMargin(28.f, 0.f));
-		AddColumn(*Header, B.Text(TEXT("ShipText"), TEXT("Hull 180 / 250"), 22, Light), FMargin(0.f, 0.f, 28.f, 0.f));
-		AddColumn(*Header, B.Text(TEXT("HoldText"), TEXT("Hold 1 / 6"), 22, Light));
-		AddRow(*Column, Header, FMargin(0.f, 0.f, 0.f, 8.f));
+		UVerticalBox* Title = B.Make<UVerticalBox>();
+		AddRow(*Title, B.Text(nullptr, TEXT("The Black Lantern"), 42, Ink::Text));
+		AddColumn(*Header, Title, FMargin(0.f), /*bFill*/ true);
+		AddColumn(*Header, Picture(B, nullptr, Icon(TEXT("T_ICON_Pirate_Coin_01")), FVector2D(40.f, 40.f)), FMargin(28.f, 0.f, 6.f, 0.f));
+		AddColumn(*Header, B.Text(TEXT("GoldText"), TEXT("240 gold"), 30, Ink::Text));
+		AddColumn(*Header, B.Text(TEXT("ShipText"), TEXT("Hull 180 / 250"), 22, Ink::Dim, /*bBold*/ false), FMargin(28.f, 0.f));
+		AddColumn(*Header, B.Text(TEXT("HoldText"), TEXT("Hold 1 / 6"), 22, Ink::Dim, /*bBold*/ false));
+		AddRow(*Column, Header, FMargin(0.f, 0.f, 0.f, 4.f));
 		UWrapBox* Crew = B.Make<UWrapBox>(TEXT("CrewList"));
-		Crew->SetInnerSlotPadding(FVector2D(36.f, 4.f));
-		AddRow(*Column, Crew, FMargin(0.f, 0.f, 0.f, 22.f));
+		Crew->SetInnerSlotPadding(FVector2D(36.f, 2.f));
+		AddRow(*Column, Crew, FMargin(0.f, 0.f, 0.f, 8.f));
+		AddRow(*Column, InkRule(B, 1700.f), FMargin(0.f, 0.f, 0.f, 18.f));
 
-		// Two columns: things bought on a click (left), new moves with their pick (right).
+		// Two pages: things bought on a click (left), new moves with their pick (right).
 		UHorizontalBox* Body = B.Make<UHorizontalBox>();
 		UVerticalBox* Left = B.Make<UVerticalBox>();
-		ShopSection(B, *Left, TEXT("SupplyLabel"), TEXT("Repairs and supplies"), TEXT("SupplyList"));
-		ShopSection(B, *Left, TEXT("RecruitLabel"), TEXT("Crew for hire"), TEXT("RecruitList"));
-		ShopSection(B, *Left, TEXT("UpgradeLabel"), TEXT("Ship upgrades"), TEXT("UpgradeList"));
-		ShopSection(B, *Left, TEXT("DisbandLabel"), TEXT("Disband crew"), TEXT("DisbandList"));
+		ShopSection(B, *Left, TEXT("SupplyLabel"), TEXT("Repairs & Supplies"), TEXT("SupplyList"));
+		ShopSection(B, *Left, TEXT("RecruitLabel"), TEXT("Crew for Hire"), TEXT("RecruitList"));
+		ShopSection(B, *Left, TEXT("UpgradeLabel"), TEXT("Ship Upgrades"), TEXT("UpgradeList"));
 		USizeBox* LeftBox = B.Make<USizeBox>();
-		LeftBox->SetWidthOverride(880.f);
+		LeftBox->SetWidthOverride(960.f);
 		LeftBox->SetContent(Left);
-		AddColumn(*Body, LeftBox, FMargin(0.f, 0.f, 20.f, 0.f), /*bFill*/ false, VAlign_Top);
+		AddColumn(*Body, LeftBox, FMargin(0.f, 0.f, 30.f, 0.f), /*bFill*/ false, VAlign_Top);
 
 		UVerticalBox* Right = B.Make<UVerticalBox>();
-		AddRow(*Right, B.Text(nullptr, TEXT("New moves"), 20, Gold), FMargin(0.f, 0.f, 0.f, 4.f));
-		UTextBlock* Hint = B.Text(TEXT("MoveHintText"), TEXT("Pick a move, then who learns it."), 16, Dim, /*bBold*/ false);
+		AddRow(*Right, B.Text(nullptr, TEXT("New Moves"), 24, Ink::Text), FMargin(0.f, 0.f, 0.f, 2.f));
+		UTextBlock* Hint = B.Text(TEXT("MoveHintText"), TEXT("Pick a move, then who learns it."), 17, Ink::Dim, /*bBold*/ false);
+		Hint->SetFont(Font(false, 17, 0.f, /*bItalic*/ true));
 		Hint->SetAutoWrapText(true);
 		AddRow(*Right, Hint, FMargin(0.f, 0.f, 0.f, 8.f));
-		AddRow(*Right, ChoiceRow(B, TEXT("MoveList")), FMargin(0.f, 0.f, 0.f, 12.f));
-		AddRow(*Right, ChoiceRow(B, TEXT("LearnerList")), FMargin(0.f, 0.f, 0.f, 12.f));
-		AddRow(*Right, ChoiceRow(B, TEXT("ForgetList")), FMargin(0.f, 0.f, 0.f, 12.f));
-		AddRow(*Right, B.Make<UHorizontalBox>(TEXT("BuyMoveSlot")), FMargin(0.f));
+		AddRow(*Right, ChoiceRow(B, TEXT("MoveList"), 700.f, /*bCentre*/ false), FMargin(0.f, 0.f, 0.f, 12.f));
+		AddRow(*Right, ChoiceRow(B, TEXT("LearnerList"), 700.f, /*bCentre*/ false), FMargin(0.f, 0.f, 0.f, 12.f));
+		AddRow(*Right, ChoiceRow(B, TEXT("ForgetList"), 700.f, /*bCentre*/ false), FMargin(0.f, 0.f, 0.f, 12.f));
+		AddRow(*Right, B.Make<UHorizontalBox>(TEXT("BuyMoveSlot")), FMargin(0.f, 0.f, 0.f, 18.f));
+		ShopSection(B, *Right, TEXT("DisbandLabel"), TEXT("Disband Crew"), TEXT("DisbandList"));
 		USizeBox* RightBox = B.Make<USizeBox>();
-		RightBox->SetWidthOverride(880.f);
+		RightBox->SetWidthOverride(700.f);
 		RightBox->SetContent(Right);
 		AddColumn(*Body, RightBox, FMargin(0.f), /*bFill*/ false, VAlign_Top);
-		AddRow(*Column, Body, FMargin(0.f, 0.f, 0.f, 12.f));
+		AddRow(*Column, Body, FMargin(0.f, 0.f, 0.f, 10.f));
 
-		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("LeaveSlot")), FMargin(0.f, 8.f, 0.f, 0.f), HAlign_Center);
+		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("LeaveSlot")), FMargin(0.f, 6.f, 0.f, 0.f), HAlign_Center);
 		return B.Finish(Root);
 	}
 
@@ -833,12 +944,16 @@ namespace DwUIContent
 	{
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
-		UVerticalBox* Column = ScreenColumn(B, Root, 800.f);
-		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Calm water"), 36, Gold), FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
-		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("The sea is quiet."), 20, Light, false);
+		UVerticalBox* Column = ScreenColumn(B, Root, 980.f);
+		AddRow(*Column, Kicker(B, TEXT("FROM THE LOG")), FMargin(0.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("HeadlineText"), TEXT("Calm water"), 54, Ink::Text), FMargin(0.f, 0.f, 0.f, 10.f), HAlign_Center);
+		AddRow(*Column, InkRule(B, 500.f), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
+		UTextBlock* Body = B.Text(TEXT("BodyText"), TEXT("The sea is quiet."), 23, Ink::Text, false);
+		Body->SetFont(Font(false, 23, 0.f, /*bItalic*/ true));
 		Body->SetAutoWrapText(true);
 		Body->SetJustification(ETextJustify::Center);
-		AddRow(*Column, Body, FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
+		AddRow(*Column, Body, FMargin(0.f, 0.f, 0.f, 26.f), HAlign_Center);
+		AddRow(*Column, B.Text(nullptr, TEXT("What say you, Captain?"), 24, Ink::Text), FMargin(0.f, 0.f, 0.f, 12.f), HAlign_Center);
 		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ActionSlot")), FMargin(0.f), HAlign_Center);
 		return B.Finish(Root);
 	}
@@ -850,9 +965,10 @@ namespace DwUIContent
 	{
 		FTreeBuilder B(Blueprint, Log);
 		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
-		Root->SetWidthOverride(48.f);
-		Root->SetHeightOverride(40.f);
+		Root->SetWidthOverride(52.f);
+		Root->SetHeightOverride(44.f);
 		UButton* Button = B.Make<UButton>(TEXT("ChoiceButton"));
+		Button->SetStyle(ButtonStyle(PaperStripBrush(), 1.06f, 0.92f));
 		Root->SetContent(Button);
 		UVerticalBox* Rows = B.Make<UVerticalBox>();
 		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Rows)))
@@ -861,20 +977,25 @@ namespace DwUIContent
 			Slot->SetHorizontalAlignment(HAlign_Center);
 			Slot->SetVerticalAlignment(VAlign_Center);
 		}
-		AddRow(*Rows, B.Text(TEXT("TitleText"), TEXT("<"), 20, Light), FMargin(0.f), HAlign_Center);
-		AddRow(*Rows, B.Text(TEXT("BodyText"), TEXT(""), 12, Dim, false));
-		AddRow(*Rows, B.Text(TEXT("ReasonText"), TEXT(""), 12, Bad, false));
+		AddRow(*Rows, B.Text(TEXT("TitleText"), TEXT("<"), 22, Ink::Text), FMargin(0.f), HAlign_Center);
+		AddRow(*Rows, B.Text(TEXT("BodyText"), TEXT(""), 12, Ink::Dim, false));
+		AddRow(*Rows, B.Text(TEXT("ReasonText"), TEXT(""), 12, Ink::Red, false));
 		return B.Finish(Root);
 	}
 
+	/** Main menu, pause, confirm and the run summary: one log page (title, lines, buttons) with a wax seal. */
 	bool BuildMenuScreen(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
-		UVerticalBox* Column = ScreenColumn(B, Root, 720.f, /*Opacity*/ 0.96f); // pause and confirm stack over other screens: nothing may show through
-		UTextBlock* Title = B.Text(TEXT("TitleText"), TEXT("DEADWATER RUN"), 40, Gold);
+		UVerticalBox* Column = ScreenColumn(B, Root, 720.f, /*Opacity*/ 0.9f); // pause and confirm stack over other screens
+		AddRow(*Column, Kicker(B, TEXT("THE LOG OF THE")), FMargin(0.f), HAlign_Center);
+		UTextBlock* Title = B.Text(TEXT("TitleText"), TEXT("DEADWATER RUN"), 64, Ink::Text);
 		Title->SetJustification(ETextJustify::Center);
-		AddRow(*Column, Title, FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
+		Title->SetAutoWrapText(true);
+		Title->SetLineHeightPercentage(0.82f); // Grenze's line box is tall: two-line titles (the victory page) stay together
+		AddRow(*Column, Title, FMargin(0.f, 0.f, 0.f, 10.f), HAlign_Center);
+		AddRow(*Column, InkRule(B, 420.f), FMargin(0.f, 0.f, 0.f, 16.f), HAlign_Center);
 		AddRow(*Column, B.Make<UVerticalBox>(TEXT("LineList")), FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
 		UVerticalBox* Buttons = B.Make<UVerticalBox>(TEXT("ButtonList"));
 		AddRow(*Column, Buttons, FMargin(0.f), HAlign_Center);
@@ -886,13 +1007,14 @@ namespace DwUIContent
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
 		UVerticalBox* Column = ScreenColumn(B, Root, 1100.f);
-		AddRow(*Column, B.Text(nullptr, TEXT("Choose your captain"), 36, Gold), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
-		AddRow(*Column, ChoiceRow(B, TEXT("CaptainList")), FMargin(0.f, 0.f, 0.f, 24.f), HAlign_Center);
-		AddRow(*Column, B.Text(TEXT("DetailTitleText"), TEXT("Team Leader"), 26, Light), FMargin(0.f, 0.f, 0.f, 8.f));
+		AddRow(*Column, Kicker(B, TEXT("WANTED - DEAD OR ALIVE")), FMargin(0.f), HAlign_Center);
+		AddRow(*Column, B.Text(nullptr, TEXT("Who commands the Gull?"), 52, Ink::Text), FMargin(0.f, 0.f, 0.f, 18.f), HAlign_Center);
+		AddRow(*Column, ChoiceRow(B, TEXT("CaptainList"), 1100.f), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
+		AddRow(*Column, B.Text(TEXT("DetailTitleText"), TEXT("Team Leader"), 32, Ink::Text), FMargin(0.f, 0.f, 0.f, 6.f));
 		USizeBox* DetailBox = B.Make<USizeBox>();
-		DetailBox->SetMinDesiredHeight(170.f);
+		DetailBox->SetMinDesiredHeight(150.f);
 		DetailBox->SetContent(B.Make<UVerticalBox>(TEXT("DetailList")));
-		AddRow(*Column, DetailBox, FMargin(0.f, 0.f, 0.f, 20.f));
+		AddRow(*Column, DetailBox, FMargin(0.f, 0.f, 0.f, 18.f));
 		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ButtonList")), FMargin(0.f), HAlign_Center);
 		return B.Finish(Root);
 	}
@@ -912,17 +1034,18 @@ namespace DwUIContent
 		Root->SetContent(Row);
 		USizeBox* LabelBox = B.Make<USizeBox>();
 		LabelBox->SetWidthOverride(240.f);
-		LabelBox->SetContent(B.Text(TEXT("LabelText"), TEXT("Game speed"), 20, Light));
+		LabelBox->SetContent(B.Text(TEXT("LabelText"), TEXT("Game speed"), 22, Ink::Text, /*bBold*/ false));
 		AddColumn(*Row, LabelBox);
-		AddColumn(*Row, B.MakeOf<UDwChoiceButtonWidget>(Step->GeneratedClass, TEXT("DecreaseButton")), FMargin(0.f, 2.f, 8.f, 2.f));
+		AddColumn(*Row, B.MakeOf<UDwChoiceButtonWidget>(Step->GeneratedClass, TEXT("DecreaseButton")), FMargin(0.f, 3.f, 8.f, 3.f));
 		USizeBox* ValueBox = B.Make<USizeBox>();
 		ValueBox->SetWidthOverride(220.f);
-		UTextBlock* Value = B.Text(TEXT("ValueText"), TEXT("1.5x"), 20, Gold);
+		UTextBlock* Value = B.Text(TEXT("ValueText"), TEXT("1.5x"), 22, Ink::Red);
 		Value->SetJustification(ETextJustify::Center);
 		ValueBox->SetContent(Value);
 		AddColumn(*Row, ValueBox);
-		AddColumn(*Row, B.MakeOf<UDwChoiceButtonWidget>(Step->GeneratedClass, TEXT("IncreaseButton")), FMargin(8.f, 2.f, 16.f, 2.f));
-		UTextBlock* Note = B.Text(TEXT("NoteText"), TEXT("Animations only."), 14, Dim, false);
+		AddColumn(*Row, B.MakeOf<UDwChoiceButtonWidget>(Step->GeneratedClass, TEXT("IncreaseButton")), FMargin(8.f, 3.f, 16.f, 3.f));
+		UTextBlock* Note = B.Text(TEXT("NoteText"), TEXT("Animations only."), 15, Ink::Dim, false);
+		Note->SetFont(Font(false, 15, 0.f, /*bItalic*/ true));
 		Note->SetAutoWrapText(true);
 		AddColumn(*Row, Note, FMargin(0.f), /*bFill*/ true);
 		return B.Finish(Root);
@@ -932,8 +1055,10 @@ namespace DwUIContent
 	{
 		FTreeBuilder B(Blueprint, Log);
 		UWidget* Root = nullptr;
-		UVerticalBox* Column = ScreenColumn(B, Root, 920.f);
-		AddRow(*Column, B.Text(nullptr, TEXT("Settings"), 36, Gold), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
+		UVerticalBox* Column = ScreenColumn(B, Root, 920.f, 0.9f);
+		AddRow(*Column, Kicker(B, TEXT("SHIP'S ORDERS")), FMargin(0.f), HAlign_Center);
+		AddRow(*Column, B.Text(nullptr, TEXT("Settings"), 52, Ink::Text), FMargin(0.f, 0.f, 0.f, 10.f), HAlign_Center);
+		AddRow(*Column, InkRule(B, 420.f), FMargin(0.f, 0.f, 0.f, 20.f), HAlign_Center);
 		AddRow(*Column, B.Make<UVerticalBox>(TEXT("RowList")), FMargin(0.f, 0.f, 0.f, 24.f));
 		AddRow(*Column, B.Make<UHorizontalBox>(TEXT("ButtonList")), FMargin(0.f), HAlign_Center);
 		return B.Finish(Root);
@@ -1251,6 +1376,43 @@ namespace DwUIContent
 		return bOk;
 	}
 
+	/** Run and shell screens (Ship's Log): ink buttons on parchment, inked chart stamps. */
+	bool ApplyRunStyle(const TMap<FString, UWidgetBlueprint*>& Built, TArray<FString>& Log)
+	{
+		bool bOk = true;
+		for (const TCHAR* Name : { TEXT("WBP_ChoiceButton"), TEXT("WBP_ChoiceCard"), TEXT("WBP_StepButton") })
+		{
+			UObject* Button = Built[Name]->GeneratedClass->GetDefaultObject();
+			bOk &= SetStyle(Button, TEXT("ReadyColor"), FLinearColor::White, Log);
+			bOk &= SetStyle(Button, TEXT("SelectedColor"), FLinearColor(1.f, 0.9f, 0.8f), Log);
+			bOk &= SetStyle(Button, TEXT("DisabledColor"), FLinearColor(0.74f, 0.71f, 0.66f), Log);
+			bOk &= SetStyle(Button, TEXT("GlyphColor"), Ink::Text, Log);
+		}
+		UObject* Node = Built[TEXT("WBP_MapNode")]->GeneratedClass->GetDefaultObject();
+		bOk &= SetStyle(Node, TEXT("AheadColor"), Ink::Paper, Log);
+		bOk &= SetStyle(Node, TEXT("ChoosableColor"), FLinearColor::FromSRGBColor(FColor(232, 160, 140)), Log);
+		bOk &= SetStyle(Node, TEXT("CurrentColor"), FLinearColor::FromSRGBColor(FColor(222, 186, 110)), Log);
+		bOk &= SetStyle(Node, TEXT("SailedColor"), FLinearColor::FromSRGBColor(FColor(196, 176, 140)), Log);
+		bOk &= SetStyle(Node, TEXT("MissedColor"), FLinearColor(0.9f, 0.84f, 0.72f, 0.45f), Log);
+		bOk &= SetStyle(Node, TEXT("BossColor"), FLinearColor::FromSRGBColor(FColor(200, 92, 74)), Log);
+		bOk &= SetStyle(Node, TEXT("LabelColor"), Ink::Text, Log);
+		bOk &= SetStyle(Node, TEXT("MissedLabelColor"), Ink::Dim, Log);
+		bOk &= SetStyle(Node, TEXT("IconColor"), Ink::Text, Log);
+		bOk &= SetStyle(Node, TEXT("FightIcon"), TObjectPtr<UTexture2D>(PackTexture(TEXT("Icons_Map/T_ICON_FantasyWarrior_Map_Skull01_Clean"))), Log);
+		bOk &= SetStyle(Node, TEXT("ShopIcon"), TObjectPtr<UTexture2D>(PackTexture(TEXT("Icons_Map/T_ICON_FantasyWarrior_Map_ShopWeapons01_Clean"))), Log);
+		bOk &= SetStyle(Node, TEXT("EventIcon"), TObjectPtr<UTexture2D>(PackTexture(TEXT("Icons_Map/T_ICON_FantasyWarrior_Map_Unknown01_Clean"))), Log);
+		bOk &= SetStyle(Node, TEXT("BossIcon"), TObjectPtr<UTexture2D>(PackTexture(TEXT("Icons_Map/T_ICON_FantasyWarrior_Map_Monster01_Clean"))), Log);
+		if (UDwMapScreen* Map = Built[TEXT("WBP_Map")]->GeneratedClass->GetDefaultObject<UDwMapScreen>())
+		{
+			Map->NodeSize = FVector2D(80.f, 80.f);
+			Map->Spacing = FVector2D(150.f, 120.f);
+			Map->RouteColor = FLinearColor(Ink::Dim.R, Ink::Dim.G, Ink::Dim.B, 0.6f);
+			Map->OpenRouteColor = Ink::Red;
+			Map->SailedRouteColor = Ink::Text;
+		}
+		return bOk;
+	}
+
 	// -----------------------------------------------------------------------------------------------------------------
 	// UI art: icons and portraits (Tools/Content/ui_icon_map.json)
 
@@ -1404,6 +1566,7 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		{ TEXT("WBP_PrimaryLayout"), UDwPrimaryLayoutWidget::StaticClass(), &BuildPrimaryLayout },
 		{ TEXT("WBP_CombatHud"), UDwCombatHudScreen::StaticClass(), &BuildCombatHud },
 		{ TEXT("WBP_ChoiceButton"), UDwChoiceButtonWidget::StaticClass(), &BuildChoiceButton },
+		{ TEXT("WBP_ChoiceCard"), UDwChoiceButtonWidget::StaticClass(), &BuildChoiceCard },
 		{ TEXT("WBP_MapNode"), UDwMapNodeWidget::StaticClass(), &BuildMapNode },
 		{ TEXT("WBP_Map"), UDwMapScreen::StaticClass(), &BuildMapScreen },
 		{ TEXT("WBP_Rewards"), UDwRewardsScreen::StaticClass(), &BuildRewardsScreen },
@@ -1444,6 +1607,7 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		Hud->IntentMarkerClass = ClassOf(TEXT("WBP_IntentMarker"));
 	}
 	bOk &= ApplyCombatStyle(Built, OutLog);
+	bOk &= ApplyRunStyle(Built, OutLog);
 	if (UDwSettingsScreen* SettingsScreen = Built[TEXT("WBP_Settings")]->GeneratedClass->GetDefaultObject<UDwSettingsScreen>())
 	{
 		SettingsScreen->RowClass = ClassOf(TEXT("WBP_SettingRow"));
@@ -1454,6 +1618,9 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		if (UDwRunScreen* Screen = Built[Name]->GeneratedClass->GetDefaultObject<UDwRunScreen>())
 		{
 			Screen->ChoiceButtonClass = ClassOf(TEXT("WBP_ChoiceButton"));
+			Screen->CardButtonClass = ClassOf(TEXT("WBP_ChoiceCard"));
+			Screen->LineFont = Font(false, 18);
+			Screen->LineColor = Ink::Text;
 		}
 	}
 	if (UDwMapScreen* Map = Built[TEXT("WBP_Map")]->GeneratedClass->GetDefaultObject<UDwMapScreen>())

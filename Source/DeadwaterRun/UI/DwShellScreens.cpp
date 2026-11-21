@@ -58,7 +58,7 @@ void UDwCaptainSelectScreen::NativeOnViewModelChanged()
 	{
 		return;
 	}
-	FillChoices(CaptainList, Select->GetCaptains());
+	FillChoices(CaptainList, Select->GetCaptains(), /*bCards*/ true);
 	DetailTitleText->SetText(Select->GetDetailTitle());
 	FillLines(DetailList, Select->GetDetailLines(), 18, DwShellScreens::Light);
 	for (UWidget* Child : DetailList->GetAllChildren())

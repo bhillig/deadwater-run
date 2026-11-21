@@ -88,6 +88,18 @@ namespace DwRunScreens
 		return Member ? Member->GetDisplayName() : FText::GetEmpty();
 	}
 
+	static TSoftObjectPtr<UTexture2D> PortraitOf(const FDwRunState& State, const FGuid& Id)
+	{
+		const FDwCrewMemberState* Member = State.FindCrew(Id);
+		return Member && Member->Unit ? Member->Unit->Portrait : TSoftObjectPtr<UTexture2D>();
+	}
+
+	template <typename T>
+	static TSoftObjectPtr<UTexture2D> IconOf(const T* Definition)
+	{
+		return Definition ? Definition->Icon : TSoftObjectPtr<UTexture2D>();
+	}
+
 	static FText NameOf(const UDwDefinitionBase* Definition)
 	{
 		return Definition ? Definition->DisplayName : LOCTEXT("Unknown", "?");
@@ -367,6 +379,7 @@ void UDwRewardsViewModel::Refresh()
 			FDwChoiceView View;
 			View.Title = DwRunScreens::NameOf(Ability);
 			View.Body = Ability ? Ability->Description : FText::GetEmpty();
+			View.Icon = DwRunScreens::IconOf(Ability);
 			View.bSelected = Index == SelectedOffer;
 			Choice(Offers, OfferCount++)->Set(View, [this, Index]() { return SelectOffer(Index); });
 		}
@@ -378,6 +391,7 @@ void UDwRewardsViewModel::Refresh()
 				const FDwCrewMemberState* Member = S->FindCrew(Eligible[Index]);
 				FDwChoiceView View;
 				View.Title = DwRunScreens::CrewName(*S, Eligible[Index]);
+				View.Icon = DwRunScreens::PortraitOf(*S, Eligible[Index]);
 				View.Body = Member ? FText::Format(LOCTEXT("LearnerBody", "Level {0}, knows {1} moves"), Member->Level, Member->Abilities.Num()) : FText::GetEmpty();
 				View.bSelected = Eligible[Index] == SelectedCrew;
 				Choice(Learners, LearnerCount++)->Set(View, [this, Index]() { return SelectLearner(Index); });
@@ -390,6 +404,7 @@ void UDwRewardsViewModel::Refresh()
 			{
 				FDwChoiceView View;
 				View.Title = FText::Format(LOCTEXT("Forget", "Forget {0}"), DwRunScreens::NameOf(Learner->Abilities[Index]));
+				View.Icon = DwRunScreens::IconOf(Learner->Abilities[Index].Get());
 				View.bSelected = Index == SelectedSlot;
 				Choice(Forget, ForgetCount++)->Set(View, [this, Index]() { return SelectForget(Index); });
 			}
@@ -440,6 +455,8 @@ void UDwLevelUpViewModel::Refresh()
 			const UDwPerkDefinition* Perk = LevelUp->PerkChoices[Index];
 			FDwChoiceView View;
 			View.Title = DwRunScreens::NameOf(Perk);
+			View.Icon = DwRunScreens::IconOf(Perk);
+			View.bIconIsGlyph = true;
 			View.Body = Perk ? Perk->GetFormattedDescription() : FText::GetEmpty();
 			Choice(Cards, CardCount++)->Set(View, [this, Index]() { UDwRun* R = GetRun(); return R && R->ChoosePerk(Index); });
 		}
@@ -698,6 +715,7 @@ void UDwShopViewModel::Refresh()
 				break;
 			case EDwShopOfferType::Item:
 				View.Title = DwRunScreens::NameOf(Offer.Item);
+				View.Icon = DwRunScreens::IconOf(Offer.Item.Get());
 				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Item ? Offer.Item->Description : FText::GetEmpty());
 				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
 				Choice(Supplies, SupplyCount++)->Set(View, [this, Id]() { return Buy(Id); });
@@ -714,6 +732,7 @@ void UDwShopViewModel::Refresh()
 				const FText Who = Names.IsEmpty() ? LOCTEXT("Nobody", "nobody aboard can learn it")
 					: FText::Format(LOCTEXT("WhoLearns", "for {0}"), FText::FromString(FString::Join(Names, TEXT(", "))));
 				View.Title = DwRunScreens::NameOf(Offer.Ability);
+				View.Icon = DwRunScreens::IconOf(Offer.Ability.Get());
 				View.Body = FText::Format(LOCTEXT("MoveBody", "{0} gold, {1}\n{2}"), Offer.Price, Who, Offer.Ability ? Offer.Ability->Description : FText::GetEmpty());
 				View.bSelected = bMovePicked && Id == SelectedMove;
 				View.bEnabled = Result == EDwPurchaseResult::Ok;
@@ -723,12 +742,14 @@ void UDwShopViewModel::Refresh()
 			}
 			case EDwShopOfferType::Recruit:
 				View.Title = FText::Format(LOCTEXT("Recruit", "{0}, level {1}"), DwRunScreens::NameOf(Offer.Unit), Offer.Level);
+				View.Icon = Offer.Unit ? Offer.Unit->Portrait : TSoftObjectPtr<UTexture2D>();
 				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Unit ? Offer.Unit->Description : FText::GetEmpty());
 				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
 				Choice(Recruits, RecruitCount++)->Set(View, [this, Id]() { return Buy(Id); });
 				break;
 			case EDwShopOfferType::ShipUpgrade:
 				View.Title = DwRunScreens::NameOf(Offer.Upgrade);
+				View.Icon = DwRunScreens::IconOf(Offer.Upgrade.Get());
 				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Upgrade ? Offer.Upgrade->GetFormattedDescription() : FText::GetEmpty());
 				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
 				Choice(Upgrades, UpgradeCount++)->Set(View, [this, Id]() { return Buy(Id); });
@@ -741,6 +762,7 @@ void UDwShopViewModel::Refresh()
 				}
 				const FText Name = DwRunScreens::CrewName(S, Offer.CrewId);
 				View.Title = FText::Format(LOCTEXT("Disband", "Disband {0}"), Name);
+				View.Icon = DwRunScreens::PortraitOf(S, Offer.CrewId);
 				View.Body = Offer.Amount > 0 ? FText::Format(LOCTEXT("Refund", "Refund {0} gold"), Offer.Amount) : LOCTEXT("NoRefund", "No refund");
 				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
 				View.SelectSound = DwTags::UI_Sound_Confirm;
@@ -765,6 +787,7 @@ void UDwShopViewModel::Refresh()
 				const bool bFull = Member && Slots > 0 && Member->Abilities.Num() >= Slots;
 				FDwChoiceView View;
 				View.Title = DwRunScreens::CrewName(S, Id);
+				View.Icon = DwRunScreens::PortraitOf(S, Id);
 				View.Body = Member ? (Slots > 0 ? FText::Format(LOCTEXT("LearnerSlots", "L{0}, knows {1} / {2} moves"), Member->Level, Member->Abilities.Num(), Slots)
 					: FText::Format(LOCTEXT("ShopLearnerBody", "L{0}, knows {1} moves"), Member->Level, Member->Abilities.Num())) : FText::GetEmpty();
 				View.bSelected = Id == SelectedCrew;
@@ -780,6 +803,7 @@ void UDwShopViewModel::Refresh()
 				{
 					FDwChoiceView View;
 					View.Title = FText::Format(LOCTEXT("ShopForget", "Forget {0}"), DwRunScreens::NameOf(Learner->Abilities[Index]));
+					View.Icon = DwRunScreens::IconOf(Learner->Abilities[Index].Get());
 					View.bSelected = Index == SelectedSlot;
 					Choice(Forget, ForgetCount++)->Set(View, [this, Index]() { return SelectForget(Index); });
 				}
@@ -915,6 +939,7 @@ void UDwNodeShellViewModel::RefreshEvent(const UDwRun& TheRun, int32& Count)
 			const FDwCrewMemberState* Member = S.FindCrew(Id);
 			FDwChoiceView View;
 			View.Title = DwRunScreens::CrewName(S, Id);
+			View.Icon = DwRunScreens::PortraitOf(S, Id);
 			View.Body = Member ? FText::Format(LOCTEXT("CrewHp", "{0} / {1} HP"), FMath::RoundToInt(Member->Health), FMath::RoundToInt(Member->GetMaxHealth()))
 				: FText::GetEmpty();
 			const int32 Index = PendingChoice;

@@ -10,6 +10,8 @@
 
 class UButton;
 class UCanvasPanel;
+class UImage;
+class UTexture2D;
 class UPanelWidget;
 class UTextBlock;
 class UWidget;
@@ -34,10 +36,15 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> TitleText;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> BodyText;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> ReasonText;
+	/** FDwChoiceView::Icon (hidden when the choice has none) and the outline shown while selected. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UImage> ChoiceIcon;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> SelectedOutline;
+	/** Tint for glyph icons (FDwChoiceView::bIconIsGlyph); coloured renders stay untinted. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor GlyphColor = FLinearColor::White;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor ReadyColor = FLinearColor(0.12f, 0.16f, 0.22f, 0.95f);
-	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor SelectedColor = FLinearColor(0.75f, 0.58f, 0.12f, 1.f);
-	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor DisabledColor = FLinearColor(0.08f, 0.08f, 0.09f, 0.9f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor ReadyColor = FLinearColor::White; // tints the parchment button art (Ship's Log)
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor SelectedColor = FLinearColor(1.f, 0.9f, 0.8f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor DisabledColor = FLinearColor(0.74f, 0.71f, 0.66f);
 
 private:
 	UFUNCTION() void HandleClicked();
@@ -52,10 +59,15 @@ class DEADWATERRUN_API UDwRunScreen : public UDwActivatableScreen
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|UI") TSubclassOf<UDwChoiceButtonWidget> ChoiceButtonClass;
+	/** Tall icon cards (WBP_ChoiceCard) for the lists that are picks rather than buttons: perks, captains, new moves. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|UI") TSubclassOf<UDwChoiceButtonWidget> CardButtonClass;
+	/** Text lines (FillLines): the art direction's body font and ink. An unset font keeps the engine font; alpha 0 keeps the caller's colour. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FSlateFontInfo LineFont;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor LineColor = FLinearColor::Transparent;
 
 protected:
-	/** One WBP_ChoiceButton per choice in Panel, reused while the count holds (so juice and hover survive refreshes). */
-	void FillChoices(UPanelWidget* Panel, TConstArrayView<TObjectPtr<UDwChoiceViewModel>> Choices);
+	/** One WBP_ChoiceButton (or WBP_ChoiceCard with bCards) per choice in Panel, reused while the count and kind hold. */
+	void FillChoices(UPanelWidget* Panel, TConstArrayView<TObjectPtr<UDwChoiceViewModel>> Choices, bool bCards = false);
 	/** Plain text lines into a vertical panel. */
 	void FillLines(UPanelWidget* Panel, TConstArrayView<FText> Lines, int32 FontSize, const FLinearColor& Color);
 };
@@ -76,12 +88,21 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor SailedColor = FLinearColor(0.28f, 0.24f, 0.16f, 0.95f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor MissedColor = FLinearColor(0.05f, 0.05f, 0.06f, 0.6f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor BossColor = FLinearColor(0.45f, 0.08f, 0.1f, 1.f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor LabelColor = FLinearColor(0.95f, 0.92f, 0.85f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor MissedLabelColor = FLinearColor(0.5f, 0.5f, 0.5f);
+	/** Glyph per node type in NodeIcon (missing = the label alone). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TObjectPtr<UTexture2D> FightIcon;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TObjectPtr<UTexture2D> ShopIcon;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TObjectPtr<UTexture2D> EventIcon;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TObjectPtr<UTexture2D> BossIcon;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor IconColor = FLinearColor::White;
 
 protected:
 	virtual void NativeOnInitialized() override;
 
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UButton> NodeButton;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> LabelText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UImage> NodeIcon;
 
 private:
 	UFUNCTION() void HandleClicked();

@@ -137,6 +137,7 @@ void UDwCaptainSelectViewModel::Refresh()
 	{
 		FDwChoiceView View;
 		View.Title = Captains[Index]->DisplayName;
+		View.Icon = Captains[Index]->Portrait;
 		TArray<FString> Abilities;
 		for (const UDwAbilityDefinition* Ability : Captains[Index]->CaptainAbilities)
 		{
@@ -295,6 +296,7 @@ bool UDwSettingsViewModel::Step(ERow Row, int32 Direction)
 		if (!FMath::IsNearlyEqual(Old, New))
 		{
 			Settings->SetVolume(VolumeOf(Row), New);
+			Settings->ApplyAudio(); // heard at once, not on the next level load
 			bChanged = true;
 		}
 		break;
@@ -372,7 +374,6 @@ void UDwSettingsViewModel::Refresh()
 	}
 	auto StepFor = [this](ERow Row) { return [this, Row](int32 Direction) { return Step(Row, Direction); }; };
 	auto OnOff = [](bool bOn) { return bOn ? LOCTEXT("On", "On") : LOCTEXT("Off", "Off"); };
-	const FText Pending = LOCTEXT("NoAudio", "Saved; takes effect when the game has sound.");
 
 	const FIntPoint Resolution = Settings->GetScreenResolution();
 	const int32 ResIndex = Resolutions.IndexOfByKey(Resolution);
@@ -391,7 +392,7 @@ void UDwSettingsViewModel::Refresh()
 	for (const TPair<ERow, FText>& Volume : Volumes)
 	{
 		const float Value = Settings->GetVolume(VolumeOf(Volume.Key));
-		GetRow(Volume.Key)->Set(Volume.Value, FText::Format(LOCTEXT("Percent", "{0}%"), FMath::RoundToInt(Value * 100.f)), Pending,
+		GetRow(Volume.Key)->Set(Volume.Value, FText::Format(LOCTEXT("Percent", "{0}%"), FMath::RoundToInt(Value * 100.f)), FText::GetEmpty(),
 			Value > 0.001f, Value < 0.999f, StepFor(Volume.Key));
 	}
 

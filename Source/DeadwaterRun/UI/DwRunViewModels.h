@@ -8,6 +8,8 @@
 #include "UI/DwViewModelBase.h"
 #include "DwRunViewModels.generated.h"
 
+class UTexture2D;
+
 class UDwRun;
 
 /*
@@ -25,6 +27,10 @@ struct DEADWATERRUN_API FDwChoiceView
 
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText Title;
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText Body;
+	/** What it is at a glance: the move, item, perk or upgrade icon, or the crew member's / captain's portrait. */
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") TSoftObjectPtr<UTexture2D> Icon;
+	/** The icon is a flat white glyph (the perks' pack status icons) the widget tints, not a coloured render. */
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") bool bIconIsGlyph = false;
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") bool bEnabled = true;
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") bool bSelected = false;
 	/** Why it can't be clicked; empty when enabled. */

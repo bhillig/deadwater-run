@@ -6,6 +6,8 @@
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/Image.h"
+#include "Engine/Texture2D.h"
 #include "Components/PanelWidget.h"
 #include "Components/TextBlock.h"
 #include "Core/DwGameplayTags.h"
@@ -80,6 +82,17 @@ void UDwChoiceButtonWidget::NativeOnViewModelChanged()
 	ReasonText->SetVisibility(View.DisabledReason.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 	// Disabled buttons stay clickable: the click plays the error sound, the reason is already on the button.
 	ChoiceButton->SetBackgroundColor(View.bSelected ? SelectedColor : (View.bEnabled ? ReadyColor : DisabledColor));
+	if (ChoiceIcon)
+	{
+		ChoiceIcon->SetBrushFromSoftTexture(View.Icon);
+		ChoiceIcon->SetVisibility(View.Icon.IsNull() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+		ChoiceIcon->SetRenderOpacity(View.bEnabled || View.bSelected ? 1.f : 0.5f);
+		ChoiceIcon->SetColorAndOpacity(View.bIconIsGlyph ? GlyphColor : FLinearColor::White);
+	}
+	if (SelectedOutline)
+	{
+		SelectedOutline->SetVisibility(View.bSelected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	}
 	if (View.bSelected)
 	{
 		PlayJuice(DwJuice::Highlight);
@@ -89,18 +102,20 @@ void UDwChoiceButtonWidget::NativeOnViewModelChanged()
 // ---------------------------------------------------------------------------------------------------------------------
 // Run screen helpers
 
-void UDwRunScreen::FillChoices(UPanelWidget* Panel, TConstArrayView<TObjectPtr<UDwChoiceViewModel>> Choices)
+void UDwRunScreen::FillChoices(UPanelWidget* Panel, TConstArrayView<TObjectPtr<UDwChoiceViewModel>> Choices, bool bCards)
 {
-	if (!Panel || !ChoiceButtonClass)
+	const TSubclassOf<UDwChoiceButtonWidget> EntryClass = bCards && CardButtonClass ? CardButtonClass : ChoiceButtonClass;
+	if (!Panel || !EntryClass)
 	{
 		return;
 	}
-	if (Panel->GetChildrenCount() != Choices.Num())
+	const bool bSameKind = Panel->GetChildrenCount() == 0 || (Panel->GetChildAt(0) && Panel->GetChildAt(0)->GetClass() == EntryClass.Get());
+	if (Panel->GetChildrenCount() != Choices.Num() || !bSameKind)
 	{
 		Panel->ClearChildren();
 		for (int32 Index = 0; Index < Choices.Num(); ++Index)
 		{
-			Panel->AddChild(CreateWidget<UDwChoiceButtonWidget>(this, ChoiceButtonClass));
+			Panel->AddChild(CreateWidget<UDwChoiceButtonWidget>(this, EntryClass));
 		}
 	}
 	for (int32 Index = 0; Index < Choices.Num(); ++Index)
@@ -124,12 +139,16 @@ void UDwRunScreen::FillLines(UPanelWidget* Panel, TConstArrayView<FText> Lines, 
 	{
 		UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
 		Text->SetText(Line);
-		FSlateFontInfo Font = Text->GetFont();
+		FSlateFontInfo Font = LineFont.HasValidFont() ? LineFont : Text->GetFont();
 		Font.Size = FontSize;
 		Text->SetFont(Font);
-		Text->SetColorAndOpacity(FSlateColor(Color));
-		Text->SetShadowOffset(FVector2D(1.f, 1.f));
-		Text->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.85f));
+		const FLinearColor Ink = LineColor.A > 0.f ? LineColor : Color;
+		Text->SetColorAndOpacity(FSlateColor(Ink));
+		// Light text over the sea gets a shadow; ink on parchment none.
+		const bool bLight = Ink.GetLuminance() > 0.25f;
+		Text->SetShadowOffset(bLight ? FVector2D(1.f, 1.f) : FVector2D::ZeroVector);
+		Text->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, bLight ? 0.85f : 0.f));
+		Text->SetAutoWrapText(true);
 		Panel->AddChild(Text);
 	}
 }
@@ -163,7 +182,22 @@ void UDwMapNodeWidget::SetNode(const FDwMapNodeView& InNode, UDwMapViewModel* In
 	case EDwMapNodeState::Ahead:     Color = Node.Type == EDwNodeType::Boss ? BossColor : AheadColor; break;
 	}
 	NodeButton->SetBackgroundColor(Color);
-	LabelText->SetColorAndOpacity(FSlateColor(Node.State == EDwMapNodeState::Missed ? FLinearColor(0.5f, 0.5f, 0.5f) : FLinearColor(0.95f, 0.92f, 0.85f)));
+	LabelText->SetColorAndOpacity(FSlateColor(Node.State == EDwMapNodeState::Missed ? MissedLabelColor : LabelColor));
+	if (NodeIcon)
+	{
+		UTexture2D* Glyph = FightIcon;
+		switch (Node.Type)
+		{
+		case EDwNodeType::Shop:  Glyph = ShopIcon; break;
+		case EDwNodeType::Event: Glyph = EventIcon; break;
+		case EDwNodeType::Boss:  Glyph = BossIcon; break;
+		default: break;
+		}
+		NodeIcon->SetBrushFromTexture(Glyph);
+		NodeIcon->SetColorAndOpacity(FLinearColor(IconColor.R, IconColor.G, IconColor.B, Node.State == EDwMapNodeState::Missed ? 0.35f : IconColor.A));
+		NodeIcon->SetVisibility(Glyph ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+		LabelText->SetVisibility(Glyph ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible); // the glyph says it; the tooltip has the words
+	}
 	FText Reason;
 	const bool bCan = InMap && InMap->CanChoose(Node.Index, &Reason);
 	NodeButton->SetToolTipText(bCan ? Node.Tooltip : FText::Format(LOCTEXT("NodeTip", "{0}\n{1}"), Node.Tooltip, Reason));
@@ -326,7 +360,7 @@ void UDwRewardsScreen::NativeOnViewModelChanged()
 	HeadlineText->SetText(Rewards->GetHeadline());
 	FillLines(LootList, Rewards->GetLines(), 20, FLinearColor(0.95f, 0.92f, 0.85f));
 	OfferHintText->SetText(Rewards->GetNoOffersText());
-	FillChoices(OfferList, Rewards->GetOffers());
+	FillChoices(OfferList, Rewards->GetOffers(), /*bCards*/ true);
 	FillChoices(LearnerList, Rewards->GetLearners());
 	FillChoices(ForgetList, Rewards->GetForget());
 	const TArray<TObjectPtr<UDwChoiceViewModel>> Claim = { Rewards->GetClaim() };
@@ -344,7 +378,7 @@ void UDwLevelUpScreen::NativeOnViewModelChanged()
 	StatText->SetText(LevelUp->GetStatText());
 	QueueText->SetText(LevelUp->GetQueueText());
 	QueueText->SetVisibility(LevelUp->GetQueueText().IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
-	FillChoices(CardList, LevelUp->GetCards());
+	FillChoices(CardList, LevelUp->GetCards(), /*bCards*/ true);
 	if (!LevelUp->GetCards().IsEmpty())
 	{
 		PlayJuice(DwJuice::Highlight); // OnLevelUpShown hook (doc 14)
