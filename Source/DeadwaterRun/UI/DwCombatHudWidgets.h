@@ -12,6 +12,7 @@
 class UBorder;
 class UButton;
 class UHorizontalBox;
+class UImage;
 class UPanelWidget;
 class UProgressBar;
 class UTextBlock;
@@ -49,6 +50,8 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UHorizontalBox> FearPips;
 	/** Any panel (a wrap box in WBP_UnitCard, so many statuses wrap instead of clipping). */
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> StatusList;
+	/** The unit's face (FDwUnitView::Portrait). */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UImage> Portrait;
 
 	// Placeholder palette (art direction U6 pending; side colours move to DA_HighlightPalette_* with DW-216).
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor AllyColor = FLinearColor(0.25f, 0.55f, 1.f);
@@ -61,6 +64,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor FearOnColor = FLinearColor(0.75f, 0.45f, 1.f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor FearOffColor = FLinearColor(0.2f, 0.2f, 0.25f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") int32 StatusFontSize = 14;
+	/** HP bar fill per side (names keep AllyColor / EnemyColor). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor AllyBarColor = FLinearColor(0.25f, 0.55f, 1.f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor EnemyBarColor = FLinearColor(0.95f, 0.3f, 0.25f);
+	/** Shape of a Fear pip (tinted FearOnColor / FearOffColor); empty = a plain square. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FSlateBrush PipBrush;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float PipSize = 16.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FSlateFontInfo StatusFont;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor StatusChipColor = FLinearColor(0.3f, 0.22f, 0.05f, 0.95f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor StatusTextColor = FLinearColor(0.95f, 0.92f, 0.85f);
 
 private:
 	UFUNCTION() void HandleClicked();
@@ -89,19 +101,39 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> NameText;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> CostText;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> ReasonText;
+	/** The action's icon (FDwActionView::Icon), its description, and the outline shown while armed. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UImage> ActionIcon;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> DescText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> ArmedOutline;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor ReadyColor = FLinearColor(0.12f, 0.16f, 0.22f, 0.95f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor ArmedColor = FLinearColor(0.75f, 0.58f, 0.12f, 1.f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor DisabledColor = FLinearColor(0.08f, 0.08f, 0.09f, 0.9f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor NameColor = FLinearColor(0.95f, 0.92f, 0.85f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor DisabledNameColor = FLinearColor(0.55f, 0.55f, 0.58f);
+	/** How far a card rises when hovered / armed (Slate units, upwards). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float HoverLift = 26.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float ArmedLift = 40.f;
+
+public:
+	/** The card's place in the fanned hand (set by the HUD): tilt in degrees and how far it sits below the top of the arc. */
+	void SetFanPose(float AngleDegrees, float Drop);
+
+protected:
+	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 
 private:
 	UFUNCTION() void HandleClicked();
 	UFUNCTION() void HandleHovered();
+	void ApplyPose();
 
 	bool bWasEnabled = true;
 	bool bWasArmed = false;
+	bool bArmed = false;
+	bool bMouseOver = false;
+	float FanAngle = 0.f;
+	float FanDrop = 0.f;
 };
 
 /**
@@ -247,6 +279,18 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UVerticalBox> IntentList;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UWidget> PhaseBanner;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> PhaseBannerText;
+	// Art pass: "ROUND n" over "YOUR TURN", the selected pirate's plate, the strip behind hint / preview / message.
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> RoundText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> SelectedPanel;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UImage> SelectedPortrait;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> SelectedNameText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> SelectedInfoText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UProgressBar> SelectedHealthBar;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> SelectedHealthText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UProgressBar> SelectedManaBar;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> SelectedManaText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> SelectedBudgetText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> PromptPanel;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor AllyColor = FLinearColor(0.25f, 0.55f, 1.f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor EnemyColor = FLinearColor(0.95f, 0.3f, 0.25f);
@@ -255,6 +299,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor EndTurnColor = FLinearColor(0.16f, 0.2f, 0.27f, 0.95f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor EndTurnSuggestedColor = FLinearColor(0.75f, 0.58f, 0.12f, 1.f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") int32 PreviewFontSize = 20;
+	/** Preview line font (empty = the engine default at PreviewFontSize). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FSlateFontInfo PreviewFont;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor SelectedHealthColor = FLinearColor(0.66f, 0.2f, 0.16f);
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor SelectedManaColor = FLinearColor(0.18f, 0.36f, 0.58f);
+	/** The hand of action cards: tilt per card from the middle (degrees) and drop per card (Slate units). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float FanAnglePerCard = 0.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float FanDropPerCard = 0.f;
 
 private:
 	UFUNCTION() void HandleEndTurnClicked();
@@ -265,6 +316,8 @@ private:
 	void SyncList(UPanelWidget& Panel, TSubclassOf<TWidget> EntryClass, const TArray<TObjectPtr<TViewModel>>& ViewModels);
 	void RefreshShips(const UDwCombatHudViewModel& Hud);
 	void RefreshPrompt(const UDwCombatHudViewModel& Hud);
+	void RefreshSelected(const UDwCombatHudViewModel& Hud);
+	void FanActionCards();
 	void HideTurnBanner();
 	void HidePhaseBanner();
 	void RefreshBoss(const UDwCombatHudViewModel& Hud);

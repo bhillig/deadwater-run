@@ -26,7 +26,11 @@
 #include "Core/DwGameData.h"
 #include "EditorAssetLibrary.h"
 #include "Engine/DataTable.h"
+#include "Engine/Font.h"
+#include "Engine/FontFace.h"
 #include "Engine/Texture2D.h"
+#include "Components/Image.h"
+#include "Styling/SlateTypes.h"
 #include "Misc/FileHelper.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
@@ -60,6 +64,124 @@ namespace DwUIContent
 	const FLinearColor Bad(1.f, 0.45f, 0.35f);
 	const FLinearColor Mana(0.6f, 0.78f, 1.f);
 	const FLinearColor Clear(0.f, 0.f, 0.f, 0.f);
+
+	/**
+	 * Art direction "Ship's Log" (Brandon, 2026-11-20; mockups in Saved/UIDesign, direction B): parchment, ink, brass and
+	 * red wax, fonts Grenze (headings) and Texturina (body) from the Synty UI pack. Combat takes direction C's slim
+	 * steel top bar, rosters and End Turn ("Iron Tide"). Every colour and brush lives here, nowhere else.
+	 */
+	namespace Ink
+	{
+		const FLinearColor Paper = FLinearColor::FromSRGBColor(FColor(236, 220, 180));
+		const FLinearColor PaperDark = FLinearColor::FromSRGBColor(FColor(214, 192, 140));
+		const FLinearColor Text = FLinearColor::FromSRGBColor(FColor(58, 38, 20));
+		const FLinearColor Dim = FLinearColor::FromSRGBColor(FColor(107, 74, 42));
+		const FLinearColor Red = FLinearColor::FromSRGBColor(FColor(154, 43, 29));
+		const FLinearColor Blue = FLinearColor::FromSRGBColor(FColor(47, 93, 147));
+		const FLinearColor Hp = FLinearColor::FromSRGBColor(FColor(168, 50, 42));
+		const FLinearColor Mp = FLinearColor::FromSRGBColor(FColor(47, 93, 147));
+		const FLinearColor Track = FLinearColor(0.23f, 0.15f, 0.08f, 0.18f);
+		const FLinearColor Seal = FLinearColor::FromSRGBColor(FColor(160, 44, 28));
+	}
+	namespace Steel
+	{
+		const FLinearColor Panel = FLinearColor(0.012f, 0.022f, 0.032f, 0.9f);
+		const FLinearColor Line = FLinearColor::FromSRGBColor(FColor(74, 93, 109));
+		const FLinearColor Text = FLinearColor::FromSRGBColor(FColor(230, 237, 242));
+		const FLinearColor Dim = FLinearColor::FromSRGBColor(FColor(147, 164, 178));
+		const FLinearColor Sea = FLinearColor::FromSRGBColor(FColor(79, 214, 196));
+		const FLinearColor SeaLight = FLinearColor::FromSRGBColor(FColor(159, 240, 228));
+		const FLinearColor SeaInk = FLinearColor::FromSRGBColor(FColor(6, 34, 30));
+		const FLinearColor Red = FLinearColor::FromSRGBColor(FColor(224, 73, 59));
+		const FLinearColor RedText = FLinearColor::FromSRGBColor(FColor(255, 179, 168));
+		const FLinearColor Mp = FLinearColor::FromSRGBColor(FColor(62, 143, 240));
+		const FLinearColor Track = FLinearColor(1.f, 1.f, 1.f, 0.09f);
+		const FLinearColor Gold = FLinearColor::FromSRGBColor(FColor(233, 183, 79));
+	}
+
+	// Fonts made from the pack's font faces (CreateUIFonts); set before any widget is built.
+	UFont* HeadingFont = nullptr;
+	UFont* BodyFont = nullptr;
+	const FString FontFolder = TEXT("/Game/DeadwaterRun/UI/Fonts");
+	const FString PackTextures = TEXT("/Game/Synty/UIFantasyWarriorHUD/Textures");
+
+	UTexture2D* PackTexture(const FString& Relative)
+	{
+		const FString Path = PackTextures / Relative;
+		return LoadObject<UTexture2D>(nullptr, *FString::Printf(TEXT("%s.%s"), *Path, *FPackageName::GetShortName(Path)), nullptr, LOAD_NoWarn | LOAD_Quiet);
+	}
+
+	/** A pack texture drawn as a 9-slice box (Margin = fraction kept unstretched at each edge), tinted. */
+	FSlateBrush TextureBrush(const FString& Relative, const FLinearColor& Tint, float Margin = 0.25f, ESlateBrushDrawType::Type DrawAs = ESlateBrushDrawType::Box)
+	{
+		FSlateBrush Brush;
+		if (UTexture2D* Texture = PackTexture(Relative))
+		{
+			Brush.SetResourceObject(Texture);
+			Brush.ImageSize = FVector2D(Texture->GetSizeX(), Texture->GetSizeY());
+		}
+		Brush.DrawAs = DrawAs;
+		Brush.Margin = FMargin(Margin);
+		Brush.TintColor = FSlateColor(Tint);
+		return Brush;
+	}
+
+	/** Flat fill with rounded corners and an optional outline (bars, tags, kbd boxes, steel panels). */
+	FSlateBrush RoundedBrush(const FLinearColor& Fill, float Radius, const FLinearColor& Outline = FLinearColor::Transparent, float OutlineWidth = 0.f)
+	{
+		FSlateBrush Brush;
+		Brush.DrawAs = ESlateBrushDrawType::RoundedBox;
+		Brush.TintColor = FSlateColor(Fill);
+		Brush.OutlineSettings = FSlateBrushOutlineSettings(FVector4(Radius, Radius, Radius, Radius), FSlateColor(Outline), OutlineWidth);
+		Brush.OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+		return Brush;
+	}
+
+	FSlateBrush ImageBrush(UTexture2D* Texture, const FVector2D& Size)
+	{
+		FSlateBrush Brush;
+		Brush.SetResourceObject(Texture);
+		Brush.ImageSize = Size;
+		Brush.DrawAs = ESlateBrushDrawType::Image;
+		return Brush;
+	}
+
+	/** A progress bar style: Track behind, a white fill the widget tints at runtime (SetFillColorAndOpacity). */
+	FProgressBarStyle BarStyle(const FLinearColor& Track, float Radius, const FLinearColor& Outline = FLinearColor::Transparent, float OutlineWidth = 0.f)
+	{
+		FProgressBarStyle Style;
+		Style.SetBackgroundImage(RoundedBrush(Track, Radius, Outline, OutlineWidth));
+		Style.SetFillImage(RoundedBrush(FLinearColor::White, Radius));
+		Style.SetMarqueeImage(RoundedBrush(FLinearColor::White, Radius));
+		return Style;
+	}
+
+	FButtonStyle ButtonStyle(const FSlateBrush& Normal, float HoverBoost = 1.12f, float PressDim = 0.88f)
+	{
+		auto Scaled = [&Normal](float Factor)
+		{
+			FSlateBrush Brush = Normal;
+			const FLinearColor Base = Normal.TintColor.GetSpecifiedColor();
+			Brush.TintColor = FSlateColor(FLinearColor(Base.R * Factor, Base.G * Factor, Base.B * Factor, Base.A));
+			return Brush;
+		};
+		FButtonStyle Style;
+		Style.SetNormal(Normal);
+		Style.SetHovered(Scaled(HoverBoost));
+		Style.SetPressed(Scaled(PressDim));
+		Style.SetDisabled(Scaled(0.7f));
+		Style.SetNormalPadding(FMargin(0.f));
+		Style.SetPressedPadding(FMargin(0.f, 2.f, 0.f, 0.f));
+		return Style;
+	}
+
+	FSlateFontInfo Font(bool bHeading, int32 Size, float LetterSpacing = 0.f)
+	{
+		FSlateFontInfo Info(bHeading ? static_cast<UObject*>(HeadingFont) : static_cast<UObject*>(BodyFont), Size, bHeading ? FName(TEXT("Bold")) : FName(TEXT("Regular")));
+		Info.LetterSpacing = static_cast<int32>(LetterSpacing);
+		return Info;
+	}
+
 
 	template <typename T>
 	T* Load(const FString& Folder, const FString& Name)
@@ -161,13 +283,22 @@ namespace DwUIContent
 		{
 			UTextBlock* Block = Make<UTextBlock>(Name);
 			Block->SetText(FText::FromString(Initial));
-			FSlateFontInfo Font = Block->GetFont();
-			Font.Size = Size;
-			Font.TypefaceFontName = bBold ? FName(TEXT("Bold")) : FName(TEXT("Regular"));
-			Block->SetFont(Font);
+			if (HeadingFont && BodyFont)
+			{
+				Block->SetFont(DwUIContent::Font(bBold, Size));
+			}
+			else
+			{
+				FSlateFontInfo Font = Block->GetFont();
+				Font.Size = Size;
+				Font.TypefaceFontName = bBold ? FName(TEXT("Bold")) : FName(TEXT("Regular"));
+				Block->SetFont(Font);
+			}
 			Block->SetColorAndOpacity(FSlateColor(Color));
-			Block->SetShadowOffset(FVector2D(1.f, 1.f));
-			Block->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.85f));
+			// Light text gets a drop shadow over the 3D scene; ink on parchment gets none.
+			const bool bLight = Color.GetLuminance() > 0.25f;
+			Block->SetShadowOffset(bLight ? FVector2D(1.f, 1.f) : FVector2D::ZeroVector);
+			Block->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, bLight ? 0.85f : 0.f));
 			Block->SetVisibility(ESlateVisibility::HitTestInvisible);
 			return Block;
 		}
@@ -285,106 +416,237 @@ namespace DwUIContent
 		return B.Finish(Root);
 	}
 
+	// -----------------------------------------------------------------------------------------------------------------
+	// Shared pieces (art direction in DwUIContent::Ink / Steel)
+
+	UBorder* Framed(FTreeBuilder& B, const TCHAR* Name, const FSlateBrush& Brush, const FMargin& Padding)
+	{
+		UBorder* Border = B.Make<UBorder>(Name);
+		Border->SetBrush(Brush);
+		Border->SetPadding(Padding);
+		Border->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		return Border;
+	}
+
+	USizeBox* Sized(FTreeBuilder& B, UWidget* Content, float Width, float Height, const TCHAR* Name = nullptr)
+	{
+		USizeBox* Box = B.Make<USizeBox>(Name);
+		if (Width > 0.f) { Box->SetWidthOverride(Width); }
+		if (Height > 0.f) { Box->SetHeightOverride(Height); }
+		Box->SetContent(Content);
+		Box->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		return Box;
+	}
+
+	UImage* Picture(FTreeBuilder& B, const TCHAR* Name, UTexture2D* Texture, const FVector2D& Size)
+	{
+		UImage* Image = B.Make<UImage>(Name);
+		Image->SetBrush(ImageBrush(Texture, Size));
+		Image->SetVisibility(ESlateVisibility::HitTestInvisible);
+		return Image;
+	}
+
+	UTexture2D* Icon(const TCHAR* Name)
+	{
+		const FString Path = FString(TEXT("/Game/DeadwaterRun/UI/Icons/")) + Name;
+		return LoadObject<UTexture2D>(nullptr, *FString::Printf(TEXT("%s.%s"), *Path, Name), nullptr, LOAD_NoWarn | LOAD_Quiet);
+	}
+
+	FSlateBrush PaperBrush() { return TextureBrush(TEXT("FantasyWarrior/T_FantasyWarrior_Box_Parchment02"), Ink::Paper, 0.3f); }
+	FSlateBrush PaperStripBrush() { return TextureBrush(TEXT("HUD/T_HUD_FantasyWarrior_Box_Medium_Parchment02"), Ink::Paper, 0.3f); }
+	FSlateBrush PaperCardBrush() { return TextureBrush(TEXT("HUD/T_HUD_FantasyWarrior_Box_Small_Parchment02"), Ink::Paper, 0.3f); }
+	FSlateBrush SteelPanelBrush() { return RoundedBrush(Steel::Panel, 3.f, Steel::Line, 1.f); }
+
+	/** B: a rounded ink-outlined bar with its "12 / 30" label (white, shadowed) on it. */
+	UOverlay* InkBar(FTreeBuilder& B, const TCHAR* BarName, const TCHAR* TextName, float Width, float Height, int32 FontSize)
+	{
+		UOverlay* Overlay = B.Make<UOverlay>();
+		UProgressBar* Progress = B.Make<UProgressBar>(BarName);
+		Progress->SetWidgetStyle(BarStyle(Ink::Track, Height * 0.5f, Ink::Dim, 2.f));
+		Progress->SetPercent(0.7f);
+		UOverlaySlot* BarSlot = Overlay->AddChildToOverlay(Sized(B, Progress, Width, Height));
+		BarSlot->SetHorizontalAlignment(HAlign_Fill);
+		UTextBlock* Label = B.Text(TextName, TEXT("140 / 140"), FontSize, Light, /*bBold*/ false);
+		Label->SetShadowOffset(FVector2D(1.f, 1.f));
+		Label->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.9f));
+		UOverlaySlot* LabelSlot = Overlay->AddChildToOverlay(Label);
+		LabelSlot->SetHorizontalAlignment(HAlign_Center);
+		LabelSlot->SetVerticalAlignment(VAlign_Center);
+		Overlay->SetVisibility(ESlateVisibility::HitTestInvisible);
+		return Overlay;
+	}
+
+	/** C: a slim bar, no label (the number sits beside it). */
+	USizeBox* SteelBar(FTreeBuilder& B, const TCHAR* BarName, float Width, float Height)
+	{
+		UProgressBar* Progress = B.Make<UProgressBar>(BarName);
+		Progress->SetWidgetStyle(BarStyle(Steel::Track, 1.f));
+		Progress->SetPercent(0.7f);
+		Progress->SetVisibility(ESlateVisibility::HitTestInvisible);
+		return Sized(B, Progress, Width, Height);
+	}
+
+	/** C: a key cap ("SPACE"). */
+	UBorder* KeyCap(FTreeBuilder& B, const TCHAR* TextName, const TCHAR* Initial, const FLinearColor& Color)
+	{
+		UBorder* Cap = Framed(B, nullptr, RoundedBrush(FLinearColor(0.f, 0.f, 0.f, 0.12f), 3.f, Color, 1.f), FMargin(7.f, 1.f));
+		UTextBlock* Text = B.Text(TextName, Initial, 13, Color, /*bBold*/ false);
+		FSlateFontInfo Info = Text->GetFont();
+		Info.LetterSpacing = 120;
+		Text->SetFont(Info);
+		Cap->SetContent(Text);
+		Cap->SetVisibility(ESlateVisibility::HitTestInvisible);
+		return Cap;
+	}
+
+	UTextBlock* Caps(FTreeBuilder& B, const TCHAR* Name, const TCHAR* Initial, int32 Size, const FLinearColor& Color, int32 LetterSpacing = 120)
+	{
+		UTextBlock* Text = B.Text(Name, Initial, Size, Color);
+		FSlateFontInfo Info = Text->GetFont();
+		Info.LetterSpacing = LetterSpacing;
+		Text->SetFont(Info);
+		return Text;
+	}
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// Combat HUD pieces (hybrid: B parchment cards and plate, C steel rosters / top bar / End Turn)
+
+	/** C roster row: portrait in a 2 px frame (selected / hovered / acting tint), name, slim HP bar, numbers, Fear diamonds. */
 	bool BuildUnitCard(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
-		Root->SetWidthOverride(210.f);
+		Root->SetWidthOverride(250.f);
 		Root->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
 		UButton* Button = B.Make<UButton>(TEXT("CardButton"));
-		Button->SetBackgroundColor(Clear); // the frame below draws the card; the button only takes clicks
+		FButtonStyle Style = ButtonStyle(RoundedBrush(FLinearColor(0.f, 0.f, 0.f, 0.f), 3.f));
+		Style.SetHovered(RoundedBrush(FLinearColor(1.f, 1.f, 1.f, 0.06f), 3.f));
+		Style.SetPressed(RoundedBrush(FLinearColor(1.f, 1.f, 1.f, 0.1f), 3.f));
+		Button->SetStyle(Style);
 		Root->SetContent(Button);
-		// Frame = a 3 px outline (selected / hovered / acting colour), Body = the dark card behind the text.
-		UBorder* Frame = B.Make<UBorder>(TEXT("Frame"));
-		Frame->SetBrushColor(Panel);
-		Frame->SetPadding(FMargin(3.f));
-		Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
-		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Frame)))
+
+		UHorizontalBox* Row = B.Make<UHorizontalBox>();
+		Row->SetVisibility(ESlateVisibility::HitTestInvisible);
+		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Row)))
 		{
-			Slot->SetPadding(FMargin(0.f));
+			Slot->SetPadding(FMargin(2.f));
 			Slot->SetHorizontalAlignment(HAlign_Fill);
-			Slot->SetVerticalAlignment(VAlign_Fill);
 		}
-		UBorder* Body = B.Make<UBorder>();
-		Body->SetBrushColor(Panel);
-		Body->SetPadding(FMargin(8.f, 5.f));
-		Frame->SetContent(Body);
+		UBorder* Frame = Framed(B, TEXT("Frame"), RoundedBrush(FLinearColor::White, 2.f), FMargin(2.f));
+		UBorder* PortraitBack = Framed(B, nullptr, RoundedBrush(FLinearColor::FromSRGBColor(FColor(36, 52, 66)), 1.f), FMargin(0.f));
+		PortraitBack->SetContent(Picture(B, TEXT("Portrait"), Icon(TEXT("T_ICON_Portrait_Male_01")), FVector2D(60.f, 60.f)));
+		Frame->SetContent(Sized(B, PortraitBack, 60.f, 60.f));
+		AddColumn(*Row, Frame, FMargin(0.f, 0.f, 10.f, 0.f), false, VAlign_Top);
 
-		UVerticalBox* Rows = B.Make<UVerticalBox>();
-		Body->SetContent(Rows);
-
-		UTextBlock* Name = B.Text(TEXT("NameText"), TEXT("Swordsman"), 20, Light);
+		UVerticalBox* Info = B.Make<UVerticalBox>();
+		AddColumn(*Row, Info, FMargin(0.f), /*bFill*/ true, VAlign_Top);
+		UHorizontalBox* NameRow = B.Make<UHorizontalBox>();
+		UTextBlock* Name = B.Text(TEXT("NameText"), TEXT("Swordsman"), 17, Steel::Text, /*bBold*/ false);
 		Name->SetClipping(EWidgetClipping::ClipToBounds);
-		Name->SetTextOverflowPolicy(ETextOverflowPolicy::Ellipsis); // long names never push the card wider
-		AddRow(*Rows, Name, FMargin(0.f, 0.f, 0.f, 4.f));
-
-		AddRow(*Rows, B.Bar(TEXT("HealthBar"), TEXT("HealthText"), 22.f, 16), FMargin(0.f, 0.f, 0.f, 3.f));
-		AddRow(*Rows, B.Bar(TEXT("ManaBar"), TEXT("ManaText"), 18.f, 14), FMargin(0.f, 0.f, 0.f, 4.f));
-
-		UHorizontalBox* Footer = B.Make<UHorizontalBox>();
-		AddColumn(*Footer, B.Text(TEXT("BudgetText"), TEXT("Move  Action"), 15, Dim, /*bBold*/ false), FMargin(0.f, 0.f, 8.f, 0.f), /*bFill*/ true);
+		Name->SetTextOverflowPolicy(ETextOverflowPolicy::Ellipsis);
+		AddColumn(*NameRow, Name, FMargin(0.f), /*bFill*/ true);
+		AddRow(*Info, NameRow);
+		AddRow(*Info, SteelBar(B, TEXT("HealthBar"), 170.f, 8.f), FMargin(0.f, 2.f, 0.f, 1.f));
+		UHorizontalBox* Numbers = B.Make<UHorizontalBox>();
+		AddColumn(*Numbers, B.Text(TEXT("HealthText"), TEXT("118 / 150"), 12, Steel::Text, /*bBold*/ false), FMargin(0.f), /*bFill*/ true);
+		AddColumn(*Numbers, B.Text(TEXT("ManaText"), TEXT("20 / 20"), 12, Steel::Dim, /*bBold*/ false));
 		UHorizontalBox* FearRow = B.Make<UHorizontalBox>(TEXT("FearRow"));
-		AddColumn(*FearRow, B.Text(nullptr, TEXT("Fear"), 15, Dim, false), FMargin(0.f, 0.f, 6.f, 0.f));
 		AddColumn(*FearRow, B.Make<UHorizontalBox>(TEXT("FearPips")));
-		AddColumn(*Footer, FearRow);
-		AddRow(*Rows, Footer);
-		// Captain / Acting / Down on its own line (collapsed when empty), so it never crowds the footer.
-		AddRow(*Rows, B.Text(TEXT("RoleText"), TEXT("Captain"), 15, Gold), FMargin(0.f, 2.f, 0.f, 0.f));
-
+		AddColumn(*Numbers, FearRow);
+		AddRow(*Info, Numbers);
+		AddRow(*Info, SteelBar(B, TEXT("ManaBar"), 170.f, 4.f), FMargin(0.f, 1.f, 0.f, 1.f));
+		UHorizontalBox* Footer = B.Make<UHorizontalBox>();
+		AddColumn(*Footer, B.Text(TEXT("RoleText"), TEXT("Captain"), 12, Steel::Gold, /*bBold*/ false), FMargin(0.f, 0.f, 6.f, 0.f));
+		AddColumn(*Footer, B.Text(TEXT("BudgetText"), TEXT("Move  Action"), 12, Steel::Dim, /*bBold*/ false), FMargin(0.f), /*bFill*/ true);
+		AddRow(*Info, Footer);
 		UWrapBox* Statuses = B.Make<UWrapBox>(TEXT("StatusList"));
-		Statuses->SetInnerSlotPadding(FVector2D(4.f, 4.f));
+		Statuses->SetInnerSlotPadding(FVector2D(3.f, 3.f));
 		Statuses->SetVisibility(ESlateVisibility::HitTestInvisible);
-		AddRow(*Rows, Statuses, FMargin(0.f, 4.f, 0.f, 0.f));
+		AddRow(*Info, Statuses, FMargin(0.f, 2.f, 0.f, 0.f));
 		return B.Finish(Root);
 	}
 
+	/** B card in the hand: hotkey and cost, the rendered icon, name, description or why it can't be played. */
 	bool BuildActionButton(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
-		Root->SetWidthOverride(180.f);
-		Root->SetMinDesiredHeight(92.f);
+		Root->SetWidthOverride(176.f);
+		Root->SetHeightOverride(246.f);
 		Root->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		UOverlay* Layers = B.Make<UOverlay>();
+		Layers->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		Root->SetContent(Layers);
 
 		UButton* Button = B.Make<UButton>(TEXT("ActionButton"));
-		Root->SetContent(Button);
+		Button->SetStyle(ButtonStyle(PaperCardBrush(), 1.06f, 0.94f));
+		UOverlaySlot* ButtonSlot = Layers->AddChildToOverlay(Button);
+		ButtonSlot->SetHorizontalAlignment(HAlign_Fill);
+		ButtonSlot->SetVerticalAlignment(VAlign_Fill);
 		UVerticalBox* Rows = B.Make<UVerticalBox>();
+		Rows->SetVisibility(ESlateVisibility::HitTestInvisible);
 		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->SetContent(Rows)))
 		{
-			Slot->SetPadding(FMargin(8.f, 6.f));
+			Slot->SetPadding(FMargin(14.f, 12.f, 14.f, 10.f));
 			Slot->SetHorizontalAlignment(HAlign_Fill);
-			Slot->SetVerticalAlignment(VAlign_Top);
+			Slot->SetVerticalAlignment(VAlign_Fill);
 		}
 		UHorizontalBox* Header = B.Make<UHorizontalBox>();
-		AddColumn(*Header, B.Text(TEXT("HotkeyText"), TEXT("1"), 16, Gold), FMargin(0.f), /*bFill*/ true);
-		AddColumn(*Header, B.Text(TEXT("CostText"), TEXT("2 MP"), 16, Mana));
+		AddColumn(*Header, B.Text(TEXT("HotkeyText"), TEXT("1"), 20, Ink::Text), FMargin(0.f), /*bFill*/ true);
+		AddColumn(*Header, B.Text(TEXT("CostText"), TEXT("8 MP"), 16, Ink::Blue));
 		AddRow(*Rows, Header);
-		UTextBlock* Name = B.Text(TEXT("NameText"), TEXT("Cutlass"), 19, Light);
-		AddRow(*Rows, Name, FMargin(0.f, 2.f, 0.f, 2.f));
-		UTextBlock* Reason = B.Text(TEXT("ReasonText"), TEXT("No target in reach"), 14, Bad, /*bBold*/ false);
+		UImage* IconImage = Picture(B, TEXT("ActionIcon"), Icon(TEXT("T_ICON_Pirate_Rifle_01")), FVector2D(96.f, 96.f));
+		AddRow(*Rows, IconImage, FMargin(0.f, -4.f, 0.f, 0.f), HAlign_Center);
+		UTextBlock* Name = B.Text(TEXT("NameText"), TEXT("Musket Shot"), 20, Ink::Text);
+		Name->SetJustification(ETextJustify::Center);
+		Name->SetAutoWrapText(true);
+		AddRow(*Rows, Name, FMargin(0.f, 0.f, 0.f, 2.f));
+		UTextBlock* Description = B.Text(TEXT("DescText"), TEXT("24-30 damage. Range 6."), 12, Ink::Dim, /*bBold*/ false);
+		Description->SetJustification(ETextJustify::Center);
+		Description->SetAutoWrapText(true);
+		AddRow(*Rows, Description);
+		UTextBlock* Reason = B.Text(TEXT("ReasonText"), TEXT("Stand next to a loaded cannon"), 13, Ink::Red, /*bBold*/ false);
+		Reason->SetJustification(ETextJustify::Center);
 		Reason->SetAutoWrapText(true);
 		AddRow(*Rows, Reason);
+
+		// Armed (picked, waiting for a target): a red ink outline on top of the card.
+		UBorder* Armed = Framed(B, TEXT("ArmedOutline"), RoundedBrush(FLinearColor::Transparent, 8.f, Ink::Red, 3.f), FMargin(0.f));
+		Armed->SetVisibility(ESlateVisibility::HitTestInvisible);
+		UOverlaySlot* ArmedSlot = Layers->AddChildToOverlay(Armed);
+		ArmedSlot->SetHorizontalAlignment(HAlign_Fill);
+		ArmedSlot->SetVerticalAlignment(VAlign_Fill);
+		Root->SetClipping(EWidgetClipping::ClipToBounds); // long descriptions never spill past the card
 		return B.Finish(Root);
 	}
 
 	bool BuildFloatingText(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
-		UTextBlock* Value = B.Text(TEXT("ValueText"), TEXT("-25"), 30, Light);
+		UTextBlock* Value = B.Text(TEXT("ValueText"), TEXT("-25"), 34, Light);
 		Value->SetJustification(ETextJustify::Center);
+		FSlateFontInfo Info = Value->GetFont();
+		Info.OutlineSettings.OutlineSize = 2;
+		Info.OutlineSettings.OutlineColor = FLinearColor(0.08f, 0.04f, 0.02f, 0.95f);
+		Value->SetFont(Info);
 		Value->SetShadowOffset(FVector2D(2.f, 2.f));
 		return B.Finish(Value);
 	}
 
-	/** "YOUR SHIP" over a 360 px bar with "250 / 250" on it. */
+	/** C top bar half: "YOUR SHIP   250 / 250" over a slim bar. */
 	UVerticalBox* ShipPanel(FTreeBuilder& B, const TCHAR* PanelName, const TCHAR* Title, const TCHAR* BarName, const TCHAR* TextName,
-		const FLinearColor& TitleColor, EHorizontalAlignment Align)
+		const FLinearColor& TitleColor, bool bMirror)
 	{
 		UVerticalBox* Box = B.Make<UVerticalBox>(PanelName);
 		Box->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		AddRow(*Box, B.Text(nullptr, Title, 18, TitleColor), FMargin(0.f, 0.f, 0.f, 4.f), Align);
-		AddRow(*Box, B.Bar(BarName, TextName, 28.f, 18, 360.f), FMargin(0.f), Align);
+		UHorizontalBox* Labels = B.Make<UHorizontalBox>();
+		UTextBlock* Name = Caps(B, nullptr, Title, 15, TitleColor);
+		UTextBlock* Numbers = B.Text(TextName, TEXT("250 / 250"), 15, Steel::Text, /*bBold*/ false);
+		AddColumn(*Labels, bMirror ? static_cast<UWidget*>(Numbers) : Name, FMargin(0.f), /*bFill*/ true);
+		AddColumn(*Labels, bMirror ? static_cast<UWidget*>(Name) : Numbers);
+		AddRow(*Box, Labels, FMargin(0.f, 0.f, 0.f, 4.f));
+		AddRow(*Box, SteelBar(B, BarName, 280.f, 10.f));
 		return Box;
 	}
 
@@ -678,41 +940,39 @@ namespace DwUIContent
 	// Kraken HUD (DW-303)
 
 	/** "1  Tentacle Slam" over "Swordsman's tile (step off to dodge)" and "50 damage", on a dark red card. */
+	/** C: one telegraphed Kraken move under the enemy roster (DW-303, B6); frame tint set at runtime. */
 	bool BuildIntent(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
 		USizeBox* Root = B.Make<USizeBox>(TEXT("Root"));
-		Root->SetWidthOverride(400.f);
+		Root->SetWidthOverride(360.f);
 		Root->SetVisibility(ESlateVisibility::HitTestInvisible);
-		UBorder* Frame = B.Make<UBorder>(TEXT("Frame"));
-		Frame->SetBrushColor(FLinearColor(0.35f, 0.12f, 0.1f, 0.92f));
-		Frame->SetPadding(FMargin(10.f, 6.f));
+		UBorder* Frame = Framed(B, TEXT("Frame"), RoundedBrush(FLinearColor::White, 3.f), FMargin(3.f, 0.f, 0.f, 0.f));
 		Root->SetContent(Frame);
-
+		UBorder* Body = Framed(B, nullptr, RoundedBrush(Steel::Panel, 2.f), FMargin(10.f, 6.f));
+		Frame->SetContent(Body);
 		UHorizontalBox* Columns = B.Make<UHorizontalBox>();
-		Frame->SetContent(Columns);
-		AddColumn(*Columns, B.Text(TEXT("OrderText"), TEXT("1"), 26, Gold), FMargin(0.f, 0.f, 10.f, 0.f), false, VAlign_Top);
+		Body->SetContent(Columns);
+		AddColumn(*Columns, B.Text(TEXT("OrderText"), TEXT("1"), 24, Steel::Gold), FMargin(0.f, 0.f, 10.f, 0.f), false, VAlign_Top);
 		UVerticalBox* Rows = B.Make<UVerticalBox>();
 		AddColumn(*Columns, Rows, FMargin(0.f), /*bFill*/ true, VAlign_Top);
-		AddRow(*Rows, B.Text(TEXT("MoveText"), TEXT("Tentacle Slam"), 20, Light));
-		UTextBlock* Target = B.Text(TEXT("TargetText"), TEXT("Swordsman's tile  (step off to dodge)"), 16, Gold, /*bBold*/ false);
+		AddRow(*Rows, Caps(B, TEXT("MoveText"), TEXT("Tentacle Slam"), 17, Steel::Text, 60));
+		UTextBlock* Target = B.Text(TEXT("TargetText"), TEXT("Swordsman's tile  (step off to dodge)"), 14, Steel::Dim, /*bBold*/ false);
 		Target->SetAutoWrapText(true);
 		AddRow(*Rows, Target, FMargin(0.f, 1.f, 0.f, 0.f));
-		UTextBlock* Effect = B.Text(TEXT("EffectText"), TEXT("50 damage"), 16, Light, /*bBold*/ false);
+		UTextBlock* Effect = B.Text(TEXT("EffectText"), TEXT("50 damage"), 14, Steel::RedText, /*bBold*/ false);
 		Effect->SetAutoWrapText(true);
 		AddRow(*Rows, Effect, FMargin(0.f, 1.f, 0.f, 0.f));
 		return B.Finish(Root);
 	}
 
-	/** The intent text that floats above the Kraken's body. */
+	/** The intent that floats above the Kraken's body: a C steel tag. */
 	bool BuildIntentMarker(UWidgetBlueprint& Blueprint, TArray<FString>& Log)
 	{
 		FTreeBuilder B(Blueprint, Log);
-		UBorder* Root = B.Make<UBorder>(TEXT("Root"));
-		Root->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, 0.6f));
-		Root->SetPadding(FMargin(10.f, 4.f));
+		UBorder* Root = Framed(B, TEXT("Root"), SteelPanelBrush(), FMargin(12.f, 5.f));
 		Root->SetVisibility(ESlateVisibility::HitTestInvisible);
-		UTextBlock* Text = B.Text(TEXT("MarkerText"), TEXT("Tentacle Slam: Swordsman's tile"), 18, Gold);
+		UTextBlock* Text = B.Text(TEXT("MarkerText"), TEXT("Tentacle Slam: Swordsman's tile"), 18, Steel::Gold);
 		Text->SetJustification(ETextJustify::Center);
 		Root->SetContent(Text);
 		return B.Finish(Root);
@@ -724,111 +984,243 @@ namespace DwUIContent
 		UCanvasPanel* Root = B.Make<UCanvasPanel>(TEXT("Root"));
 		Root->SetVisibility(ESlateVisibility::SelfHitTestInvisible); // empty space clicks through to the board
 
-		// Top: ships left and right, round and side in the middle.
-		Place(*Root, ShipPanel(B, TEXT("PlayerShipPanel"), TEXT("YOUR SHIP"), TEXT("PlayerShipBar"), TEXT("PlayerShipText"),
-			FLinearColor(0.45f, 0.7f, 1.f), HAlign_Left), FVector2D(0.f, 0.f), FVector2D(24.f, 16.f));
-		Place(*Root, ShipPanel(B, TEXT("EnemyShipPanel"), TEXT("ENEMY SHIP"), TEXT("EnemyShipBar"), TEXT("EnemyShipText"),
-			FLinearColor(1.f, 0.5f, 0.42f), HAlign_Right), FVector2D(1.f, 0.f), FVector2D(-24.f, 16.f));
-		Place(*Root, B.Text(TEXT("TurnText"), TEXT("Round 1  -  YOUR TURN"), 26, Gold), FVector2D(0.5f, 0.f), FVector2D(0.f, 20.f));
-
-		// Kraken fight (DW-303): the boss bar takes the enemy ship bar's place (there is no enemy ship), title and
-		// phase over a 420 px bar, tentacles and their damage cut on the title row.
+		// C top bar: our hull | ROUND n / YOUR TURN | their hull, or the Kraken's bar in its place (DW-303).
+		UBorder* TopBar = Framed(B, nullptr, SteelPanelBrush(), FMargin(20.f, 10.f));
+		UHorizontalBox* Top = B.Make<UHorizontalBox>();
+		Top->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		TopBar->SetContent(Top);
+		AddColumn(*Top, ShipPanel(B, TEXT("PlayerShipPanel"), TEXT("YOUR SHIP"), TEXT("PlayerShipBar"), TEXT("PlayerShipText"), Steel::Text, false));
+		UVerticalBox* Turn = B.Make<UVerticalBox>();
+		Turn->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		AddRow(*Turn, Caps(B, TEXT("RoundText"), TEXT("ROUND 1"), 13, Steel::Dim, 300), FMargin(0.f), HAlign_Center);
+		AddRow(*Turn, Caps(B, TEXT("TurnText"), TEXT("YOUR TURN"), 26, Steel::SeaLight, 80), FMargin(0.f), HAlign_Center);
+		AddColumn(*Top, Sized(B, Turn, 220.f, 0.f), FMargin(16.f, 0.f));
+		UOverlay* TheirSide = B.Make<UOverlay>();
+		TheirSide->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		TheirSide->AddChildToOverlay(ShipPanel(B, TEXT("EnemyShipPanel"), TEXT("ENEMY SHIP"), TEXT("EnemyShipBar"), TEXT("EnemyShipText"), Steel::RedText, true));
 		UVerticalBox* BossBox = B.Make<UVerticalBox>(TEXT("BossPanel"));
 		BossBox->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		UHorizontalBox* BossTitle = B.Make<UHorizontalBox>();
-		AddColumn(*BossTitle, B.Text(TEXT("BossPhaseText"), TEXT("ENRAGED"), 18, FLinearColor(1.f, 0.25f, 0.2f)), FMargin(0.f, 0.f, 10.f, 0.f));
-		AddColumn(*BossTitle, B.Text(TEXT("BossTentacleText"), TEXT("Tentacles 3/4   -10% damage"), 16, Dim, /*bBold*/ false), FMargin(0.f, 0.f, 12.f, 0.f));
-		AddColumn(*BossTitle, B.Text(TEXT("BossNameText"), TEXT("The Kraken"), 18, FLinearColor(1.f, 0.5f, 0.42f)));
-		AddRow(*BossBox, BossTitle, FMargin(0.f, 0.f, 0.f, 4.f), HAlign_Right);
-		AddRow(*BossBox, B.Bar(TEXT("BossHealthBar"), TEXT("BossHealthText"), 28.f, 18, 420.f), FMargin(0.f), HAlign_Right);
-		Place(*Root, BossBox, FVector2D(1.f, 0.f), FVector2D(-24.f, 16.f));
+		AddColumn(*BossTitle, Caps(B, TEXT("BossPhaseText"), TEXT("ENRAGED"), 15, Steel::Red), FMargin(0.f, 0.f, 8.f, 0.f));
+		AddColumn(*BossTitle, B.Text(TEXT("BossTentacleText"), TEXT("Tentacles 3/4  -10%"), 13, Steel::Dim, /*bBold*/ false), FMargin(0.f), /*bFill*/ true);
+		AddColumn(*BossTitle, B.Text(TEXT("BossHealthText"), TEXT("476 / 500"), 15, Steel::Text, /*bBold*/ false), FMargin(8.f, 0.f));
+		AddColumn(*BossTitle, Caps(B, TEXT("BossNameText"), TEXT("THE KRAKEN"), 15, Steel::RedText));
+		AddRow(*BossBox, BossTitle, FMargin(0.f, 0.f, 0.f, 4.f));
+		AddRow(*BossBox, SteelBar(B, TEXT("BossHealthBar"), 340.f, 10.f));
+		TheirSide->AddChildToOverlay(BossBox);
+		AddColumn(*Top, TheirSide);
+		Place(*Root, TopBar, FVector2D(0.5f, 0.f), FVector2D(0.f, 12.f));
+		Place(*Root, B.Text(TEXT("ControlsText"), TEXT("LMB select / move / attack"), 13, Steel::Dim, /*bBold*/ false), FVector2D(0.5f, 0.f), FVector2D(0.f, 118.f));
 
-		// Its telegraphed moves (B6), in the open water under the enemy row; filled at runtime from IntentClass.
+		// C rosters down the screen edges (the decks stay clear). Filled at runtime from UnitCardClass.
+		UVerticalBox* Crew = B.Make<UVerticalBox>(TEXT("CrewList"));
+		Crew->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		Place(*Root, Crew, FVector2D(0.f, 0.f), FVector2D(18.f, 118.f));
+		UVerticalBox* Enemies = B.Make<UVerticalBox>(TEXT("EnemyList"));
+		Enemies->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		Place(*Root, Enemies, FVector2D(1.f, 0.f), FVector2D(-18.f, 118.f));
+
+		// Kraken intents (B6) under the enemy roster.
 		UVerticalBox* IntentBox = B.Make<UVerticalBox>(TEXT("IntentPanel"));
 		IntentBox->SetVisibility(ESlateVisibility::HitTestInvisible);
-		AddRow(*IntentBox, B.Text(nullptr, TEXT("NEXT KRAKEN TURN"), 16, Bad), FMargin(0.f, 0.f, 0.f, 4.f), HAlign_Right);
+		AddRow(*IntentBox, Caps(B, nullptr, TEXT("NEXT KRAKEN TURN"), 14, Steel::RedText, 200), FMargin(0.f, 0.f, 0.f, 6.f), HAlign_Right);
 		UVerticalBox* IntentRows = B.Make<UVerticalBox>(TEXT("IntentList"));
 		IntentRows->SetVisibility(ESlateVisibility::HitTestInvisible);
 		AddRow(*IntentBox, IntentRows, FMargin(0.f), HAlign_Right);
-		Place(*Root, IntentBox, FVector2D(1.f, 0.f), FVector2D(-24.f, 230.f));
+		Place(*Root, IntentBox, FVector2D(1.f, 0.f), FVector2D(-18.f, 470.f));
 
-		// Crew cards in a row under our ship, enemy bars under theirs: the board below stays uncovered
-		// (placeholder placement, open question for Brandon). Filled at runtime from UnitCardClass.
-		UHorizontalBox* Crew = B.Make<UHorizontalBox>(TEXT("CrewList"));
-		Crew->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		Place(*Root, Crew, FVector2D(0.f, 0.f), FVector2D(24.f, 92.f));
-		UHorizontalBox* Enemies = B.Make<UHorizontalBox>(TEXT("EnemyList"));
-		Enemies->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		Place(*Root, Enemies, FVector2D(1.f, 0.f), FVector2D(-24.f, 92.f));
+		// B plate: the selected pirate on parchment, bottom left.
+		UBorder* Plate = Framed(B, TEXT("SelectedPanel"), PaperBrush(), FMargin(32.f, 28.f, 34.f, 40.f));
+		UHorizontalBox* PlateRow = B.Make<UHorizontalBox>();
+		Plate->SetContent(PlateRow);
+		UBorder* PortraitFrame = Framed(B, nullptr, RoundedBrush(Ink::PaperDark, 5.f, Ink::Dim, 3.f), FMargin(3.f));
+		PortraitFrame->SetContent(Picture(B, TEXT("SelectedPortrait"), Icon(TEXT("T_ICON_Portrait_Female_01")), FVector2D(140.f, 150.f)));
+		AddColumn(*PlateRow, PortraitFrame, FMargin(0.f, 0.f, 18.f, 0.f), false, VAlign_Top);
+		UVerticalBox* PlateInfo = B.Make<UVerticalBox>();
+		AddColumn(*PlateRow, Sized(B, PlateInfo, 240.f, 0.f), FMargin(0.f), false, VAlign_Top);
+		AddRow(*PlateInfo, B.Text(TEXT("SelectedNameText"), TEXT("Sniper"), 32, Ink::Text));
+		AddRow(*PlateInfo, B.Text(TEXT("SelectedInfoText"), TEXT("Crew"), 15, Ink::Dim, /*bBold*/ false), FMargin(0.f, -4.f, 0.f, 8.f));
+		AddRow(*PlateInfo, InkBar(B, TEXT("SelectedHealthBar"), TEXT("SelectedHealthText"), 230.f, 18.f, 13), FMargin(0.f, 0.f, 0.f, 5.f));
+		AddRow(*PlateInfo, InkBar(B, TEXT("SelectedManaBar"), TEXT("SelectedManaText"), 230.f, 14.f, 11), FMargin(0.f, 0.f, 0.f, 8.f));
+		AddRow(*PlateInfo, B.Text(TEXT("SelectedBudgetText"), TEXT("Can move  ·  Can act"), 15, Ink::Text, /*bBold*/ false));
+		Place(*Root, Plate, FVector2D(0.f, 1.f), FVector2D(14.f, -14.f));
 
-		// Bottom: hint / preview / message above the action bar and End Turn.
+		// B hand: the actions as cards along the bottom (fanned at runtime), the prompt strip above them.
 		UVerticalBox* Bottom = B.Make<UVerticalBox>(TEXT("BottomPanel"));
 		Bottom->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		AddRow(*Bottom, B.Text(TEXT("HintText"), TEXT("Click one of your pirates."), 20, Gold), FMargin(0.f, 0.f, 0.f, 4.f), HAlign_Center);
+		UBorder* PromptStrip = Framed(B, TEXT("PromptPanel"), PaperStripBrush(), FMargin(28.f, 10.f));
+		UVerticalBox* PromptRows = B.Make<UVerticalBox>();
+		PromptRows->SetVisibility(ESlateVisibility::HitTestInvisible);
+		PromptStrip->SetContent(PromptRows);
+		AddRow(*PromptRows, B.Text(TEXT("HintText"), TEXT("Click one of your pirates."), 18, Ink::Text, /*bBold*/ false), FMargin(0.f), HAlign_Center);
 		UVerticalBox* Preview = B.Make<UVerticalBox>(TEXT("PreviewList"));
 		Preview->SetVisibility(ESlateVisibility::HitTestInvisible);
-		AddRow(*Bottom, Preview, FMargin(0.f, 0.f, 0.f, 4.f), HAlign_Center);
-		AddRow(*Bottom, B.Text(TEXT("MessageText"), TEXT("Not a valid target"), 20, Bad), FMargin(0.f, 0.f, 0.f, 8.f), HAlign_Center);
-
-		UHorizontalBox* Controls = B.Make<UHorizontalBox>();
-		Controls->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		AddRow(*PromptRows, Preview, FMargin(0.f, 2.f, 0.f, 0.f), HAlign_Center);
+		AddRow(*PromptRows, B.Text(TEXT("MessageText"), TEXT("Not a valid target"), 18, Ink::Red), FMargin(0.f, 2.f, 0.f, 0.f), HAlign_Center);
+		AddRow(*Bottom, PromptStrip, FMargin(0.f, 0.f, 0.f, 14.f), HAlign_Center);
 		UHorizontalBox* Actions = B.Make<UHorizontalBox>(TEXT("ActionBar"));
 		Actions->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		AddColumn(*Controls, Actions, FMargin(0.f, 0.f, 24.f, 0.f), false, VAlign_Bottom);
+		AddRow(*Bottom, Actions, FMargin(0.f), HAlign_Center);
+		Place(*Root, Bottom, FVector2D(0.5f, 1.f), FVector2D(60.f, -8.f));
 
+		// C End Turn, bottom right, with the non-modal "End turn?" prompt (C14) above it.
 		UVerticalBox* EndTurnColumn = B.Make<UVerticalBox>();
 		EndTurnColumn->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		UBorder* Prompt = B.Make<UBorder>(TEXT("EndTurnPrompt"));
-		Prompt->SetBrushColor(Panel);
-		Prompt->SetPadding(FMargin(10.f, 4.f));
-		Prompt->SetContent(B.Text(nullptr, TEXT("End turn?"), 18, Gold));
+		UBorder* Prompt = Framed(B, TEXT("EndTurnPrompt"), SteelPanelBrush(), FMargin(12.f, 4.f));
+		Prompt->SetContent(Caps(B, nullptr, TEXT("END TURN?"), 15, Steel::SeaLight));
 		Prompt->SetVisibility(ESlateVisibility::HitTestInvisible);
-		AddRow(*EndTurnColumn, Prompt, FMargin(0.f, 0.f, 0.f, 6.f), HAlign_Center);
-		USizeBox* EndTurnBox = B.Make<USizeBox>();
-		EndTurnBox->SetWidthOverride(170.f);
-		EndTurnBox->SetHeightOverride(92.f);
+		AddRow(*EndTurnColumn, Prompt, FMargin(0.f, 0.f, 0.f, 8.f), HAlign_Right);
 		UButton* EndTurn = B.Make<UButton>(TEXT("EndTurnButton"));
-		EndTurnBox->SetContent(EndTurn);
-		UVerticalBox* EndTurnLabels = B.Make<UVerticalBox>();
+		EndTurn->SetStyle(ButtonStyle(TextureBrush(TEXT("HUD/T_HUD_FantasyWarrior_Bar_Diamond01"), Steel::Sea, 0.f, ESlateBrushDrawType::Box), 1.12f, 0.9f));
+		{
+			FButtonStyle Style = EndTurn->GetStyle();
+			FSlateBrush Shape = Style.Normal;
+			Shape.Margin = FMargin(0.16f, 0.f);
+			Style.SetNormal(Shape);
+			Shape.TintColor = FSlateColor(Steel::SeaLight);
+			Style.SetHovered(Shape);
+			Shape.TintColor = FSlateColor(Steel::Sea * 0.85f);
+			Style.SetPressed(Shape);
+			Shape.TintColor = FSlateColor(FLinearColor(0.3f, 0.36f, 0.4f));
+			Style.SetDisabled(Shape);
+			EndTurn->SetStyle(Style);
+		}
+		UHorizontalBox* EndTurnLabels = B.Make<UHorizontalBox>();
+		EndTurnLabels->SetVisibility(ESlateVisibility::HitTestInvisible);
 		if (UButtonSlot* Slot = Cast<UButtonSlot>(EndTurn->SetContent(EndTurnLabels)))
 		{
 			Slot->SetHorizontalAlignment(HAlign_Center);
 			Slot->SetVerticalAlignment(VAlign_Center);
 		}
-		AddRow(*EndTurnLabels, B.Text(TEXT("EndTurnText"), TEXT("END TURN"), 20, Light), FMargin(0.f), HAlign_Center);
-		AddRow(*EndTurnLabels, B.Text(TEXT("EndTurnKeyText"), TEXT("Space"), 15, Gold, false), FMargin(0.f, 2.f, 0.f, 0.f), HAlign_Center);
-		AddRow(*EndTurnColumn, EndTurnBox, FMargin(0.f), HAlign_Center);
-		AddColumn(*Controls, EndTurnColumn, FMargin(0.f), false, VAlign_Bottom);
-		AddRow(*Bottom, Controls, FMargin(0.f), HAlign_Center);
-		Place(*Root, Bottom, FVector2D(0.5f, 1.f), FVector2D(0.f, -40.f));
+		AddColumn(*EndTurnLabels, Caps(B, TEXT("EndTurnText"), TEXT("END TURN"), 24, Steel::SeaInk, 140), FMargin(0.f, 0.f, 14.f, 0.f));
+		AddColumn(*EndTurnLabels, KeyCap(B, TEXT("EndTurnKeyText"), TEXT("SPACE"), Steel::SeaInk));
+		AddRow(*EndTurnColumn, Sized(B, EndTurn, 300.f, 62.f), FMargin(0.f), HAlign_Right);
+		Place(*Root, EndTurnColumn, FVector2D(1.f, 1.f), FVector2D(-24.f, -28.f));
 
-		UTextBlock* Help = B.Text(TEXT("ControlsText"), TEXT("LMB select / move / attack"), 14, Dim, false);
-		Place(*Root, Help, FVector2D(0.5f, 1.f), FVector2D(0.f, -12.f));
-
-		// Banners in front of everything (never take clicks).
-		UBorder* Banner = B.Make<UBorder>(TEXT("TurnBanner"));
-		Banner->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, 0.72f));
-		Banner->SetPadding(FMargin(36.f, 12.f));
+		// Banners in front of everything (never take clicks): C turn banner, B outcome page, Kraken phase in red.
+		UBorder* Banner = Framed(B, TEXT("TurnBanner"), SteelPanelBrush(), FMargin(48.f, 14.f));
 		Banner->SetVisibility(ESlateVisibility::HitTestInvisible);
-		Banner->SetContent(B.Text(TEXT("TurnBannerText"), TEXT("Round 1 - Your turn"), 40, Gold));
+		Banner->SetContent(Caps(B, TEXT("TurnBannerText"), TEXT("ROUND 1 - YOUR TURN"), 40, Steel::SeaLight, 100));
 		Place(*Root, Banner, FVector2D(0.5f, 0.28f), FVector2D::ZeroVector, 10);
 
-		UBorder* Outcome = B.Make<UBorder>(TEXT("OutcomeBanner"));
-		Outcome->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, 0.78f));
-		Outcome->SetPadding(FMargin(40.f, 16.f));
+		UBorder* Outcome = Framed(B, TEXT("OutcomeBanner"), PaperBrush(), FMargin(70.f, 30.f));
 		Outcome->SetVisibility(ESlateVisibility::HitTestInvisible);
-		Outcome->SetContent(B.Text(TEXT("OutcomeText"), TEXT("VICTORY"), 36, Gold));
+		Outcome->SetContent(B.Text(TEXT("OutcomeText"), TEXT("Victory"), 56, Ink::Red));
 		Place(*Root, Outcome, FVector2D(0.5f, 0.42f), FVector2D::ZeroVector, 11);
 
-		// B7: "The Kraken is ENRAGED!" between the turn banner and the outcome banner.
-		UBorder* Phase = B.Make<UBorder>(TEXT("PhaseBanner"));
-		Phase->SetBrushColor(FLinearColor(0.25f, 0.f, 0.f, 0.8f));
-		Phase->SetPadding(FMargin(44.f, 14.f));
+		UBorder* Phase = Framed(B, TEXT("PhaseBanner"), RoundedBrush(FLinearColor(0.32f, 0.03f, 0.02f, 0.92f), 4.f, Steel::Red, 2.f), FMargin(48.f, 14.f));
 		Phase->SetVisibility(ESlateVisibility::HitTestInvisible);
-		Phase->SetContent(B.Text(TEXT("PhaseBannerText"), TEXT("The Kraken is ENRAGED!"), 44, FLinearColor(1.f, 0.3f, 0.22f)));
+		Phase->SetContent(Caps(B, TEXT("PhaseBannerText"), TEXT("THE KRAKEN IS ENRAGED!"), 42, Steel::RedText, 80));
 		Place(*Root, Phase, FVector2D(0.5f, 0.36f), FVector2D::ZeroVector, 10);
 
 		return B.Finish(Root);
+	}
+
+	/** F_DwHeading (Grenze SemiBold/Bold) and F_DwBody (Texturina SemiBold) from the Synty UI pack's font faces. */
+	bool CreateUIFonts(TArray<FString>& Log)
+	{
+		auto Face = [&Log](const TCHAR* Path) -> UFontFace*
+		{
+			UFontFace* Found = LoadObject<UFontFace>(nullptr, *FString::Printf(TEXT("%s.%s"), Path, *FPackageName::GetShortName(Path)), nullptr, LOAD_NoWarn | LOAD_Quiet);
+			if (!Found)
+			{
+				Log.Add(FString::Printf(TEXT("ERROR font face %s is missing (Synty UI Fantasy Warrior HUD pack)"), Path));
+			}
+			return Found;
+		};
+		UFontFace* GrenzeSemi = Face(TEXT("/Game/Synty/UIFantasyWarriorHUD/Fonts/Grenze/Grenze-SemiBold"));
+		UFontFace* GrenzeBold = Face(TEXT("/Game/Synty/UIFantasyWarriorHUD/Fonts/Grenze/Grenze-Bold"));
+		UFontFace* Texturina = Face(TEXT("/Game/Synty/UIFantasyWarriorHUD/Fonts/Texturina/Texturina_18pt-SemiBold"));
+		if (!GrenzeSemi || !GrenzeBold || !Texturina)
+		{
+			return false;
+		}
+		auto MakeFont = [&Log](const TCHAR* Name, UFontFace* Regular, UFontFace* Bold) -> UFont*
+		{
+			UFont* Asset = FindOrCreate<UFont>(FontFolder, Name, Log);
+			Asset->FontCacheType = EFontCacheType::Runtime;
+			FCompositeFont& Composite = Asset->GetMutableInternalCompositeFont();
+			Composite = FCompositeFont();
+			for (const TPair<const TCHAR*, UFontFace*>& Face : { TPair<const TCHAR*, UFontFace*>(TEXT("Regular"), Regular), TPair<const TCHAR*, UFontFace*>(TEXT("Bold"), Bold) })
+			{
+				FTypefaceEntry& Entry = Composite.DefaultTypeface.Fonts.AddDefaulted_GetRef();
+				Entry.Name = Face.Key;
+				Entry.Font = FFontData(Face.Value);
+			}
+			Asset->PostEditChange();
+			return Save(Asset, Log) ? Asset : nullptr;
+		};
+		HeadingFont = MakeFont(TEXT("F_DwHeading"), GrenzeSemi, GrenzeBold);
+		BodyFont = MakeFont(TEXT("F_DwBody"), Texturina, Texturina);
+		return HeadingFont && BodyFont;
+	}
+
+	/** Sets a style default (often protected) on a widget class's defaults by name; false and a log line if it is not there. */
+	template <typename T>
+	bool SetStyle(UObject* Defaults, const TCHAR* Name, const T& Value, TArray<FString>& Log)
+	{
+		FProperty* Property = Defaults ? Defaults->GetClass()->FindPropertyByName(Name) : nullptr;
+		if (!Property || Property->GetElementSize() != sizeof(T))
+		{
+			Log.Add(FString::Printf(TEXT("ERROR style property %s.%s is missing"), *GetNameSafe(Defaults ? Defaults->GetClass() : nullptr), Name));
+			return false;
+		}
+		*Property->ContainerPtrToValuePtr<T>(Defaults) = Value;
+		return true;
+	}
+
+	/** Combat HUD palette (hybrid B + C): pushed onto the WBP defaults the C++ widgets read at runtime. */
+	bool ApplyCombatStyle(const TMap<FString, UWidgetBlueprint*>& Built, TArray<FString>& Log)
+	{
+		auto Defaults = [&Built](const TCHAR* Name) { return Built[Name]->GeneratedClass->GetDefaultObject(); };
+		bool bOk = true;
+		UObject* Card = Defaults(TEXT("WBP_UnitCard"));
+		bOk &= SetStyle(Card, TEXT("AllyColor"), Steel::Text, Log);
+		bOk &= SetStyle(Card, TEXT("EnemyColor"), Steel::RedText, Log);
+		bOk &= SetStyle(Card, TEXT("AllyBarColor"), Steel::Red, Log);
+		bOk &= SetStyle(Card, TEXT("EnemyBarColor"), Steel::Red, Log);
+		bOk &= SetStyle(Card, TEXT("ManaColor"), Steel::Mp, Log);
+		bOk &= SetStyle(Card, TEXT("FrameColor"), Steel::Line, Log);
+		bOk &= SetStyle(Card, TEXT("SelectedFrameColor"), Steel::SeaLight, Log);
+		bOk &= SetStyle(Card, TEXT("HoveredFrameColor"), Steel::Text, Log);
+		bOk &= SetStyle(Card, TEXT("ActingFrameColor"), Steel::Red, Log);
+		bOk &= SetStyle(Card, TEXT("FearOnColor"), Steel::Gold, Log);
+		bOk &= SetStyle(Card, TEXT("FearOffColor"), FLinearColor(1.f, 1.f, 1.f, 0.15f), Log);
+		bOk &= SetStyle(Card, TEXT("PipBrush"), TextureBrush(TEXT("HUD/T_HUD_FantasyWarrior_Mask_Diamond01"), FLinearColor::White, 0.f, ESlateBrushDrawType::Image), Log);
+		bOk &= SetStyle(Card, TEXT("PipSize"), 11.f, Log);
+		bOk &= SetStyle(Card, TEXT("StatusFont"), Font(false, 12), Log);
+		bOk &= SetStyle(Card, TEXT("StatusChipColor"), FLinearColor(0.02f, 0.12f, 0.11f, 0.92f), Log);
+		bOk &= SetStyle(Card, TEXT("StatusTextColor"), Steel::SeaLight, Log);
+
+		UObject* Action = Defaults(TEXT("WBP_ActionButton"));
+		bOk &= SetStyle(Action, TEXT("ReadyColor"), FLinearColor::White, Log);
+		bOk &= SetStyle(Action, TEXT("ArmedColor"), FLinearColor(1.f, 0.94f, 0.86f), Log);
+		bOk &= SetStyle(Action, TEXT("DisabledColor"), FLinearColor(0.72f, 0.69f, 0.64f), Log);
+		bOk &= SetStyle(Action, TEXT("NameColor"), Ink::Text, Log);
+		bOk &= SetStyle(Action, TEXT("DisabledNameColor"), Ink::Dim, Log);
+
+		UObject* Hud = Defaults(TEXT("WBP_CombatHud"));
+		bOk &= SetStyle(Hud, TEXT("AllyColor"), Steel::Sea, Log);
+		bOk &= SetStyle(Hud, TEXT("EnemyColor"), Steel::Red, Log);
+		bOk &= SetStyle(Hud, TEXT("PreviewColor"), Ink::Text, Log);
+		bOk &= SetStyle(Hud, TEXT("LethalColor"), Ink::Red, Log);
+		bOk &= SetStyle(Hud, TEXT("PreviewFont"), Font(false, 18), Log);
+		bOk &= SetStyle(Hud, TEXT("EndTurnColor"), FLinearColor(0.85f, 0.85f, 0.85f), Log);
+		bOk &= SetStyle(Hud, TEXT("EndTurnSuggestedColor"), FLinearColor::White, Log);
+		bOk &= SetStyle(Hud, TEXT("SelectedHealthColor"), Ink::Hp, Log);
+		bOk &= SetStyle(Hud, TEXT("SelectedManaColor"), Ink::Mp, Log);
+		bOk &= SetStyle(Hud, TEXT("FanAnglePerCard"), 4.f, Log);
+		bOk &= SetStyle(Hud, TEXT("FanDropPerCard"), 6.f, Log);
+
+		UObject* Intent = Defaults(TEXT("WBP_Intent"));
+		bOk &= SetStyle(Intent, TEXT("NormalColor"), Steel::Line, Log);
+		bOk &= SetStyle(Intent, TEXT("LethalColor"), Steel::Red, Log);
+		bOk &= SetStyle(Intent, TEXT("CaptainColor"), Steel::Gold, Log);
+		bOk &= SetStyle(Intent, TEXT("MissColor"), FLinearColor(0.3f, 0.33f, 0.36f), Log);
+		UObject* Marker = Defaults(TEXT("WBP_IntentMarker"));
+		bOk &= SetStyle(Marker, TEXT("NormalColor"), Steel::Gold, Log);
+		bOk &= SetStyle(Marker, TEXT("LethalColor"), Steel::RedText, Log);
+		return bOk;
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------
@@ -910,6 +1302,10 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 	bool bOk = true;
 	auto Fail = [&OutLog]() { OutLog.Add(TEXT("CONTENT FAIL")); return OutLog; };
 
+	if (!CreateUIFonts(OutLog))
+	{
+		return Fail();
+	}
 	UDwGameData* GameData = Load<UDwGameData>(Data, UDwGameData::AssetName.ToString());
 	if (!GameData)
 	{
@@ -1019,6 +1415,7 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 		Hud->IntentClass = ClassOf(TEXT("WBP_Intent"));
 		Hud->IntentMarkerClass = ClassOf(TEXT("WBP_IntentMarker"));
 	}
+	bOk &= ApplyCombatStyle(Built, OutLog);
 	if (UDwSettingsScreen* SettingsScreen = Built[TEXT("WBP_Settings")]->GeneratedClass->GetDefaultObject<UDwSettingsScreen>())
 	{
 		SettingsScreen->RowClass = ClassOf(TEXT("WBP_SettingRow"));

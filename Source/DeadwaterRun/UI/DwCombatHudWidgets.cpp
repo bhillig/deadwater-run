@@ -9,6 +9,7 @@
 #include "Components/Button.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/SizeBox.h"
 #include "Components/TextBlock.h"
@@ -42,7 +43,8 @@ namespace DwHudWidgets
 	}
 
 	/** A small label in a coloured box (status chips). Created at runtime: their number changes with the fight. */
-	UWidget* MakeChip(UWidgetTree& Tree, const FText& Label, int32 FontSize, const FLinearColor& Background)
+	UWidget* MakeChip(UWidgetTree& Tree, const FText& Label, int32 FontSize, const FLinearColor& Background, const FSlateFontInfo& Font = FSlateFontInfo(),
+		const FLinearColor& TextColor = FLinearColor::White)
 	{
 		UBorder* Chip = Tree.ConstructWidget<UBorder>();
 		Chip->SetBrushColor(Background);
@@ -50,7 +52,15 @@ namespace DwHudWidgets
 		Chip->SetVisibility(ESlateVisibility::HitTestInvisible);
 		UTextBlock* Text = Tree.ConstructWidget<UTextBlock>();
 		Text->SetText(Label);
-		SetFontSize(*Text, FontSize);
+		if (Font.HasValidFont())
+		{
+			Text->SetFont(Font);
+		}
+		else
+		{
+			SetFontSize(*Text, FontSize);
+		}
+		Text->SetColorAndOpacity(FSlateColor(TextColor));
 		Chip->SetContent(Text);
 		return Chip;
 	}
@@ -130,11 +140,20 @@ void UDwUnitCardWidget::NativeOnViewModelChanged()
 	}
 
 	HealthBar->SetPercent(Percent(View.Health, View.MaxHealth));
-	HealthBar->SetFillColorAndOpacity(bAlly ? AllyColor : EnemyColor);
+	HealthBar->SetFillColorAndOpacity(bAlly ? AllyBarColor : EnemyBarColor);
 	HealthText->SetText(Fraction(View.Health, View.MaxHealth));
 	ManaBar->SetPercent(Percent(View.Mana, View.MaxMana));
 	ManaBar->SetFillColorAndOpacity(ManaColor);
 	ManaText->SetText(Fraction(View.Mana, View.MaxMana));
+	// Enemies act on their own turn: their MP is noise for the player.
+	const ESlateVisibility ManaVisibility = bAlly && View.MaxMana > 0.f ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed;
+	ManaBar->SetVisibility(ManaVisibility);
+	ManaText->SetVisibility(ManaVisibility);
+	if (Portrait)
+	{
+		Portrait->SetBrushFromSoftTexture(View.Portrait);
+		Portrait->SetVisibility(View.Portrait.IsNull() ? ESlateVisibility::Hidden : ESlateVisibility::HitTestInvisible);
+	}
 
 	// Enemy Fear as pips out of MaxFear (doc 14 "Readability rules").
 	const int32 MaxPips = bAlly ? 0 : FMath::RoundToInt(View.MaxFear);
@@ -145,9 +164,14 @@ void UDwUnitCardWidget::NativeOnViewModelChanged()
 		for (int32 Pip = 0; Pip < MaxPips; ++Pip)
 		{
 			USizeBox* Box = WidgetTree->ConstructWidget<USizeBox>();
-			Box->SetWidthOverride(16.f);
-			Box->SetHeightOverride(16.f);
-			Box->SetContent(WidgetTree->ConstructWidget<UBorder>());
+			Box->SetWidthOverride(PipSize);
+			Box->SetHeightOverride(PipSize);
+			UBorder* PipFill = WidgetTree->ConstructWidget<UBorder>();
+			if (PipBrush.GetResourceObject())
+			{
+				PipFill->SetBrush(PipBrush);
+			}
+			Box->SetContent(PipFill);
 			if (UHorizontalBoxSlot* PipSlot = FearPips->AddChildToHorizontalBox(Box))
 			{
 				PipSlot->SetPadding(FMargin(0.f, 0.f, 4.f, 0.f));
@@ -170,7 +194,7 @@ void UDwUnitCardWidget::NativeOnViewModelChanged()
 	{
 		const FText Label = Status.TurnsRemaining > 0
 			? FText::Format(LOCTEXT("StatusTurns", "{0} {1}"), Status.Label, Status.TurnsRemaining) : Status.Label;
-		StatusList->AddChild(MakeChip(*WidgetTree, Label, StatusFontSize, FLinearColor(0.3f, 0.22f, 0.05f, 0.95f)));
+		StatusList->AddChild(MakeChip(*WidgetTree, Label, StatusFontSize, StatusChipColor, StatusFont, StatusTextColor));
 	}
 	StatusList->SetVisibility(View.Statuses.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 
@@ -230,6 +254,23 @@ void UDwActionButtonWidget::NativeOnViewModelChanged()
 	}
 	const FDwActionView& View = Action->GetView();
 	HotkeyText->SetText(View.Hotkey);
+	if (ActionIcon)
+	{
+		ActionIcon->SetBrushFromSoftTexture(View.Icon);
+		ActionIcon->SetVisibility(View.Icon.IsNull() ? ESlateVisibility::Hidden : ESlateVisibility::HitTestInvisible);
+		ActionIcon->SetRenderOpacity(View.bEnabled || View.bArmed ? 1.f : 0.45f);
+	}
+	if (DescText)
+	{
+		DescText->SetText(View.Description);
+		DescText->SetVisibility(View.Description.IsEmpty() || !View.DisabledReason.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+	}
+	if (ArmedOutline)
+	{
+		ArmedOutline->SetVisibility(View.bArmed ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	}
+	bArmed = View.bArmed;
+	ApplyPose();
 	NameText->SetText(View.Count > 0 ? FText::Format(LOCTEXT("ActionCount", "{0} x{1}"), View.Name, View.Count) : View.Name);
 	CostText->SetText(View.CostText);
 	CostText->SetVisibility(View.CostText.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
@@ -252,6 +293,38 @@ void UDwActionButtonWidget::NativeOnViewModelChanged()
 	}
 	bWasEnabled = View.bEnabled;
 	bWasArmed = View.bArmed;
+}
+
+void UDwActionButtonWidget::SetFanPose(float AngleDegrees, float Drop)
+{
+	FanAngle = AngleDegrees;
+	FanDrop = Drop;
+	ApplyPose();
+}
+
+void UDwActionButtonWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+	bMouseOver = true;
+	ApplyPose();
+}
+
+void UDwActionButtonWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseLeave(InMouseEvent);
+	bMouseOver = false;
+	ApplyPose();
+}
+
+void UDwActionButtonWidget::ApplyPose()
+{
+	// Fanned like a hand of cards; the hovered or armed card rises and straightens so it reads.
+	const float Lift = bArmed ? ArmedLift : (bMouseOver ? HoverLift : 0.f);
+	FWidgetTransform Pose;
+	Pose.Translation = FVector2D(0.f, FanDrop - Lift);
+	Pose.Angle = Lift > 0.f ? FanAngle * 0.3f : FanAngle;
+	SetRenderTransformPivot(FVector2D(0.5f, 1.f));
+	SetRenderTransform(Pose);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -321,8 +394,8 @@ bool UDwCombatHudScreen::IsTurnBannerVisible() const
 void UDwCombatHudScreen::HandleTurnBanner(EDwSide Side, int32 Round)
 {
 	TurnBannerText->SetText(Side == EDwSide::Player
-		? FText::Format(LOCTEXT("BannerPlayer", "Round {0} - Your turn"), Round)
-		: FText::Format(LOCTEXT("BannerEnemy", "Round {0} - Enemy turn"), Round));
+		? FText::Format(LOCTEXT("BannerPlayer", "ROUND {0} - YOUR TURN"), Round)
+		: FText::Format(LOCTEXT("BannerEnemy", "ROUND {0} - ENEMY TURN"), Round));
 	TurnBannerText->SetColorAndOpacity(FSlateColor(Side == EDwSide::Player ? AllyColor : EnemyColor));
 	TurnBanner->SetVisibility(ESlateVisibility::HitTestInvisible);
 	if (const UWorld* World = GetWorld())
@@ -397,13 +470,23 @@ void UDwCombatHudScreen::NativeOnViewModelChanged()
 		return;
 	}
 
-	TurnText->SetText(Hud->GetTurnText());
+	if (RoundText)
+	{
+		RoundText->SetText(FText::Format(LOCTEXT("RoundCaps", "ROUND {0}"), Hud->GetRound()));
+		TurnText->SetText(Hud->IsPlayerTurn() ? LOCTEXT("YourTurnCaps", "YOUR TURN") : LOCTEXT("EnemyTurnCaps", "ENEMY TURN"));
+	}
+	else
+	{
+		TurnText->SetText(Hud->GetTurnText());
+	}
 	TurnText->SetColorAndOpacity(FSlateColor(Hud->IsPlayerTurn() ? AllyColor : EnemyColor));
 	RefreshShips(*Hud);
 	RefreshBoss(*Hud);
 	SyncList<UDwUnitCardWidget, UDwUnitViewModel>(*CrewList, UnitCardClass, Hud->GetCrew());
 	SyncList<UDwUnitCardWidget, UDwUnitViewModel>(*EnemyList, UnitCardClass, Hud->GetEnemies());
 	SyncList<UDwActionButtonWidget, UDwActionViewModel>(*ActionBar, ActionButtonClass, Hud->GetActions());
+	FanActionCards();
+	RefreshSelected(*Hud);
 	ActionBar->SetVisibility(Hud->IsPlayerTurn() ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 
 	// End Turn: enabled when the player may act; the "End turn?" prompt is non-modal and never ends the turn itself.
@@ -465,10 +548,76 @@ void UDwCombatHudScreen::RefreshPrompt(const UDwCombatHudViewModel& Hud)
 		Text->SetColorAndOpacity(FSlateColor(Line.bLethal ? LethalColor : PreviewColor));
 		Text->SetShadowOffset(FVector2D(1.f, 1.f));
 		Text->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.9f));
-		DwHudWidgets::SetFontSize(*Text, PreviewFontSize);
+		if (PreviewFont.HasValidFont())
+		{
+			Text->SetFont(PreviewFont);
+		}
+		else
+		{
+			DwHudWidgets::SetFontSize(*Text, PreviewFontSize);
+		}
 		PreviewList->AddChildToVerticalBox(Text);
 	}
 	PreviewList->SetVisibility(Hud.GetPreview().IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+	if (PromptPanel)
+	{
+		const bool bAny = !Hud.GetHint().IsEmpty() || !Hud.GetMessage().IsEmpty() || !Hud.GetPreview().IsEmpty();
+		PromptPanel->SetVisibility(bAny ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	}
+}
+
+void UDwCombatHudScreen::FanActionCards()
+{
+	const int32 Count = ActionBar->GetChildrenCount();
+	const float Middle = (Count - 1) * 0.5f;
+	for (int32 Index = 0; Index < Count; ++Index)
+	{
+		if (UDwActionButtonWidget* Card = Cast<UDwActionButtonWidget>(ActionBar->GetChildAt(Index)))
+		{
+			const float Offset = Index - Middle;
+			Card->SetFanPose(Offset * FanAnglePerCard, FMath::Abs(Offset) * FanDropPerCard);
+		}
+	}
+}
+
+void UDwCombatHudScreen::RefreshSelected(const UDwCombatHudViewModel& Hud)
+{
+	using namespace DwHudWidgets;
+	if (!SelectedPanel)
+	{
+		return;
+	}
+	const TObjectPtr<UDwUnitViewModel>* Found = Hud.GetCrew().FindByPredicate([](const UDwUnitViewModel* Unit) { return Unit && Unit->GetView().bSelected; });
+	if (!Found || !Hud.IsPlayerTurn())
+	{
+		SelectedPanel->SetVisibility(ESlateVisibility::Collapsed);
+		return;
+	}
+	const FDwUnitView& View = (*Found)->GetView();
+	SelectedPanel->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	if (SelectedPortrait) { SelectedPortrait->SetBrushFromSoftTexture(View.Portrait); }
+	if (SelectedNameText) { SelectedNameText->SetText(View.Name); }
+	if (SelectedInfoText) { SelectedInfoText->SetText(View.bIsCaptain ? LOCTEXT("PlateCaptain", "Captain") : LOCTEXT("PlateCrew", "Crew")); }
+	if (SelectedHealthBar)
+	{
+		SelectedHealthBar->SetPercent(Percent(View.Health, View.MaxHealth));
+		SelectedHealthBar->SetFillColorAndOpacity(SelectedHealthColor);
+	}
+	if (SelectedHealthText) { SelectedHealthText->SetText(Fraction(View.Health, View.MaxHealth)); }
+	if (SelectedManaBar)
+	{
+		SelectedManaBar->SetPercent(Percent(View.Mana, View.MaxMana));
+		SelectedManaBar->SetFillColorAndOpacity(SelectedManaColor);
+	}
+	if (SelectedManaText) { SelectedManaText->SetText(Fraction(View.Mana, View.MaxMana)); }
+	if (SelectedBudgetText)
+	{
+		FText Budget = LOCTEXT("PlateDone", "Done for this turn");
+		if (View.bHasMove && View.bHasAction) { Budget = LOCTEXT("PlateBoth", "Can move  -  can act"); }
+		else if (View.bHasMove)               { Budget = LOCTEXT("PlateMove", "Can still move"); }
+		else if (View.bHasAction)             { Budget = LOCTEXT("PlateAct", "Can still act"); }
+		SelectedBudgetText->SetText(Budget);
+	}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
