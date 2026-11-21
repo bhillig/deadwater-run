@@ -27,6 +27,8 @@ param(
     [ValidateSet('none', 'move', 'aim', 'cannon', 'hit', 'endturn', 'enemy', 'run', 'voyage', 'boss', 'shop', 'shell', 'captain', 'cues')] [string] $Demo = 'none',
     # Run with an audio device (drops -nosound): cue sounds and Dw.Audio.Dump reach a real mixer.
     [switch] $Sound,
+    # Screenshots without the UI (scene only), e.g. backdrops for UI mockups or store art.
+    [switch] $NoUI,
     # Start a run with this captain (TeamLeader, Fearmongerer, Conqueror) instead of the dev fight. -Demo run defaults to TeamLeader.
     [string] $Captain = '',
     # Dev fight against this crew (DA_Encounter_<Encounter>) instead of DA_GameData.DevEncounter.
@@ -74,6 +76,7 @@ $gameArgs = @(
     '-nosplash', '-unattended', "-abslog=$log"
 )
 if (-not $Sound) { $gameArgs += '-nosound' }
+if ($NoUI) { $gameArgs += '-DwCaptureNoUI' }
 if ($Mood -and $Mood -ne 'Random') { $gameArgs += "-DwMood=$Mood" }
 if ($Demo -in @('run', 'voyage', 'boss', 'shop', 'captain') -and -not $Captain) { $Captain = 'TeamLeader' }
 if ($Captain) { $gameArgs += "-DwCaptain=$Captain" }

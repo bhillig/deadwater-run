@@ -324,7 +324,7 @@ void UDwDevCaptureSubsystem::CaptureEnemyTurn()
 	const bool bOver = !Combat || !Combat->IsActive() || Combat->GetOutcome() != EDwCombatOutcome::None;
 	const bool bTurnDone = bOver || Combat->GetActiveSide() == EDwSide::Player;
 	++EnemyFrame;
-	FScreenshotRequest::RequestScreenshot(FPaths::GetBaseFilename(Path, false) + FString::Printf(TEXT("-%02d.png"), EnemyFrame), /*bShowUI*/ true, false);
+	FScreenshotRequest::RequestScreenshot(FPaths::GetBaseFilename(Path, false) + FString::Printf(TEXT("-%02d.png"), EnemyFrame), /*bShowUI*/ !FParse::Param(FCommandLine::Get(), TEXT("DwCaptureNoUI")), false);
 	if (bTurnDone && !bOver && ++EnemyTurnsPlayed < EnemyTurns && EnemyFrame < MaxEnemyFrames)
 	{
 		Combat->SubmitCommand(FDwCombatCommand::MakeEndTurn(EDwSide::Player));
@@ -448,7 +448,7 @@ void UDwDevCaptureSubsystem::CuesDemoStep()
 
 void UDwDevCaptureSubsystem::CaptureFrame(int32 Frame) const
 {
-	FScreenshotRequest::RequestScreenshot(FPaths::GetBaseFilename(Path, false) + FString::Printf(TEXT("-%02d.png"), Frame), /*bShowUI*/ true, false);
+	FScreenshotRequest::RequestScreenshot(FPaths::GetBaseFilename(Path, false) + FString::Printf(TEXT("-%02d.png"), Frame), /*bShowUI*/ !FParse::Param(FCommandLine::Get(), TEXT("DwCaptureNoUI")), false);
 }
 
 void UDwDevCaptureSubsystem::RunDemoStep()
@@ -1416,7 +1416,7 @@ void UDwDevCaptureSubsystem::BossFightStep()
 
 void UDwDevCaptureSubsystem::Capture()
 {
-	FScreenshotRequest::RequestScreenshot(Path, /*bShowUI*/ true, /*bAddFilenameSuffix*/ false);
+	FScreenshotRequest::RequestScreenshot(Path, /*bShowUI*/ !FParse::Param(FCommandLine::Get(), TEXT("DwCaptureNoUI")), /*bAddFilenameSuffix*/ false);
 	UE_LOG(LogDw, Log, TEXT("Dev capture requested: %s"), *Path);
 	// Give the renderer a moment to write the file, then quit.
 	GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateLambda([]() { FPlatformMisc::RequestExit(false); }), 1.5f, false);
