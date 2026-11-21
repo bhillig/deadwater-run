@@ -52,6 +52,8 @@ struct DEADWATERRUN_API FDwUnitView
 	UPROPERTY(BlueprintReadOnly, Category = "Unit") EDwSide Side = EDwSide::Player;
 	UPROPERTY(BlueprintReadOnly, Category = "Unit") FText Name;
 	UPROPERTY(BlueprintReadOnly, Category = "Unit") bool bIsCaptain = false;
+	/** The unit's look (ADwCombatUnit::Portrait, else its definition's). */
+	UPROPERTY(BlueprintReadOnly, Category = "Unit") TSoftObjectPtr<UTexture2D> Portrait;
 	UPROPERTY(BlueprintReadOnly, Category = "Unit") bool bAlive = true;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float Health = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category = "Stats") float MaxHealth = 0.f;

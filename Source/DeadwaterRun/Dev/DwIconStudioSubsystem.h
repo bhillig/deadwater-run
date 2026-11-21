@@ -24,6 +24,8 @@ struct FDwIconRenderJob
 	/** Mirror the side view (swaps which end of the mesh points up). */
 	bool bFlip = false;
 	FVector Direction = FVector(-0.62, 0.55, 0.56);
+	/** Output size in px (0 = the manifest's size). */
+	int32 Size = 0;
 	/** Fraction of the frame the mesh fills (1 = edge to edge). */
 	float Fill = 0.9f;
 	/** Portraits: frame this bone of the subject's skeletal mesh (e.g. "head"), FocusRadius cm around it, lifted FocusLift cm. */

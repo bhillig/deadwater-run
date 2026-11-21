@@ -17,6 +17,7 @@ class UDwUnitAttributeSet;
 class UDwUnitDefinition;
 class UStaticMeshComponent;
 class UMaterialInterface;
+class UTexture2D;
 
 /** What the combat subsystem tells a unit when it spawns it (Docs/Architecture/03 "ADwCombatUnit"). */
 USTRUCT(BlueprintType)
@@ -103,6 +104,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Visuals")
 	TObjectPtr<UAnimationAsset> MoveAnimation;
+
+	/** HUD portrait of this look (Tools/RenderIcons.ps1). Raiders share their unit definition with the crew but not their face, so the visual owns it; the HUD falls back to UDwUnitDefinition::Portrait. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Visuals")
+	TSoftObjectPtr<UTexture2D> Portrait;
 
 	/** Needs a "Color" vector parameter (M_UnitRing). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Deadwater|Visuals")

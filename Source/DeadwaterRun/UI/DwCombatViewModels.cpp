@@ -74,7 +74,7 @@ bool FDwUnitView::operator==(const FDwUnitView& Other) const
 		&& bAlive == Other.bAlive && Health == Other.Health && MaxHealth == Other.MaxHealth && Mana == Other.Mana
 		&& MaxMana == Other.MaxMana && Fear == Other.Fear && MaxFear == Other.MaxFear && bHasMove == Other.bHasMove
 		&& bHasAction == Other.bHasAction && bSelected == Other.bSelected && bHovered == Other.bHovered
-		&& bActing == Other.bActing && Statuses == Other.Statuses;
+		&& bActing == Other.bActing && Statuses == Other.Statuses && Portrait == Other.Portrait;
 }
 
 void UDwUnitViewModel::Apply(const FDwUnitView& NewView)
@@ -341,6 +341,8 @@ void UDwCombatHudViewModel::RefreshUnits(const FDwCombatSnapshot& Snapshot)
 			View.Side = Unit.Side;
 			View.Name = Actor && Actor->GetDefinition() ? Actor->GetDefinition()->DisplayName : FText::AsNumber(Unit.Handle.Id);
 			View.bIsCaptain = Actor && Actor->IsCaptain();
+			View.Portrait = Actor && !Actor->Portrait.IsNull() ? Actor->Portrait
+				: (Actor && Actor->GetDefinition() ? Actor->GetDefinition()->Portrait : TSoftObjectPtr<UTexture2D>());
 			View.bAlive = Unit.bAlive;
 			View.Health = Unit.Health;
 			View.MaxHealth = Unit.MaxHealth;

@@ -26,6 +26,12 @@
 #include "Core/DwGameData.h"
 #include "EditorAssetLibrary.h"
 #include "Engine/DataTable.h"
+#include "Engine/Texture2D.h"
+#include "Misc/FileHelper.h"
+#include "Misc/PackageName.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "UI/DwCombatHudWidgets.h"
@@ -824,6 +830,77 @@ namespace DwUIContent
 
 		return B.Finish(Root);
 	}
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// UI art: icons and portraits (Tools/Content/ui_icon_map.json)
+
+	/**
+	 * Sets the soft texture property PropertyName ("Icon" or "Portrait") on every object the map names: a data asset, or
+	 * a Blueprint's class defaults (the BP_Unit_* visuals). Only writes and saves what changed. Each owner keeps the
+	 * field; this pass is the only writer, so content scripts that rebuild definitions never fight over it.
+	 */
+	bool AssignTextures(const TSharedPtr<FJsonObject>& Map, const FString& IconFolder, const FName PropertyName, TArray<FString>& Log)
+	{
+		bool bOk = true;
+		for (const TPair<FString, TSharedPtr<FJsonValue>>& Entry : Map->Values)
+		{
+			const FString TextureName = Entry.Value->AsString();
+			const FString TexturePath = TextureName.StartsWith(TEXT("/")) ? TextureName : IconFolder / TextureName;
+			UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, *FString::Printf(TEXT("%s.%s"), *TexturePath, *FPackageName::GetShortName(TexturePath)),
+				nullptr, LOAD_NoWarn | LOAD_Quiet);
+			UObject* Asset = LoadObject<UObject>(nullptr, *FString::Printf(TEXT("%s.%s"), *Entry.Key, *FPackageName::GetShortName(Entry.Key)),
+				nullptr, LOAD_NoWarn | LOAD_Quiet);
+			if (!Texture || !Asset)
+			{
+				Log.Add(FString::Printf(TEXT("ERROR ui_icon_map: %s -> %s (%s missing; run Tools/RenderIcons.ps1 -Import?)"), *Entry.Key, *TextureName,
+					Texture ? *Entry.Key : *TexturePath));
+				bOk = false;
+				continue;
+			}
+			UBlueprint* Blueprint = Cast<UBlueprint>(Asset);
+			UObject* Target = Blueprint && Blueprint->GeneratedClass ? Blueprint->GeneratedClass->GetDefaultObject() : Asset;
+			FSoftObjectProperty* Property = FindFProperty<FSoftObjectProperty>(Target->GetClass(), PropertyName);
+			if (!Property)
+			{
+				Log.Add(FString::Printf(TEXT("ERROR ui_icon_map: %s has no %s property"), *Entry.Key, *PropertyName.ToString()));
+				bOk = false;
+				continue;
+			}
+			FSoftObjectPtr* Value = Property->GetPropertyValuePtr_InContainer(Target);
+			if (Value->ToSoftObjectPath() == FSoftObjectPath(Texture))
+			{
+				continue;
+			}
+			*Value = FSoftObjectPtr(Texture);
+			Target->MarkPackageDirty();
+			bOk &= Save(Asset, Log);
+			Log.Add(FString::Printf(TEXT("Set %s.%s = %s"), *Entry.Key, *PropertyName.ToString(), *Texture->GetName()));
+		}
+		return bOk;
+	}
+
+	bool AssignUIArt(TArray<FString>& Log)
+	{
+		const FString File = FPaths::Combine(FPaths::ProjectDir(), TEXT("Tools/Content/ui_icon_map.json"));
+		FString Json;
+		TSharedPtr<FJsonObject> Root;
+		if (!FFileHelper::LoadFileToString(Json, *File) || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Json), Root) || !Root.IsValid())
+		{
+			Log.Add(FString::Printf(TEXT("ERROR cannot read %s"), *File));
+			return false;
+		}
+		const FString IconFolder = Root->GetStringField(TEXT("iconFolder"));
+		const TSharedPtr<FJsonObject>* Icons = nullptr;
+		const TSharedPtr<FJsonObject>* Portraits = nullptr;
+		if (!Root->TryGetObjectField(TEXT("icons"), Icons) || !Root->TryGetObjectField(TEXT("portraits"), Portraits))
+		{
+			Log.Add(TEXT("ERROR ui_icon_map.json needs \"icons\" and \"portraits\""));
+			return false;
+		}
+		const bool bIcons = AssignTextures(*Icons, IconFolder, TEXT("Icon"), Log);
+		const bool bPortraits = AssignTextures(*Portraits, IconFolder, TEXT("Portrait"), Log);
+		return bIcons && bPortraits;
+	}
 }
 
 TArray<FString> UDwUIContentLibrary::CreateUIContent()
@@ -989,6 +1066,9 @@ TArray<FString> UDwUIContentLibrary::CreateUIContent()
 	// 4. DA_GameData slot.
 	GameData->UIScreenSet = Screens;
 	bOk &= Save(GameData, OutLog);
+
+	// 5. Icons and portraits on definitions and unit visuals (Tools/Content/ui_icon_map.json).
+	bOk &= AssignUIArt(OutLog);
 
 	OutLog.Add(bOk ? TEXT("CONTENT PASS") : TEXT("CONTENT FAIL"));
 	return OutLog;

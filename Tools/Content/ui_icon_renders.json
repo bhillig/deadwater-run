@@ -26,17 +26,18 @@
     { "name": "Pirate_Coin_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Coin_01", "view": "three" },
     { "name": "Pirate_Chest_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Treasure_Chest_01", "view": "three" },
     { "name": "Pirate_Anchor_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Anchor_01", "view": "side", "roll": 0 },
+    { "name": "Pirate_Cannonball_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Cannonball_01", "view": "three", "fill": 0.6 },
     { "name": "Pirate_Skull_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Skull_01", "view": "three" },
     { "name": "Pirate_Map_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Map_01", "view": "three" },
     { "name": "Pirate_Compass_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Compass_01", "view": "three" },
     { "name": "Pirate_Lantern_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Lantern_01", "view": "three" },
     { "name": "Pirate_TreasureSkull_01", "mesh": "/Game/Synty/PolygonPirateRealm/Meshes/Props/SM_Prop_Treasure_Skull_01", "view": "three" },
-    { "name": "Portrait_Captain_01", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Captain_01", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
-    { "name": "Portrait_Captain_02", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Captain_02", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
-    { "name": "Portrait_Captain_03", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Captain_03", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
-    { "name": "Portrait_Male_01", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Male_01", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
-    { "name": "Portrait_Female_01", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Female_01", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
-    { "name": "Portrait_Male_03", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Male_03", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
-    { "name": "Portrait_Female_04", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Female_04", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "focusBone": "head", "focusRadius": 42, "focusLift": 2 }
+    { "name": "Portrait_Captain_01", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Captain_01", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "size": 512, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
+    { "name": "Portrait_Captain_02", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Captain_02", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "size": 512, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
+    { "name": "Portrait_Captain_03", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Captain_03", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "size": 512, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
+    { "name": "Portrait_Male_01", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Male_01", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "size": 512, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
+    { "name": "Portrait_Female_01", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Female_01", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "size": 512, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
+    { "name": "Portrait_Male_03", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Male_03", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "size": 512, "focusBone": "head", "focusRadius": 42, "focusLift": 2 },
+    { "name": "Portrait_Female_04", "actor": "/Game/Synty/PolygonPirateRealm/Blueprints/Characters/BP_Chr_Female_04", "view": "three", "dir": [1.0, 0.35, 0.12], "roll": 0, "size": 512, "focusBone": "head", "focusRadius": 42, "focusLift": 2 }
   ]
 }

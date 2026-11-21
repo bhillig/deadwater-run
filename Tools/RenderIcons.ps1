@@ -5,11 +5,14 @@
   First output line is "ICONS PASS <count> <folder>" or "ICONS FAIL ...". Exit code 0 only on PASS.
 .EXAMPLE
   ./Tools/RenderIcons.ps1                               # all icons -> Saved/Icons
+  ./Tools/RenderIcons.ps1 -Import                       # render, then import as UI textures into /Game/DeadwaterRun/UI/Icons
   ./Tools/RenderIcons.ps1 -Out C:\temp\icons -Manifest .\my.json
 #>
 param(
     [string] $Manifest = '',
-    [string] $Out = ''
+    [string] $Out = '',
+    # Also import the PNGs as UI textures (no editor may be running).
+    [switch] $Import
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'DwCommon.ps1')
@@ -20,6 +23,7 @@ if (-not $Out) { $Out = Join-Path $root 'Saved\Icons' }
 $Manifest = [IO.Path]::GetFullPath($Manifest)
 $Out = [IO.Path]::GetFullPath($Out)
 try {
+    if ($Import) { Assert-DwEditorClosed }
     $editorCmd = Get-DwEditorCmd
 } catch {
     Write-Output "ICONS FAIL ($($_.Exception.Message))"
@@ -44,6 +48,23 @@ if (-not $result -or $result.Matches[0].Groups[1].Value -ne 'PASS') {
     Write-Output "ICONS FAIL ($why)"
     Write-Output "  log: $log"
     exit 1
+}
+if ($Import) {
+    # Headless import into /Game/DeadwaterRun/UI/Icons (Tools/Content/import_ui_icons.py).
+    $importLog = Join-Path $logDir 'ImportUIIcons.log'
+    $env:DW_UI_ICON_DIR = $Out
+    & $editorCmd (Get-DwProject) -run=pythonscript "-script=$(Join-Path $PSScriptRoot 'Content\import_ui_icons.py')" -unattended -nullrhi -nosplash -nop4 -nosound -stdout -FullStdOutLogOutput *> $importLog
+    $lines = @(Get-Content $importLog | Where-Object { $_ -match 'DWCONTENT (.*)$' } | ForEach-Object { ($_ -replace '^.*DWCONTENT ', '') })
+    if (-not $lines -or $lines[-1] -ne 'CONTENT PASS') {
+        Write-Output "ICONS FAIL (import)"
+        $lines | Where-Object { $_ -match '^ERROR' } | ForEach-Object { Write-Output "  $_" }
+        Write-Output "  log: $importLog"
+        exit 1
+    }
+    Write-Output "ICONS PASS $count $Out (imported to /Game/DeadwaterRun/UI/Icons)"
+    Write-Output "  log: $log"
+    Write-Output "  import log: $importLog"
+    exit 0
 }
 Write-Output "ICONS PASS $count $Out"
 Write-Output "  log: $log"

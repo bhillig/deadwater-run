@@ -88,6 +88,7 @@ bool UDwIconStudioSubsystem::ParseManifest(const FString& Json, int32& OutSize, 
 		if (Item->TryGetNumberField(TEXT("roll"), Number)) { Job.Roll = static_cast<float>(Number); }
 		if (Item->TryGetNumberField(TEXT("fill"), Number)) { Job.Fill = FMath::Clamp(static_cast<float>(Number), 0.2f, 1.f); }
 		Item->TryGetBoolField(TEXT("flip"), Job.bFlip);
+		if (Item->TryGetNumberField(TEXT("size"), Number)) { Job.Size = FMath::Clamp(static_cast<int32>(Number), 32, 1024); }
 		FString Bone;
 		if (Item->TryGetStringField(TEXT("focusBone"), Bone) && !Bone.IsEmpty())
 		{
@@ -265,6 +266,13 @@ void UDwIconStudioSubsystem::Step()
 				}
 			}
 		});
+		// Resize here, not in RenderJob: the render target's resource is recreated on the render thread.
+		const int32 JobSize = Job.Size > 0 ? Job.Size : Size;
+		if (ColorTarget->SizeX != JobSize * 2)
+		{
+			ColorTarget->ResizeTarget(JobSize * 2, JobSize * 2);
+			AlphaTarget->ResizeTarget(JobSize * 2, JobSize * 2);
+		}
 		WaitFrames = DwIconStudio::SettleFrames;
 		return;
 	}
@@ -360,6 +368,7 @@ bool UDwIconStudioSubsystem::RenderJob(const FDwIconRenderJob& Job)
 	Key->SetActorRotation((Forward - ScreenUp * 0.9 + Right * 0.7).Rotation());
 	Fill->SetActorRotation((Forward + ScreenUp * 0.3 - Right * 0.8).Rotation());
 
+	const int32 JobSize = Job.Size > 0 ? Job.Size : Size; // targets were resized in Step's setup frame
 	Capture->TextureTarget = ColorTarget;
 	Capture->CaptureSource = SCS_FinalColorLDR;
 	Capture->CaptureScene();
@@ -373,18 +382,18 @@ bool UDwIconStudioSubsystem::RenderJob(const FDwIconRenderJob& Job)
 	{
 		return false;
 	}
-	const int32 Big = Size * 2;
+	const int32 Big = JobSize * 2;
 	if (Color.Num() != Big * Big || Alpha.Num() != Big * Big)
 	{
 		return false;
 	}
 	// 2x2 box down-sample. The LDR colour is the mesh over black (premultiplied), so sum colour / sum coverage un-premultiplies it.
 	TArray<FColor> Out;
-	Out.SetNumZeroed(Size * Size);
+	Out.SetNumZeroed(JobSize * JobSize);
 	int32 Covered = 0;
-	for (int32 Y = 0; Y < Size; ++Y)
+	for (int32 Y = 0; Y < JobSize; ++Y)
 	{
-		for (int32 X = 0; X < Size; ++X)
+		for (int32 X = 0; X < JobSize; ++X)
 		{
 			double R = 0.0, G = 0.0, B = 0.0, A = 0.0;
 			for (int32 S = 0; S < 4; ++S)
@@ -401,7 +410,7 @@ bool UDwIconStudioSubsystem::RenderJob(const FDwIconRenderJob& Job)
 				continue;
 			}
 			++Covered;
-			FColor& Pixel = Out[Y * Size + X];
+			FColor& Pixel = Out[Y * JobSize + X];
 			Pixel.R = static_cast<uint8>(FMath::Clamp(R / A, 0.0, 255.0));
 			Pixel.G = static_cast<uint8>(FMath::Clamp(G / A, 0.0, 255.0));
 			Pixel.B = static_cast<uint8>(FMath::Clamp(B / A, 0.0, 255.0));
@@ -414,12 +423,12 @@ bool UDwIconStudioSubsystem::RenderJob(const FDwIconRenderJob& Job)
 		return false;
 	}
 	const FString File = FPaths::Combine(OutDir, FString::Printf(TEXT("T_ICON_%s.png"), *Job.Name));
-	const FImageView View(Out.GetData(), Size, Size, EGammaSpace::sRGB);
+	const FImageView View(Out.GetData(), JobSize, JobSize, EGammaSpace::sRGB);
 	if (!FImageUtils::SaveImageByExtension(*File, View))
 	{
 		return false;
 	}
-	UE_LOG(LogDw, Log, TEXT("Icon studio: %s (%d%% covered)"), *File, Covered * 100 / (Size * Size));
+	UE_LOG(LogDw, Log, TEXT("Icon studio: %s (%d%% covered)"), *File, Covered * 100 / (JobSize * JobSize));
 	return true;
 }
 
