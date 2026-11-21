@@ -26,6 +26,8 @@
 #include "Core/DwGameData.h"
 #include "EditorAssetLibrary.h"
 #include "Engine/DataTable.h"
+#include "AssetToolsModule.h"
+#include "AssetImportTask.h"
 #include "Engine/Font.h"
 #include "Engine/FontFace.h"
 #include "Engine/Texture2D.h"
@@ -175,9 +177,10 @@ namespace DwUIContent
 		return Style;
 	}
 
-	FSlateFontInfo Font(bool bHeading, int32 Size, float LetterSpacing = 0.f)
+	FSlateFontInfo Font(bool bHeading, int32 Size, float LetterSpacing = 0.f, bool bItalic = false)
 	{
-		FSlateFontInfo Info(bHeading ? static_cast<UObject*>(HeadingFont) : static_cast<UObject*>(BodyFont), Size, bHeading ? FName(TEXT("Bold")) : FName(TEXT("Regular")));
+		const FName Typeface = bHeading ? FName(TEXT("Bold")) : (bItalic ? FName(TEXT("Italic")) : FName(TEXT("Regular")));
+		FSlateFontInfo Info(bHeading ? static_cast<UObject*>(HeadingFont) : static_cast<UObject*>(BodyFont), Size, Typeface);
 		Info.LetterSpacing = static_cast<int32>(LetterSpacing);
 		return Info;
 	}
@@ -1131,17 +1134,42 @@ namespace DwUIContent
 		UFontFace* GrenzeSemi = Face(TEXT("/Game/Synty/UIFantasyWarriorHUD/Fonts/Grenze/Grenze-SemiBold"));
 		UFontFace* GrenzeBold = Face(TEXT("/Game/Synty/UIFantasyWarriorHUD/Fonts/Grenze/Grenze-Bold"));
 		UFontFace* Texturina = Face(TEXT("/Game/Synty/UIFantasyWarriorHUD/Fonts/Texturina/Texturina_18pt-SemiBold"));
-		if (!GrenzeSemi || !GrenzeBold || !Texturina)
+		// Texturina Regular and Italic (SIL OFL 1.1, Omnibus-Type; Brandon approved 2026-11-20): the pack ships SemiBold only.
+		// Sources and licence live in Tools/Content/Fonts/Texturina; imported once as font faces.
+		auto ImportFace = [&Log, &Face](const TCHAR* File, const TCHAR* Name) -> UFontFace*
+		{
+			const FString Path = FontFolder / TEXT("Faces") / Name;
+			if (!UEditorAssetLibrary::DoesAssetExist(Path))
+			{
+				// Built from the file bytes like UFontFileImportFactory does, minus its PostEditChange (needs Slate, absent headless).
+				TArray<uint8> Bytes;
+				const FString Source = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), TEXT("Tools/Content/Fonts/Texturina"), File));
+				if (!FFileHelper::LoadFileToArray(Bytes, *Source))
+				{
+					Log.Add(FString::Printf(TEXT("ERROR cannot read %s"), *Source));
+					return nullptr;
+				}
+				UFontFace* Created = FindOrCreate<UFontFace>(FontFolder / TEXT("Faces"), Name, Log);
+				Created->InitializeFromBulkData(FPaths::GetCleanFilename(Source), EFontHinting::Default, Bytes.GetData(), Bytes.Num());
+				Created->LoadingPolicy = EFontLoadingPolicy::Inline; // cooked with the asset, no loose file to ship
+				Save(Created, Log);
+			}
+			return Face(*Path);
+		};
+		UFontFace* TexturinaRegular = ImportFace(TEXT("Texturina-Regular.ttf"), TEXT("Texturina-Regular"));
+		UFontFace* TexturinaItalic = ImportFace(TEXT("Texturina-Italic.ttf"), TEXT("Texturina-Italic"));
+		if (!GrenzeSemi || !GrenzeBold || !Texturina || !TexturinaRegular || !TexturinaItalic)
 		{
 			return false;
 		}
-		auto MakeFont = [&Log](const TCHAR* Name, UFontFace* Regular, UFontFace* Bold) -> UFont*
+		auto MakeFont = [&Log](const TCHAR* Name, UFontFace* Regular, UFontFace* Bold, UFontFace* Italic) -> UFont*
 		{
 			UFont* Asset = FindOrCreate<UFont>(FontFolder, Name, Log);
 			Asset->FontCacheType = EFontCacheType::Runtime;
 			FCompositeFont& Composite = Asset->GetMutableInternalCompositeFont();
 			Composite = FCompositeFont();
-			for (const TPair<const TCHAR*, UFontFace*>& Face : { TPair<const TCHAR*, UFontFace*>(TEXT("Regular"), Regular), TPair<const TCHAR*, UFontFace*>(TEXT("Bold"), Bold) })
+			for (const TPair<const TCHAR*, UFontFace*>& Face : { TPair<const TCHAR*, UFontFace*>(TEXT("Regular"), Regular), TPair<const TCHAR*, UFontFace*>(TEXT("Bold"), Bold),
+				TPair<const TCHAR*, UFontFace*>(TEXT("Italic"), Italic) })
 			{
 				FTypefaceEntry& Entry = Composite.DefaultTypeface.Fonts.AddDefaulted_GetRef();
 				Entry.Name = Face.Key;
@@ -1150,8 +1178,8 @@ namespace DwUIContent
 			Asset->PostEditChange();
 			return Save(Asset, Log) ? Asset : nullptr;
 		};
-		HeadingFont = MakeFont(TEXT("F_DwHeading"), GrenzeSemi, GrenzeBold);
-		BodyFont = MakeFont(TEXT("F_DwBody"), Texturina, Texturina);
+		HeadingFont = MakeFont(TEXT("F_DwHeading"), GrenzeSemi, GrenzeBold, GrenzeSemi);
+		BodyFont = MakeFont(TEXT("F_DwBody"), TexturinaRegular, Texturina, TexturinaItalic);
 		return HeadingFont && BodyFont;
 	}
 

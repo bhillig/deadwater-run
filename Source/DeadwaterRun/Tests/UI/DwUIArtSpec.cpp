@@ -94,9 +94,10 @@ void FDwUIArtSpec::Define()
 		}
 	});
 
-	It("crew and raider looks have their own faces", [this]()
+	It("every captain, crew and raider look has its own face", [this]()
 	{
-		for (const TCHAR* Name : { TEXT("BP_Unit_Swordsman"), TEXT("BP_Unit_Sniper"), TEXT("BP_Unit_Raider_Swordsman"), TEXT("BP_Unit_Raider_Sniper") })
+		TSet<FSoftObjectPath> Faces;
+		for (const TCHAR* Name : { TEXT("BP_Unit_Captain_TeamLeader"), TEXT("BP_Unit_Captain_Fearmongerer"), TEXT("BP_Unit_Captain_Conqueror"), TEXT("BP_Unit_Swordsman"), TEXT("BP_Unit_Sniper"), TEXT("BP_Unit_Raider_Swordsman"), TEXT("BP_Unit_Raider_Sniper") })
 		{
 			const UClass* Class = LoadClass<ADwCombatUnit>(nullptr, *FString::Printf(TEXT("/Game/DeadwaterRun/Units/%s.%s_C"), Name, Name));
 			if (!TestNotNull(FString::Printf(TEXT("%s exists"), Name), Class))
@@ -104,7 +105,9 @@ void FDwUIArtSpec::Define()
 				continue;
 			}
 			ExpectTexture(Class->GetDefaultObject(), Class->GetDefaultObject<ADwCombatUnit>()->Portrait, TEXT("portrait"));
+			Faces.Add(Class->GetDefaultObject<ADwCombatUnit>()->Portrait.ToSoftObjectPath());
 		}
+		TestEqual(TEXT("seven looks, seven faces"), Faces.Num(), 7);
 	});
 }
 

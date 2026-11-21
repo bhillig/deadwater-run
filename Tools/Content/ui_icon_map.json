@@ -1,5 +1,5 @@
 {
-  "_comment": "Which UI icon or portrait each definition and unit visual uses. Applied by Tools/CreateUIContent.ps1 (UDwUIContentLibrary::AssignUIArt). A bare name is a texture in iconFolder (rendered by Tools/RenderIcons.ps1, imported with -Import); a /Game path is any texture (e.g. the Synty UI pack's status glyphs). Captains share BP_Unit_Captain, so their faces come from their unit/captain definitions, not the visual.",
+  "_comment": "Which UI icon or portrait each definition and unit visual uses. Applied by Tools/CreateUIContent.ps1 (UDwUIContentLibrary::AssignUIArt). A bare name is a texture in iconFolder (rendered by Tools/RenderIcons.ps1, imported with -Import); a /Game path is any texture (e.g. the Synty UI pack's status glyphs).",
   "iconFolder": "/Game/DeadwaterRun/UI/Icons",
   "icons": {
     "/Game/DeadwaterRun/Data/Abilities/DA_Ability_AttackRifle": "T_ICON_Pirate_Rifle_01",
@@ -50,6 +50,9 @@
     "/Game/DeadwaterRun/Data/Units/DA_Unit_Sniper": "T_ICON_Portrait_Female_01",
     "/Game/DeadwaterRun/Data/Units/DA_Unit_KrakenBody": "/Game/Synty/UIFantasyWarriorHUD/Textures/Icons_Map/T_ICON_FantasyWarrior_Map_Monster01_Clean",
     "/Game/DeadwaterRun/Data/Units/DA_Unit_KrakenTentacle": "/Game/Synty/UIFantasyWarriorHUD/Textures/Icons_Map/T_ICON_FantasyWarrior_Map_Monster01_Clean",
+    "/Game/DeadwaterRun/Units/BP_Unit_Captain_TeamLeader": "T_ICON_Portrait_Captain_01",
+    "/Game/DeadwaterRun/Units/BP_Unit_Captain_Fearmongerer": "T_ICON_Portrait_Captain_02",
+    "/Game/DeadwaterRun/Units/BP_Unit_Captain_Conqueror": "T_ICON_Portrait_Captain_03",
     "/Game/DeadwaterRun/Units/BP_Unit_Swordsman": "T_ICON_Portrait_Male_01",
     "/Game/DeadwaterRun/Units/BP_Unit_Sniper": "T_ICON_Portrait_Female_01",
     "/Game/DeadwaterRun/Units/BP_Unit_Raider_Swordsman": "T_ICON_Portrait_Male_03",

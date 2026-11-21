@@ -87,7 +87,10 @@ namespace DwArtContent
 	constexpr float SwordPitch = 35.f; // blade lowered, at rest
 	constexpr float RiflePitch = 20.f;
 	const FUnitSpec UnitSpecs[] = {
-		{ TEXT("BP_Unit_Captain"), TEXT("BP_Chr_Captain_01"), TEXT("SM_Wep_Sword_02"), SwordPitch },
+		// Each captain has its own Synty captain (Brandon, 2026-11-20); the HUD and captain select use the same faces.
+		{ TEXT("BP_Unit_Captain_TeamLeader"), TEXT("BP_Chr_Captain_01"), TEXT("SM_Wep_Sword_02"), SwordPitch },
+		{ TEXT("BP_Unit_Captain_Fearmongerer"), TEXT("BP_Chr_Captain_02"), TEXT("SM_Wep_Sword_01"), SwordPitch },
+		{ TEXT("BP_Unit_Captain_Conqueror"), TEXT("BP_Chr_Captain_03"), TEXT("SM_Wep_Sword_04"), SwordPitch },
 		{ TEXT("BP_Unit_Swordsman"), TEXT("BP_Chr_Male_01"), TEXT("SM_Wep_Sword_01"), SwordPitch },
 		{ TEXT("BP_Unit_Sniper"), TEXT("BP_Chr_Female_01"), TEXT("SM_Wep_Rifle_01"), RiflePitch },
 		{ TEXT("BP_Unit_Raider_Swordsman"), TEXT("BP_Chr_Male_03"), TEXT("SM_Wep_Sword_04"), SwordPitch },
@@ -609,10 +612,14 @@ TArray<FString> UDwArtContentLibrary::CreateArtContent()
 			bOk &= Save(Unit, Log);
 		}
 	};
-	// One captain look for all three until each captain gets its own Synty character (follow-up of DW-307).
-	SetUnitClass(TEXT("DA_Unit_Captain_TeamLeader"), TEXT("BP_Unit_Captain"));
-	SetUnitClass(TEXT("DA_Unit_Captain_Fearmongerer"), TEXT("BP_Unit_Captain"));
-	SetUnitClass(TEXT("DA_Unit_Captain_Conqueror"), TEXT("BP_Unit_Captain"));
+	SetUnitClass(TEXT("DA_Unit_Captain_TeamLeader"), TEXT("BP_Unit_Captain_TeamLeader"));
+	SetUnitClass(TEXT("DA_Unit_Captain_Fearmongerer"), TEXT("BP_Unit_Captain_Fearmongerer"));
+	SetUnitClass(TEXT("DA_Unit_Captain_Conqueror"), TEXT("BP_Unit_Captain_Conqueror"));
+	// The shared captain look they replaced.
+	if (UEditorAssetLibrary::DoesAssetExist(Units / TEXT("BP_Unit_Captain")))
+	{
+		Log.Add(UEditorAssetLibrary::DeleteAsset(Units / TEXT("BP_Unit_Captain")) ? TEXT("Deleted BP_Unit_Captain (one look per captain now)") : TEXT("ERROR could not delete BP_Unit_Captain"));
+	}
 	SetUnitClass(TEXT("DA_Unit_Swordsman"), TEXT("BP_Unit_Swordsman"));
 	SetUnitClass(TEXT("DA_Unit_Sniper"), TEXT("BP_Unit_Sniper"));
 
