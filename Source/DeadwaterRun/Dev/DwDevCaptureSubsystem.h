@@ -62,6 +62,8 @@ private:
 	 * recruit on deck and the third cannon.
 	 */
 	void ShopDemoStep();
+	/** Clicks the shop's Leave button through Slate input at its on-screen centre (real hit-testing). False when it isn't on screen. */
+	bool ClickShopLeave(FVector2D& OutCentre) const;
 	/**
 	 * Demo "captain" (needs -DwCaptain=; DW-206..208): the captain's own showcase in the first fight, one frame per turn
 	 * after the captain acts, final frame the rewards screen. Fearmongerer: Smoke and Fire every turn until the enemy

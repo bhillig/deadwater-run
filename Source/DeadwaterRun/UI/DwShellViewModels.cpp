@@ -27,6 +27,7 @@ void UDwMenuViewModel::Set(const FText& InTitle, TArray<FText> InLines, TArray<F
 		FDwChoiceView View;
 		View.Title = Button.Title;
 		View.Body = Button.Body;
+		View.bPrimary = Index == 0 && InButtons.Num() > 1; // the menu's first entry is its main action (New Run, Resume)
 		View.bEnabled = Button.bEnabled;
 		View.DisabledReason = Button.DisabledReason;
 		Buttons[Index]->Set(View, MoveTemp(Button.OnSelect));
@@ -138,12 +139,19 @@ void UDwCaptainSelectViewModel::Refresh()
 		FDwChoiceView View;
 		View.Title = Captains[Index]->DisplayName;
 		View.Icon = Captains[Index]->Portrait;
-		TArray<FString> Abilities;
+		// The wanted poster: who they are in a line, then their two abilities with their icons (the long rules stay in
+		// GetDetailLines and the in-fight tooltips).
+		View.Body = Captains[Index]->GetSummary();
 		for (const UDwAbilityDefinition* Ability : Captains[Index]->CaptainAbilities)
 		{
-			Abilities.Add(Ability ? Ability->DisplayName.ToString() : FString());
+			if (Ability)
+			{
+				FDwChoiceDetail& Detail = View.Details.AddDefaulted_GetRef();
+				Detail.Icon = Ability->Icon;
+				Detail.Title = Ability->DisplayName;
+				Detail.Text = Ability->GetSummary();
+			}
 		}
-		View.Body = FText::FromString(FString::Join(Abilities, TEXT(", ")));
 		View.bSelected = Index == Selected;
 		CaptainChoices[Index]->Set(View, [this, Index]() { return SelectCaptain(Index); });
 	}
@@ -175,6 +183,7 @@ void UDwCaptainSelectViewModel::Refresh()
 	}
 	FDwChoiceView Sail;
 	Sail.Title = LOCTEXT("SetSail", "Set Sail");
+	Sail.bPrimary = true;
 	Sail.bEnabled = Captain != nullptr;
 	Sail.DisabledReason = Captain ? FText::GetEmpty() : LOCTEXT("PickFirst", "Pick a captain first.");
 	SetSail->Set(Sail, [this]() { const UDwCaptainDefinition* C = GetSelected(); return C && OnSetSail && OnSetSail(*C); });

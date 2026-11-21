@@ -41,4 +41,9 @@ public:
 
 	/** Description with {MaxHealthBonus}, {CannonDamageBonus} and {Price} filled from the tuning row. */
 	FText GetFormattedDescription() const;
+	/** GetSummary() (the shop ledger's short line), filled the same way. */
+	FText GetFormattedSummary() const;
+
+private:
+	FText FormatFromTuning(const FText& Pattern) const;
 };

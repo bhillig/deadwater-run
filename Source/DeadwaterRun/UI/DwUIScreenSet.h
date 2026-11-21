@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Engine/Texture2D.h"
 #include "Run/DwRunTypes.h"
 #include "DwUIScreenSet.generated.h"
 
@@ -85,4 +86,8 @@ public:
 	/** DA_UISoundMap (contents: ui-juice-engineer, DW-402). Optional. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Juice")
 	TSoftObjectPtr<UDwUISoundMap> SoundMap;
+
+	/** The shop's "Repair the hull" line icon (repair has no definition of its own). Optional. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Shop")
+	TSoftObjectPtr<UTexture2D> RepairIcon;
 };

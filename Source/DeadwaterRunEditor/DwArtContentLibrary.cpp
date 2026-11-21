@@ -9,6 +9,8 @@
 #include "Board/DwDeckLayout.h"
 #include "Combat/DwCombatUnit.h"
 #include "Combat/DwShip.h"
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
@@ -97,6 +99,11 @@ namespace DwArtContent
 		{ TEXT("BP_Unit_Raider_Sniper"), TEXT("BP_Chr_Female_04"), TEXT("SM_Wep_Rifle_03"), RiflePitch },
 	};
 	const FName WeaponBone = TEXT("hand_r");
+	// L_MainMenu backdrop framing (PrepareMenuLevel): the galleon three-quarters on, the page sits over the open sea.
+	const float MenuShipYaw = 25.f;
+	const FVector MenuCameraLocation(-5200.f, 3400.f, 700.f);
+	const FVector MenuCameraTarget(400.f, 0.f, 1100.f);
+	constexpr float MenuCameraFov = 55.f;
 
 	// ---- Helpers ----
 
@@ -532,6 +539,89 @@ namespace DwArtContent
 	}
 }
 
+namespace DwArtContent
+{
+	/**
+	 * L_MainMenu (Brandon 2026-11-21): the sea with a ship behind the menu's log page. The same sea environment as L_Sea,
+	 * Synty's dressed galleon under sail, and a fixed camera framing her (the menu has no pawn; the camera auto-activates).
+	 */
+	bool PrepareMenuLevel(UDwSeaMood* DefaultMood, TArray<FString>& Log)
+	{
+		const FString MenuLevel = TEXT("/Game/DeadwaterRun/Maps/L_MainMenu");
+		UWorld* World = UEditorLoadingAndSavingUtils::LoadMap(MenuLevel);
+		if (!World)
+		{
+			Log.Add(TEXT("ERROR could not load L_MainMenu"));
+			return false;
+		}
+		bool bOk = true;
+		auto Find = [World](UClass* Class, const TCHAR* Label) -> AActor*
+		{
+			for (TActorIterator<AActor> It(World, Class); It; ++It)
+			{
+				if (It->GetActorLabel() == Label)
+				{
+					return *It;
+				}
+			}
+			return nullptr;
+		};
+		ADwSeaEnvironment* Sea = Cast<ADwSeaEnvironment>(Find(ADwSeaEnvironment::StaticClass(), TEXT("SeaEnvironment")));
+		if (!Sea)
+		{
+			Sea = World->SpawnActor<ADwSeaEnvironment>();
+			Sea->SetActorLabel(TEXT("SeaEnvironment"));
+		}
+		Sea->Water->SetStaticMesh(Require<UStaticMesh>(Core + TEXT("/Models"), TEXT("SM_Env_Water_Plane_01"), Log, bOk));
+		Sea->Water->SetRelativeScale3D(FVector(400.f, 400.f, 1.f));
+		Sea->SkyDome->SetStaticMesh(Require<UStaticMesh>(Core + TEXT("/Models"), TEXT("SM_Env_Skydome_01"), Log, bOk));
+		Sea->SkyDome->SetRelativeScale3D(FVector(250.f));
+		Sea->SkyDome->SetRelativeLocation(FVector(0.f, 0.f, -20000.f));
+		Sea->WaterHeight = 0.f; // the preset's waterline is its Z = 0
+		Sea->DefaultMood = DefaultMood;
+		Sea->RerunConstructionScripts();
+
+		const UBlueprint* Galleon = Require<UBlueprint>(Pirate + TEXT("/Blueprints/Vehicles"), TEXT("BP_Veh_Preset_L_Dressed_01"), Log, bOk);
+		AActor* Ship = Find(AActor::StaticClass(), TEXT("MenuShip"));
+		if (!Ship && Galleon && Galleon->GeneratedClass)
+		{
+			Ship = World->SpawnActor<AActor>(Galleon->GeneratedClass, FTransform::Identity);
+			Ship->SetActorLabel(TEXT("MenuShip"));
+		}
+		if (Ship)
+		{
+			Ship->SetActorLocationAndRotation(FVector::ZeroVector, FRotator(0.f, MenuShipYaw, 0.f));
+		}
+		ACameraActor* Camera = Cast<ACameraActor>(Find(ACameraActor::StaticClass(), TEXT("MenuCamera")));
+		if (!Camera)
+		{
+			Camera = World->SpawnActor<ACameraActor>();
+			Camera->SetActorLabel(TEXT("MenuCamera"));
+		}
+		Camera->SetActorLocationAndRotation(MenuCameraLocation, (MenuCameraTarget - MenuCameraLocation).Rotation());
+		Camera->GetCameraComponent()->SetFieldOfView(MenuCameraFov);
+		Camera->GetCameraComponent()->SetConstraintAspectRatio(false);
+		// AutoActivateForPlayer is private: set it the way the details panel does.
+		if (FByteProperty* Auto = FindFProperty<FByteProperty>(ACameraActor::StaticClass(), TEXT("AutoActivateForPlayer")))
+		{
+			*Auto->ContainerPtrToValuePtr<uint8>(Camera) = static_cast<uint8>(EAutoReceiveInput::Player0);
+		}
+		else
+		{
+			Log.Add(TEXT("ERROR ACameraActor::AutoActivateForPlayer not found"));
+			bOk = false;
+		}
+
+		if (!UEditorLoadingAndSavingUtils::SaveMap(World, MenuLevel))
+		{
+			Log.Add(TEXT("ERROR could not save L_MainMenu"));
+			return false;
+		}
+		Log.Add(TEXT("L_MainMenu: sea, galleon and camera set"));
+		return bOk;
+	}
+}
+
 TArray<FString> UDwArtContentLibrary::CreateArtContent()
 {
 	using namespace DwArtContent;
@@ -678,6 +768,7 @@ TArray<FString> UDwArtContentLibrary::CreateArtContent()
 
 	// 8. The level.
 	bOk &= PrepareSeaLevel(Day, Log);
+	bOk &= PrepareMenuLevel(Day, Log);
 
 	Log.Add(bOk ? TEXT("CONTENT PASS") : TEXT("CONTENT FAIL"));
 	return Log;

@@ -115,6 +115,7 @@ namespace DwRunScreens
 			Line.Name = Member.GetDisplayName();
 			Line.bAlive = Member.bAlive;
 			Line.bIsCaptain = Member.bIsCaptain;
+			Line.Portrait = Member.Unit ? Member.Unit->Portrait : TSoftObjectPtr<UTexture2D>();
 			Line.Detail = Member.bAlive
 				? FText::Format(LOCTEXT("CrewDetail", "L{0}   {1} / {2} HP"), Member.Level, FMath::RoundToInt(Member.Health), FMath::RoundToInt(Member.GetMaxHealth()))
 				: LOCTEXT("CrewLost", "lost");
@@ -126,11 +127,10 @@ namespace DwRunScreens
 		return FText::Format(LOCTEXT("Ship", "Hull {0} / {1}"), FMath::RoundToInt(State.Ship.Health), FMath::RoundToInt(State.Ship.MaxHealth));
 	}
 
-	/** "<price> gold" and, when there is one, the description on the next line. */
-	static FText PriceAndText(int32 Price, const FText& Text)
+	/** The ledger's price column: the number ("gold" is the row's own unit label). */
+	static FText Gold(int32 Price)
 	{
-		return Text.IsEmpty() ? FText::Format(LOCTEXT("Price", "{0} gold"), Price)
-			: FText::Format(LOCTEXT("PriceText", "{0} gold\n{1}"), Price, Text);
+		return FText::AsNumber(Price);
 	}
 }
 
@@ -421,6 +421,7 @@ void UDwRewardsViewModel::Refresh()
 	}
 	FDwChoiceView ClaimView;
 	const bool bLearning = bActive && S->PendingRewards.AbilityChoices.IsValidIndex(SelectedOffer);
+	ClaimView.bPrimary = true;
 	ClaimView.Title = bLearning
 		? FText::Format(LOCTEXT("ClaimLearn", "Take the rewards and learn {0}"), DwRunScreens::NameOf(S->PendingRewards.AbilityChoices[SelectedOffer].Ability))
 		: LOCTEXT("Claim", "Take the rewards");
@@ -493,7 +494,7 @@ FText UDwShopViewModel::DescribeResult(EDwPurchaseResult Result, const UDwRun& R
 	case EDwPurchaseResult::NoSlot:        return FText::Format(LOCTEXT("NoSlot", "{0} knows {1} moves already: pick one to forget."), Who, Run.GetMaxAbilitySlots());
 	case EDwPurchaseResult::CantDisband:   return LOCTEXT("CantDisband", "The captain keeps at least one crew member.");
 	case EDwPurchaseResult::CrewFull:      return LOCTEXT("CrewFull", "No room aboard: the crew is full.");
-	case EDwPurchaseResult::ShipFull:      return LOCTEXT("ShipFull", "The hull is already sound.");
+	case EDwPurchaseResult::ShipFull:      return LOCTEXT("ShipFull", "Hull is sound."); // short: the ledger stamps it
 	case EDwPurchaseResult::InventoryFull: return FText::Format(LOCTEXT("HoldFull", "The hold is full ({0} / {1})."), S.CountItems(), Run.GetMaxInventory());
 	case EDwPurchaseResult::NotEnoughGold: return FText::Format(LOCTEXT("NeedsGold", "Needs {0} gold - you have {1}."), Offer ? Offer->Price : 0, S.Gold);
 	}
@@ -709,14 +710,17 @@ void UDwShopViewModel::Refresh()
 			{
 			case EDwShopOfferType::Repair:
 				View.Title = LOCTEXT("Repair", "Repair the hull");
-				View.Body = FText::Format(LOCTEXT("RepairBody", "{0} gold\n+{1} hull"), Offer.Price, Offer.Amount);
+				View.Icon = RepairIcon;
+				View.Body = FText::Format(LOCTEXT("RepairBody", "+{0} hull"), Offer.Amount);
+				View.Price = DwRunScreens::Gold(Offer.Price);
 				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
 				Choice(Supplies, SupplyCount++)->Set(View, [this, Id]() { return Buy(Id); });
 				break;
 			case EDwShopOfferType::Item:
 				View.Title = DwRunScreens::NameOf(Offer.Item);
 				View.Icon = DwRunScreens::IconOf(Offer.Item.Get());
-				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Item ? Offer.Item->Description : FText::GetEmpty());
+				View.Body = Offer.Item ? Offer.Item->GetFormattedDescription() : FText::GetEmpty();
+				View.Price = DwRunScreens::Gold(Offer.Price);
 				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
 				Choice(Supplies, SupplyCount++)->Set(View, [this, Id]() { return Buy(Id); });
 				break;
@@ -724,16 +728,18 @@ void UDwShopViewModel::Refresh()
 			{
 				FGuid Learner;
 				const EDwPurchaseResult Result = CheckMoveCard(Offer, Learner);
-				TArray<FString> Names;
+				TArray<FString> Names; // each name once: two Swordsmen read "For Swordsman", the chips below tell them apart
 				for (const FGuid& Eligible : Offer.EligibleCrew)
 				{
-					Names.Add(DwRunScreens::CrewName(S, Eligible).ToString());
+					Names.AddUnique(DwRunScreens::CrewName(S, Eligible).ToString());
 				}
-				const FText Who = Names.IsEmpty() ? LOCTEXT("Nobody", "nobody aboard can learn it")
-					: FText::Format(LOCTEXT("WhoLearns", "for {0}"), FText::FromString(FString::Join(Names, TEXT(", "))));
+				FDwChoiceDetail& Who = View.Details.AddDefaulted_GetRef();
+				Who.Text = Names.IsEmpty() ? LOCTEXT("Nobody", "Nobody aboard can learn it")
+					: FText::Format(LOCTEXT("WhoLearns", "For {0}"), FText::FromString(FString::Join(Names, TEXT(", "))));
 				View.Title = DwRunScreens::NameOf(Offer.Ability);
 				View.Icon = DwRunScreens::IconOf(Offer.Ability.Get());
-				View.Body = FText::Format(LOCTEXT("MoveBody", "{0} gold, {1}\n{2}"), Offer.Price, Who, Offer.Ability ? Offer.Ability->Description : FText::GetEmpty());
+				View.Body = Offer.Ability ? Offer.Ability->GetSummary() : FText::GetEmpty();
+				View.Price = DwRunScreens::Gold(Offer.Price);
 				View.bSelected = bMovePicked && Id == SelectedMove;
 				View.bEnabled = Result == EDwPurchaseResult::Ok;
 				View.DisabledReason = DescribeResult(Result, *TheRun, &Offer, Offer.EligibleCrew.Num() == 1 ? Learner : FGuid());
@@ -743,14 +749,16 @@ void UDwShopViewModel::Refresh()
 			case EDwShopOfferType::Recruit:
 				View.Title = FText::Format(LOCTEXT("Recruit", "{0}, level {1}"), DwRunScreens::NameOf(Offer.Unit), Offer.Level);
 				View.Icon = Offer.Unit ? Offer.Unit->Portrait : TSoftObjectPtr<UTexture2D>();
-				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Unit ? Offer.Unit->Description : FText::GetEmpty());
+				View.Body = Offer.Unit ? Offer.Unit->GetSummary() : FText::GetEmpty();
+				View.Price = DwRunScreens::Gold(Offer.Price);
 				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
 				Choice(Recruits, RecruitCount++)->Set(View, [this, Id]() { return Buy(Id); });
 				break;
 			case EDwShopOfferType::ShipUpgrade:
 				View.Title = DwRunScreens::NameOf(Offer.Upgrade);
 				View.Icon = DwRunScreens::IconOf(Offer.Upgrade.Get());
-				View.Body = DwRunScreens::PriceAndText(Offer.Price, Offer.Upgrade ? Offer.Upgrade->GetFormattedDescription() : FText::GetEmpty());
+				View.Body = Offer.Upgrade ? Offer.Upgrade->GetFormattedSummary() : FText::GetEmpty();
+				View.Price = DwRunScreens::Gold(Offer.Price);
 				Priced(View, Offer, TheRun->CanPurchase(Id, FGuid()));
 				Choice(Upgrades, UpgradeCount++)->Set(View, [this, Id]() { return Buy(Id); });
 				break;
@@ -786,10 +794,10 @@ void UDwShopViewModel::Refresh()
 				const FDwCrewMemberState* Member = S.FindCrew(Id);
 				const bool bFull = Member && Slots > 0 && Member->Abilities.Num() >= Slots;
 				FDwChoiceView View;
-				View.Title = DwRunScreens::CrewName(S, Id);
+				// "Sniper, Lv 3" (mockup B); the moves count only once it matters: a full learner forgets one.
+				View.Title = Member ? FText::Format(LOCTEXT("LearnerTitle", "{0}, Lv {1}"), DwRunScreens::CrewName(S, Id), Member->Level) : DwRunScreens::CrewName(S, Id);
 				View.Icon = DwRunScreens::PortraitOf(S, Id);
-				View.Body = Member ? (Slots > 0 ? FText::Format(LOCTEXT("LearnerSlots", "L{0}, knows {1} / {2} moves"), Member->Level, Member->Abilities.Num(), Slots)
-					: FText::Format(LOCTEXT("ShopLearnerBody", "L{0}, knows {1} moves"), Member->Level, Member->Abilities.Num())) : FText::GetEmpty();
+				View.Body = bFull ? FText::Format(LOCTEXT("LearnerFull", "Knows {0} / {1}: forgets one"), Member->Abilities.Num(), Slots) : FText::GetEmpty();
 				View.bSelected = Id == SelectedCrew;
 				const EDwPurchaseResult Result = TheRun->CanPurchase(Picked->OfferId, Id, bFull ? 0 : INDEX_NONE);
 				View.bEnabled = Result == EDwPurchaseResult::Ok;
@@ -820,14 +828,14 @@ void UDwShopViewModel::Refresh()
 		if (Picked)
 		{
 			const FDwCrewMemberState* Learner = SelectedCrew.IsValid() ? S.FindCrew(SelectedCrew) : nullptr;
-			BuyView.Title = Learner
-				? FText::Format(LOCTEXT("Teach", "Teach {0}"), DwRunScreens::NameOf(Picked->Ability))
-				: FText::Format(LOCTEXT("BuyMove", "Buy {0}"), DwRunScreens::NameOf(Picked->Ability));
-			BuyView.Body = Learner && Learner->Abilities.IsValidIndex(SelectedSlot)
-				? FText::Format(LOCTEXT("TeachForget", "To {0}, {1} gold, forgets {2}"), Learner->GetDisplayName(), Picked->Price, DwRunScreens::NameOf(Learner->Abilities[SelectedSlot]))
-				: Learner ? FText::Format(LOCTEXT("TeachTo", "To {0}, {1} gold"), Learner->GetDisplayName(), Picked->Price)
-				: FText::Format(LOCTEXT("Price", "{0} gold"), Picked->Price);
-			MoveHint = MoveResult == EDwPurchaseResult::Ok ? LOCTEXT("ReadyToTeach", "Ready: buy to teach it now.") : Blocker;
+			BuyView.bPrimary = true;
+			BuyView.Title = FText::Format(LOCTEXT("SignAndPay", "Sign & Pay {0}"), Picked->Price);
+			BuyView.Body = Learner && Learner->Abilities.IsValidIndex(SelectedSlot) // the one thing the button must still say
+				? FText::Format(LOCTEXT("TeachForget", "{0} forgets {1}"), Learner->GetDisplayName(), DwRunScreens::NameOf(Learner->Abilities[SelectedSlot]))
+				: FText::GetEmpty();
+			// The heading over the learners: the question, or what still blocks the purchase (a move to forget, gold).
+			MoveHint = !Learner || MoveResult == EDwPurchaseResult::Ok ? FText::Format(LOCTEXT("WhoLearnsIt", "Who learns {0}?"), DwRunScreens::NameOf(Picked->Ability))
+				: Blocker;
 		}
 		else
 		{
@@ -856,7 +864,7 @@ void UDwShopViewModel::Refresh()
 		Leave = NewObject<UDwChoiceViewModel>(this);
 	}
 	FDwChoiceView LeaveView;
-	LeaveView.Title = LOCTEXT("LeaveShop", "Leave the shop");
+	LeaveView.Title = LOCTEXT("LeaveShop", "Leave");
 	LeaveView.bEnabled = bActive;
 	LeaveView.DisabledReason = bActive ? FText::GetEmpty() : LOCTEXT("NoShop", "No shop here.");
 	Leave->Set(LeaveView, [this]() { UDwRun* R = GetRun(); return R && R->GetPhase() == EDwRunPhase::Shop && R->LeaveShop(); });

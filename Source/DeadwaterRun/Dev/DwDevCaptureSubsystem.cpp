@@ -35,6 +35,10 @@
 #include "UI/DwRunViewModels.h"
 #include "UI/DwShellViewModels.h"
 #include "UI/DwUIManagerSubsystem.h"
+#include "UI/DwRunScreens.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Components/PanelWidget.h"
+#include "Framework/Application/SlateApplication.h"
 #include "HighResScreenshot.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -1055,6 +1059,11 @@ void UDwDevCaptureSubsystem::ShopDemoStep()
 			S.Ship.Health, S.Ship.MaxHealth, S.Ship.CannonDamage, S.Ship.Upgrades.Num(), S.CountLivingCrew(), S.CountItems());
 	};
 
+	if (ShopStage == 5 && Run->GetPhase() != EDwRunPhase::Shop)
+	{
+		UE_LOG(LogDw, Log, TEXT("Dev capture 'shop': LEAVE CLICK PASS - the Slate click left the shop (phase %s)."), *UEnum::GetValueAsString(Run->GetPhase()));
+		ShopStage = 6;
+	}
 	switch (Run->GetPhase())
 	{
 	case EDwRunPhase::Combat:
@@ -1138,7 +1147,26 @@ void UDwDevCaptureSubsystem::ShopDemoStep()
 		return;
 	case EDwRunPhase::Shop:
 	{
-		if (ShopStage >= 4)
+		if (ShopStage == 4)
+		{
+			// Leave the way a player does: a real mouse click through Slate at the Leave button's on-screen centre, after
+			// buying and teaching (the state where the button once slid off the screen). Hit-testing decides, not the view model.
+			FVector2D Centre;
+			const bool bClicked = ClickShopLeave(Centre);
+			UE_LOG(LogDw, Log, TEXT("Dev capture 'shop': Leave clicked through Slate at (%.0f, %.0f): %s"), Centre.X, Centre.Y,
+				bClicked ? TEXT("sent") : TEXT("no Leave button on screen"));
+			ShopStage = 5;
+			Next(0.6f);
+			return;
+		}
+		if (ShopStage == 5)
+		{
+			// The player could not leave: fail the capture (no final screenshot -> Capture.ps1 says CAPTURE FAIL), never paper over it.
+			UE_LOG(LogDw, Error, TEXT("Dev capture 'shop': LEAVE CLICK FAIL - the Leave click did not leave the shop."));
+			FPlatformMisc::RequestExit(false);
+			return;
+		}
+		if (ShopStage >= 6)
 		{
 			Run->LeaveShop(); // a later shop on the way to the next fight
 			Next(0.6f);
@@ -1259,6 +1287,27 @@ void UDwDevCaptureSubsystem::ShopDemoStep()
 		Next(0.5f);
 		return;
 	}
+}
+
+bool UDwDevCaptureSubsystem::ClickShopLeave(FVector2D& OutCentre) const
+{
+	OutCentre = FVector2D::ZeroVector;
+	TArray<UUserWidget*> Screens;
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), Screens, UDwShopScreen::StaticClass(), /*TopLevelOnly*/ false);
+	const UPanelWidget* Slot = Screens.IsEmpty() ? nullptr : Cast<UPanelWidget>(Screens[0]->GetWidgetFromName(TEXT("LeaveSlot")));
+	const UUserWidget* Entry = Slot && Slot->GetChildrenCount() > 0 ? Cast<UUserWidget>(Slot->GetChildAt(0)) : nullptr;
+	const UWidget* Button = Entry ? Entry->GetWidgetFromName(TEXT("ChoiceButton")) : nullptr;
+	if (!Button || !FSlateApplication::IsInitialized())
+	{
+		return false;
+	}
+	OutCentre = Button->GetCachedGeometry().GetAbsolutePositionAtCoordinates(FVector2D(0.5f, 0.5f));
+	FSlateApplication& Slate = FSlateApplication::Get();
+	const TSet<FKey> Pressed = { EKeys::LeftMouseButton };
+	Slate.ProcessMouseMoveEvent(FPointerEvent(0, OutCentre, OutCentre, TSet<FKey>(), EKeys::Invalid, 0.f, FModifierKeysState()));
+	Slate.ProcessMouseButtonDownEvent(nullptr, FPointerEvent(0, OutCentre, OutCentre, Pressed, EKeys::LeftMouseButton, 0.f, FModifierKeysState()));
+	Slate.ProcessMouseButtonUpEvent(FPointerEvent(0, OutCentre, OutCentre, TSet<FKey>(), EKeys::LeftMouseButton, 0.f, FModifierKeysState()));
+	return true;
 }
 
 void UDwDevCaptureSubsystem::BossFightStep()

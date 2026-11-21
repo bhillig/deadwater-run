@@ -121,6 +121,8 @@ void UDwGameUserSettings::ApplyAudio() const
 void UDwGameUserSettings::SetToDefaults()
 {
 	Super::SetToDefaults();
+	// UGameUserSettings::SetToDefaults leaves VSync as last saved; "defaults" means the engine default (off) here too.
+	SetVSyncEnabled(false);
 	MasterVolume = 1.f;
 	MusicVolume = 0.8f;
 	SfxVolume = 1.f;

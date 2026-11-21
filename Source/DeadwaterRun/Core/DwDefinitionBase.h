@@ -24,6 +24,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Definition", meta = (MultiLine = true))
 	FText Description;
 
+	/** One short line for compact UI (wanted posters, shop offers). Set from Tools/Content/ui_summaries.json; empty = Description. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Definition")
+	FText Summary;
+
+	const FText& GetSummary() const { return Summary.IsEmpty() ? Description : Summary; }
+
 	/** Row in the tuning table this definition reads its numbers from. Required when GetTuningRowStruct() is non-null. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Definition")
 	FDataTableRowHandle Tuning;

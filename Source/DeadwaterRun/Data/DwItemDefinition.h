@@ -30,6 +30,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = "1"))
 	int32 MaxStack = 1;
 
+	/** Description with {Amount} and {Price} filled from the tuning row ("Heal {Amount} HP in a fight."). */
+	FText GetFormattedDescription() const;
+
 	virtual FPrimaryAssetType GetDwAssetType() const override { return FTypes::Item; }
 	virtual const UScriptStruct* GetTuningRowStruct() const override;
 };

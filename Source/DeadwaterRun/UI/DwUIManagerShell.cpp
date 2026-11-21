@@ -110,7 +110,7 @@ void UDwUIManagerSubsystem::ShowMainMenu()
 		return true;
 	} });
 	// No Esc on the main menu: Quit is a button, never an accidental key press.
-	Menu->Set(LOCTEXT("GameTitle", "DEADWATER RUN"), { LOCTEXT("Tagline", "Pick a captain, sail the chart, and face the Kraken.") }, MoveTemp(Buttons));
+	Menu->Set(LOCTEXT("GameTitle", "Deadwater\nRun"), { LOCTEXT("Tagline", "Pick a captain, sail the chart,\nand face the Kraken.") }, MoveTemp(Buttons));
 	PushShellScreen(DwTags::UI_Layer_Menu, Screens->Menu, Menu);
 }
 

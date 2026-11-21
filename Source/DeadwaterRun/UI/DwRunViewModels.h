@@ -10,6 +10,18 @@
 
 class UTexture2D;
 
+/** One line under a choice: an icon and its text (a captain's abilities on the wanted poster). */
+USTRUCT(BlueprintType)
+struct DEADWATERRUN_API FDwChoiceDetail
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") TSoftObjectPtr<UTexture2D> Icon;
+	/** Drawn in the detail title font before Text ("Rally Cry" - "Heal all crew 15"); empty = Text alone. */
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText Title;
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText Text;
+};
+
 class UDwRun;
 
 /*
@@ -31,6 +43,11 @@ struct DEADWATERRUN_API FDwChoiceView
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") TSoftObjectPtr<UTexture2D> Icon;
 	/** The icon is a flat white glyph (the perks' pack status icons) the widget tints, not a coloured render. */
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") bool bIconIsGlyph = false;
+	/** "30 gold": the price column of a shop ledger row (empty when there is no price). */
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") FText Price;
+	/** The screen's main action (Set Sail, Teach, Take the rewards): drawn as the red primary button. */
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") bool bPrimary = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Choice") TArray<FDwChoiceDetail> Details;
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") bool bEnabled = true;
 	UPROPERTY(BlueprintReadOnly, Category = "Choice") bool bSelected = false;
 	/** Why it can't be clicked; empty when enabled. */
@@ -131,6 +148,7 @@ struct DEADWATERRUN_API FDwCrewLineView
 	UPROPERTY(BlueprintReadOnly, Category = "Crew") FText Detail;
 	UPROPERTY(BlueprintReadOnly, Category = "Crew") bool bAlive = true;
 	UPROPERTY(BlueprintReadOnly, Category = "Crew") bool bIsCaptain = false;
+	UPROPERTY(BlueprintReadOnly, Category = "Crew") TSoftObjectPtr<UTexture2D> Portrait;
 };
 
 /** The sea chart (phase Map) and the run header every run screen shows: gold, hull, crew. */
@@ -264,6 +282,9 @@ class DEADWATERRUN_API UDwShopViewModel : public UDwRunScreenViewModel
 	GENERATED_BODY()
 
 public:
+	/** The repair line's icon (it has no definition to carry one): DA_UIScreenSet.RepairIcon, set by the UI manager. */
+	UPROPERTY(Transient) TSoftObjectPtr<UTexture2D> RepairIcon;
+
 	int32 GetGold() const { return Gold; }
 	FText GetShipText() const { return ShipText; }
 	/** "Hold 3 / 6" (P10), or "Hold 3" with no cap. */

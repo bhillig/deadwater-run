@@ -16,7 +16,7 @@
     "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_BoardingCry": "T_ICON_Pirate_Skull_01",
     "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_ChainShot": "T_ICON_Pirate_Cannonball_01",
     "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_Cleave": "/Game/Synty/UIFantasyWarriorHUD/Textures/Icons_Weapons/T_ICON_SM_Wep_Axe_01",
-    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_CrowsNestShot": "T_ICON_Pirate_Rifle_02",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_CrowsNestShot": "T_ICON_Pirate_Rifle_03",
     "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_FieldDressing": "/Game/Synty/UIFantasyWarriorHUD/Textures/Icons_Resources/T_ICON_SM_Item_Mortar_01",
     "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_GrogCourage": "T_ICON_Pirate_Barrel_01",
     "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_Hamstring": "T_ICON_Pirate_Dagger_01",
@@ -35,9 +35,9 @@
     "/Game/DeadwaterRun/Data/Perks/DA_Perk_SeaLegs": "/Game/Synty/UIFantasyWarriorHUD/Textures/Icons_Status/T_ICON_FantasyWarrior_Status_SpeedUp01_Clean",
     "/Game/DeadwaterRun/Data/Perks/DA_Perk_SteadyHand": "/Game/Synty/UIFantasyWarriorHUD/Textures/Icons_Stats/T_ICON_FantasyWarrior_Stat_Accuracy01_Clean",
     "/Game/DeadwaterRun/Data/Perks/DA_Perk_ThickSkin": "/Game/Synty/UIFantasyWarriorHUD/Textures/Icons_Status/T_ICON_FantasyWarrior_Status_FortifiedHealth01_Clean",
-    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_ExtraCannon": "T_ICON_Pirate_Cannon_04",
-    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_HeavyShot": "T_ICON_Pirate_Cannonball_01",
-    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_ReinforcedHull": "/Game/Synty/UIFantasyWarriorHUD/Textures/Icons_Resources/T_ICON_SM_Item_Wood_01"
+    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_ExtraCannon": "T_ICON_Pirate_Cannon_01",
+    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_HeavyShot": "T_ICON_Pirate_Cannon_04",
+    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_ReinforcedHull": "T_ICON_Pirate_Chest_01"
   },
   "portraits": {
     "/Game/DeadwaterRun/Data/Captains/DA_Captain_TeamLeader": "T_ICON_Portrait_Captain_01",

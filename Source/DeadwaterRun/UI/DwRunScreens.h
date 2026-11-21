@@ -15,12 +15,24 @@ class UTexture2D;
 class UPanelWidget;
 class UTextBlock;
 class UWidget;
+class UDataTable;
 
 /*
  * Run screens (Docs/Architecture/14-UI.md "Screens", DW-211): WBP_Map, WBP_Rewards, WBP_LevelUp, WBP_Shop and WBP_NodeShell
  * (event). Structure and logic here; the WBPs (UDwUIContentLibrary) only lay out and style. Every
  * click goes to a view model intent; nothing here reads UDwRun.
  */
+
+/** How a list of choices is drawn (UDwRunScreen::FillChoices). */
+enum class EDwChoiceStyle : uint8
+{
+	Row,    // WBP_ChoiceButton: a parchment strip
+	Card,   // WBP_ChoiceCard: tall card with a big icon (perks, reward moves)
+	Ledger, // WBP_LedgerRow: a line of the shop ledger, price on the right
+	Poster, // WBP_PosterCard: a wanted poster (captain select)
+	Chip,   // WBP_ChoiceChip: a small outlined portrait chip (who learns a move)
+	Offer   // WBP_OfferRow: a shop move - big icon, name, italic text, who can learn it, price
+};
 
 /** WBP_ChoiceButton: one UDwChoiceViewModel - title, body, disabled reason, selected highlight. */
 UCLASS(Abstract)
@@ -41,6 +53,38 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> SelectedOutline;
 	/** Tint for glyph icons (FDwChoiceView::bIconIsGlyph); coloured renders stay untinted. */
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor GlyphColor = FLinearColor::White;
+	/** Ledger rows: the price column ("30", then PriceUnitText "gold"), and a stamp ("SOLD OUT") for short disabled reasons instead of the red line. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> PriceText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> PriceUnitText;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> StampPanel;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> StampText;
+	/** Posters: FDwChoiceView::Details, one icon + text line each. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UPanelWidget> DetailList;
+	/** FDwChoiceView::bPrimary: the button art and title colour of the screen's main action. Unset = no primary look. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FButtonStyle PrimaryStyle;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor PrimaryTitleColor = FLinearColor::White;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") bool bHasPrimaryStyle = false;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FSlateFontInfo DetailFont;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor DetailColor = FLinearColor::White;
+	/** FDwChoiceDetail::Title, before the text on the same line (wraps under it when the line is full). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FSlateFontInfo DetailTitleFont;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor DetailTitleColor = FLinearColor::White;
+	/**
+	 * Rich text styles (FRichTextStyleRow: "Default" = the text, "b" = the title). Set: each detail line is one paragraph
+	 * that wraps as a whole ("<b>Rally Cry</> - Heal all crew 15, clear bad effects"); unset: title and text blocks.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TObjectPtr<UDataTable> DetailTextStyles;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float DetailIconSize = 34.f;
+	/** Shown before a non-empty body ("- Heal 40 HP in a fight" after the name on a ledger line). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FText BodyPrefix;
+	/** Opacity of a disabled, unselected choice (sold-out ledger rows fade). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float DisabledOpacity = 1.f;
+	/** Disabled reasons up to this many characters become a stamp (when StampText exists). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") int32 StampMaxChars = 18;
+	/** Rows without an icon centre their text (menu buttons, Leave, Set Sail). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") bool bCentreTextWithoutIcon = false;
+	/** Keep the icon's space when a choice has none, so a list's text lines up (ledger). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") bool bReserveIconSpace = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor ReadyColor = FLinearColor::White; // tints the parchment button art (Ship's Log)
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor SelectedColor = FLinearColor(1.f, 0.9f, 0.8f);
@@ -49,6 +93,15 @@ protected:
 private:
 	UFUNCTION() void HandleClicked();
 	UFUNCTION() void HandleHovered();
+	FButtonStyle DefaultStyle;
+	FSlateColor DefaultTitleColor;
+	FSlateColor DefaultBodyColor;
+	bool bCachedDefaults = false;
+	/** The icon last asked for: a refresh with the same icon must not restart its async load (UImage cancels and re-requests). */
+	FSoftObjectPath ShownIcon;
+	/** The details DetailList was built from (rebuilt only when they change, for the same reason). */
+	TArray<FDwChoiceDetail> ShownDetails;
+	bool bDetailsShown = false;
 };
 
 /** Base of the run screens: a choice button class and the fill helper. */
@@ -59,15 +112,22 @@ class DEADWATERRUN_API UDwRunScreen : public UDwActivatableScreen
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|UI") TSubclassOf<UDwChoiceButtonWidget> ChoiceButtonClass;
-	/** Tall icon cards (WBP_ChoiceCard) for the lists that are picks rather than buttons: perks, captains, new moves. */
+	/** EDwChoiceStyle::Card, ::Ledger and ::Poster entries (Row uses ChoiceButtonClass). Missing = a row. */
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|UI") TSubclassOf<UDwChoiceButtonWidget> CardButtonClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|UI") TSubclassOf<UDwChoiceButtonWidget> LedgerRowClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|UI") TSubclassOf<UDwChoiceButtonWidget> PosterCardClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|UI") TSubclassOf<UDwChoiceButtonWidget> ChipClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|UI") TSubclassOf<UDwChoiceButtonWidget> OfferRowClass;
 	/** Text lines (FillLines): the art direction's body font and ink. An unset font keeps the engine font; alpha 0 keeps the caller's colour. */
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FSlateFontInfo LineFont;
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor LineColor = FLinearColor::Transparent;
+	/** Used for every line when > 0 (the caller's size otherwise); and the lines' justification. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") int32 LineFontSize = 0;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TEnumAsByte<ETextJustify::Type> LineJustification = ETextJustify::Left;
 
 protected:
-	/** One WBP_ChoiceButton (or WBP_ChoiceCard with bCards) per choice in Panel, reused while the count and kind hold. */
-	void FillChoices(UPanelWidget* Panel, TConstArrayView<TObjectPtr<UDwChoiceViewModel>> Choices, bool bCards = false);
+	/** One entry per choice in Panel, drawn in Style; reused while the count and kind hold (so juice and hover survive refreshes). */
+	void FillChoices(UPanelWidget* Panel, TConstArrayView<TObjectPtr<UDwChoiceViewModel>> Choices, EDwChoiceStyle Style = EDwChoiceStyle::Row);
 	/** Plain text lines into a vertical panel. */
 	void FillLines(UPanelWidget* Panel, TConstArrayView<FText> Lines, int32 FontSize, const FLinearColor& Color);
 };
@@ -96,6 +156,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TObjectPtr<UTexture2D> EventIcon;
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TObjectPtr<UTexture2D> BossIcon;
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor IconColor = FLinearColor::White;
+	/** Ring: the stamp's ink circle (separate from the fill so a choosable stop can be ringed in red). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor RingColor = FLinearColor::White;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") FLinearColor ChoosableRingColor = FLinearColor::White;
+	/** Glyph size for ordinary stops and for the boss (whose stamp the chart draws larger: UDwMapScreen::BossScale). */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float IconSize = 42.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") float BossIconSize = 42.f;
 
 protected:
 	virtual void NativeOnInitialized() override;
@@ -103,6 +169,10 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UButton> NodeButton;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> LabelText;
 	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UImage> NodeIcon;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UImage> Ring;
+	/** A red cross on sailed stops, and the "WE ARE HERE" tag on the current one. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> SailedMark;
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UWidget> HereTag;
 
 private:
 	UFUNCTION() void HandleClicked();
@@ -118,6 +188,10 @@ struct FDwMapRoute
 	FVector2D End = FVector2D::ZeroVector;
 	FLinearColor Color = FLinearColor::White;
 	float Thickness = 1.f;
+	/** Drawn as an ink dash pattern (routes not yet sailed). */
+	bool bDashed = false;
+	/** How far the route bows upwards at its middle, in chart units (0 = straight). */
+	float Bow = 0.f;
 };
 
 /**
@@ -140,6 +214,24 @@ private:
 	TArray<FDwMapRoute> Routes;
 };
 
+/** A hand-inked rule across the widget's middle, solid or dashed (the shop ledger's lines). Give it a height (size box). */
+UCLASS()
+class DEADWATERRUN_API UDwInkRuleWidget : public UUserWidget
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Deadwater|Style") FLinearColor Color = FLinearColor::Black;
+	UPROPERTY(EditAnywhere, Category = "Deadwater|Style") float Thickness = 1.f;
+	/** Dash and gap lengths; Dash 0 = a solid line. */
+	UPROPERTY(EditAnywhere, Category = "Deadwater|Style") float Dash = 0.f;
+	UPROPERTY(EditAnywhere, Category = "Deadwater|Style") float Gap = 4.f;
+
+protected:
+	virtual int32 NativePaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
+		FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override;
+};
+
 /** WBP_Map (phase Map): header (gold, hull, crew), the chart with its routes, a hint line. */
 UCLASS(Abstract)
 class DEADWATERRUN_API UDwMapScreen : public UDwRunScreen
@@ -153,9 +245,22 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") FLinearColor RouteColor = FLinearColor(0.55f, 0.55f, 0.6f, 0.45f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") FLinearColor OpenRouteColor = FLinearColor(1.f, 0.82f, 0.3f, 1.f);
 	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") FLinearColor SailedRouteColor = FLinearColor(0.35f, 0.65f, 1.f, 0.9f);
+	/** Hand-drawn chart: routes bow by this much, and the ones not yet sailed are dashed. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") float RouteBow = 0.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") bool bDashUnsailed = false;
+	/** Crew faces in the header (CrewPortraits), this big. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") float CrewPortraitSize = 62.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") FSlateBrush CrewPortraitFrame;
+	/** The boss stop's stamp is this many times NodeSize, centred where an ordinary stop would sit. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") float BossScale = 1.f;
+	/** Route thickness: open or sailed, and the rest. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") float RouteThickness = 3.f;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Map") float FarRouteThickness = 1.5f;
 
-	/** Where a node sits in the chart canvas (top-left of the node). */
+	/** Where a node sits in the chart canvas (top-left of an ordinary node). */
 	FVector2D GetNodePosition(int32 Layer, int32 Lane) const;
+	/** A node's stamp in the chart canvas: top-left and size (the boss is BossScale times larger, same centre). */
+	FBox2D GetNodeBox(const FDwMapNodeView& Node) const;
 	/** A failed click's reason (or empty), shown under the chart. */
 	void ShowHint(const FText& Hint);
 
@@ -168,6 +273,8 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> CrewList;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UCanvasPanel> Chart;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> HintText;
+	/** The crew as framed faces (a horizontal box), next to the gold. */
+	UPROPERTY(meta = (BindWidgetOptional)) TObjectPtr<UPanelWidget> CrewPortraits;
 
 private:
 	void RefreshRoutes(const UDwMapViewModel& Map);

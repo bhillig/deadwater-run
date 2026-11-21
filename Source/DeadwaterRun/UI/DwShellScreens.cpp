@@ -27,6 +27,12 @@ void UDwMenuScreen::NativeOnViewModelChanged()
 		return;
 	}
 	TitleText->SetText(Menu->GetTitle());
+	FSlateFontInfo TitleFont = TitleText->GetFont();
+	TitleSize = TitleSize > 0 ? TitleSize : TitleFont.Size;
+	const FString Title = Menu->GetTitle().ToString();
+	const bool bLong = LongTitleSize > 0 && !Title.Contains(TEXT("\n")) && Title.Len() > LongTitleChars;
+	TitleFont.Size = bLong ? LongTitleSize : TitleSize;
+	TitleText->SetFont(TitleFont);
 	FillLines(LineList, Menu->GetLines(), 20, DwShellScreens::Light);
 	LineList->SetVisibility(Menu->GetLines().IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
 	FillChoices(ButtonList, Menu->GetButtons());
@@ -58,7 +64,16 @@ void UDwCaptainSelectScreen::NativeOnViewModelChanged()
 	{
 		return;
 	}
-	FillChoices(CaptainList, Select->GetCaptains(), /*bCards*/ true);
+	FillChoices(CaptainList, Select->GetCaptains(), EDwChoiceStyle::Poster);
+	// Wanted posters pinned up slightly askew.
+	for (int32 Index = 0; Index < CaptainList->GetChildrenCount(); ++Index)
+	{
+		if (UWidget* Poster = CaptainList->GetChildAt(Index); Poster && PosterTilts.Num() > 0)
+		{
+			Poster->SetRenderTransformPivot(FVector2D(0.5f, 0.5f));
+			Poster->SetRenderTransformAngle(PosterTilts[Index % PosterTilts.Num()]);
+		}
+	}
 	DetailTitleText->SetText(Select->GetDetailTitle());
 	FillLines(DetailList, Select->GetDetailLines(), 18, DwShellScreens::Light);
 	for (UWidget* Child : DetailList->GetAllChildren())
@@ -68,7 +83,7 @@ void UDwCaptainSelectScreen::NativeOnViewModelChanged()
 			Line->SetAutoWrapText(true);
 		}
 	}
-	const TArray<TObjectPtr<UDwChoiceViewModel>> Buttons = { Select->GetSetSail(), Select->GetBack() };
+	const TArray<TObjectPtr<UDwChoiceViewModel>> Buttons = { Select->GetBack(), Select->GetSetSail() }; // Back, then the primary on the right
 	FillChoices(ButtonList, Buttons);
 }
 

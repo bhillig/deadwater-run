@@ -238,10 +238,11 @@ TArray<FString> UDwCombatContentLibrary::CreateCombatPlaceholderContent()
 	bOk &= Save(SwordDef, OutLog) && Save(RifleDef, OutLog);
 
 	// 4. Items: self or an adjacent ally (range from DT_ItemTuning).
-	auto MakeItem = [&](const TCHAR* AssetName, const TCHAR* Display, TSubclassOf<UGameplayEffect> Effect, const TCHAR* TuningRow)
+	auto MakeItem = [&](const TCHAR* AssetName, const TCHAR* Display, const TCHAR* Description, TSubclassOf<UGameplayEffect> Effect, const TCHAR* TuningRow)
 	{
 		UDwItemDefinition* Item = FindOrCreate<UDwItemDefinition>(ItemData, AssetName, OutLog);
 		Item->DisplayName = FText::FromString(Display);
+		Item->Description = FText::FromString(Description); // {Amount} from the tuning row (UDwItemDefinition::GetFormattedDescription)
 		Item->Effect = Effect;
 		Item->Targeting = FDwTargetingRules();
 		Item->Targeting.Pattern = EDwTargetPattern::SingleUnit;
@@ -251,8 +252,8 @@ TArray<FString> UDwCombatContentLibrary::CreateCombatPlaceholderContent()
 		bOk &= Save(Item, OutLog);
 		return Item;
 	};
-	MakeItem(TEXT("DA_Item_HealthRestore"), TEXT("Grog"), Effects.Heal, TEXT("HealthRestore"));
-	MakeItem(TEXT("DA_Item_ManaRestore"), TEXT("Sea Salts"), Effects.RestoreMana, TEXT("ManaRestore"));
+	MakeItem(TEXT("DA_Item_HealthRestore"), TEXT("Grog"), TEXT("Heal {Amount} HP in a fight"), Effects.Heal, TEXT("HealthRestore"));
+	MakeItem(TEXT("DA_Item_ManaRestore"), TEXT("Sea Salts"), TEXT("Restore {Amount} MP in a fight"), Effects.RestoreMana, TEXT("ManaRestore"));
 
 	// 5. Units (placeholder visuals: ADwCombatUnit's tinted cylinder until BP_Unit_* exist, DW-307).
 	auto MakeUnit = [&](const TCHAR* AssetName, const TCHAR* Display, UDwAbilityDefinition* Attack, const FGameplayTagContainer& UnitTags, const TCHAR* TuningRow)

@@ -325,14 +325,33 @@ EDataValidationResult UDwMapRules::IsDataValid(FDataValidationContext& Context) 
 
 #undef LOCTEXT_NAMESPACE
 
+FText UDwItemDefinition::GetFormattedDescription() const
+{
+	const FDwItemTuningRow* Row = GetTuningRow<FDwItemTuningRow>();
+	FFormatNamedArguments Args;
+	Args.Add(TEXT("Amount"), FText::AsNumber(Row ? Row->Amount : 0));
+	Args.Add(TEXT("Price"), FText::AsNumber(Row ? Row->Price : 0));
+	return FText::Format(Description, Args);
+}
+
 FText UDwShipUpgradeDefinition::GetFormattedDescription() const
+{
+	return FormatFromTuning(Description);
+}
+
+FText UDwShipUpgradeDefinition::GetFormattedSummary() const
+{
+	return FormatFromTuning(GetSummary());
+}
+
+FText UDwShipUpgradeDefinition::FormatFromTuning(const FText& Pattern) const
 {
 	const FDwShipUpgradeTuningRow* Row = GetTuningRow<FDwShipUpgradeTuningRow>();
 	FFormatNamedArguments Args;
 	Args.Add(TEXT("MaxHealthBonus"), FText::AsNumber(Row ? Row->MaxHealthBonus : 0));
 	Args.Add(TEXT("CannonDamageBonus"), FText::AsNumber(Row ? Row->CannonDamageBonus : 0));
 	Args.Add(TEXT("Price"), FText::AsNumber(Row ? Row->Price : 0));
-	return FText::Format(Description, Args);
+	return FText::Format(Pattern, Args);
 }
 
 FText UDwPerkDefinition::GetFormattedDescription() const

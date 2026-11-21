@@ -1,0 +1,24 @@
+{
+  "_comment": "One short line per definition for compact UI (wanted posters, shop offers): UDwDefinitionBase::Summary. Applied by Tools/CreateUIContent.ps1 (UDwUIContentLibrary::AssignUIArt). The full rules stay in Description (tooltips, captain details). Wording from the Ship's Log mockups (Saved/UIDesign, direction B).",
+  "summaries": {
+    "/Game/DeadwaterRun/Data/Captains/DA_Captain_TeamLeader": "Crew fighting side by side hit harder. He can shield a crewmate.",
+    "/Game/DeadwaterRun/Data/Captains/DA_Captain_Fearmongerer": "Breaks crews before he boards them. Frightened foes cower or surrender.",
+    "/Game/DeadwaterRun/Data/Captains/DA_Captain_Conqueror": "Fights alone at the front. Every kill feeds his legend.",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Captain_RallyCry": "Heal all crew 15, clear bad effects",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Captain_GrappleHook": "Pull a unit next to the captain",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Captain_SmokeAndFire": "Fear on every enemy, burns the afraid",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Captain_SixPistols": "Six shots at random targets",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Captain_Charge": "Dash and strike in a line",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Captain_EyeOfTheTiger": "Freeze one enemy for a turn",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_GrogCourage": "Shake off a root, heal a little",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_CrowsNestShot": "A huge shot from the nest",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_Hamstring": "Target cannot move next turn",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_PommelStrike": "Target loses its next turn",
+    "/Game/DeadwaterRun/Data/Abilities/DA_Ability_Crew_PinningShot": "Target cannot move next turn",
+    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_ReinforcedHull": "+{MaxHealthBonus} max hull",
+    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_HeavyShot": "+{CannonDamageBonus} cannon damage",
+    "/Game/DeadwaterRun/Data/Ship/DA_ShipUpgrade_ExtraCannon": "A third cannon on deck",
+    "/Game/DeadwaterRun/Data/Units/DA_Unit_Swordsman": "A blade for hire",
+    "/Game/DeadwaterRun/Data/Units/DA_Unit_Sniper": "A long gun for hire"
+  }
+}

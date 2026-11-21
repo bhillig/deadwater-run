@@ -25,6 +25,10 @@ class DEADWATERRUN_API UDwMenuScreen : public UDwRunScreen
 public:
 	UDwMenuScreen();
 
+	/** One-line titles longer than LongTitleChars ("Quit Deadwater Run?") drop to LongTitleSize so they fit the page; 0 = never. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") int32 LongTitleSize = 0;
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") int32 LongTitleChars = 12;
+
 protected:
 	virtual void NativeOnViewModelChanged() override;
 	virtual bool NativeOnHandleBackAction() override;
@@ -32,6 +36,9 @@ protected:
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> TitleText;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> LineList;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> ButtonList;
+
+private:
+	int32 TitleSize = 0; // the layout's own title size, cached on the first refresh
 };
 
 /** WBP_CaptainSelect. */
@@ -48,6 +55,8 @@ protected:
 	virtual bool NativeOnHandleBackAction() override;
 
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> CaptainList;
+	/** Degrees each wanted poster leans, cycled. */
+	UPROPERTY(EditDefaultsOnly, Category = "Deadwater|Style") TArray<float> PosterTilts;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UTextBlock> DetailTitleText;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> DetailList;
 	UPROPERTY(meta = (BindWidget)) TObjectPtr<UPanelWidget> ButtonList;
