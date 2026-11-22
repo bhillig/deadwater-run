@@ -18,10 +18,12 @@ const OUTCOME_FIELDS = {
   Recruit: { unit: 'unit' },
   LoseCrew: { selector: 'selector' },
   RandomOf: { options: 'options' },
+  Nothing: {},
 };
 const REQUIREMENT_FIELDS = {
   MinGold: { amount: 'posint' },
   CrewCountAtLeast: { count: 'posint' },
+  CrewCountAtMost: { count: 'posint' },
   HasItem: { item: 'item' },
   CaptainIs: { captain: 'captain' },
 };
@@ -163,7 +165,13 @@ function checkEvents(events, facts, brief = {}, existingIds = []) {
         checkParams(ev, p, r, spec, `UDwEventRequirement_${r.type}`);
       });
       checkOutcomes(ev, `${at}.outcomes`, c.outcomes, false);
-      if (Array.isArray(c.outcomes) && !c.outcomes.length && !/nothing/i.test(c.resultText || '')) add('major', ev, `${at}.outcomes`, 'E05 outcome', 'No outcomes and the result text doesn\'t say nothing happens', 'Add an outcome or say nothing happens');
+      // DwEventImporter turns an empty choice into UDwEventOutcome_Nothing, so the text has to own up to it.
+      if (Array.isArray(c.outcomes) && !c.outcomes.length && !/nothing/i.test(c.resultText || '')) add('major', ev, `${at}.outcomes`, 'E05 outcome', 'No outcomes (imports as Nothing) and the result text doesn\'t say nothing happens', 'Add an outcome or say nothing happens');
+      if (flatOutcomes(c.outcomes).some((o) => o.type === 'Recruit')
+        && !(c.requirements || []).some((r) => r.type === 'CrewCountAtMost' && r.count < facts.numbers.maxCrew)) {
+        add('major', ev, `${at}.requirements`, 'E15 recruit trap', `Recruit with no CrewCountAtMost gate: with a full crew of ${facts.numbers.maxCrew} the button is live and does nothing`,
+          `Add { "type": "CrewCountAtMost", "count": ${facts.numbers.maxCrew - 1} }`);
+      }
       checkTextNumbers(ev, at, c);
     });
 

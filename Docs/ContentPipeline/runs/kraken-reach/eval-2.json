@@ -1,0 +1,396 @@
+{
+  "by": "refiner",
+  "score": {
+    "score": 85,
+    "base": 84.8,
+    "penalty": 0,
+    "capped": false,
+    "strangerCapped": false,
+    "blockers": [],
+    "dims": [
+      {
+        "key": "rules",
+        "weight": 20,
+        "what": "Game rules: only outcomes, requirements, items, units, captains and numbers in the facts; nothing the game can't do",
+        "score": 95,
+        "reason": "Every outcome, selector, requirement and captain exists in the facts, and every number is inside the guardrails (gold +140 max, crew -45 max, ship -50/+60, XP 40). Captain-selector damage of -35 and -40 is allowed because event health loss floors at 1. Nothing implies LoseCrew, the Kraken or magic (S06, S08). The closest call is the Wreck Current's 'You lash the wheel and let the current have her', which is flavour only and claims no mechanic."
+      },
+      {
+        "key": "text_data",
+        "weight": 15,
+        "what": "Text matches data: every body, label and result is true to the outcomes of its choice, in every RandomOf branch (V07)",
+        "score": 82,
+        "reason": "Most result texts match their outcomes. 'The hull stays whole' really has no ShipHealth outcome, 'nobody else bleeds for it' really uses the Captain selector, 'as much as one man can' really pays 100 gold against Storm's 120, and the Cutter's board text 'come out burned, carrying whatever they could grab' reads true in both RandomOf branches (V07). The weak spot is the Brigantine's Fearmongerer gamble. 'Every blade but one hits the deck ... and the hold comes over the rail around the man still holding it' promises the full hold and shows no wound, but branch 2 pays only 90 gold and puts -20 on a Random crew member. Nothing in the text says the one man who kept his blade hurt anyone (V07)."
+      },
+      {
+        "key": "design",
+        "weight": 20,
+        "what": "Real decisions with sink-or-plunder tension (S02), ship vs crew costs (S03), Good/Bad fit (S07), fair for a medium ~30 minute run, no dominant or trap choice",
+        "score": 79,
+        "reason": "S02 is strong in the Brigantine and the Cutter (sink against board) and S03 is strong in the Wreck Current and the Galleon (hull against crew). Every Bad event has a choice that limits the damage (S07). Two real problems remain. (1) The Brigantine and the Galleon are the same event: a wrecked rival with armed survivors guarding a full hold, a safe option, and a 'storm them' option at about -25/-30 All for 120-140 gold. Three of the four events are 'damaged rival ship with loot', on top of the shipped Drifting Wreck, Turning Brig and Wreckers Among the Hulls. (2) In the Wreck Current, 'Take the bow yourself' (-35 Captain, +40 XP All, boosted by Veteran Crew) is a net gain, so for the Team Leader this Bad event stops being bad and that choice beats both others. Smaller point: the Cutter's 'Sink her at range' (-30 ship, +30 gold) is close to free once you count repair at 100 gold per 100 HP."
+      },
+      {
+        "key": "voice",
+        "weight": 20,
+        "what": "Sounds like the voice rules (V01-V07), the reference lines and the shipped pool; Ship's Log aesthetic (A01-A03)",
+        "score": 87,
+        "reason": "Second person, present tense, short concrete sentences, and dry understatement that matches the shipped pool: 'the pumps are working harder than anyone aboard', 'one strongbox and a great many splinters', 'Her timber is sound where it isn't broken' (V02, V03). No caps, no exclamation marks, no UI talk (A01, A02), and the titles name what you sailed into (A03). Weakest lines: 'They learn more in an hour than in a week of drill, and nobody else bleeds for it' explains the mechanic instead of showing it. 'until the rope burns through their palms' and 'a purse off a dead man' repeat shipped motifs ('until their hands bleed' in Squall Line and Something Under the Keel, 'a purse in a dead man's coat' in Drifting Wreck)."
+      },
+      {
+        "key": "specificity",
+        "weight": 25,
+        "what": "Stranger test: could a stranger tell this is Deadwater Run? Low if the event would work unchanged in any other pirate game (S01-S08, C01-C03)",
+        "score": 81,
+        "reason": "The gated choices are built on the captains rather than name-dropping them. The Fearmongerer's 'Run up your colours' is literally his GDD third choice (sink, kill, or scare) and his reputation (C02). The Team Leader takes the blows for his crew, which is his defend trait (C01). The Conqueror goes over alone with only a sword (C03). The Kraken hints stay hints and never cross into fighting it: 'holed from below', 'where no wave could have put her', 'round scars the size of cartwheels' (S06). The weakest is the Cutter: 'A cutter drifts down on you with the current, burning from the waterline up' would work unchanged in any pirate game, and only the scar line and the sink-or-board split place it. The batch's sameness (three hulks with a hold to take) also weakens the brief's 'sea that is getting worse' (S01): the sea itself is barely shown."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "major": 0,
+      "minor": 0
+    },
+    "reason": "85/100. Dimensions (weighted 20/15/20/20/25): rules 95 - Every outcome, selector, requirement and captain exists in the facts, and every number is inside the guardrails (gold +140 max, crew -45 max, ship -50/+60, XP 40). Captain-selector damage of -35 and -40 is allowed because event health loss floors at 1. Nothing implies LoseCrew, the Kraken or magic (S06, S08). The closest call is the Wreck Current's 'You lash the wheel and let the current have her', which is flavour only and claims no mechanic. | text_data 82 - Most result texts match their outcomes. 'The hull stays whole' really has no ShipHealth outcome, 'nobody else bleeds for it' really uses the Captain selector, 'as much as one man can' really pays 100 gold against Storm's 120, and the Cutter's board text 'come out burned, carrying whatever they could grab' reads true in both RandomOf branches (V07). The weak spot is the Brigantine's Fearmongerer gamble. 'Every blade but one hits the deck ... and the hold comes over the rail around the man still holding it' promises the full hold and shows no wound, but branch 2 pays only 90 gold and puts -20 on a Random crew member. Nothing in the text says the one man who kept his blade hurt anyone (V07). | design 79 - S02 is strong in the Brigantine and the Cutter (sink against board) and S03 is strong in the Wreck Current and the Galleon (hull against crew). Every Bad event has a choice that limits the damage (S07). Two real problems remain. (1) The Brigantine and the Galleon are the same event: a wrecked rival with armed survivors guarding a full hold, a safe option, and a 'storm them' option at about -25/-30 All for 120-140 gold. Three of the four events are 'damaged rival ship with loot', on top of the shipped Drifting Wreck, Turning Brig and Wreckers Among the Hulls. (2) In the Wreck Current, 'Take the bow yourself' (-35 Captain, +40 XP All, boosted by Veteran Crew) is a net gain, so for the Team Leader this Bad event stops being bad and that choice beats both others. Smaller point: the Cutter's 'Sink her at range' (-30 ship, +30 gold) is close to free once you count repair at 100 gold per 100 HP. | voice 87 - Second person, present tense, short concrete sentences, and dry understatement that matches the shipped pool: 'the pumps are working harder than anyone aboard', 'one strongbox and a great many splinters', 'Her timber is sound where it isn't broken' (V02, V03). No caps, no exclamation marks, no UI talk (A01, A02), and the titles name what you sailed into (A03). Weakest lines: 'They learn more in an hour than in a week of drill, and nobody else bleeds for it' explains the mechanic instead of showing it. 'until the rope burns through their palms' and 'a purse off a dead man' repeat shipped motifs ('until their hands bleed' in Squall Line and Something Under the Keel, 'a purse in a dead man's coat' in Drifting Wreck). | specificity 81 - The gated choices are built on the captains rather than name-dropping them. The Fearmongerer's 'Run up your colours' is literally his GDD third choice (sink, kill, or scare) and his reputation (C02). The Team Leader takes the blows for his crew, which is his defend trait (C01). The Conqueror goes over alone with only a sword (C03). The Kraken hints stay hints and never cross into fighting it: 'holed from below', 'where no wave could have put her', 'round scars the size of cartwheels' (S06). The weakest is the Cutter: 'A cutter drifts down on you with the current, burning from the waterline up' would work unchanged in any pirate game, and only the scar line and the sink-or-board split place it. The batch's sameness (three hulks with a hold to take) also weakens the brief's 'sea that is getting worse' (S01): the sea itself is barely shown.. Base 84.8. Code checks: no deductions. Evaluator: A strong batch: the three captain-gated choices play to who each captain is, and the Kraken hints are subtle without fighting it. The score is held down by repetition (the Brigantine and the Galleon are the same 'guarded hulk' event), a Team Leader choice that makes the Wreck Current a net gain, and a Fearmongerer gamble whose text does not cover its hurt branch."
+  },
+  "eventScores": [
+    {
+      "id": "DA_Event_TheGuttedBrigantine",
+      "score": 83,
+      "reason": "The cleanest sink / kill / scare restaging in the batch (S02, C02), with good dry humour. Held back by the Fearmongerer result text, which does not cover branch 2, and by its near-duplicate structure with the Galleon.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheGuttedBrigantine",
+          "field": "choices[2].resultText",
+          "rule": "V07",
+          "problem": "One result text covers a RandomOf with branches of +140 gold and of -20 Random crew plus +90 gold. 'the hold comes over the rail around the man still holding it' promises the whole hold and shows no wound, so the second branch contradicts it.",
+          "fix": "Write a line that holds for both: say the one man who keeps his blade may or may not use it before the rest of the crew deal with him, and say the plunder is 'what they hand over' instead of 'the hold'."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheWreckCurrent",
+      "score": 84,
+      "reason": "A true hull-or-crew call (S03), with rival colours and 'holed from below' as Kraken foreshadowing (S06, S08). The Team Leader option is on-trait (C01) but beats both other choices and turns the Bad event into a gain. No sink-or-plunder tension (S02).",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheWreckCurrent",
+          "field": "choices[2].outcomes",
+          "rule": "S07",
+          "problem": "-35 on the Captain plus +40 XP for every crew member (more under Veteran Crew) is a net gain. For the Team Leader, this Bad event becomes a reward and 'Take the bow yourself' beats both other choices.",
+          "fix": "Cut the XP to about 20, or add a ShipHealth cost of about -20 (the bow still takes some timber), so the option limits the damage instead of paying out."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheWreckCurrent",
+          "field": "choices[1].resultText",
+          "rule": "V03",
+          "problem": "'snag a purse off a dead man' echoes the shipped Drifting Wreck's 'a purse in a dead man's coat'.",
+          "fix": "Change what they snag, such as a strongbox caught in the rigging of a wreck or a rival's coin pouch nailed to a stump."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheWreckCurrent",
+          "field": "choices[2].resultText",
+          "rule": "V06",
+          "problem": "'They learn more in an hour than in a week of drill' explains the XP payout rather than showing it.",
+          "fix": "Show one concrete thing the crew picks up from watching you take the blows, and cut the comparison."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheGalleonOnTheReef",
+      "score": 80,
+      "reason": "Good hull-repair-or-crew-blood split (S03), a subtle Kraken hint ('where no wave could have put her') and a strong Conqueror option (sword only, stronger than his crew, C03). It is structurally the Brigantine again: armed survivors guarding a hold, with 'storm the rail' at -30 All for 120 gold.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheGalleonOnTheReef",
+          "field": "body / choices[1]",
+          "rule": "design",
+          "problem": "Same shape as the Gutted Brigantine (wrecked rival, armed survivors guarding the hold, a safe option, and a 'storm them' choice at -30 All for 120 gold). Three of the four events are 'damaged rival hulk with loot', after three shipped wreck events. Neither event shows the brief's 'sea that is getting worse' (S01).",
+          "fix": "Rebuild the Galleon around the sea itself (the reef, the tide, something that put her there). For example, make the rich choice a crew-or-hull gamble against the reef rather than another boarding fight, and keep the Conqueror's solo option."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheBurningCutter",
+      "score": 80,
+      "reason": "Sink at range against board for the cabin restages S02 well, and the RandomOf result text reads true in both branches (V07). 'Sink her at range' is close to free for a Bad event, the premise is the most generic in the batch, and 'until the rope burns through their palms' echoes a shipped line.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheBurningCutter",
+          "field": "choices[0].outcomes",
+          "rule": "design",
+          "problem": "-30 ship with +30 gold is nearly free at 100 gold per 100 HP of repair, which makes it the default pick in a Bad event.",
+          "fix": "Drop the gold to 0-10, or raise the ship cost to about -45."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheBurningCutter",
+          "field": "choices[2].resultText",
+          "rule": "V03",
+          "problem": "'until the rope burns through their palms' repeats the shipped motif 'until their hands bleed' (Squall Line, Something Under the Keel).",
+          "fix": "Show the cost through a different deck detail, such as singed sails, a scorched rail, or smoke in the rigging."
+        }
+      ]
+    }
+  ],
+  "code": [],
+  "signals": {
+    "DA_Event_TheGuttedBrigantine": {
+      "terms": [
+        "plunder"
+      ],
+      "mechanics": [
+        "CaptainIs gate (S-captain)"
+      ]
+    },
+    "DA_Event_TheWreckCurrent": {
+      "terms": [],
+      "mechanics": [
+        "CaptainIs gate (S-captain)",
+        "ship vs crew health bars (S03)"
+      ]
+    },
+    "DA_Event_TheGalleonOnTheReef": {
+      "terms": [],
+      "mechanics": [
+        "CaptainIs gate (S-captain)",
+        "ship vs crew health bars (S03)"
+      ]
+    },
+    "DA_Event_TheBurningCutter": {
+      "terms": [
+        "sink"
+      ],
+      "mechanics": [
+        "ship vs crew health bars (S03)"
+      ]
+    }
+  },
+  "evaluation": {
+    "dimensions": {
+      "rules": {
+        "score": 95,
+        "reason": "Every outcome, selector, requirement and captain exists in the facts, and every number is inside the guardrails (gold +140 max, crew -45 max, ship -50/+60, XP 40). Captain-selector damage of -35 and -40 is allowed because event health loss floors at 1. Nothing implies LoseCrew, the Kraken or magic (S06, S08). The closest call is the Wreck Current's 'You lash the wheel and let the current have her', which is flavour only and claims no mechanic."
+      },
+      "text_data": {
+        "score": 82,
+        "reason": "Most result texts match their outcomes. 'The hull stays whole' really has no ShipHealth outcome, 'nobody else bleeds for it' really uses the Captain selector, 'as much as one man can' really pays 100 gold against Storm's 120, and the Cutter's board text 'come out burned, carrying whatever they could grab' reads true in both RandomOf branches (V07). The weak spot is the Brigantine's Fearmongerer gamble. 'Every blade but one hits the deck ... and the hold comes over the rail around the man still holding it' promises the full hold and shows no wound, but branch 2 pays only 90 gold and puts -20 on a Random crew member. Nothing in the text says the one man who kept his blade hurt anyone (V07)."
+      },
+      "design": {
+        "score": 79,
+        "reason": "S02 is strong in the Brigantine and the Cutter (sink against board) and S03 is strong in the Wreck Current and the Galleon (hull against crew). Every Bad event has a choice that limits the damage (S07). Two real problems remain. (1) The Brigantine and the Galleon are the same event: a wrecked rival with armed survivors guarding a full hold, a safe option, and a 'storm them' option at about -25/-30 All for 120-140 gold. Three of the four events are 'damaged rival ship with loot', on top of the shipped Drifting Wreck, Turning Brig and Wreckers Among the Hulls. (2) In the Wreck Current, 'Take the bow yourself' (-35 Captain, +40 XP All, boosted by Veteran Crew) is a net gain, so for the Team Leader this Bad event stops being bad and that choice beats both others. Smaller point: the Cutter's 'Sink her at range' (-30 ship, +30 gold) is close to free once you count repair at 100 gold per 100 HP."
+      },
+      "voice": {
+        "score": 87,
+        "reason": "Second person, present tense, short concrete sentences, and dry understatement that matches the shipped pool: 'the pumps are working harder than anyone aboard', 'one strongbox and a great many splinters', 'Her timber is sound where it isn't broken' (V02, V03). No caps, no exclamation marks, no UI talk (A01, A02), and the titles name what you sailed into (A03). Weakest lines: 'They learn more in an hour than in a week of drill, and nobody else bleeds for it' explains the mechanic instead of showing it. 'until the rope burns through their palms' and 'a purse off a dead man' repeat shipped motifs ('until their hands bleed' in Squall Line and Something Under the Keel, 'a purse in a dead man's coat' in Drifting Wreck)."
+      },
+      "specificity": {
+        "score": 81,
+        "reason": "The gated choices are built on the captains rather than name-dropping them. The Fearmongerer's 'Run up your colours' is literally his GDD third choice (sink, kill, or scare) and his reputation (C02). The Team Leader takes the blows for his crew, which is his defend trait (C01). The Conqueror goes over alone with only a sword (C03). The Kraken hints stay hints and never cross into fighting it: 'holed from below', 'where no wave could have put her', 'round scars the size of cartwheels' (S06). The weakest is the Cutter: 'A cutter drifts down on you with the current, burning from the waterline up' would work unchanged in any pirate game, and only the scar line and the sink-or-board split place it. The batch's sameness (three hulks with a hold to take) also weakens the brief's 'sea that is getting worse' (S01): the sea itself is barely shown."
+      }
+    },
+    "events": [
+      {
+        "id": "DA_Event_TheGuttedBrigantine",
+        "score": 83,
+        "reason": "The cleanest sink / kill / scare restaging in the batch (S02, C02), with good dry humour. Held back by the Fearmongerer result text, which does not cover branch 2, and by its near-duplicate structure with the Galleon.",
+        "stranger_test": "The Fearmongerer's surrender choice sitting beside sink (1x) and plunder (more gold) is Deadwater Run's fight hook; another game would lose that third option."
+      },
+      {
+        "id": "DA_Event_TheWreckCurrent",
+        "score": 84,
+        "reason": "A true hull-or-crew call (S03), with rival colours and 'holed from below' as Kraken foreshadowing (S06, S08). The Team Leader option is on-trait (C01) but beats both other choices and turns the Bad event into a gain. No sink-or-plunder tension (S02).",
+        "stranger_test": "Spending ship HP against crew HP, and the Team Leader taking hits meant for his crew, only make sense with Deadwater Run's two health bars and captains."
+      },
+      {
+        "id": "DA_Event_TheGalleonOnTheReef",
+        "score": 80,
+        "reason": "Good hull-repair-or-crew-blood split (S03), a subtle Kraken hint ('where no wave could have put her') and a strong Conqueror option (sword only, stronger than his crew, C03). It is structurally the Brigantine again: armed survivors guarding a hold, with 'storm the rail' at -30 All for 120 gold.",
+        "stranger_test": "The Conqueror going over alone with only his sword, and repairing the hull against bleeding the crew, tie it to Deadwater Run; the wreck premise itself is generic."
+      },
+      {
+        "id": "DA_Event_TheBurningCutter",
+        "score": 80,
+        "reason": "Sink at range against board for the cabin restages S02 well, and the RandomOf result text reads true in both branches (V07). 'Sink her at range' is close to free for a Bad event, the premise is the most generic in the batch, and 'until the rope burns through their palms' echoes a shipped line.",
+        "stranger_test": "Mostly the sink (small loot) vs board (rich, bloody) split and the sucker-ring scars; without those, a burning ship drifting down on you fits any pirate game."
+      }
+    ],
+    "findings": [
+      {
+        "severity": "major",
+        "event": "DA_Event_TheGuttedBrigantine",
+        "field": "choices[2].resultText",
+        "rule": "V07",
+        "problem": "One result text covers a RandomOf with branches of +140 gold and of -20 Random crew plus +90 gold. 'the hold comes over the rail around the man still holding it' promises the whole hold and shows no wound, so the second branch contradicts it.",
+        "fix": "Write a line that holds for both: say the one man who keeps his blade may or may not use it before the rest of the crew deal with him, and say the plunder is 'what they hand over' instead of 'the hold'."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_TheGalleonOnTheReef",
+        "field": "body / choices[1]",
+        "rule": "design",
+        "problem": "Same shape as the Gutted Brigantine (wrecked rival, armed survivors guarding the hold, a safe option, and a 'storm them' choice at -30 All for 120 gold). Three of the four events are 'damaged rival hulk with loot', after three shipped wreck events. Neither event shows the brief's 'sea that is getting worse' (S01).",
+        "fix": "Rebuild the Galleon around the sea itself (the reef, the tide, something that put her there). For example, make the rich choice a crew-or-hull gamble against the reef rather than another boarding fight, and keep the Conqueror's solo option."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_TheWreckCurrent",
+        "field": "choices[2].outcomes",
+        "rule": "S07",
+        "problem": "-35 on the Captain plus +40 XP for every crew member (more under Veteran Crew) is a net gain. For the Team Leader, this Bad event becomes a reward and 'Take the bow yourself' beats both other choices.",
+        "fix": "Cut the XP to about 20, or add a ShipHealth cost of about -20 (the bow still takes some timber), so the option limits the damage instead of paying out."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheBurningCutter",
+        "field": "choices[0].outcomes",
+        "rule": "design",
+        "problem": "-30 ship with +30 gold is nearly free at 100 gold per 100 HP of repair, which makes it the default pick in a Bad event.",
+        "fix": "Drop the gold to 0-10, or raise the ship cost to about -45."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheBurningCutter",
+        "field": "choices[2].resultText",
+        "rule": "V03",
+        "problem": "'until the rope burns through their palms' repeats the shipped motif 'until their hands bleed' (Squall Line, Something Under the Keel).",
+        "fix": "Show the cost through a different deck detail, such as singed sails, a scorched rail, or smoke in the rigging."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheWreckCurrent",
+        "field": "choices[1].resultText",
+        "rule": "V03",
+        "problem": "'snag a purse off a dead man' echoes the shipped Drifting Wreck's 'a purse in a dead man's coat'.",
+        "fix": "Change what they snag, such as a strongbox caught in the rigging of a wreck or a rival's coin pouch nailed to a stump."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheWreckCurrent",
+        "field": "choices[2].resultText",
+        "rule": "V06",
+        "problem": "'They learn more in an hour than in a week of drill' explains the XP payout rather than showing it.",
+        "fix": "Show one concrete thing the crew picks up from watching you take the blows, and cut the comparison."
+      }
+    ],
+    "code_check_disputes": [],
+    "summary": "A strong batch: the three captain-gated choices play to who each captain is, and the Kraken hints are subtle without fighting it. The score is held down by repetition (the Brigantine and the Galleon are the same 'guarded hulk' event), a Team Leader choice that makes the Wreck Current a net gain, and a Fearmongerer gamble whose text does not cover its hurt branch."
+  },
+  "changes": [
+    {
+      "event": "DA_Event_TheGuttedBrigantine",
+      "field": "choices[2].outcomes",
+      "finding": "major design: Fearmongerer +140 for nothing",
+      "after": "RandomOf 50/50: Gold +140, or CrewHealth -20 Random + Gold 90. Expected 115 with risk, so it no longer beats both sink (75 safe) and board (140 sure)"
+    },
+    {
+      "event": "DA_Event_TheGuttedBrigantine",
+      "field": "choices[2].resultText",
+      "finding": "V07 RandomOf (reads true for both branches)",
+      "after": "They know the flag. Every blade but one hits the deck before you're alongside, and the hold comes over the rail around the man still holding it."
+    },
+    {
+      "event": "DA_Event_TheGuttedBrigantine",
+      "field": "body",
+      "finding": "voice: awkward 'something with a grip'",
+      "after": "her deck split from bow to stern and her mainmast torn out by the roots"
+    },
+    {
+      "event": "DA_Event_TheWreckCurrent",
+      "field": "choices[1].resultText",
+      "finding": "V02 'dead rail'",
+      "after": "snag a purse off a dead man still lashed to a rail on the way through"
+    },
+    {
+      "event": "DA_Event_TheWreckCurrent",
+      "field": "choices[2].resultText",
+      "finding": "specificity / C01 (Team Leader defends the crew)",
+      "after": "take every blow meant for the crew behind you. They learn more in an hour than in a week of drill, and nobody else bleeds for it."
+    },
+    {
+      "event": "DA_Event_TheWreckCurrent",
+      "field": "body",
+      "finding": "specificity",
+      "after": "'each one holed from below' -> 'every one of them holed from below' (minor rhythm fix, scene kept)"
+    },
+    {
+      "event": "DA_Event_TheGalleonOnTheReef",
+      "field": "body",
+      "finding": "major S02/fit: retread of Wreckers Among the Hulls",
+      "after": "Rival scavenger crew dropped. The galleon's own survivors hold the high rail with a swivel gun, and her hold is still sealed"
+    },
+    {
+      "event": "DA_Event_TheGalleonOnTheReef",
+      "field": "body",
+      "finding": "voice: 'long curved line' repeats the Cutter's Kraken hint",
+      "after": "one side stove in across three decks"
+    },
+    {
+      "event": "DA_Event_TheGalleonOnTheReef",
+      "field": "choices[0].resultText",
+      "finding": "major: 'planks and pitch' echoes The Turning Brig",
+      "after": "You take planks and oakum from the side their gun can't reach. The survivors watch you work and keep their powder dry."
+    },
+    {
+      "event": "DA_Event_TheGalleonOnTheReef",
+      "field": "choices[1]",
+      "finding": "V03 'a lot of cuts' + scene change",
+      "after": "Label 'Storm the high rail'. Result: They hold the rail longer than men on a dead ship should. Your crew row back with the hold's gold and the reef's coral in every wound."
+    },
+    {
+      "event": "DA_Event_TheGalleonOnTheReef",
+      "field": "choices[2].outcomes",
+      "finding": "major design: Conqueror copy of the crates choice",
+      "after": "Captain -40, Gold 100, GrantXp 40 Captain. A different shape: less gold and a heavier personal cost, for the captain's XP"
+    },
+    {
+      "event": "DA_Event_TheGalleonOnTheReef",
+      "field": "choices[2].resultText",
+      "finding": "V07 (match the new outcomes) / C03",
+      "after": "You leave the crew aboard and wade onto the reef with nothing but your sword. The rail is yours by noon, and you carry back as much as one man can."
+    },
+    {
+      "event": "DA_Event_TheBurningCutter",
+      "field": "choices[2].outcomes",
+      "finding": "major design: sink and helm nearly the same",
+      "after": "ShipHealth -20 replaced with CrewHealth -15 All. Now the three choices are hull for coin, crew for more coin (gamble), or crew only"
+    },
+    {
+      "event": "DA_Event_TheBurningCutter",
+      "field": "choices[2].resultText",
+      "finding": "V07 'only the paint blisters'",
+      "after": "Every hand hauls on the sheets until the rope burns through their palms, and she goes up a cable's length away."
+    },
+    {
+      "event": "DA_Event_TheBurningCutter",
+      "field": "choices[1].resultText",
+      "finding": "A01 explains the gamble",
+      "after": "Cut 'How much that is depends on how long they dared stay.'"
+    },
+    {
+      "event": "DA_Event_TheBurningCutter",
+      "field": "choices[0].resultText",
+      "finding": "V03 'Two shots' repeat",
+      "after": "Your cannons open her up and her powder answers, throwing burning timber across your deck. A small strongbox bobs up in the smoke."
+    },
+    {
+      "event": "DA_Event_TheBurningCutter",
+      "field": "body",
+      "finding": "V03 'long curved bite' repeat / S06",
+      "after": "her stern is pocked with round scars the size of cartwheels"
+    }
+  ],
+  "reverted": [],
+  "locked": []
+}

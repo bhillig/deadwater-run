@@ -1,0 +1,326 @@
+{
+  "by": "generator",
+  "score": {
+    "score": 82,
+    "base": 81.8,
+    "penalty": 0,
+    "capped": false,
+    "strangerCapped": false,
+    "blockers": [],
+    "dims": [
+      {
+        "key": "rules",
+        "weight": 20,
+        "what": "Game rules: only outcomes, requirements, items, units, captains and numbers in the facts; nothing the game can't do",
+        "score": 92,
+        "reason": "Every outcome, selector, requirement and captain exists, and every number is inside the guardrails: gold up to +140, crew down to -45, ship down to -50 and up to +60, XP 40. Events cannot kill (health floors at 1), so lines like \"nobody dies today\" are safe. The Kraken is only hinted at, never fought (S06). The choices also use the game's own pieces: \"Two shots below the waterline\" matches the ship's two cannons, and \"nothing but your sword\" matches the Conqueror being sword-only (C03). The weakest link is small: \"the blast still throws burning timber across your deck\" leans on an exploding enemy ship, which only exists in events. It is still plausible."
+      },
+      {
+        "key": "text_data",
+        "weight": 15,
+        "what": "Text matches data: every body, label and result is true to the outcomes of its choice, in every RandomOf branch (V07)",
+        "score": 87,
+        "reason": "Most result lines match their outcomes (V07). The Burning Cutter RandomOf uses one result for both branches, \"carrying whatever they could grab before the powder went\", and it reads true either way. \"nobody else bleeds for it\" matches the Captain-only selector. \"The hull stays whole\" matches a choice with no ShipHealth outcome. The weakest line is the Burning Cutter helm result, \"Only the paint on your stern blisters.\": it says the damage is cosmetic, but the choice takes ShipHealth -20. Also, \"How much that is depends on how long they dared stay\" explains the gamble instead of showing it."
+      },
+      {
+        "key": "design",
+        "weight": 20,
+        "what": "Real decisions with sink-or-plunder tension (S02), ship vs crew costs (S03), Good/Bad fit (S07), fair for a medium ~30 minute run, no dominant or trap choice",
+        "score": 70,
+        "reason": "S02 is restaged well. Brigantine is sink for 75 against board for 140 at -25 to all crew, close to the game's 1x vs 1.5x. Wreck Current is a clean hull-or-crew split (S03). The Bad events always offer a way to limit the damage (S07). But two gated choices are strictly dominant, which the author admits. Brigantine \"Run up your colours\" gives +140 for nothing, so a Fearmongerer has no decision at all: sinking (75) and boarding (140 for -25 crew) are both beaten. Galleon \"Go over alone\" is the crates choice with the cost moved onto the captain only, so it beats \"Take their crates\". The shipped captain perks that carry stakes still risk something (the beard RandomOf in Wreckers Among the Hulls). Burning Cutter's two ship-only choices are nearly the same call: \"Sink her at range\" (-30 ship, +30 gold) against \"Put the helm over\" (-20 ship). That's 10 HP for 30 gold, which is no real decision."
+      },
+      {
+        "key": "voice",
+        "weight": 20,
+        "what": "Sounds like the voice rules (V01-V07), the reference lines and the shipped pool; Ship's Log aesthetic (A01-A03)",
+        "score": 83,
+        "reason": "The dry understatement is on target (V03): \"What floats up is yours: one strongbox and a great many splinters.\" and \"the pumps are working harder than anyone aboard.\" Bodies are 3 sentences and results 1-2 (V06), with no stage-pirate words (V04) and imperative labels (V05). The batch repeats itself, though. \"Two shots ... she goes down\" closes both sink choices (Brigantine, Cutter). \"long curved line\" and \"long curved bite\" both carry the Kraken hint (Galleon, Cutter). \"cuts\" lands in two results (\"the list of cuts to stitch\", \"a lot of cuts\"). Some phrases are awkward: \"something with a grip\" and \"snag a purse off a dead rail\". The weakest line is \"How much that is depends on how long they dared stay.\", which reads like a rules note, not a log entry (A01)."
+      },
+      {
+        "key": "specificity",
+        "weight": 25,
+        "what": "Stranger test: could a stranger tell this is Deadwater Run? Low if the event would work unchanged in any other pirate game (S01-S08, C01-C03)",
+        "score": 79,
+        "reason": "The Brigantine is very Deadwater Run. It offers exactly the Fearmongerer's third choice from the GDD (sink, kill, or scare them into giving up) and ties surrender to \"They know the flag\" (Dread Reputation, C02). Wreck Current asks which of the two health bars pays (S03), and the Team Leader shields the crew (C01). Galleon's Conqueror is \"stronger than his crew\" (C03). Every hull is a rival crew's ship broken by something from below (S06, S08). The rest is weaker. With the names swapped, Wreck Current's boathooks scene and Galleon's scavengers-stripping-a-wreck scene would work in most pirate games, and Galleon retreads the shipped Wreckers Among the Hulls. The Burning Cutter has no captain hook. Three of the four events are \"a broken ship drifts by\", so the brief's \"sea that is getting worse\" only shows up once."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "major": 0,
+      "minor": 0
+    },
+    "reason": "82/100. Dimensions (weighted 20/15/20/20/25): rules 92 - Every outcome, selector, requirement and captain exists, and every number is inside the guardrails: gold up to +140, crew down to -45, ship down to -50 and up to +60, XP 40. Events cannot kill (health floors at 1), so lines like \"nobody dies today\" are safe. The Kraken is only hinted at, never fought (S06). The choices also use the game's own pieces: \"Two shots below the waterline\" matches the ship's two cannons, and \"nothing but your sword\" matches the Conqueror being sword-only (C03). The weakest link is small: \"the blast still throws burning timber across your deck\" leans on an exploding enemy ship, which only exists in events. It is still plausible. | text_data 87 - Most result lines match their outcomes (V07). The Burning Cutter RandomOf uses one result for both branches, \"carrying whatever they could grab before the powder went\", and it reads true either way. \"nobody else bleeds for it\" matches the Captain-only selector. \"The hull stays whole\" matches a choice with no ShipHealth outcome. The weakest line is the Burning Cutter helm result, \"Only the paint on your stern blisters.\": it says the damage is cosmetic, but the choice takes ShipHealth -20. Also, \"How much that is depends on how long they dared stay\" explains the gamble instead of showing it. | design 70 - S02 is restaged well. Brigantine is sink for 75 against board for 140 at -25 to all crew, close to the game's 1x vs 1.5x. Wreck Current is a clean hull-or-crew split (S03). The Bad events always offer a way to limit the damage (S07). But two gated choices are strictly dominant, which the author admits. Brigantine \"Run up your colours\" gives +140 for nothing, so a Fearmongerer has no decision at all: sinking (75) and boarding (140 for -25 crew) are both beaten. Galleon \"Go over alone\" is the crates choice with the cost moved onto the captain only, so it beats \"Take their crates\". The shipped captain perks that carry stakes still risk something (the beard RandomOf in Wreckers Among the Hulls). Burning Cutter's two ship-only choices are nearly the same call: \"Sink her at range\" (-30 ship, +30 gold) against \"Put the helm over\" (-20 ship). That's 10 HP for 30 gold, which is no real decision. | voice 83 - The dry understatement is on target (V03): \"What floats up is yours: one strongbox and a great many splinters.\" and \"the pumps are working harder than anyone aboard.\" Bodies are 3 sentences and results 1-2 (V06), with no stage-pirate words (V04) and imperative labels (V05). The batch repeats itself, though. \"Two shots ... she goes down\" closes both sink choices (Brigantine, Cutter). \"long curved line\" and \"long curved bite\" both carry the Kraken hint (Galleon, Cutter). \"cuts\" lands in two results (\"the list of cuts to stitch\", \"a lot of cuts\"). Some phrases are awkward: \"something with a grip\" and \"snag a purse off a dead rail\". The weakest line is \"How much that is depends on how long they dared stay.\", which reads like a rules note, not a log entry (A01). | specificity 79 - The Brigantine is very Deadwater Run. It offers exactly the Fearmongerer's third choice from the GDD (sink, kill, or scare them into giving up) and ties surrender to \"They know the flag\" (Dread Reputation, C02). Wreck Current asks which of the two health bars pays (S03), and the Team Leader shields the crew (C01). Galleon's Conqueror is \"stronger than his crew\" (C03). Every hull is a rival crew's ship broken by something from below (S06, S08). The rest is weaker. With the names swapped, Wreck Current's boathooks scene and Galleon's scavengers-stripping-a-wreck scene would work in most pirate games, and Galleon retreads the shipped Wreckers Among the Hulls. The Burning Cutter has no captain hook. Three of the four events are \"a broken ship drifts by\", so the brief's \"sea that is getting worse\" only shows up once.. Base 81.8. Code checks: no deductions. Evaluator: The voice is good and the hull-or-crew choices are solid. Two gated perks (Fearmongerer +140 for nothing, Conqueror's cost-moved copy of the crates choice) are strictly dominant, Burning Cutter's two ship-only choices are nearly the same, and the Galleon retreads the shipped Wreckers Among the Hulls."
+  },
+  "eventScores": [
+    {
+      "id": "DA_Event_TheGuttedBrigantine",
+      "score": 79,
+      "reason": "This is the strongest restaging of sink vs plunder in the batch, and the Fearmongerer surrender lifts its idea straight from the GDD. But \"Run up your colours\" gives +140 at no cost, so the event offers a Fearmongerer no decision.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheGuttedBrigantine",
+          "field": "choices[2].outcomes",
+          "rule": "design",
+          "problem": "\"Run up your colours\" gives Gold +140 with no cost. A Fearmongerer gets the same gold as \"Board her and clear the deck\" without the -25 crew damage, and much more than \"Put her under\" (75). So the event offers no decision for that captain.",
+          "fix": "Keep the surrender but add stakes. Either cut the gold to 100-110, or make it a RandomOf where a holdout at the rail sometimes costs CrewHealth -15 Random. If you use the RandomOf, write the result so it reads true either way."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheWreckCurrent",
+      "score": 82,
+      "reason": "A clean choice of hull or crew, and the Team Leader's choice plays to defending the crew and to Veteran Crew XP. The body is generic apart from \"holed from below\", and \"dead rail\" is a clumsy phrase.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheWreckCurrent",
+          "field": "choices[1].resultText",
+          "rule": "V02",
+          "problem": "\"snag a purse off a dead rail\" is unclear. A rail can't carry a purse, so the line probably means a dead man at the rail.",
+          "fix": "\"snag a purse off a dead man still lashed to a rail\""
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheGalleonOnTheReef",
+      "score": 75,
+      "reason": "The repair vs gold-for-crew-health choice is real, and the Conqueror going alone with his sword fits him. But the Conqueror choice strictly beats \"Take their crates\", and the scene (a rival crew stripping a wreck) repeats the shipped Wreckers Among the Hulls.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheGalleonOnTheReef",
+          "field": "choices[2].outcomes",
+          "rule": "design",
+          "problem": "\"Go over alone\" is \"Take their crates\" (-30 All, +120) with the damage moved to the captain only. It strictly beats the ungated plunder choice.",
+          "fix": "Give it a different shape from the crates choice. For example, raise the captain cost to -40 and the gold to 140, or drop the gold to 100 and add a small GrantXp for the captain's kills."
+        },
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheGalleonOnTheReef",
+          "field": "body",
+          "rule": "S02/fit",
+          "problem": "\"A rival crew already has ropes on her and is lowering crates into their longboat\" retreads the shipped Wreckers Among the Hulls (a wrecker crew stripping broken ships, longboats). \"planks and pitch\" also echoes The Turning Brig's \"timber and pitch\".",
+          "fix": "Drop the second scavenger crew, or make the galleon's own survivors the obstacle. Put the reef-stranded galleon at the centre of the event, and use a different repair noun."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheGalleonOnTheReef",
+          "field": "choices[1].resultText",
+          "rule": "V03",
+          "problem": "\"a lot of cuts\" echoes the Brigantine's \"list of cuts to stitch\" and is flat. \"a lot of\" is also used twice in this event.",
+          "fix": "Use a concrete cost image, for example \"and the reef's coral in every wound\"."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheBurningCutter",
+      "score": 76,
+      "reason": "Safe sink against a risky boarding, with a RandomOf result that reads true either way. But the sink and helm choices are almost the same, the helm result understates its damage, and the \"How much that is depends...\" sentence explains the mechanic.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheBurningCutter",
+          "field": "choices[0] / choices[2]",
+          "rule": "design",
+          "problem": "\"Sink her at range\" (-30 ship, +30 gold) and \"Put the helm over\" (-20 ship) differ by 10 HP against 30 gold, so it isn't a real decision. The event has no captain-specific hook.",
+          "fix": "Make the escape cost the crew, not the hull. For example, \"Put the helm over\" becomes CrewHealth -15 All (hands burned on the sheets) with no ship loss. That gives three distinct choices: hull for coin, crew for coin, or crew only."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheBurningCutter",
+          "field": "choices[2].resultText",
+          "rule": "V07",
+          "problem": "\"Only the paint on your stern blisters.\" says the damage is cosmetic, but the choice takes ShipHealth -20.",
+          "fix": "Show some real damage, for example \"The blast still stoves in a stern plank or two.\""
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheBurningCutter",
+          "field": "choices[1].resultText",
+          "rule": "A01",
+          "problem": "\"How much that is depends on how long they dared stay.\" explains the gamble instead of showing it.",
+          "fix": "Cut the sentence. The first sentence already reads true for both branches."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheBurningCutter",
+          "field": "choices[0].resultText",
+          "rule": "V03",
+          "problem": "\"Two shots and she goes down\" repeats the Brigantine's \"Two shots below the waterline and she goes down fast\". \"long curved bite\" repeats the Galleon's \"long curved line\".",
+          "fix": "Give each sink and each Kraken scar a different image. For example, sucker rings in the cutter's stern, or a broadside instead of \"two shots\"."
+        }
+      ]
+    }
+  ],
+  "code": [],
+  "signals": {
+    "DA_Event_TheGuttedBrigantine": {
+      "terms": [
+        "plunder"
+      ],
+      "mechanics": [
+        "CaptainIs gate (S-captain)"
+      ]
+    },
+    "DA_Event_TheWreckCurrent": {
+      "terms": [],
+      "mechanics": [
+        "CaptainIs gate (S-captain)",
+        "ship vs crew health bars (S03)"
+      ]
+    },
+    "DA_Event_TheGalleonOnTheReef": {
+      "terms": [
+        "rival crew"
+      ],
+      "mechanics": [
+        "CaptainIs gate (S-captain)",
+        "ship vs crew health bars (S03)"
+      ]
+    },
+    "DA_Event_TheBurningCutter": {
+      "terms": [
+        "sink"
+      ],
+      "mechanics": [
+        "ship vs crew health bars (S03)"
+      ]
+    }
+  },
+  "evaluation": {
+    "dimensions": {
+      "rules": {
+        "score": 92,
+        "reason": "Every outcome, selector, requirement and captain exists, and every number is inside the guardrails: gold up to +140, crew down to -45, ship down to -50 and up to +60, XP 40. Events cannot kill (health floors at 1), so lines like \"nobody dies today\" are safe. The Kraken is only hinted at, never fought (S06). The choices also use the game's own pieces: \"Two shots below the waterline\" matches the ship's two cannons, and \"nothing but your sword\" matches the Conqueror being sword-only (C03). The weakest link is small: \"the blast still throws burning timber across your deck\" leans on an exploding enemy ship, which only exists in events. It is still plausible."
+      },
+      "text_data": {
+        "score": 87,
+        "reason": "Most result lines match their outcomes (V07). The Burning Cutter RandomOf uses one result for both branches, \"carrying whatever they could grab before the powder went\", and it reads true either way. \"nobody else bleeds for it\" matches the Captain-only selector. \"The hull stays whole\" matches a choice with no ShipHealth outcome. The weakest line is the Burning Cutter helm result, \"Only the paint on your stern blisters.\": it says the damage is cosmetic, but the choice takes ShipHealth -20. Also, \"How much that is depends on how long they dared stay\" explains the gamble instead of showing it."
+      },
+      "design": {
+        "score": 70,
+        "reason": "S02 is restaged well. Brigantine is sink for 75 against board for 140 at -25 to all crew, close to the game's 1x vs 1.5x. Wreck Current is a clean hull-or-crew split (S03). The Bad events always offer a way to limit the damage (S07). But two gated choices are strictly dominant, which the author admits. Brigantine \"Run up your colours\" gives +140 for nothing, so a Fearmongerer has no decision at all: sinking (75) and boarding (140 for -25 crew) are both beaten. Galleon \"Go over alone\" is the crates choice with the cost moved onto the captain only, so it beats \"Take their crates\". The shipped captain perks that carry stakes still risk something (the beard RandomOf in Wreckers Among the Hulls). Burning Cutter's two ship-only choices are nearly the same call: \"Sink her at range\" (-30 ship, +30 gold) against \"Put the helm over\" (-20 ship). That's 10 HP for 30 gold, which is no real decision."
+      },
+      "voice": {
+        "score": 83,
+        "reason": "The dry understatement is on target (V03): \"What floats up is yours: one strongbox and a great many splinters.\" and \"the pumps are working harder than anyone aboard.\" Bodies are 3 sentences and results 1-2 (V06), with no stage-pirate words (V04) and imperative labels (V05). The batch repeats itself, though. \"Two shots ... she goes down\" closes both sink choices (Brigantine, Cutter). \"long curved line\" and \"long curved bite\" both carry the Kraken hint (Galleon, Cutter). \"cuts\" lands in two results (\"the list of cuts to stitch\", \"a lot of cuts\"). Some phrases are awkward: \"something with a grip\" and \"snag a purse off a dead rail\". The weakest line is \"How much that is depends on how long they dared stay.\", which reads like a rules note, not a log entry (A01)."
+      },
+      "specificity": {
+        "score": 79,
+        "reason": "The Brigantine is very Deadwater Run. It offers exactly the Fearmongerer's third choice from the GDD (sink, kill, or scare them into giving up) and ties surrender to \"They know the flag\" (Dread Reputation, C02). Wreck Current asks which of the two health bars pays (S03), and the Team Leader shields the crew (C01). Galleon's Conqueror is \"stronger than his crew\" (C03). Every hull is a rival crew's ship broken by something from below (S06, S08). The rest is weaker. With the names swapped, Wreck Current's boathooks scene and Galleon's scavengers-stripping-a-wreck scene would work in most pirate games, and Galleon retreads the shipped Wreckers Among the Hulls. The Burning Cutter has no captain hook. Three of the four events are \"a broken ship drifts by\", so the brief's \"sea that is getting worse\" only shows up once."
+      }
+    },
+    "events": [
+      {
+        "id": "DA_Event_TheGuttedBrigantine",
+        "score": 79,
+        "reason": "This is the strongest restaging of sink vs plunder in the batch, and the Fearmongerer surrender lifts its idea straight from the GDD. But \"Run up your colours\" gives +140 at no cost, so the event offers a Fearmongerer no decision.",
+        "stranger_test": "Sink for less or board for more, plus the Fearmongerer's surrender as a third option. Only Deadwater Run has that."
+      },
+      {
+        "id": "DA_Event_TheWreckCurrent",
+        "score": 82,
+        "reason": "A clean choice of hull or crew, and the Team Leader's choice plays to defending the crew and to Veteran Crew XP. The body is generic apart from \"holed from below\", and \"dead rail\" is a clumsy phrase.",
+        "stranger_test": "Spend the ship bar or the crew bar, or the Team Leader takes the hits himself. The current scene could appear in any pirate game."
+      },
+      {
+        "id": "DA_Event_TheGalleonOnTheReef",
+        "score": 75,
+        "reason": "The repair vs gold-for-crew-health choice is real, and the Conqueror going alone with his sword fits him. But the Conqueror choice strictly beats \"Take their crates\", and the scene (a rival crew stripping a wreck) repeats the shipped Wreckers Among the Hulls.",
+        "stranger_test": "The Conqueror being stronger than his crew is the tie. Without it, it's a generic scavenger wreck."
+      },
+      {
+        "id": "DA_Event_TheBurningCutter",
+        "score": 76,
+        "reason": "Safe sink against a risky boarding, with a RandomOf result that reads true either way. But the sink and helm choices are almost the same, the helm result understates its damage, and the \"How much that is depends...\" sentence explains the mechanic.",
+        "stranger_test": "Sink-or-board on a rival ship with a Kraken bite in her stern. No captain hook, and the scene works anywhere."
+      }
+    ],
+    "findings": [
+      {
+        "severity": "major",
+        "event": "DA_Event_TheGuttedBrigantine",
+        "field": "choices[2].outcomes",
+        "rule": "design",
+        "problem": "\"Run up your colours\" gives Gold +140 with no cost. A Fearmongerer gets the same gold as \"Board her and clear the deck\" without the -25 crew damage, and much more than \"Put her under\" (75). So the event offers no decision for that captain.",
+        "fix": "Keep the surrender but add stakes. Either cut the gold to 100-110, or make it a RandomOf where a holdout at the rail sometimes costs CrewHealth -15 Random. If you use the RandomOf, write the result so it reads true either way."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_TheGalleonOnTheReef",
+        "field": "choices[2].outcomes",
+        "rule": "design",
+        "problem": "\"Go over alone\" is \"Take their crates\" (-30 All, +120) with the damage moved to the captain only. It strictly beats the ungated plunder choice.",
+        "fix": "Give it a different shape from the crates choice. For example, raise the captain cost to -40 and the gold to 140, or drop the gold to 100 and add a small GrantXp for the captain's kills."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_TheGalleonOnTheReef",
+        "field": "body",
+        "rule": "S02/fit",
+        "problem": "\"A rival crew already has ropes on her and is lowering crates into their longboat\" retreads the shipped Wreckers Among the Hulls (a wrecker crew stripping broken ships, longboats). \"planks and pitch\" also echoes The Turning Brig's \"timber and pitch\".",
+        "fix": "Drop the second scavenger crew, or make the galleon's own survivors the obstacle. Put the reef-stranded galleon at the centre of the event, and use a different repair noun."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_TheBurningCutter",
+        "field": "choices[0] / choices[2]",
+        "rule": "design",
+        "problem": "\"Sink her at range\" (-30 ship, +30 gold) and \"Put the helm over\" (-20 ship) differ by 10 HP against 30 gold, so it isn't a real decision. The event has no captain-specific hook.",
+        "fix": "Make the escape cost the crew, not the hull. For example, \"Put the helm over\" becomes CrewHealth -15 All (hands burned on the sheets) with no ship loss. That gives three distinct choices: hull for coin, crew for coin, or crew only."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheBurningCutter",
+        "field": "choices[2].resultText",
+        "rule": "V07",
+        "problem": "\"Only the paint on your stern blisters.\" says the damage is cosmetic, but the choice takes ShipHealth -20.",
+        "fix": "Show some real damage, for example \"The blast still stoves in a stern plank or two.\""
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheBurningCutter",
+        "field": "choices[1].resultText",
+        "rule": "A01",
+        "problem": "\"How much that is depends on how long they dared stay.\" explains the gamble instead of showing it.",
+        "fix": "Cut the sentence. The first sentence already reads true for both branches."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheBurningCutter",
+        "field": "choices[0].resultText",
+        "rule": "V03",
+        "problem": "\"Two shots and she goes down\" repeats the Brigantine's \"Two shots below the waterline and she goes down fast\". \"long curved bite\" repeats the Galleon's \"long curved line\".",
+        "fix": "Give each sink and each Kraken scar a different image. For example, sucker rings in the cutter's stern, or a broadside instead of \"two shots\"."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheWreckCurrent",
+        "field": "choices[1].resultText",
+        "rule": "V02",
+        "problem": "\"snag a purse off a dead rail\" is unclear. A rail can't carry a purse, so the line probably means a dead man at the rail.",
+        "fix": "\"snag a purse off a dead man still lashed to a rail\""
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheGalleonOnTheReef",
+        "field": "choices[1].resultText",
+        "rule": "V03",
+        "problem": "\"a lot of cuts\" echoes the Brigantine's \"list of cuts to stitch\" and is flat. \"a lot of\" is also used twice in this event.",
+        "fix": "Use a concrete cost image, for example \"and the reef's coral in every wound\"."
+      }
+    ],
+    "code_check_disputes": [],
+    "summary": "The voice is good and the hull-or-crew choices are solid. Two gated perks (Fearmongerer +140 for nothing, Conqueror's cost-moved copy of the crates choice) are strictly dominant, Burning Cutter's two ship-only choices are nearly the same, and the Galleon retreads the shipped Wreckers Among the Hulls."
+  }
+}

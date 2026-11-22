@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 78449,
+  "stop_reason": "end_turn",
+  "session_id": "3046ddb9-ccbc-4345-b87e-19cfeda9ca60",
+  "total_cost_usd": 0.300752,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 17057,
+    "cache_read_input_tokens": 3540,
+    "output_tokens": 8179,
+    "output_tokens_details": {
+      "thinking_tokens": 4053
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 17057,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 8179,
+        "cache_read_input_tokens": 3540,
+        "cache_creation_input_tokens": 17057,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 17057
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 8179,
+      "cacheReadInputTokens": 3540,
+      "cacheCreationInputTokens": 17057,
+      "webSearchRequests": 0,
+      "costUSD": 0.300752,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 4053,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 17057,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"dimensions\": {\n    \"rules\": {\n      \"score\": 93,\n      \"reason\": \"Every outcome, requirement, selector, unit and captain exists, and every number is inside the guardrails (Gold +150, ShipHealth -60, CrewHealth -35, XP 80). Recruit is correctly gated with CrewCountAtMost 3. CrewHealth -35 on the Captain floors at 1, so no event can end a run. There are no rule breaks. The score is not higher because the weakest line, the Conqueror's 'Their captain pays you to go home', points to an ending the game does not have (S01: the run only goes forward toward the Kraken).\"\n    },\n    \"text_data\": {\n      \"score\": 70,\n      \"reason\": \"V07: in DA_Event_DeadCalm choices[1], the result 'You load both cannons and sit out the calm. When the wind finally fills the sails, you take it and don't look back.' is the same in both RandomOf branches, but nothing in it explains the 60-hull branch. Loading the cannons hints at a fight the text never shows. choices[2] 'Row over and take theirs' follows a body about low water casks, so 'theirs' reads as water, but the outcome is Gold +80. choices[0] 'Tow her by longboat' reads as towing the rival ship, not your own. Smaller slips: in LockedHulls the ship is 'burnt to the waterline' in the body but 'The burning hull' in the result, and in ShadowAstern 'you go home bleeding' does not fit a run toward the Kraken.\"\n    },\n    \"design\": {\n      \"score\": 71,\n      \"reason\": \"S02/S03 tension is real in ScuttledSloop (a recruit for 25 hull, or 120 gold for 20 crew HP while the stranger drowns) and in LockedHulls (70 safe or 150 for 35 hull, which is quick-and-safe against slow-and-rich). DeadCalm has a trap: 'Tow her by longboat' (-25 to All, which is 75-100 crew HP for nothing) is strictly worse than 'Row over and take theirs' (-30 to one crew, +80 gold). The boarding choice is open to any starting crew of 3, so the tow is never right. In ShadowAstern, 'Pay their share' (-80 gold) loses to 'Give them both cannons' (-60 hull, about 60 gold to repair, +50 gold back) in almost every run. Both Bad events offer a choice that turns a profit, which weakens S07.\"\n    },\n    \"voice\": {\n      \"score\": 82,\n      \"reason\": \"Strong lines match the shipped pool: 'Under a battened hatch, someone is hammering to be let out.', 'Nobody speaks at supper.' and 'Eighty gold goes across in a bucket on a line.' (V02/V03). Labels are short imperatives (V05), and there are no banned words, caps or exclamation marks (V04/A02). The score is held down by 'Your diver comes up gashed and hauling a sea chest full of coin.', which echoes the RivalsCache line 'Your diver ... comes up with a fat purse and a gashed arm' and DriftingWreck. 'They learn more here than from a month of drills' is a stock phrase. 'Smoke rises off a rival's deck' is never explained.\"\n    },\n    \"specificity\": {\n      \"score\": 78,\n      \"reason\": \"ScuttledSloop ('Whoever sank her took the quick way and never set foot on her deck, so her hold is still full') and LockedHulls ('Both crews fought to the last, and nobody stayed to plunder') are built directly on the sink-vs-plunder hook (S02). ShadowAstern puts a rival crew on the same run to the Kraken (S08), offers sinking for less loot than plundering, and gives the Conqueror a Charge choice (C03). DeadCalm is the weak event: a becalmed ship with low water and a nearby rival works unchanged in any pirate game, and the hull-or-crew split (S03) does not rescue it.\"\n    }\n  },\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheScuttledSloop\",\n      \"score\": 84,\n      \"reason\": \"Sharp hook and a real choice between a recruit and the gold (S05, S03). Held back by a diver result that repeats RivalsCache almost word for word, and by a close idea overlap with DesertersLongboat (recruit a sniper from the water).\",\n      \"stranger_test\": \"A rival chose the quick 1x sink and left the hold full, and you weigh a permanent crewmate against coin.\"\n    },\n    {\n      \"id\": \"DA_Event_DeadCalm\",\n      \"score\": 61,\n      \"reason\": \"The tow choice is a trap that boarding dominates. The RandomOf result never accounts for the -60 hull branch (V07). 'Take theirs' promises water and pays gold. The becalmed-ship premise is stock.\",\n      \"stranger_test\": \"Mostly nothing. A dead calm with a nearby rival works in any pirate game. Only the hull-or-crew split ties it to Deadwater Run.\"\n    },\n    {\n      \"id\": \"DA_Event_TheLockedHulls\",\n      \"score\": 84,\n      \"reason\": \"A clean quick-vs-rich split (S02) and a Team Leader option tied to Veteran Crew XP (C01). The 'burnt to the waterline' vs 'burning hull' contradiction and the stock 'month of drills' line are polish.\",\n      \"stranger_test\": \"Two rival crews killed each other, which is plunder with nobody left to take it, and the Team Leader turns it into crew XP.\"\n    },\n    {\n      \"id\": \"DA_Event_TheShadowAstern\",\n      \"score\": 76,\n      \"reason\": \"Strong ties: a rival crew on the same run to the Kraken (S08), sinking for little loot (S02), and the Conqueror's Charge (C03). The premise repeats the toll in WreckersAmongTheHulls. Paying is almost always worse than fighting, and 'go home' contradicts the run.\",\n      \"stranger_test\": \"A rival crew letting you break the trail to the Kraken, with cannons vs a sword-only Conqueror charge.\"\n    }\n  ],\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"choices[0].outcomes\",\n      \"rule\": \"design\",\n      \"problem\": \"'Tow her by longboat' (CrewHealth -25 All, no gain) is strictly worse than 'Row over and take theirs' (CrewHealth -30 Random, Gold +80). The boarding choice is open to any crew of 3 or more, which is every run from the start.\",\n      \"fix\": \"Give the tow a reason to exist: make it the only choice with no rival contact. Or make it cheaper, e.g. CrewHealth -10 All. Or add a cost to boarding, e.g. ShipHealth from the rival's return fire.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"V07\",\n      \"problem\": \"One result is shown for both RandomOf branches (Nothing / ShipHealth -60), but 'you take it and don't look back' gives no cause for 60 hull damage. 'You load both cannons' implies a fight the text never shows.\",\n      \"fix\": \"Write a hedge that reads true in both branches, in the style of SquallLine: say the rival drifts close in the night and whatever passes between the hulls before the wind comes, you sail off with it.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"choices[2].label\",\n      \"rule\": \"V07\",\n      \"problem\": \"The body is about 'water casks are low', so 'take theirs' reads as taking their water, but the outcome is Gold +80. The result also says 'The rival crew watch them row away and do nothing about it', which is never explained.\",\n      \"fix\": \"Change the label to 'Row over and take their purse', or tie the body's stakes to gold. Give the rival a reason to do nothing, e.g. they are as parched as you are.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"body\",\n      \"rule\": \"S02\",\n      \"problem\": \"A becalmed ship with low water is a stock pirate trope. The rival is set dressing and the event is not built on anything only this game has.\",\n      \"fix\": \"Make the stakes the rival crew themselves: for example, they are becalmed beside you, both of you are within cannon range, and whoever moves first chooses between sinking and boarding.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"V03\",\n      \"problem\": \"'Your diver comes up gashed and hauling a sea chest full of coin.' repeats the shipped RivalsCache line 'Your diver saws through the line and comes up with a fat purse and a gashed arm' (and DriftingWreck's diver).\",\n      \"fix\": \"Give the cost a new picture that belongs to this sloop, such as the hold flooding fast, or a splinter from the stove-in side. Keep the drowned stranger landing as the final beat.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_TheShadowAstern\",\n      \"field\": \"choices[0]\",\n      \"rule\": \"design\",\n      \"problem\": \"Pay (-80 gold) almost always loses to fighting (-60 hull, which costs about 60 gold at the shop, +50 gold back). The premise of a toll, a fight or captain bravado also repeats WreckersAmongTheHulls.\",\n      \"fix\": \"Lower the fight's gold to 0-20, or raise its hull cost, so that paying is the safe choice and not a trap. Set the scene apart from Wreckers by leaning on the rival following your wake toward the Kraken.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheShadowAstern\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"S01\",\n      \"problem\": \"'Their captain pays you to go home, and you go home bleeding through your coat' suggests leaving the run. The chart only goes forward to the Kraken.\",\n      \"fix\": \"Use 'pays you to sail on' and 'you sail on bleeding through your coat'.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheLockedHulls\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"V07\",\n      \"problem\": \"The body says the ship is 'burnt to the waterline', but the result says 'The burning hull swings into yours'.\",\n      \"fix\": \"Change the body to 'still burning at the waterline', or the result to 'The burnt hull'.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheLockedHulls\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"C01\",\n      \"problem\": \"'They learn more here than from a month of drills' is a stock phrase, and the scene connects to the Team Leader only loosely (Veteran Crew). Any captain could give this lesson.\",\n      \"fix\": \"Show crew fighting side by side, e.g. the dead pairs who fell back to back on deck, so the scene reads as synergy and loyalty.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"body\",\n      \"rule\": \"V02\",\n      \"problem\": \"'Smoke rises off a rival's deck' is never explained or paid off, and 'the sea goes flat as glass' echoes SomethingUnderTheKeel's 'The water goes flat and dark.'\",\n      \"fix\": \"Cut the smoke or give it a meaning, e.g. cookfires and an obvious water supply, and pick a different image for the calm.\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"summary\": \"Three events restage sink-vs-plunder well. DeadCalm drags the batch down: its tow choice is a trap, its RandomOf result does not cover the hull-loss branch, and the premise is generic. Each Bad event also has a choice that beats the alternatives, and two results repeat shipped lines or premises.\"\n}\n```",
+  "ttft_ms": 43226,
+  "type": "result",
+  "duration_ms": 78495,
+  "uuid": "29718561-e5b3-46a9-a530-5e8fac532c27",
+  "ttft_stream_ms": 3800,
+  "time_to_request_ms": 46,
+  "first_content_frame_ms": 3800,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

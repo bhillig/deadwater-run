@@ -1,101 +1,104 @@
-# Dynamic Content Pipeline - Deadwater Run
+# Content Loop - Deadwater Run
 
-For this assignment I built a content pipeline for Deadwater Run around **map events**. A writer agent reads my GDD and drafts events. A critic agent checks them against the game, the writer revises once, and the drafts come back to me for approval. I ran it on three briefs and got a draft of the whole v1.0 event pool: **12 events in 3 batches**, 7 Good / 5 Bad (my scope calls for ~10-12 at 60/40).
+I built a self-correcting content loop for Deadwater Run's map events. A **Generator** writes a batch, an **Evaluator** scores it 0-100 with a reason, and a **Refiner** fixes what scored low. It keeps going until the score clears the bar or stops improving. There's no human step inside the loop. I start it by asking the **content-director** agent for content, and nothing runs unless I do.
 
 ```
- Tools/ContentPipeline/briefs.json           lib/facts.js  (read from the repo on every run)
-   (what to write)                     ┌──── GDD "Game Mechanics", 11-Events.md, 09-Run-Map.md,
-        │                              │     DwEventDefinition.h, DwDataTypes.h, Tuning/*.json, voice.md
-        ▼                              ▼
-  event-writer agent ──► draft ──► lib/checks.js (code) ──► content-critic agent ──► findings
-        ▲                                                                              │
-        └──────────── blocker/major findings (code + critic), 1 revision ◄─────────────┘
-                                                   ▼
-                     Docs/ContentPipeline/out/<batch>/report.md   (drafts only - nothing goes into Content/)
+ my request ──► content-director ──► briefs.json
+                                          │
+                                          ▼
+ GDD, voice sheet, store page,     lib/style.js ──► style-guide.md (21 rules, every one cited, stranger test)
+ 14-UI art direction, 11-Events,   lib/facts.js ──► game facts (outcomes, items, captains, guardrails)
+ tuning, Tuning/Events.json              │  (both rebuilt from the repo on every run)
+                                         ▼
+ event-writer (Generator) ──► draft ──► lib/checks.js (code) ──► content-critic (Evaluator) ──► score 0-100 + reason
+                                ▲                                                                   │
+                                │        score >= 85, no blocker, no code major ──► accepted ◄──────┤
+                                │                                                                   ▼
+                                └────────── content-refiner (Refiner), always from the BEST draft so far
+                                            stops on its own: accepted / plateau / max rounds / budget
 ```
 
-## Deliverables
+## What I asked for, and where it is
 
-| # | Deliverable | Where |
+| Requirement | How it's met | Where |
 |---|---|---|
-| 1 | Content agent (reads the GDD, generates content) | [`.claude/agents/event-writer.md`](../../.claude/agents/event-writer.md). I kept it to one content type, events: title, body, 1-3 choices, outcomes and result text, in my `UDwEventDefinition` format |
-| 2 | Critic agent | [`.claude/agents/content-critic.md`](../../.claude/agents/content-critic.md). I made this one generic so it can review any content type later. It's read-only and returns blocker/major/minor findings plus a voice score |
-| 3 | Pipeline | [`Tools/ContentPipeline/`](../../Tools/ContentPipeline/): facts, code checks, the revision loop and 10 tests |
-| 4 | Three generated outputs | [`out/early-waters`](out/early-waters/report.md), [`out/deep-water`](out/deep-water/report.md), [`out/kraken-reach`](out/kraken-reach/report.md), plus the [pool summary](out/summary.md) |
-| 5 | Voice sheet the critic scores against | [`voice.md`](voice.md) |
+| Style guide pulled from my GDD and game, nothing generic | Every rule is compiled from my docs and quotes its source `file:line`. The build fails if a quote moves | [`lib/style.js`](../../Tools/ContentPipeline/lib/style.js) → [`style-guide.md`](style-guide.md) |
+| A stranger can tell exactly what game it's for | **Stranger test (code):** every rule has to name something only Deadwater Run has (Aquadia, the Kraken, the three captains and their abilities, sink vs plunder, gone for good, the Ship's Log). Genre words like gold, ship and crew don't count. A test proves a generic guide fails | `strangerTest()`, tested |
+| ...and the content passes it too | The evaluator scores `specificity` as the stranger test. It's also a **gate**: under 70, the batch is capped at 69 and can never be accepted, however polished | [`lib/score.js`](../../Tools/ContentPipeline/lib/score.js) |
+| Evaluator emits a score, not pass/fail, with a reason | Five dimensions, each 0-100 with a reason, plus a score per event and a one-line stranger test. Code combines them the same way every time and lists every term in the reason | `scoreEvaluation()` |
+| Generator → Evaluator → Refiner, no human | `event-writer` → `content-critic` → `content-refiner`, run by `content-pipeline.js run` | [`content-pipeline.js`](../../Tools/ContentPipeline/content-pipeline.js) |
+| It's an agent | `content-director` turns my request into a brief, proves the tool, runs the loop and reports the scores | [`.claude/agents/content-director.md`](../../.claude/agents/content-director.md) |
 
-I added both agents to my roster in `DeadwaterRun.md`, `Scope.md` and `Orchestration.md`.
+## The score
 
-## What I generated
+`score = weighted mean of 5 dimensions - code-check penalties`, then the caps.
 
-| Batch | Brief | Events | Highlights |
+| Dimension | Weight | What it judges |
+|---|---|---|
+| `rules` | 20 | Only outcomes, items, units, captains and numbers that exist |
+| `text_data` | 15 | Text is true to the data, in every RandomOf branch |
+| `design` | 20 | Real decisions, sink-or-plunder tension, ship vs crew costs, fair for a ~30 min run |
+| `voice` | 20 | My voice rules, the store page lines and the shipped pool; the Ship's Log aesthetic |
+| `specificity` | 25 | The stranger test |
+
+- Code checks take off 15 / 6 / 1 per blocker / major / minor, so the critic can't talk its way past a broken event.
+- Any blocker caps the score at 49. Specificity under 70 caps it at 69.
+- **Accepted** = 85+, no blocker anywhere, no code major. Anything else ends as `best effort` with the reason it stopped.
+
+## Keeping it honest with no human in the loop
+
+- **Calibration.** Before the loop trusts the critic, it scores a generic pirate control batch against four of my shipped events. The control is well-written and valid: treasure map, merchant galleon, mutiny, storm. Only the stranger test should sink it. If calibration fails, the loop refuses to run. It recalibrates on its own when anything the critic depends on changes, since `stamp.json` holds a hash of its prompt, rubric, agent definition and sources.
+- **Best draft wins.** The refiner always starts from the best-scoring draft, so a bad revision can't make the result worse. A test plants a refiner that makes everything worse, and the final is still round 1.
+- **Locks.** Events that already scored 85+ with no findings are locked. If the refiner touches one anyway, code puts it back.
+- **It stops on its own:** accepted, no gain for 2 rounds, 5 rounds, or the budget. Running out of budget keeps the best draft instead of crashing.
+
+## Results
+
+Calibration passed. The control scored **52** with specificity **18**. My shipped events scored **67** with specificity **70**. [Report](runs/calibration/report.md)
+
+| Batch | Score by round | Final | Status |
 |---|---|---|---|
-| [`early-waters`](out/early-waters/report.md) | Layers 1-3. Low stakes; teach the player that events are trade-offs | 3 Good, 1 Bad | The Drifting Wreck, A Peddler's Sloop, Castaway on a Spar, The Hidden Shoal |
-| [`deep-water`](out/deep-water/report.md) | Layers 4-6. Costs bite; touch the crew roster; one gamble | 2 Good, 2 Bad | The Rival's Cache, Deserters in a Longboat (recruit), Squall Line, Mutterings Below Deck (can cost a crewmate for good) |
-| [`kraken-reach`](out/kraken-reach/report.md) | Layers 6-9. Kraken omens; one `CaptainIs` choice per captain | 2 Good, 2 Bad | The Tally Rock (Conqueror), Wreckers Among the Hulls (Fearmongerer), Something Under the Keel (TeamLeader) |
+| [`early-waters`](runs/early-waters/report.md) | 69 → 84 → 84 → 83 | **84** | best effort (plateau) |
+| [`deep-water`](runs/deep-water/report.md) | 79 → 82 → 84 → 84 → 88 | **88** | accepted |
+| [`kraken-reach`](runs/kraken-reach/report.md) | 82 → 85 | **85** | accepted |
 
-Each batch folder keeps the full trail: `draft-1.json` → `review-1.json` → `draft-2.json` → `review-2.json` → `final.json`. The `calls/` folder holds the raw agent replies (cost, turns, model usage). Here's one final event in the authoring format from my [Editor-Tools.md](../Architecture/Editor-Tools.md):
+12 events, 7 Good / 5 Bad, no code findings, no pool findings. $6.23 for the whole run including calibration (24 agent calls, Opus 5.5). [Pool summary](runs/summary.md)
 
-```
-Title:    The Tally Rock
-Valence:  Good      Layers: 6-9        Weight: 1
-Body:     A black rock stands alone in the swell, cut all over with names. Every crew that sailed on to the
-          Kraken stopped here first. Under a cairn at its foot sits a strongbox and a page of notes, weighted with a stone.
-Choice 1: Open the strongbox  -> Outcomes: Gold +120  -> Result: Old coin, still dry. Whoever left it isn't coming back for it.
-Choice 2: Read the notes aloud  -> Outcomes: GrantXp 60 (All)  -> Result: Scrawled warnings about tentacles, timing and where to stand. The crew make you read it twice.
-Choice 3: Keep the notes to yourself  -> Requires: CaptainIs Conqueror -> Outcomes: GrantXp 80 (Captain); Gold +60
-          -> Result: You read every page alone, then pocket half the coin and leave the rest under the cairn. The crew don't need to know how it ends. You'll be the one ending it.
-```
+**Do they sound like Deadwater Run?** Yes, and not like any other pirate game. Most of them are built on the hook itself:
+- *The Grounded Sloop:* "Fire the cannons" for 60 gold, or "Board her" for 90 and cuts across the crew. The Fearmongerer gets a third option: "Smoke rolls off your beard and across the reef. Her crew hand up the hold and ask to keep their buckets."
+- *The Scuttled Sloop:* "Whoever sank her took the quick way and never set foot on her deck, so her hold is still full." That's the 1x sink rule used as a story.
+- *The Locked Hulls:* "Both crews went for the plunder instead of the cannons, and nobody was left to take it."
+- The captains play to the GDD. The Team Leader takes the hits meant for his crew and uses the Grapple Hook, and the Conqueror goes over alone with only his sword.
 
-## Does it sound like Deadwater Run?
-
-**Mostly, yes.** The critic gave every batch **4/5** in both rounds against [`voice.md`](voice.md)
-
-- **What I liked:** it's written in second person and present tense. It's close to the tone I want. Lines I like: *"The hull barely notices. The crew's shoulders do."*, *"Small, but it's yours."*, *"Whoever left it isn't coming back for it."* There are no stage-pirate words, no magic and no lore dumps. The events also use the game's real systems: permadeath (*Mutterings Below Deck* can lose a crewmate for good), Fear (the Fearmongerer "lights the fuses in his beard", straight from my GDD) and the Kraken (the Tally Rock notes are about tentacles).
-- **What I didn't like:** some result texts for gambles describe both outcomes at once (*"comes up with a full chest, or comes up empty-handed"*). That's a limit of the data format I generated, since a choice has only one `ResultText` (see open questions). There's also some melodrama (*"You'll be the one ending it."*) and a few phrases repeat across batches ("the sea decides").
-- For now, a 4/5 means is good. Once I finalize that sheet, every later review follows it.
-
-## What the critic caught
-
-Across the 3 batches the critic raised **10 blockers in round 1**, and 6 remained after the first revision. It also raised 30 minor findings, and the code checks raised 4 minor format issues. The writer fixed or dropped most of them. The rest are in each report for me to decide. All three batches end as **"needs Brandon"** because I set the loop to one revision: after that, the call is mine, not the critic's.
-
-| What it caught | Example (batch) |
-|---|---|
-| **Gambles with no real downside** | *Drifting Wreck*: diving the hold averaged 84 gold against a sure 40, and its worst case was barely worse. The writer changed the bad branch to 0 gold and -30 HP (early-waters) |
-| **Dead buttons and traps from game rules** | *Castaway on a Spar* and *Deserters in a Longboat*: `Recruit` silently does nothing with a full crew of 4, but the button stays enabled. In *Deserters* it still took 40 gold. My event format has no requirement that can gate it, so this points at a missing feature, not just bad writing (early-waters, deep-water) |
-| **Bad events that are free when you're broke** | Gold floors at 0, so a choice that pays 80 gold with no `MinGold 80` costs a broke player nothing. The critic found this 3 times, and the writer added `MinGold` each time (early-waters, kraken-reach) |
-| **Strictly dominant choices** | The Fearmongerer's choice in *Wreckers* gave +40 gold for free in a **Bad** event. It took two rounds: the first fix still beat every other option in every branch (kraken-reach) |
-| **Text that contradicts the data** | **Blocker:** the revised *Wreckers* result says you got gold *and* got rammed, but each RandomOf branch applies only one of them. *"Pay for the whole lot"* promised the medicine chest, but the outcome gives only hull repair (kraken-reach) |
-| **Bugs introduced by the revision** | In kraken-reach, round 2 found a new blocker *created by the writer's fix*. That's why I have the critic re-review every revision |
-| **Cross-checking against my docs** | The early-waters critic asked whether crew HP carries between fights. The deep-water critic answered it from my docs (*"It does: C9"*) and confirmed the costs are real |
-
-**The code checks** (`lib/checks.js`) only found minor format issues in the real runs, because the writer gets the same facts and stayed within them. Their value is the guarantee, which the tests prove: they plant 7 kinds of mistakes and each one is caught. The planted mistakes are a removed outcome (`CrewMana`), an unknown item, "Pay 40 gold" on a -30 outcome, `LoseCrew` on the captain, an event where every choice has a requirement, +500 gold, and "matey". The critic agent covers what code can't judge: design, fairness and voice.
+**What I'd still change:** early-waters stalled at 84. The critic called *The Empty Hulk* "the shipped Drifting Wreck again", and the refiner couldn't get away from the wreck premise. Some RandomOf results are written vaguely so they read true for both branches.
 
 ## Problems I hit (and fixed)
 
-- **`claude -p --agent` ignores `--json-schema`:** the reply had no `structured_output`. The writer happened to match the schema, but the critic made up its own keys, and my first two runs stopped. **Fix:** I now put the schema and an example shape in every prompt. `callAgentChecked()` verifies the shape and retries once with the errors. A test covers this path, and the raw replies are saved in `calls/` so a failure can be traced.
-- **Facts parser:** the regex for the requirement list first matched an earlier mention of the class. It's now anchored to the start of the line. The facts also stop the run if any source changes shape (tested), so the critic never checks against nothing.
-
-## Cost
-
-$2.36 for the three batches (12 agent calls, $0.13-0.27 each, Opus 5.5), plus about $1 on the two failed runs before the schema fix. Each call is capped with `--max-budget-usd 3`, and the whole run with `--total-budget-usd 20`.
+- **The old pipeline was already broken.** `11-Events.md` gained `Nothing` and `CrewCountAtMost`, and the facts guard stopped every run. I added both, plus a code check that an ungated `Recruit` is a trap.
+- **First calibration failed.** The generic control scored 58 because good writing carried it, even at specificity 20. With specificity worth only 25%, a polished generic batch could reach about 87 and be accepted, which is exactly what I didn't want. That's why the stranger test is now a gate.
+- **One rule said more than my docs.** S07 said a Good event *must* cost something. My voice sheet only says the sea is "mostly kind but never safe". I fixed the rule to say Good events *can* cost something, and the critic stopped marking my shipped events down for it.
+- **Honest note:** my own shipped pool lands right at the stranger floor (68-70). The critic calls *Squall Line* and *Deserters in a Longboat* generic. I agree with it.
 
 ## Running it
 
+Normally I just ask the agent: *"content-director: 4 Kraken-omen events for layers 7-9"*. By hand:
+
 ```powershell
-node Tools/ContentPipeline/content-pipeline.js facts                      # the game facts both agents get
-node Tools/ContentPipeline/content-pipeline.js check <draft.json>         # code checks only, no agents
-node Tools/ContentPipeline/content-pipeline.js run --batch deep-water     # one batch (launches agents, costs money)
-node Tools/ContentPipeline/content-pipeline.js run --all                  # all briefs + pool summary
-node Tools/ContentPipeline/content-pipeline.js report                     # rebuild out/summary.md
-node Tools/ContentPipeline/test/pipeline.test.js                          # 10 tests, stub agents -> PIPELINE TEST PASS 10/10
+node Tools/ContentPipeline/test/pipeline.test.js                     # 19 tests, stub agents, free -> PIPELINE TEST PASS 19/19
+node Tools/ContentPipeline/content-pipeline.js style                 # rebuild style-guide.md (stranger test)
+node Tools/ContentPipeline/content-pipeline.js calibrate             # critic: generic control vs shipped events
+node Tools/ContentPipeline/content-pipeline.js run --batch deep-water   # one brief through the loop (launches agents, costs money)
+node Tools/ContentPipeline/content-pipeline.js run --all             # every brief + pool summary
+node Tools/ContentPipeline/content-pipeline.js check <draft.json>    # code checks only
 ```
 
-To add a batch, I add a brief to `briefs.json`. To change a rule, I edit the repo (tuning, `11-Events.md`, `voice.md`). Both agents pick up the change on the next run, with no prompt edits.
+Options: `--threshold 85`, `--max-rounds 5`, `--patience 2`, `--total-budget-usd 25`, `--budget-usd 3` (per call). To change a rule I edit the source doc (GDD, `voice.md`, `14-UI.md`, tuning). The style guide, the facts and the calibration all follow on the next run.
 
 ## Limits
 
-- **Drafts only.** The pipeline creates no `DA_Event_*` assets. The event classes (DW-205) aren't built yet, and I write and approve every event that goes into the game. The JSON maps 1:1 to `UDwEventDefinition`/`FDwEventChoice`, so an importer for DW-306 could read `final.json` directly.
-- **The guardrails are placeholders** derived from tuning: an event pays at most a fight's gold (150) and hurts at most one cannon hit (70) or half a crewmate's HP (50). I'll have the balance-designer confirm them with simulator data.
-- **One revision per batch** by default (`--revisions N`). More rounds cost more, and the critic keeps finding new issues in each revision, so I'm the one who decides when a batch is done.
-- **One writer, one content type.** Enemy crews (N2) and abilities (N1) would each get their own writer agent. The critic is already generic, so I'd reuse it.
+- **Drafts only.** Nothing goes into `Content/` or `Tuning/`. What makes it into the game is still my call.
+- **One content type:** map events. The style guide and critic aren't event-specific, so crews (N2) or abilities (N1) would need their own generator and data checks.
+- **The critic is an LLM.** The same draft can move a couple of points between calls. The code penalties, caps, locks and calibration are there so that noise can't ship generic or broken content.
+- The guardrails are still placeholders derived from tuning, for the balance-designer to confirm.
+
+The first version (writer → critic → one revision → me) and its outputs are in [`out/`](out/summary.md).

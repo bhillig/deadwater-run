@@ -1,0 +1,266 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_TheScuttledSloop",
+      "title": "The Scuttled Sloop",
+      "body": "A sloop is settling by the stern, her side stove in by cannon shot. Whoever sank her took the quick way and never set foot on her deck, so her hold is still full. Under a battened hatch, someone is hammering to be let out.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Break the hatch",
+          "requirements": [
+            {
+              "type": "CrewCountAtMost",
+              "count": 3
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Recruit",
+              "unit": "Sniper"
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -25
+            }
+          ],
+          "resultText": "Her sinking weight tears a strake off your rail while you strike the irons off a sniper her own crew had chained below. She takes the empty bunk without being asked."
+        },
+        {
+          "label": "Cut into her hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 120
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -20,
+              "selector": "Random"
+            }
+          ],
+          "resultText": "The crew chop down through her deck, and a falling beam catches one of yours before the strongbox comes up. Nobody had a hand free for the hatch."
+        },
+        {
+          "label": "Free her and take her word",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 40
+            }
+          ],
+          "resultText": "She points you to the purse her captain kept in the binnacle drawer. Then she takes the sloop's jolly boat and rows off without looking back."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_DeadCalm",
+      "title": "Dead Calm",
+      "body": "The wind dies with a rival brig two cannon shots off your beam, and the sea lies still as poured lead. Neither ship can turn. She is making her own run at the Kraken, and her captain would rather wait you out than spend his crew on you. His gun ports have been open since noon.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Tow clear by longboat",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -10,
+              "selector": "All"
+            }
+          ],
+          "resultText": "The crew pull at the oars until the brig is a speck astern. Nobody speaks at supper."
+        },
+        {
+          "label": "Run out the cannons",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 40
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -30
+            }
+          ],
+          "resultText": "Both cannons, twice, put her under, and her answering shot takes a bite out of your hull. Her deck cargo floats free, and the sea keeps the rest of her hold."
+        },
+        {
+          "label": "Row over and board her",
+          "requirements": [
+            {
+              "type": "CrewCountAtLeast",
+              "count": 3
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 110
+                    },
+                    {
+                      "type": "CrewHealth",
+                      "delta": -10,
+                      "selector": "All"
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 40
+                    },
+                    {
+                      "type": "CrewHealth",
+                      "delta": -25,
+                      "selector": "All"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "The longboat crosses the flat water under her guns, and you take her deck hand to hand. Everyone comes back over the rail bleeding, carrying whatever her captain hadn't hidden."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheLockedHulls",
+      "title": "The Locked Hulls",
+      "body": "Two rival ships drift lashed together by their own grapple lines, and nothing moves on either deck. One is burning at the waterline. The other is whole, and the lines are dragging her down with it. Both crews went for the plunder instead of the cannons, and nobody was left to take it.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Strip the open decks",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 70
+            }
+          ],
+          "resultText": "Purses off the deck and a ring off a captain's hand. Quick work, and you're clear before she rolls."
+        },
+        {
+          "label": "Cut her loose and search the hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 150
+            },
+            {
+              "type": "ShipHealth",
+              "delta": -35
+            }
+          ],
+          "resultText": "The burning hull swings into yours as the last line parts. The sound ship's hold comes up full, and your bow comes away with a hole in it."
+        },
+        {
+          "label": "Walk the crew through the fight",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "TeamLeader"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "GrantXp",
+              "amount": 80,
+              "selector": "All"
+            }
+          ],
+          "resultText": "You walk both decks with your crew and show them the pairs who fell back to back and held longest. They pick their partners for the next fight before you're done."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheShadowAstern",
+      "title": "The Shadow Astern",
+      "body": "The same black sails have sat in your wake since dawn, close enough to count their guns. A rival crew, letting you break the water toward the Kraken so they arrive fresh. At dusk they run out their cannons and hail you: a share of your hold, or they stop following and start shooting.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 4,
+      "maxLayer": 6,
+      "choices": [
+        {
+          "label": "Pay their share",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 80
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -80
+            }
+          ],
+          "resultText": "Eighty gold goes across in a bucket on a line. They dip their colours and fall back."
+        },
+        {
+          "label": "Give them both cannons",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -60
+            },
+            {
+              "type": "Gold",
+              "delta": 10
+            }
+          ],
+          "resultText": "You turn and fire, and they fire back. Their ship goes down with her hold, and all that floats up is a few loose coins."
+        },
+        {
+          "label": "Jump the gap alone",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Conqueror"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -35,
+              "selector": "Captain"
+            },
+            {
+              "type": "Gold",
+              "delta": 60
+            }
+          ],
+          "resultText": "You charge across before their boarders can form up and cut through the first rank with your sword. Their captain pays you to sail on ahead, and you sail on bleeding through your coat."
+        }
+      ]
+    }
+  ],
+  "notes": "TheLockedHulls is locked and returned unchanged. TheShadowAstern scored 84, just under the 85 lock threshold, but the evaluator marked it locked and raised no findings against it, so it is also returned word for word. The prisoner-abandonment beat now appears in one result only, as an understated line. DeadCalm's boarding requirement stays CrewCountAtLeast 3, and both RandomOf branches use CrewHealth All, which suits a boarding fight where everyone crosses.",
+  "score": 88,
+  "round": 5,
+  "status": "accepted at 88/100"
+}

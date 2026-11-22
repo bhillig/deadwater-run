@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 75712,
+  "stop_reason": "end_turn",
+  "session_id": "37ee3faa-41ca-4632-bb85-c64d1377ff34",
+  "total_cost_usd": 0.29259199999999996,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 16887,
+    "cache_read_input_tokens": 3540,
+    "output_tokens": 7839,
+    "output_tokens_details": {
+      "thinking_tokens": 4343
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 16887,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 7839,
+        "cache_read_input_tokens": 3540,
+        "cache_creation_input_tokens": 16887,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 16887
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 7839,
+      "cacheReadInputTokens": 3540,
+      "cacheCreationInputTokens": 16887,
+      "webSearchRequests": 0,
+      "costUSD": 0.29259199999999996,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 4343,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 16887,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"dimensions\": {\n    \"rules\": {\n      \"score\": 93,\n      \"reason\": \"Every outcome, requirement, item, captain and number exists and stays inside the guardrails. The biggest values are Gold +100, ShipHealth -50 and CrewHealth -30. The Fearmongerer surrender, the Team Leader Grapple Hook and the Conqueror's strength all come from the GDD (C01-C03). One small gap: 'Send someone down' uses selector Random, which can hit the captain. The data allows it, but the label implies a crewmate (V01).\"\n    },\n    \"text_data\": {\n      \"score\": 88,\n      \"reason\": \"V07 holds in most places. 'a strongbox and one corked tonic' matches Gold +80 and GiveItem HealthRestore x1. The Wager's RandomOf result, 'one purse has changed hands', reads true in both branches. Weakest point: 'Send someone down' / 'Whoever goes down comes up black with soot' is on a Random selector that can land on the captain, so 'you send someone' can be false. The 'buys the rum' stake in the Wager body has no outcome behind it, but it is only colour.\"\n    },\n    \"design\": {\n      \"score\": 76,\n      \"reason\": \"Grounded Sloop is a clean S02 restaging: 60 gold to sink, 90 gold plus crew damage to board, which is the 1x vs 1.5x split. The Fearmongerer gets his surrender option. The Hulk trade is fair: +30 gold and a tonic for 20 HP on one crew member. The real problem is The Boarding Wager. 'Buy a round instead' gives -20 gold, +15 HP to all crew and +30 XP to all crew. That beats the wager (EV +35 gold, -15 to all crew) in almost every run state, so the safe choice is the rich one and S02 is turned upside down. Smoke from the Hold has a sound S03/S07 split. Its -40 gold choice has no MinGold gate, so a broke player escapes for free.\"\n    },\n    \"voice\": {\n      \"score\": 86,\n      \"reason\": \"The voice is dry and concrete in the style of V02/V03: 'Her crew hand up the hold and ask to keep their buckets.' 'He pays up, and nurses his jaw while he does it.' No banned words, caps or UI talk (A01/A02). Weakest line: 'before tacking away toward the Kraken'. It treats the Kraken as a compass point and reads like a name-drop. Three of the four bodies open the same way: 'A rival sloop sits', 'A rival brig drifts', 'A rival sloop cuts'.\"\n    },\n    \"specificity\": {\n      \"score\": 79,\n      \"reason\": \"Three events are built on systems only this game has. Grounded Sloop is sink vs plunder plus the Fearmongerer's third choice (S02, C02). The Wager uses jumping the gap between ships and the sniper's nest from the encounter rules. The Hulk has sucker scars that point at the Kraken (S06) and the Grapple Hook and pairs synergy (C01). Smoke from the Hold fails the stranger test. A thrown fire cask with a hull/crew/gold triage works in any pirate game, and 'toward the Kraken' is the only tie. It is also the third use of the Hidden Shoal / Something Under the Keel triad. S03 asks for spending one bar to save the other. It does not ask for the same three-way split again.\"\n    }\n  },\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheGroundedSloop\",\n      \"score\": 91,\n      \"reason\": \"A textbook hook in miniature: sink for 60, or board for 90 at the cost of crew HP. The Fearmongerer's free 90 is the GDD's surrender option, in voice. It is dominant for him, but it is gated, and the shipped Peddler's gift does the same.\",\n      \"stranger_test\": \"Sink (1x) vs kill the crew to plunder (1.5x), plus the Fearmongerer's scare-them-into-surrender third choice\"\n    },\n    {\n      \"id\": \"DA_Event_TheEmptyHulk\",\n      \"score\": 80,\n      \"reason\": \"Fair trade-offs. The Team Leader choice draws well on the Grapple Hook and pairs synergy, and the scars foreshadow the Kraken without saying so. But the premise, a rival brig whose crew turned back from what waits ahead and left their goods, repeats the shipped Turning Brig.\",\n      \"stranger_test\": \"Sucker scars from the Kraken plus the Team Leader's Grapple Hook. The 'crew fled what's ahead' beat is already shipped.\"\n    },\n    {\n      \"id\": \"DA_Event_TheBoardingWager\",\n      \"score\": 78,\n      \"reason\": \"A strong scene that uses the game's ship-to-ship jump and the sniper's nest, with a fine Conqueror choice. 'Buy a round instead' (heal all crew plus 30 XP for 20 gold) beats the wager, so the event has no real decision for two of the three captains.\",\n      \"stranger_test\": \"Crews jumping the gap to take the other ship's sniper's nest, straight from the encounter rules, plus the Conqueror's strength\"\n    },\n    {\n      \"id\": \"DA_Event_SmokeFromTheHold\",\n      \"score\": 66,\n      \"reason\": \"A balanced Bad event that limits damage (S07), but it is generic. It is the third shipped-pool hull/crew/gold triad, and 'Crates of plunder' echoes Something Under the Keel. The Kraken mention is a name-drop.\",\n      \"stranger_test\": \"nothing - a fire on board with hull/crew/gold options works in any pirate game; 'toward the Kraken' is the only tie\"\n    }\n  ],\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_TheBoardingWager\",\n      \"field\": \"choices[1].outcomes\",\n      \"rule\": \"S02\",\n      \"problem\": \"'Buy a round instead' gives Gold -20, CrewHealth +15 All and GrantXp 30 All. That is better than the wager (EV +35 gold, -15 to all crew) in nearly every run state. The safe choice is also the rich one, so the decision is a trap the other way round and the hook is inverted.\",\n      \"fix\": \"Make the round cost something real: drop the heal, or cut the XP to about 15 and raise the price to around 40. Or make the wager's win branch pay XP too, so the gamble is the rich option.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_SmokeFromTheHold\",\n      \"field\": \"choices\",\n      \"rule\": \"S01/specificity\",\n      \"problem\": \"This is the third use of the shipped hull/crew/gold triad (The Hidden Shoal, Something Under the Keel), and the scene works unchanged in any pirate game. 'tacking away toward the Kraken' is a name-drop, not something the event is built on.\",\n      \"fix\": \"Make the choice run through a Deadwater Run system. For example, give the fire a reason the cannons or the sniper's nest matter (fire is near the powder, so you lose a cannon's worth of hull or put the Sniper in the nest to stop the sloop's next cask). Or tie it to the rival crew's run (S08) through what they want from you. Replace the 'toward the Kraken' clause.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_TheEmptyHulk\",\n      \"field\": \"body\",\n      \"rule\": \"Fit\",\n      \"problem\": \"'Whatever her crew saw ahead, they rowed away from it and left their hold battened behind them' repeats the shipped Turning Brig: 'A brig ... has seen what waits ahead and is going home. He has no more use for what's in his hold.' The ship type and the reason the goods are left are the same.\",\n      \"fix\": \"Drop the 'saw ahead and turned back' motive and keep the scars. For example, the crew didn't flee, they sailed on and this is what came back, or the hulk belongs to a crew that lost the race. Change the ship from a brig.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_SmokeFromTheHold\",\n      \"field\": \"choices[0]\",\n      \"rule\": \"V01/V07\",\n      \"problem\": \"The label 'Send someone down' implies a crewmate, but selector Random can hit the captain.\",\n      \"fix\": \"Change the label to 'Go down after it' and write a result that fits whoever is hit, or accept the captain case.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_SmokeFromTheHold\",\n      \"field\": \"choices[2].requirements\",\n      \"rule\": \"design\",\n      \"problem\": \"Gold -40 with no MinGold gate. Gold floors at 0, so a broke player takes this choice for free.\",\n      \"fix\": \"Add MinGold 40.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_SmokeFromTheHold\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"Fit\",\n      \"problem\": \"'every crate of plunder' echoes the shipped Something Under the Keel line 'Crates of plunder go over the side'.\",\n      \"fix\": \"Use a different thing from the deck, such as the gold in coin sacks.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"batch\",\n      \"field\": \"body\",\n      \"rule\": \"V02/Fit\",\n      \"problem\": \"Three of the four bodies open 'A rival [sloop/brig/sloop] ...', and the brief's 'traders' theme is missing entirely.\",\n      \"fix\": \"Vary the openings and make one event a trader rather than a rival crew.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheBoardingWager\",\n      \"field\": \"body\",\n      \"rule\": \"V07\",\n      \"problem\": \"'The loser pays into the purse and buys the rum' is a stake with no outcome in either branch.\",\n      \"fix\": \"Cut 'and buys the rum' or fold it into the result.\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"summary\": \"Smoke from the Hold fails the stranger test and repeats the shipped triad, and the Wager's 'Buy a round instead' beats the gamble. Grounded Sloop is ship-ready, and the Hulk needs a premise that isn't The Turning Brig.\"\n}\n```",
+  "ttft_ms": 44887,
+  "type": "result",
+  "duration_ms": 75761,
+  "uuid": "3a8c70d1-4a7c-4065-97ec-a91ccdd2f828",
+  "ttft_stream_ms": 2143,
+  "time_to_request_ms": 49,
+  "first_content_frame_ms": 2143,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

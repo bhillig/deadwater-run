@@ -1,0 +1,24 @@
+{
+  "key": "2326ba62a74a60f1",
+  "pass": true,
+  "control": 52,
+  "shipped": 67,
+  "checks": [
+    {
+      "what": "generic control can't be accepted: 52 < 85 and held under the stranger cap (69)",
+      "ok": true
+    },
+    {
+      "what": "generic control fails the stranger test: specificity 18 < 40",
+      "ok": true
+    },
+    {
+      "what": "shipped specificity beats the control by 30+ (70 vs 18)",
+      "ok": true
+    },
+    {
+      "what": "shipped events outscore the control (67 vs 52)",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 45527,
+  "stop_reason": "end_turn",
+  "session_id": "c023be4b-9275-4f5e-937b-d8eba61c58cd",
+  "total_cost_usd": 0.10558239999999999,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 833,
+    "cache_read_input_tokens": 17952,
+    "output_tokens": 4766,
+    "output_tokens_details": {
+      "thinking_tokens": 964
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 833,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 4766,
+        "cache_read_input_tokens": 17952,
+        "cache_creation_input_tokens": 833,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 833
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 4766,
+      "cacheReadInputTokens": 17952,
+      "cacheCreationInputTokens": 833,
+      "webSearchRequests": 0,
+      "costUSD": 0.10558239999999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 964,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 833,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"dimensions\": {\n    \"rules\": {\n      \"score\": 82,\n      \"reason\": \"Every outcome, requirement, selector and number is in the facts and inside the guardrails: Gold +100/+120/-60/-30, CrewHealth -20/-25, ShipHealth -50/-20, and MinGold 60 gates Gold -60. The fiction is where it breaks the setting. Mutiny says \\\"The crew has gone too long without pay\\\", but there is no wage system, and \\\"a few hands linger near the weapons locker\\\" invents a crowd of sailors that S05 rules out (a crew of 3-4 who are named units). MerchantGalleon's \\\"merchant galleon\\\" with a \\\"tired\\\" crew is a civilian trader, not the rival pirate crews S08 says fill the water.\"\n    },\n    \"text_data\": {\n      \"score\": 72,\n      \"reason\": \"V07: BuriedTreasure's body says \\\"The island is a day's sail off course\\\", but \\\"Follow the map\\\" has no cost of any kind, so the detour the text sets up never happens. Mutiny \\\"Make an example\\\" applies CrewHealth -25 with the Random selector, which can land on the captain, yet \\\"Order returns to the ship, for now.\\\" never says who was punished. A captain making an example of himself reads false. MerchantGalleon \\\"silk and silver\\\" pays out only Gold, which is acceptable. Storm's text matches its data (\\\"sails are torn\\\" for -50 ship, \\\"lose cargo overboard\\\" for -30 gold).\"\n    },\n    \"design\": {\n      \"score\": 45,\n      \"reason\": \"S02 fails in all four events: no choice is quick-and-safe against slow-and-rich. BuriedTreasure gives +100 gold for nothing against Nothing, so \\\"Follow the map\\\" is strictly dominant. MerchantGalleon trades +120 gold for -20 crew HP on one random pirate, which is near-dominant at any point in a run. S03: Storm's two choices both spend the ship bar. -50 ShipHealth is worth the same as -20 ShipHealth plus -30 Gold at the repair rate (100 gold for 100 HP), so the choice is a coin flip of equal costs and never asks you to save the hull or the crew. Mutiny is the only real trade (60 gold vs 25 crew HP) and is the weakest copy of shipped Mutterings Below Deck. The S07 valence split of 2 Good and 2 Bad matches the brief.\"\n    },\n    \"voice\": {\n      \"score\": 58,\n      \"reason\": \"V01 present tense is met. V04 is clean and there are no A02 caps or exclamation marks. V03 is missing: there is no dry gallows humour, and two results end on the flat stock line \\\"Nothing happens.\\\" (\\\"The bottle bobs away. Nothing happens.\\\" / \\\"You watch her sails shrink. Nothing happens.\\\"). A03: \\\"X Marks the Spot\\\" is a stock idiom that gives away the payout, and \\\"A Fat Merchant\\\" leans the same way. Fit: Storm's \\\"You outrun the worst of it but lose cargo overboard.\\\" echoes shipped Squall Line's \\\"You outrun the worst of it\\\" almost word for word, and Mutiny's \\\"Whispers spread on the lower deck\\\" / \\\"the whispers stop\\\" restages Mutterings Below Deck.\"\n    },\n    \"specificity\": {\n      \"score\": 18,\n      \"reason\": \"None of the four events passes the stranger test, and code found zero signature terms or mechanics. Rename nothing and all four run unchanged in any pirate game: a treasure map in a bottle, a fat merchant prize, a mutiny over pay, a storm. Nothing in them touches sink vs plunder (S02), spending ship against crew (S03), permanent crew loss (S04), the rival crews racing for the Kraken (S08), the Kraken itself (S06), or any captain (C01-C03). Aquadia is never present (S01). The weakest line is \\\"A torn map in a bottle washes against your hull. It shows a small island and a red X.\\\"\"\n    }\n  },\n  \"events\": [\n    {\n      \"id\": \"DA_Event_BuriedTreasure\",\n      \"score\": 32,\n      \"reason\": \"Free +100 gold against Nothing is a strictly dominant choice with no S02 tension. The \\\"day's sail off course\\\" detour is never charged (V07). The title is a stock idiom that names the payout (A03).\",\n      \"stranger_test\": \"nothing - the treasure map in a bottle is the most generic pirate trope there is\"\n    },\n    {\n      \"id\": \"DA_Event_MerchantGalleon\",\n      \"score\": 40,\n      \"reason\": \"+120 gold for -20 HP on one random pirate is near-dominant. A civilian merchant breaks S08 (the people on the water are rival pirate crews). The boarding is never framed as a sink-or-plunder call (S02).\",\n      \"stranger_test\": \"nothing - taking a merchant prize works in any pirate game\"\n    },\n    {\n      \"id\": \"DA_Event_Mutiny\",\n      \"score\": 40,\n      \"reason\": \"It is the only real trade (gold vs crew HP), but it restages shipped Mutterings Below Deck. The pay mechanic and the crowd of \\\"hands\\\" don't exist (S05). The Random selector can make the captain the example.\",\n      \"stranger_test\": \"nothing - a mutiny over unpaid wages, and it duplicates a shipped event\"\n    },\n    {\n      \"id\": \"DA_Event_Storm\",\n      \"score\": 38,\n      \"reason\": \"Both choices hit the ship and cost the same at the repair rate, so it is a non-decision with no ship-vs-crew trade (S03). The result echoes Squall Line's \\\"You outrun the worst of it\\\".\",\n      \"stranger_test\": \"nothing - a generic storm, and a weaker copy of shipped Squall Line\"\n    }\n  ],\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_BuriedTreasure\",\n      \"field\": \"choices[0].outcomes\",\n      \"rule\": \"S02\",\n      \"problem\": \"\\\"Follow the map\\\" gives Gold +100 at no cost against a Nothing option, so it is strictly dominant. There is no quick-safe vs slow-rich tension.\",\n      \"fix\": \"Make the dig cost something: ShipHealth or CrewHealth Chosen for the detour or the digging, or a RandomOf where a rival crew got there first. Or add a quick, safe partial take.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_BuriedTreasure\",\n      \"field\": \"body\",\n      \"rule\": \"V07\",\n      \"problem\": \"\\\"The island is a day's sail off course\\\" promises a cost that no outcome delivers.\",\n      \"fix\": \"Add the cost the body sets up, or cut the line.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_BuriedTreasure\",\n      \"field\": \"title\",\n      \"rule\": \"A03\",\n      \"problem\": \"\\\"X Marks the Spot\\\" is a stock idiom that reveals the payout instead of naming the thing you sailed into.\",\n      \"fix\": \"Name the object, e.g. a rival crew's marked cairn on a specific Aquadia reef.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_MerchantGalleon\",\n      \"field\": \"body\",\n      \"rule\": \"S08\",\n      \"problem\": \"A civilian merchant galleon with a tired crew. S08 says the other people on the water are rival pirate crews making their own run at the Kraken.\",\n      \"fix\": \"Make her a rival pirate crew limping back from the chart's end, and frame the choice as sinking her for quick safe loot vs boarding for the richer plunder at crew cost (S02/S03).\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_MerchantGalleon\",\n      \"field\": \"choices[0].outcomes\",\n      \"rule\": \"design\",\n      \"problem\": \"+120 gold for -20 HP on one random pirate is near-dominant over Nothing for the whole run.\",\n      \"fix\": \"Add a cannon-fire alternative (ShipHealth cost, less gold) against boarding (heavier CrewHealth Chosen cost, more gold), and drop the empty pass option or give it value.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_Mutiny\",\n      \"field\": \"body\",\n      \"rule\": \"S05\",\n      \"problem\": \"\\\"gone too long without pay\\\" and \\\"a few hands linger near the weapons locker\\\" invent a wage system and a crowd of sailors. The crew is 3-4 named pirates.\",\n      \"fix\": \"Ground the grievance in game facts, such as shares of plunder after a sunk ship (S02), and name the Swordsman or Sniper.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_Mutiny\",\n      \"field\": \"id\",\n      \"rule\": \"fit\",\n      \"problem\": \"It restages shipped DA_Event_MutteringsBelowDeck: crew discontent, pay it off with coin or settle it by force. \\\"the whispers stop\\\" mirrors \\\"the muttering stops\\\".\",\n      \"fix\": \"Drop it or replace it with a different idea.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_Mutiny\",\n      \"field\": \"choices[1].outcomes[0].selector\",\n      \"rule\": \"V07\",\n      \"problem\": \"CrewHealth Random can hit the captain, and \\\"Order returns to the ship, for now.\\\" hides who was punished.\",\n      \"fix\": \"Use the Chosen selector and have the result name the pirate who takes it.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_Storm\",\n      \"field\": \"choices\",\n      \"rule\": \"S03\",\n      \"problem\": \"Both choices spend the ship bar, and at the repair rate -50 ship ≈ -20 ship plus -30 gold, so it is a non-decision. No choice protects the hull by spending the crew.\",\n      \"fix\": \"Make one choice CrewHealth All (crew working the rigging) against a ShipHealth hit, with a gold-jettison middle choice, and keep the costs unequal.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_Storm\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"fit\",\n      \"problem\": \"\\\"You outrun the worst of it but lose cargo overboard\\\" repeats shipped Squall Line, both in the idea and almost word for word.\",\n      \"fix\": \"Drop it or replace it with a weather idea the pool does not have yet.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_MerchantGalleon\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"V03\",\n      \"problem\": \"\\\"Nothing happens.\\\" is a flat tag line, used twice in the batch with no dry humour.\",\n      \"fix\": \"End on a dry, concrete image the way shipped results do.\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"summary\": \"This is a control set of generic pirate tropes, and none of the four events passes the stranger test. They have no sink-or-plunder tension and no ship-vs-crew trade, two are near-dominant free gold, and two repeat shipped events.\"\n}\n```",
+  "ttft_ms": 13049,
+  "type": "result",
+  "duration_ms": 45573,
+  "uuid": "a39ad855-a298-4298-95bd-f91e2f2200aa",
+  "ttft_stream_ms": 3730,
+  "time_to_request_ms": 46,
+  "first_content_frame_ms": 3730,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

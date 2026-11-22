@@ -1,0 +1,319 @@
+{
+  "by": "generator",
+  "score": {
+    "score": 69,
+    "base": 79.7,
+    "penalty": 0,
+    "capped": false,
+    "strangerCapped": true,
+    "blockers": [],
+    "dims": [
+      {
+        "key": "rules",
+        "weight": 20,
+        "what": "Game rules: only outcomes, requirements, items, units, captains and numbers in the facts; nothing the game can't do",
+        "score": 93,
+        "reason": "All outcome types, selectors, requirements, captains and numbers exist and stay within the guardrails: Gold 90 is under 150, ShipHealth -50 is under the 70 cap, CrewHealth -30 is under 50, GrantXp 80 equals xpMax. MinGold gates match their costs ('Buy a round' needs MinGold 20 and costs Gold -20). Every event has a choice with no requirements. 'Two shots and she goes under' fits two cannons at 70 damage each. 'Send someone down' (CrewHealth Random -30) depends on the C10a floor at 1. That is fine today, but it is the open question the author flagged. Nothing here is beyond what the game can do."
+      },
+      {
+        "key": "text_data",
+        "weight": 15,
+        "what": "Text matches data: every body, label and result is true to the outcomes of its choice, in every RandomOf branch (V07)",
+        "score": 82,
+        "reason": "V07 holds for the RandomOf: 'One crew rows home lighter, and nobody draws steel over it' reads true on either branch. Weak spots: (1) Smoke from the Hold, 'Over go the kegs, and the coin chest stacked against them'. Losing the powder kegs has no outcome, because cannons use no ammo, so the line promises a loss the data never makes. The body also frames the choice as 'the hull or the crew will pay', but the third choice costs gold. (2) Dice at Anchor, 'he looks like a man who loses often'. This hints at good odds on what is a plain 50/50, so the body oversells it. (3) 'rows home' is odd when both crews are anchored in the same cove. Every other label and result matches its data."
+      },
+      {
+        "key": "design",
+        "weight": 20,
+        "what": "Real decisions with sink-or-plunder tension (S02), ship vs crew costs (S03), Good/Bad fit (S07), fair for a medium ~30 minute run, no dominant or trap choice",
+        "score": 77,
+        "reason": "The Grounded Sloop is a clean S02 restage: sink for 60 gold free, plunder for 90 gold at -15 to all crew, and the Fearmongerer gets surrender at full plunder with nobody hurt, as C02 describes. Smoke from the Hold is a good Bad event (S03, S07): it spends crew, hull or gold, and the costs are roughly even (50 hull is about 50 gold of repair). Problems: (a) the batch targets layers 1-3, and minLayer 1 means these can fire before any fight, when the hull is 250/250 and the crew is full. 'Strip her timbers' (+50 ShipHealth) and 'Buy a round' (+25 CrewHealth) then do nothing. In The Empty Hulk that leaves 'Drill the boarding' as the only live choice. (b) Dice at Anchor has no sink-or-plunder or ship-vs-crew tension (S02, S03). It is a gold coin-flip against a small heal, with 'Hold your course' as filler. (c) The Team Leader choice is strictly better than the open drill (80 XP for -10 against 60 XP for -15). That is acceptable for a gated choice, but it is not a decision."
+      },
+      {
+        "key": "voice",
+        "weight": 20,
+        "what": "Sounds like the voice rules (V01-V07), the reference lines and the shipped pool; Ship's Log aesthetic (A01-A03)",
+        "score": 83,
+        "reason": "Mostly on voice (V02, V03). 'Her crew hand up the hold and ask to keep their buckets' and 'She drifts off behind you, a skeleton' are dry and concrete, with no stage-pirate words (V04) and no caps or exclamation marks (A02). Weakest line: 'She is sound enough to strip for your hull, or to practise boarding on until dark'. It is clumsy, ends on a dangling 'on', and reads like a menu of options (V05, V06). Several lines reuse shipped phrasing: 'Over go the kegs, and the coin chest...' copies Hidden Shoal's 'Over go stores and a chest of coin', and 'You wave back and sail on. Nothing happens, except...' copies Drifting Wreck's 'You hold your course. Nothing happens, and...'. 'says the Kraken can wait one night' is a name-drop more than a scene (V06)."
+      },
+      {
+        "key": "specificity",
+        "weight": 25,
+        "what": "Stranger test: could a stranger tell this is Deadwater Run? Low if the event would work unchanged in any other pirate game (S01-S08, C01-C03)",
+        "score": 67,
+        "reason": "Uneven. The Grounded Sloop passes the stranger test: it is Deadwater Run's sink (1x) vs plunder (1.5x) fight rule plus the Fearmongerer's surrender third choice (S02, C02). The Empty Hulk partly passes: jumping the gap between two decks is the game's boarding layout, and 'until they move as one' plays to Team Leader synergy (C01). Its timber-for-hull choice repeats The Turning Brig, and its drill repeats Castaway on a Spar. Dice at Anchor fails. Remove 'the Kraken can wait one night' and it is a tavern dice game from any pirate game (S06 name-drop, no S02 or S03). Smoke from the Hold is a fire aboard ship, common in any pirate game. Only the even spread across hull, crew and gold ties it to S03, and nothing about the scene is Aquadia's. Two of the four events are generic, so this stays under 70."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "major": 0,
+      "minor": 0
+    },
+    "reason": "69/100. Dimensions (weighted 20/15/20/20/25): rules 93 - All outcome types, selectors, requirements, captains and numbers exist and stay within the guardrails: Gold 90 is under 150, ShipHealth -50 is under the 70 cap, CrewHealth -30 is under 50, GrantXp 80 equals xpMax. MinGold gates match their costs ('Buy a round' needs MinGold 20 and costs Gold -20). Every event has a choice with no requirements. 'Two shots and she goes under' fits two cannons at 70 damage each. 'Send someone down' (CrewHealth Random -30) depends on the C10a floor at 1. That is fine today, but it is the open question the author flagged. Nothing here is beyond what the game can do. | text_data 82 - V07 holds for the RandomOf: 'One crew rows home lighter, and nobody draws steel over it' reads true on either branch. Weak spots: (1) Smoke from the Hold, 'Over go the kegs, and the coin chest stacked against them'. Losing the powder kegs has no outcome, because cannons use no ammo, so the line promises a loss the data never makes. The body also frames the choice as 'the hull or the crew will pay', but the third choice costs gold. (2) Dice at Anchor, 'he looks like a man who loses often'. This hints at good odds on what is a plain 50/50, so the body oversells it. (3) 'rows home' is odd when both crews are anchored in the same cove. Every other label and result matches its data. | design 77 - The Grounded Sloop is a clean S02 restage: sink for 60 gold free, plunder for 90 gold at -15 to all crew, and the Fearmongerer gets surrender at full plunder with nobody hurt, as C02 describes. Smoke from the Hold is a good Bad event (S03, S07): it spends crew, hull or gold, and the costs are roughly even (50 hull is about 50 gold of repair). Problems: (a) the batch targets layers 1-3, and minLayer 1 means these can fire before any fight, when the hull is 250/250 and the crew is full. 'Strip her timbers' (+50 ShipHealth) and 'Buy a round' (+25 CrewHealth) then do nothing. In The Empty Hulk that leaves 'Drill the boarding' as the only live choice. (b) Dice at Anchor has no sink-or-plunder or ship-vs-crew tension (S02, S03). It is a gold coin-flip against a small heal, with 'Hold your course' as filler. (c) The Team Leader choice is strictly better than the open drill (80 XP for -10 against 60 XP for -15). That is acceptable for a gated choice, but it is not a decision. | voice 83 - Mostly on voice (V02, V03). 'Her crew hand up the hold and ask to keep their buckets' and 'She drifts off behind you, a skeleton' are dry and concrete, with no stage-pirate words (V04) and no caps or exclamation marks (A02). Weakest line: 'She is sound enough to strip for your hull, or to practise boarding on until dark'. It is clumsy, ends on a dangling 'on', and reads like a menu of options (V05, V06). Several lines reuse shipped phrasing: 'Over go the kegs, and the coin chest...' copies Hidden Shoal's 'Over go stores and a chest of coin', and 'You wave back and sail on. Nothing happens, except...' copies Drifting Wreck's 'You hold your course. Nothing happens, and...'. 'says the Kraken can wait one night' is a name-drop more than a scene (V06). | specificity 67 - Uneven. The Grounded Sloop passes the stranger test: it is Deadwater Run's sink (1x) vs plunder (1.5x) fight rule plus the Fearmongerer's surrender third choice (S02, C02). The Empty Hulk partly passes: jumping the gap between two decks is the game's boarding layout, and 'until they move as one' plays to Team Leader synergy (C01). Its timber-for-hull choice repeats The Turning Brig, and its drill repeats Castaway on a Spar. Dice at Anchor fails. Remove 'the Kraken can wait one night' and it is a tavern dice game from any pirate game (S06 name-drop, no S02 or S03). Smoke from the Hold is a fire aboard ship, common in any pirate game. Only the even spread across hull, crew and gold ties it to S03, and nothing about the scene is Aquadia's. Two of the four events are generic, so this stays under 70.. Base 79.7. Code checks: no deductions. Capped at 69: specificity 67 is under 70 - a stranger couldn't tell this is Deadwater Run. Evaluator: Specificity is just under 70, so the batch cap applies. The Grounded Sloop is a strong sink-or-plunder restage, but Dice at Anchor and Smoke from the Hold would work unchanged in any pirate game. Early-layer choices that heal a full hull or crew also leave dead choices."
+  },
+  "eventScores": [
+    {
+      "id": "DA_Event_TheGroundedSloop",
+      "score": 90,
+      "reason": "The best of the batch. It restages the sink-or-plunder hook exactly (60 against 90 gold for crew HP), the Fearmongerer surrender choice is true to C02, and the voice is sharp ('ask to keep their buckets'). Only polish is left. The Fearmongerer choice is dominant, but that is what the GDD says surrender does.",
+      "findings": []
+    },
+    {
+      "id": "DA_Event_TheEmptyHulk",
+      "score": 74,
+      "reason": "Hull against crew XP is a real S03 trade, and the Team Leader text uses synergy (C01). But '+50 ShipHealth' does nothing at full hull in layer 1, so the event can collapse to one choice. The ideas echo The Turning Brig (timber for the hull) and Castaway on a Spar (crew drill). The body's second sentence is clumsy. The 'whoever sailed her' mystery goes nowhere.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheEmptyHulk",
+          "field": "choices[0].outcomes",
+          "rule": "design",
+          "problem": "With minLayer 1, the event can fire before any fight, when the hull is at 250/250. '+50 ShipHealth' then does nothing, leaving 'Drill the boarding' as the only real choice.",
+          "fix": "Set minLayer to 2, or swap the hull choice for something that always counts (e.g. Gold, or GiveItem HealthRestore 1 from her medicine chest) so the choice is live at full hull."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheEmptyHulk",
+          "field": "body",
+          "rule": "V06",
+          "problem": "'She is sound enough to strip for your hull, or to practise boarding on until dark' is clumsy and reads like a list of options.",
+          "fix": "Show the scene instead, e.g. 'Her deck sits level with yours, close enough to jump.' Let the labels carry the choices."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_TheEmptyHulk",
+          "field": "choices",
+          "rule": "fit",
+          "problem": "Timber for your hull repeats The Turning Brig, and crew drilling for XP repeats Castaway on a Spar.",
+          "fix": "Give her a salvage that is new to the pool, or tie her emptiness to a rival crew that sailed on toward the Kraken (S06, S08) so the scene says something of its own."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_DiceAtAnchor",
+      "score": 61,
+      "reason": "The RandomOf result text is well done (V07). But the event is a generic dice game: no sink-or-plunder, no ship-vs-crew cost, and 'the Kraken can wait one night' is a name-drop. 'Buy a round' does nothing at full crew HP. The body hints at good odds ('loses often') that the 50/50 data doesn't support.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_DiceAtAnchor",
+          "field": "body",
+          "rule": "S02",
+          "problem": "No choice carries sink-or-plunder or hull-vs-crew tension. It is a generic gold coin-flip, and 'says the Kraken can wait one night' is a name-drop, not a scene built on the game (S06, stranger test).",
+          "fix": "Put the stakes on Deadwater Run's systems. For example, the rival captain bets a share of his hold against your crew in a boarding contest across the two decks (crew damage against gold), or the stake is his sniper's place in the nest. Keep the RandomOf result text that works for both branches."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_DiceAtAnchor",
+          "field": "body",
+          "rule": "V07",
+          "problem": "'he looks like a man who loses often' promises good odds, but the RandomOf is a 1:1 weighting.",
+          "fix": "Cut the hint or make it neutral (e.g. 'he looks like a man who doesn't care either way'), or weight the winning branch higher to match."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_DiceAtAnchor",
+          "field": "choices[2].resultText",
+          "rule": "V06",
+          "problem": "'You wave back and sail on. Nothing happens, except...' repeats the shape of Drifting Wreck's shipped 'You hold your course. Nothing happens, and behind you...'.",
+          "fix": "Write a fresh close, e.g. 'You leave them to it. The rattle of dice follows you out of the cove.'"
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_DiceAtAnchor",
+          "field": "choices[1].outcomes",
+          "rule": "design",
+          "problem": "'Buy a round' (+25 CrewHealth) does nothing at full crew HP, which is likely in layer 1.",
+          "fix": "Pair the heal with a small XP grant, or set minLayer to 2."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_SmokeFromTheHold",
+      "score": 70,
+      "reason": "A solid Bad event that limits damage three different ways (S03, S07), with fair numbers. But a fire in the hold is generic. The powder-keg loss has no mechanic behind it. The body leaves out the gold option. The keg-and-coin-chest result copies Hidden Shoal's 'Over go stores and a chest of coin'.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_SmokeFromTheHold",
+          "field": "choices[2].resultText",
+          "rule": "V07",
+          "problem": "'Over go the kegs, and the coin chest stacked against them.' Losing the powder has no outcome, because cannons have no ammo. The line also copies Hidden Shoal's shipped 'Over go stores and a chest of coin'.",
+          "fix": "Make the gold loss the point of the choice and drop the powder: e.g. pay to smother the fire with the sailcloth and stores you'd have sold. Avoid the 'Over go...' construction."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_SmokeFromTheHold",
+          "field": "body",
+          "rule": "V07",
+          "problem": "'the hull or the crew will pay' leaves out the third choice, which costs gold.",
+          "fix": "End on something like 'Something aboard will pay for it.'"
+        }
+      ]
+    }
+  ],
+  "code": [],
+  "signals": {
+    "DA_Event_TheGroundedSloop": {
+      "terms": [],
+      "mechanics": [
+        "CaptainIs gate (S-captain)"
+      ]
+    },
+    "DA_Event_TheEmptyHulk": {
+      "terms": [],
+      "mechanics": [
+        "CaptainIs gate (S-captain)",
+        "ship vs crew health bars (S03)"
+      ]
+    },
+    "DA_Event_DiceAtAnchor": {
+      "terms": [
+        "Kraken",
+        "rival crew"
+      ],
+      "mechanics": []
+    },
+    "DA_Event_SmokeFromTheHold": {
+      "terms": [],
+      "mechanics": [
+        "ship vs crew health bars (S03)"
+      ]
+    }
+  },
+  "evaluation": {
+    "dimensions": {
+      "rules": {
+        "score": 93,
+        "reason": "All outcome types, selectors, requirements, captains and numbers exist and stay within the guardrails: Gold 90 is under 150, ShipHealth -50 is under the 70 cap, CrewHealth -30 is under 50, GrantXp 80 equals xpMax. MinGold gates match their costs ('Buy a round' needs MinGold 20 and costs Gold -20). Every event has a choice with no requirements. 'Two shots and she goes under' fits two cannons at 70 damage each. 'Send someone down' (CrewHealth Random -30) depends on the C10a floor at 1. That is fine today, but it is the open question the author flagged. Nothing here is beyond what the game can do."
+      },
+      "text_data": {
+        "score": 82,
+        "reason": "V07 holds for the RandomOf: 'One crew rows home lighter, and nobody draws steel over it' reads true on either branch. Weak spots: (1) Smoke from the Hold, 'Over go the kegs, and the coin chest stacked against them'. Losing the powder kegs has no outcome, because cannons use no ammo, so the line promises a loss the data never makes. The body also frames the choice as 'the hull or the crew will pay', but the third choice costs gold. (2) Dice at Anchor, 'he looks like a man who loses often'. This hints at good odds on what is a plain 50/50, so the body oversells it. (3) 'rows home' is odd when both crews are anchored in the same cove. Every other label and result matches its data."
+      },
+      "design": {
+        "score": 77,
+        "reason": "The Grounded Sloop is a clean S02 restage: sink for 60 gold free, plunder for 90 gold at -15 to all crew, and the Fearmongerer gets surrender at full plunder with nobody hurt, as C02 describes. Smoke from the Hold is a good Bad event (S03, S07): it spends crew, hull or gold, and the costs are roughly even (50 hull is about 50 gold of repair). Problems: (a) the batch targets layers 1-3, and minLayer 1 means these can fire before any fight, when the hull is 250/250 and the crew is full. 'Strip her timbers' (+50 ShipHealth) and 'Buy a round' (+25 CrewHealth) then do nothing. In The Empty Hulk that leaves 'Drill the boarding' as the only live choice. (b) Dice at Anchor has no sink-or-plunder or ship-vs-crew tension (S02, S03). It is a gold coin-flip against a small heal, with 'Hold your course' as filler. (c) The Team Leader choice is strictly better than the open drill (80 XP for -10 against 60 XP for -15). That is acceptable for a gated choice, but it is not a decision."
+      },
+      "voice": {
+        "score": 83,
+        "reason": "Mostly on voice (V02, V03). 'Her crew hand up the hold and ask to keep their buckets' and 'She drifts off behind you, a skeleton' are dry and concrete, with no stage-pirate words (V04) and no caps or exclamation marks (A02). Weakest line: 'She is sound enough to strip for your hull, or to practise boarding on until dark'. It is clumsy, ends on a dangling 'on', and reads like a menu of options (V05, V06). Several lines reuse shipped phrasing: 'Over go the kegs, and the coin chest...' copies Hidden Shoal's 'Over go stores and a chest of coin', and 'You wave back and sail on. Nothing happens, except...' copies Drifting Wreck's 'You hold your course. Nothing happens, and...'. 'says the Kraken can wait one night' is a name-drop more than a scene (V06)."
+      },
+      "specificity": {
+        "score": 67,
+        "reason": "Uneven. The Grounded Sloop passes the stranger test: it is Deadwater Run's sink (1x) vs plunder (1.5x) fight rule plus the Fearmongerer's surrender third choice (S02, C02). The Empty Hulk partly passes: jumping the gap between two decks is the game's boarding layout, and 'until they move as one' plays to Team Leader synergy (C01). Its timber-for-hull choice repeats The Turning Brig, and its drill repeats Castaway on a Spar. Dice at Anchor fails. Remove 'the Kraken can wait one night' and it is a tavern dice game from any pirate game (S06 name-drop, no S02 or S03). Smoke from the Hold is a fire aboard ship, common in any pirate game. Only the even spread across hull, crew and gold ties it to S03, and nothing about the scene is Aquadia's. Two of the four events are generic, so this stays under 70."
+      }
+    },
+    "events": [
+      {
+        "id": "DA_Event_TheGroundedSloop",
+        "score": 90,
+        "reason": "The best of the batch. It restages the sink-or-plunder hook exactly (60 against 90 gold for crew HP), the Fearmongerer surrender choice is true to C02, and the voice is sharp ('ask to keep their buckets'). Only polish is left. The Fearmongerer choice is dominant, but that is what the GDD says surrender does.",
+        "stranger_test": "Sink for 1x loot or kill the crew for 1.5x, plus the Fearmongerer's surrender third choice. Only Deadwater Run has this."
+      },
+      {
+        "id": "DA_Event_TheEmptyHulk",
+        "score": 74,
+        "reason": "Hull against crew XP is a real S03 trade, and the Team Leader text uses synergy (C01). But '+50 ShipHealth' does nothing at full hull in layer 1, so the event can collapse to one choice. The ideas echo The Turning Brig (timber for the hull) and Castaway on a Spar (crew drill). The body's second sentence is clumsy. The 'whoever sailed her' mystery goes nowhere.",
+        "stranger_test": "Partly. Practising jumps across the gap between ships matches the boarding layout, and the Team Leader synergy drill is the game's own. The salvage half is generic."
+      },
+      {
+        "id": "DA_Event_DiceAtAnchor",
+        "score": 61,
+        "reason": "The RandomOf result text is well done (V07). But the event is a generic dice game: no sink-or-plunder, no ship-vs-crew cost, and 'the Kraken can wait one night' is a name-drop. 'Buy a round' does nothing at full crew HP. The body hints at good odds ('loses often') that the 50/50 data doesn't support.",
+        "stranger_test": "Nothing. Swap out 'Kraken' and it works unchanged in any pirate game."
+      },
+      {
+        "id": "DA_Event_SmokeFromTheHold",
+        "score": 70,
+        "reason": "A solid Bad event that limits damage three different ways (S03, S07), with fair numbers. But a fire in the hold is generic. The powder-keg loss has no mechanic behind it. The body leaves out the gold option. The keg-and-coin-chest result copies Hidden Shoal's 'Over go stores and a chest of coin'.",
+        "stranger_test": "Weak. Only the spread of costs across hull, crew and gold ties it to the game. The scene could be in any pirate game."
+      }
+    ],
+    "findings": [
+      {
+        "severity": "major",
+        "event": "DA_Event_DiceAtAnchor",
+        "field": "body",
+        "rule": "S02",
+        "problem": "No choice carries sink-or-plunder or hull-vs-crew tension. It is a generic gold coin-flip, and 'says the Kraken can wait one night' is a name-drop, not a scene built on the game (S06, stranger test).",
+        "fix": "Put the stakes on Deadwater Run's systems. For example, the rival captain bets a share of his hold against your crew in a boarding contest across the two decks (crew damage against gold), or the stake is his sniper's place in the nest. Keep the RandomOf result text that works for both branches."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_TheEmptyHulk",
+        "field": "choices[0].outcomes",
+        "rule": "design",
+        "problem": "With minLayer 1, the event can fire before any fight, when the hull is at 250/250. '+50 ShipHealth' then does nothing, leaving 'Drill the boarding' as the only real choice.",
+        "fix": "Set minLayer to 2, or swap the hull choice for something that always counts (e.g. Gold, or GiveItem HealthRestore 1 from her medicine chest) so the choice is live at full hull."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_SmokeFromTheHold",
+        "field": "choices[2].resultText",
+        "rule": "V07",
+        "problem": "'Over go the kegs, and the coin chest stacked against them.' Losing the powder has no outcome, because cannons have no ammo. The line also copies Hidden Shoal's shipped 'Over go stores and a chest of coin'.",
+        "fix": "Make the gold loss the point of the choice and drop the powder: e.g. pay to smother the fire with the sailcloth and stores you'd have sold. Avoid the 'Over go...' construction."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_SmokeFromTheHold",
+        "field": "body",
+        "rule": "V07",
+        "problem": "'the hull or the crew will pay' leaves out the third choice, which costs gold.",
+        "fix": "End on something like 'Something aboard will pay for it.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_DiceAtAnchor",
+        "field": "body",
+        "rule": "V07",
+        "problem": "'he looks like a man who loses often' promises good odds, but the RandomOf is a 1:1 weighting.",
+        "fix": "Cut the hint or make it neutral (e.g. 'he looks like a man who doesn't care either way'), or weight the winning branch higher to match."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_DiceAtAnchor",
+        "field": "choices[2].resultText",
+        "rule": "V06",
+        "problem": "'You wave back and sail on. Nothing happens, except...' repeats the shape of Drifting Wreck's shipped 'You hold your course. Nothing happens, and behind you...'.",
+        "fix": "Write a fresh close, e.g. 'You leave them to it. The rattle of dice follows you out of the cove.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheEmptyHulk",
+        "field": "body",
+        "rule": "V06",
+        "problem": "'She is sound enough to strip for your hull, or to practise boarding on until dark' is clumsy and reads like a list of options.",
+        "fix": "Show the scene instead, e.g. 'Her deck sits level with yours, close enough to jump.' Let the labels carry the choices."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_TheEmptyHulk",
+        "field": "choices",
+        "rule": "fit",
+        "problem": "Timber for your hull repeats The Turning Brig, and crew drilling for XP repeats Castaway on a Spar.",
+        "fix": "Give her a salvage that is new to the pool, or tie her emptiness to a rival crew that sailed on toward the Kraken (S06, S08) so the scene says something of its own."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_DiceAtAnchor",
+        "field": "choices[1].outcomes",
+        "rule": "design",
+        "problem": "'Buy a round' (+25 CrewHealth) does nothing at full crew HP, which is likely in layer 1.",
+        "fix": "Pair the heal with a small XP grant, or set minLayer to 2."
+      }
+    ],
+    "code_check_disputes": [],
+    "summary": "Specificity is just under 70, so the batch cap applies. The Grounded Sloop is a strong sink-or-plunder restage, but Dice at Anchor and Smoke from the Hold would work unchanged in any pirate game. Early-layer choices that heal a full hull or crew also leave dead choices."
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "about": "Calibration control for `content-pipeline.js calibrate`. Four well-formed, valid, competently written pirate events with nothing only Deadwater Run has: they would fit any pirate game unchanged. No banned words and no broken data, so only the stranger test (specificity) and design can mark them down. The evaluator must score them under 50 and well below the shipped events in `compare`.",
+  "compare": ["DA_Event_TheTallyRock", "DA_Event_DesertersLongboat", "DA_Event_MutteringsBelowDeck", "DA_Event_SquallLine"],
+  "notes": "Control set: generic pirate events.",
+  "events": [
+    {
+      "id": "DA_Event_BuriedTreasure",
+      "title": "X Marks the Spot",
+      "body": "A torn map in a bottle washes against your hull. It shows a small island and a red X. The island is a day's sail off course.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 9,
+      "choices": [
+        { "label": "Follow the map", "requirements": [], "outcomes": [{ "type": "Gold", "delta": 100 }], "resultText": "You dig until the shovel hits wood. The chest is full of old coins." },
+        { "label": "Toss it back", "requirements": [], "outcomes": [{ "type": "Nothing" }], "resultText": "The bottle bobs away. Nothing happens." }
+      ]
+    },
+    {
+      "id": "DA_Event_MerchantGalleon",
+      "title": "A Fat Merchant",
+      "body": "A heavy merchant galleon wallows on the horizon, low in the water with cargo. Her guns are few and her crew looks tired.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 9,
+      "choices": [
+        { "label": "Board her", "requirements": [], "outcomes": [{ "type": "Gold", "delta": 120 }, { "type": "CrewHealth", "delta": -20, "selector": "Random" }], "resultText": "The fight is short. The hold is full of silk and silver." },
+        { "label": "Let her pass", "requirements": [], "outcomes": [{ "type": "Nothing" }], "resultText": "You watch her sails shrink. Nothing happens." }
+      ]
+    },
+    {
+      "id": "DA_Event_Mutiny",
+      "title": "Grumbling Crew",
+      "body": "The crew has gone too long without pay. Whispers spread on the lower deck and a few hands linger near the weapons locker.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 9,
+      "choices": [
+        { "label": "Pay them off", "requirements": [{ "type": "MinGold", "amount": 60 }], "outcomes": [{ "type": "Gold", "delta": -60 }], "resultText": "Coins change hands and the whispers stop." },
+        { "label": "Make an example", "requirements": [], "outcomes": [{ "type": "CrewHealth", "delta": -25, "selector": "Random" }], "resultText": "Order returns to the ship, for now." }
+      ]
+    },
+    {
+      "id": "DA_Event_Storm",
+      "title": "A Gathering Storm",
+      "body": "Black clouds pile up to the west and the wind turns cold. The sea starts to heave.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 9,
+      "choices": [
+        { "label": "Ride it out", "requirements": [], "outcomes": [{ "type": "ShipHealth", "delta": -50 }], "resultText": "The storm batters the ship all night. By morning the sails are torn." },
+        { "label": "Run before the wind", "requirements": [], "outcomes": [{ "type": "ShipHealth", "delta": -20 }, { "type": "Gold", "delta": -30 }], "resultText": "You outrun the worst of it but lose cargo overboard." }
+      ]
+    }
+  ]
+}

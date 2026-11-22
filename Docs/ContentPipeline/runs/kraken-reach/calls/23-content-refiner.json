@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 61721,
+  "stop_reason": "end_turn",
+  "session_id": "be785fe1-671b-4661-8865-0d4922c8a8da",
+  "total_cost_usd": 0.3018482,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 19251,
+    "cache_read_input_tokens": 3161,
+    "output_tokens": 7360,
+    "output_tokens_details": {
+      "thinking_tokens": 2673
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 19251,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 7360,
+        "cache_read_input_tokens": 3161,
+        "cache_creation_input_tokens": 19251,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 19251
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 7360,
+      "cacheReadInputTokens": 3161,
+      "cacheCreationInputTokens": 19251,
+      "webSearchRequests": 0,
+      "costUSD": 0.3018482,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2673,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 19251,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheGuttedBrigantine\",\n      \"title\": \"The Gutted Brigantine\",\n      \"body\": \"A rival brigantine wallows in the swell, her deck split from bow to stern and her mainmast torn out by the roots. Her cannons are already under water. Three of her crew stand at the rail with cutlasses drawn, guarding a hold that sits low with plunder.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 6,\n      \"maxLayer\": 9,\n      \"choices\": [\n        {\n          \"label\": \"Put her under\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 75 }\n          ],\n          \"resultText\": \"Two shots below the waterline and she goes down fast. What floats up is yours: one strongbox and a great many splinters.\"\n        },\n        {\n          \"label\": \"Board her and clear the deck\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -25, \"selector\": \"All\" },\n            { \"type\": \"Gold\", \"delta\": 140 }\n          ],\n          \"resultText\": \"They fight like a crew with nothing left to sail for. The hold is full, and so is the list of cuts to stitch.\"\n        },\n        {\n          \"label\": \"Run up your colours\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"Fearmongerer\" }\n          ],\n          \"outcomes\": [\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                {\n                  \"weight\": 1,\n                  \"outcomes\": [\n                    { \"type\": \"Gold\", \"delta\": 140 }\n                  ]\n                },\n                {\n                  \"weight\": 1,\n                  \"outcomes\": [\n                    { \"type\": \"CrewHealth\", \"delta\": -20, \"selector\": \"Random\" },\n                    { \"type\": \"Gold\", \"delta\": 90 }\n                  ]\n                }\n              ]\n            }\n          ],\n          \"resultText\": \"They know the flag. Every blade but one hits the deck before you're alongside, and the hold comes over the rail around the man still holding it.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheWreckCurrent\",\n      \"title\": \"The Wreck Current\",\n      \"body\": \"The current takes the ship and won't let go. It drags you through a field of broken hulls, rival colours still nailed to their stumps, every one of them holed from below. Timber grinds along your keel, and the next wreck is bigger.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 6,\n      \"maxLayer\": 9,\n      \"choices\": [\n        {\n          \"label\": \"Let the hull take it\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": -50 }\n          ],\n          \"resultText\": \"You lash the wheel and let the current have her. When it spits you out, the pumps are working harder than anyone aboard.\"\n        },\n        {\n          \"label\": \"Fend off from the rail\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -25, \"selector\": \"All\" },\n            { \"type\": \"Gold\", \"delta\": 40 }\n          ],\n          \"resultText\": \"The crew hang over the side with boathooks and snag a purse off a dead man still lashed to a rail on the way through. The hull stays whole, and their arms pay for it.\"\n        },\n        {\n          \"label\": \"Take the bow yourself\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"TeamLeader\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -35, \"selector\": \"Captain\" },\n            { \"type\": \"GrantXp\", \"amount\": 40, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"You stand at the bow where the timber hits hardest and take every blow meant for the crew behind you. They learn more in an hour than in a week of drill, and nobody else bleeds for it.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheGalleonOnTheReef\",\n      \"title\": \"The Galleon on the Reef\",\n      \"body\": \"A galleon sits high on the reef where no wave could have put her, one side stove in across three decks. Her survivors have dragged a swivel gun to the high rail and watch you come in. Her timber is sound where it isn't broken, and her hold is still sealed.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 6,\n      \"maxLayer\": 9,\n      \"choices\": [\n        {\n          \"label\": \"Strip her far side\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": 60 }\n          ],\n          \"resultText\": \"You take planks and oakum from the side their gun can't reach. The survivors watch you work and keep their powder dry.\"\n        },\n        {\n          \"label\": \"Storm the high rail\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -30, \"selector\": \"All\" },\n            { \"type\": \"Gold\", \"delta\": 120 }\n          ],\n          \"resultText\": \"They hold the rail longer than men on a dead ship should. Your crew row back with the hold's gold and the reef's coral in every wound.\"\n        },\n        {\n          \"label\": \"Go over alone\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"Conqueror\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -40, \"selector\": \"Captain\" },\n            { \"type\": \"Gold\", \"delta\": 100 },\n            { \"type\": \"GrantXp\", \"amount\": 40, \"selector\": \"Captain\" }\n          ],\n          \"resultText\": \"You leave the crew aboard and wade onto the reef with nothing but your sword. The rail is yours by noon, and you carry back as much as one man can.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheBurningCutter\",\n      \"title\": \"The Burning Cutter\",\n      \"body\": \"A cutter drifts down on you with the current, burning from the waterline up. Her longboat is gone, and her stern is pocked with round scars the size of cartwheels. Somewhere under the smoke are her powder and her captain's cabin.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 6,\n      \"maxLayer\": 9,\n      \"choices\": [\n        {\n          \"label\": \"Sink her at range\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": -30 },\n            { \"type\": \"Gold\", \"delta\": 30 }\n          ],\n          \"resultText\": \"Your cannons open her up and her powder answers, throwing burning timber across your deck. A small strongbox bobs up in the smoke.\"\n        },\n        {\n          \"label\": \"Board her for the cabin\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                {\n                  \"weight\": 1,\n                  \"outcomes\": [\n                    { \"type\": \"CrewHealth\", \"delta\": -20, \"selector\": \"All\" },\n                    { \"type\": \"Gold\", \"delta\": 120 }\n                  ]\n                },\n                {\n                  \"weight\": 1,\n                  \"outcomes\": [\n                    { \"type\": \"CrewHealth\", \"delta\": -45, \"selector\": \"All\" },\n                    { \"type\": \"Gold\", \"delta\": 40 }\n                  ]\n                }\n              ]\n            }\n          ],\n          \"resultText\": \"The crew go into the smoke for her cabin and come out burned, carrying whatever they could grab before the powder went.\"\n        },\n        {\n          \"label\": \"Put the helm over\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"Every hand hauls on the sheets until the rope burns through their palms, and she goes up a cable's length away.\"\n        }\n      ]\n    }\n  ],\n  \"changes\": [\n    { \"event\": \"DA_Event_TheGuttedBrigantine\", \"field\": \"choices[2].outcomes\", \"finding\": \"major design: Fearmongerer +140 for nothing\", \"after\": \"RandomOf 50/50: Gold +140, or CrewHealth -20 Random + Gold 90. Expected 115 with risk, so it no longer beats both sink (75 safe) and board (140 sure)\" },\n    { \"event\": \"DA_Event_TheGuttedBrigantine\", \"field\": \"choices[2].resultText\", \"finding\": \"V07 RandomOf (reads true for both branches)\", \"after\": \"They know the flag. Every blade but one hits the deck before you're alongside, and the hold comes over the rail around the man still holding it.\" },\n    { \"event\": \"DA_Event_TheGuttedBrigantine\", \"field\": \"body\", \"finding\": \"voice: awkward 'something with a grip'\", \"after\": \"her deck split from bow to stern and her mainmast torn out by the roots\" },\n    { \"event\": \"DA_Event_TheWreckCurrent\", \"field\": \"choices[1].resultText\", \"finding\": \"V02 'dead rail'\", \"after\": \"snag a purse off a dead man still lashed to a rail on the way through\" },\n    { \"event\": \"DA_Event_TheWreckCurrent\", \"field\": \"choices[2].resultText\", \"finding\": \"specificity / C01 (Team Leader defends the crew)\", \"after\": \"take every blow meant for the crew behind you. They learn more in an hour than in a week of drill, and nobody else bleeds for it.\" },\n    { \"event\": \"DA_Event_TheWreckCurrent\", \"field\": \"body\", \"finding\": \"specificity\", \"after\": \"'each one holed from below' -> 'every one of them holed from below' (minor rhythm fix, scene kept)\" },\n    { \"event\": \"DA_Event_TheGalleonOnTheReef\", \"field\": \"body\", \"finding\": \"major S02/fit: retread of Wreckers Among the Hulls\", \"after\": \"Rival scavenger crew dropped. The galleon's own survivors hold the high rail with a swivel gun, and her hold is still sealed\" },\n    { \"event\": \"DA_Event_TheGalleonOnTheReef\", \"field\": \"body\", \"finding\": \"voice: 'long curved line' repeats the Cutter's Kraken hint\", \"after\": \"one side stove in across three decks\" },\n    { \"event\": \"DA_Event_TheGalleonOnTheReef\", \"field\": \"choices[0].resultText\", \"finding\": \"major: 'planks and pitch' echoes The Turning Brig\", \"after\": \"You take planks and oakum from the side their gun can't reach. The survivors watch you work and keep their powder dry.\" },\n    { \"event\": \"DA_Event_TheGalleonOnTheReef\", \"field\": \"choices[1]\", \"finding\": \"V03 'a lot of cuts' + scene change\", \"after\": \"Label 'Storm the high rail'. Result: They hold the rail longer than men on a dead ship should. Your crew row back with the hold's gold and the reef's coral in every wound.\" },\n    { \"event\": \"DA_Event_TheGalleonOnTheReef\", \"field\": \"choices[2].outcomes\", \"finding\": \"major design: Conqueror copy of the crates choice\", \"after\": \"Captain -40, Gold 100, GrantXp 40 Captain. A different shape: less gold and a heavier personal cost, for the captain's XP\" },\n    { \"event\": \"DA_Event_TheGalleonOnTheReef\", \"field\": \"choices[2].resultText\", \"finding\": \"V07 (match the new outcomes) / C03\", \"after\": \"You leave the crew aboard and wade onto the reef with nothing but your sword. The rail is yours by noon, and you carry back as much as one man can.\" },\n    { \"event\": \"DA_Event_TheBurningCutter\", \"field\": \"choices[2].outcomes\", \"finding\": \"major design: sink and helm nearly the same\", \"after\": \"ShipHealth -20 replaced with CrewHealth -15 All. Now the three choices are hull for coin, crew for more coin (gamble), or crew only\" },\n    { \"event\": \"DA_Event_TheBurningCutter\", \"field\": \"choices[2].resultText\", \"finding\": \"V07 'only the paint blisters'\", \"after\": \"Every hand hauls on the sheets until the rope burns through their palms, and she goes up a cable's length away.\" },\n    { \"event\": \"DA_Event_TheBurningCutter\", \"field\": \"choices[1].resultText\", \"finding\": \"A01 explains the gamble\", \"after\": \"Cut 'How much that is depends on how long they dared stay.'\" },\n    { \"event\": \"DA_Event_TheBurningCutter\", \"field\": \"choices[0].resultText\", \"finding\": \"V03 'Two shots' repeat\", \"after\": \"Your cannons open her up and her powder answers, throwing burning timber across your deck. A small strongbox bobs up in the smoke.\" },\n    { \"event\": \"DA_Event_TheBurningCutter\", \"field\": \"body\", \"finding\": \"V03 'long curved bite' repeat / S06\", \"after\": \"her stern is pocked with round scars the size of cartwheels\" }\n  ],\n  \"notes\": \"Burning Cutter 'no captain hook': I left it without a CaptainIs choice. The brief asks for one gated choice per captain across the batch, and Brigantine (Fearmongerer), Wreck Current (TeamLeader) and Galleon (Conqueror) already cover that. A fourth gated choice would go past the brief. The fix the critic suggested (crew-only escape) gives the Cutter three different choices instead. Kraken hints now differ in each event: mast torn out by the roots, holed from below, a hull stove in where no wave could put her, sucker-ring scars. Only the Brigantine still uses 'Two shots'. All numbers are inside the guardrails: gold up to +140, crew down to -45, ship from -50 to +60, XP 40.\"\n}\n```",
+  "ttft_ms": 30117,
+  "type": "result",
+  "duration_ms": 61768,
+  "uuid": "0fb9d1bb-b4f7-4ffc-84c2-6bdf0326998a",
+  "ttft_stream_ms": 3249,
+  "time_to_request_ms": 47,
+  "first_content_frame_ms": 3250,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

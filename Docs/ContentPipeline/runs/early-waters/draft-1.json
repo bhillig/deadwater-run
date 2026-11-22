@@ -1,0 +1,242 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_TheGroundedSloop",
+      "title": "The Grounded Sloop",
+      "body": "A rival sloop sits hard on a reef, heeled over, her crew bailing with buckets. Her cannons point at the sky. You could put two shots into her and fish out what floats, or go over her rail and take the hold whole.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Fire the cannons",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 60
+            }
+          ],
+          "resultText": "Two shots and she goes under. You fish a few purses out of the foam."
+        },
+        {
+          "label": "Board her",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 90
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -15,
+              "selector": "All"
+            }
+          ],
+          "resultText": "Her crew fight for every crate, and lose. Your crew climb back cut and carrying the hold."
+        },
+        {
+          "label": "Light the fuses",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Fearmongerer"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 90
+            }
+          ],
+          "resultText": "Smoke rolls off your beard and across the reef. Her crew hand up the hold and ask to keep their buckets."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheEmptyHulk",
+      "title": "The Empty Hulk",
+      "body": "A rival's ship drifts on the swell with nobody aboard, her rigging cut and her deck scrubbed bare. Whoever sailed her took everything but the planks. She is sound enough to strip for your hull, or to practise boarding on until dark.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Strip her timbers",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": 50
+            }
+          ],
+          "resultText": "By dusk her planks are in your hull. She drifts off behind you, a skeleton."
+        },
+        {
+          "label": "Drill the boarding",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "GrantXp",
+              "amount": 60,
+              "selector": "All"
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -15,
+              "selector": "All"
+            }
+          ],
+          "resultText": "All afternoon they jump the gap and fight across her deck. They come back bruised and better at it."
+        },
+        {
+          "label": "Drill them side by side",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "TeamLeader"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "GrantXp",
+              "amount": 80,
+              "selector": "All"
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -10,
+              "selector": "All"
+            }
+          ],
+          "resultText": "You pair them off across her deck until they move as one. A few bruises, a lot learned."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_DiceAtAnchor",
+      "title": "Dice at Anchor",
+      "body": "A rival crew lies at anchor in a still cove, rum out and dice on a barrelhead. Their captain waves you over and says the Kraken can wait one night. He wants your gold on the barrel, and he looks like a man who loses often.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Roll the dice",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 50
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 100
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": -50
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "The dice go round until dawn. One crew rows home lighter, and nobody draws steel over it."
+        },
+        {
+          "label": "Buy a round",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 20
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -20
+            },
+            {
+              "type": "CrewHealth",
+              "delta": 25,
+              "selector": "All"
+            }
+          ],
+          "resultText": "You pay for the rum and your crew sleep it off on a still deck. They wake mended, mostly."
+        },
+        {
+          "label": "Hold your course",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Nothing"
+            }
+          ],
+          "resultText": "You wave back and sail on. Nothing happens, except the dice keep rattling behind you."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_SmokeFromTheHold",
+      "title": "Smoke from the Hold",
+      "body": "A lantern has gone over below deck, and smoke is curling up through the hatch. The powder kegs are stacked two yards from the flames. Somebody has to deal with it, and the hull or the crew will pay.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Send someone down",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -30,
+              "selector": "Random"
+            }
+          ],
+          "resultText": "Whoever goes down comes up black with soot and blistered to the elbows. The powder stays dry."
+        },
+        {
+          "label": "Flood the hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -50
+            }
+          ],
+          "resultText": "You knock out the plugs and let the sea in. The fire dies, and the hull drinks deep before you bail her out."
+        },
+        {
+          "label": "Heave the kegs over",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -40
+            }
+          ],
+          "resultText": "Over go the kegs, and the coin chest stacked against them. The fire burns itself out on bare boards."
+        }
+      ]
+    }
+  ],
+  "notes": "Brief: 3 Good, 1 Bad, layers 1-3, every number within guardrails. Sink vs plunder (S02): The Grounded Sloop copies the fight rule directly. Sinking pays 60 gold, plundering pays 90 (1.5x) for 15 crew damage, and the Fearmongerer's surrender choice pays the plunder with nobody hurt (C02). The Empty Hulk makes you pick between the hull and crew XP, and its Team Leader choice uses the crew-synergy trait (C01). Dice at Anchor sets a coin-flip gamble against a sure, cheap heal; its RandomOf result text reads true for both branches (V07). Smoke from the Hold is the Bad event, and each choice spends a different thing: crew, hull or gold (S03, S07). Every event has at least one choice with no requirements. Open question: 'Send someone down' uses CrewHealth Random -30, and it relies on the C10a placeholder that event damage floors at 1 HP. If C10a later lets events kill, the critic should check this choice again. 'Buy a round' needs MinGold 20 because it costs 20 gold. No LoseCrew in this batch, which suits low-stakes early layers."
+}

@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 51121,
+  "stop_reason": "end_turn",
+  "session_id": "bb1082eb-6e21-44ef-a33a-8bdf8c8c692f",
+  "total_cost_usd": 0.2061008,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 13129,
+    "cache_read_input_tokens": 2604,
+    "output_tokens": 5027,
+    "output_tokens_details": {
+      "thinking_tokens": 2356
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 13129,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 5027,
+        "cache_read_input_tokens": 2604,
+        "cache_creation_input_tokens": 13129,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 13129
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 5027,
+      "cacheReadInputTokens": 2604,
+      "cacheCreationInputTokens": 13129,
+      "webSearchRequests": 0,
+      "costUSD": 0.2061008,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2356,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 13129,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheGroundedSloop\",\n      \"title\": \"The Grounded Sloop\",\n      \"body\": \"A rival sloop sits hard on a reef, heeled over, her crew bailing with buckets. Her cannons point at the sky. You could put two shots into her and fish out what floats, or go over her rail and take the hold whole.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Fire the cannons\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 60 }\n          ],\n          \"resultText\": \"Two shots and she goes under. You fish a few purses out of the foam.\"\n        },\n        {\n          \"label\": \"Board her\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 90 },\n            { \"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"Her crew fight for every crate, and lose. Your crew climb back cut and carrying the hold.\"\n        },\n        {\n          \"label\": \"Light the fuses\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"Fearmongerer\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 90 }\n          ],\n          \"resultText\": \"Smoke rolls off your beard and across the reef. Her crew hand up the hold and ask to keep their buckets.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheEmptyHulk\",\n      \"title\": \"The Empty Hulk\",\n      \"body\": \"A rival's ship drifts on the swell with nobody aboard, her rigging cut and her deck scrubbed bare. Whoever sailed her took everything but the planks. She is sound enough to strip for your hull, or to practise boarding on until dark.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Strip her timbers\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": 50 }\n          ],\n          \"resultText\": \"By dusk her planks are in your hull. She drifts off behind you, a skeleton.\"\n        },\n        {\n          \"label\": \"Drill the boarding\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"GrantXp\", \"amount\": 60, \"selector\": \"All\" },\n            { \"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"All afternoon they jump the gap and fight across her deck. They come back bruised and better at it.\"\n        },\n        {\n          \"label\": \"Drill them side by side\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"TeamLeader\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"GrantXp\", \"amount\": 80, \"selector\": \"All\" },\n            { \"type\": \"CrewHealth\", \"delta\": -10, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"You pair them off across her deck until they move as one. A few bruises, a lot learned.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_DiceAtAnchor\",\n      \"title\": \"Dice at Anchor\",\n      \"body\": \"A rival crew lies at anchor in a still cove, rum out and dice on a barrelhead. Their captain waves you over and says the Kraken can wait one night. He wants your gold on the barrel, and he looks like a man who loses often.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Roll the dice\",\n          \"requirements\": [\n            { \"type\": \"MinGold\", \"amount\": 50 }\n          ],\n          \"outcomes\": [\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                { \"weight\": 1, \"outcomes\": [ { \"type\": \"Gold\", \"delta\": 100 } ] },\n                { \"weight\": 1, \"outcomes\": [ { \"type\": \"Gold\", \"delta\": -50 } ] }\n              ]\n            }\n          ],\n          \"resultText\": \"The dice go round until dawn. One crew rows home lighter, and nobody draws steel over it.\"\n        },\n        {\n          \"label\": \"Buy a round\",\n          \"requirements\": [\n            { \"type\": \"MinGold\", \"amount\": 20 }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -20 },\n            { \"type\": \"CrewHealth\", \"delta\": 25, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"You pay for the rum and your crew sleep it off on a still deck. They wake mended, mostly.\"\n        },\n        {\n          \"label\": \"Hold your course\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Nothing\" }\n          ],\n          \"resultText\": \"You wave back and sail on. Nothing happens, except the dice keep rattling behind you.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_SmokeFromTheHold\",\n      \"title\": \"Smoke from the Hold\",\n      \"body\": \"A lantern has gone over below deck, and smoke is curling up through the hatch. The powder kegs are stacked two yards from the flames. Somebody has to deal with it, and the hull or the crew will pay.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Send someone down\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -30, \"selector\": \"Random\" }\n          ],\n          \"resultText\": \"Whoever goes down comes up black with soot and blistered to the elbows. The powder stays dry.\"\n        },\n        {\n          \"label\": \"Flood the hold\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": -50 }\n          ],\n          \"resultText\": \"You knock out the plugs and let the sea in. The fire dies, and the hull drinks deep before you bail her out.\"\n        },\n        {\n          \"label\": \"Heave the kegs over\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -40 }\n          ],\n          \"resultText\": \"Over go the kegs, and the coin chest stacked against them. The fire burns itself out on bare boards.\"\n        }\n      ]\n    }\n  ],\n  \"notes\": \"Brief: 3 Good, 1 Bad, layers 1-3, every number within guardrails. Sink vs plunder (S02): The Grounded Sloop copies the fight rule directly. Sinking pays 60 gold, plundering pays 90 (1.5x) for 15 crew damage, and the Fearmongerer's surrender choice pays the plunder with nobody hurt (C02). The Empty Hulk makes you pick between the hull and crew XP, and its Team Leader choice uses the crew-synergy trait (C01). Dice at Anchor sets a coin-flip gamble against a sure, cheap heal; its RandomOf result text reads true for both branches (V07). Smoke from the Hold is the Bad event, and each choice spends a different thing: crew, hull or gold (S03, S07). Every event has at least one choice with no requirements. Open question: 'Send someone down' uses CrewHealth Random -30, and it relies on the C10a placeholder that event damage floors at 1 HP. If C10a later lets events kill, the critic should check this choice again. 'Buy a round' needs MinGold 20 because it costs 20 gold. No LoseCrew in this batch, which suits low-stakes early layers.\"\n}\n```",
+  "ttft_ms": 31435,
+  "type": "result",
+  "duration_ms": 51168,
+  "uuid": "7dd562f1-dbfb-4acd-bf07-168775559d9f",
+  "ttft_stream_ms": 3527,
+  "time_to_request_ms": 47,
+  "first_content_frame_ms": 3527,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

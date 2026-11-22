@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 86792,
+  "stop_reason": "end_turn",
+  "session_id": "e8697c6e-5edb-4ee7-989b-88b8e4b9641f",
+  "total_cost_usd": 0.33054479999999997,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 19487,
+    "cache_read_input_tokens": 2604,
+    "output_tokens": 8706,
+    "output_tokens_details": {
+      "thinking_tokens": 4688
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 19487,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 8706,
+        "cache_read_input_tokens": 2604,
+        "cache_creation_input_tokens": 19487,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 19487
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 8706,
+      "cacheReadInputTokens": 2604,
+      "cacheCreationInputTokens": 19487,
+      "webSearchRequests": 0,
+      "costUSD": 0.33054479999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 4688,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 19487,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheGroundedSloop\",\n      \"title\": \"The Grounded Sloop\",\n      \"body\": \"A rival sloop sits hard on a reef, heeled over, her crew bailing with buckets. Her cannons point at the sky. You could put two shots into her and fish out what floats, or go over her rail and take the hold whole.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Fire the cannons\",\n          \"requirements\": [],\n          \"outcomes\": [{\"type\": \"Gold\", \"delta\": 60}],\n          \"resultText\": \"Two shots and she goes under. You fish a few purses out of the foam.\"\n        },\n        {\n          \"label\": \"Board her\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\"type\": \"Gold\", \"delta\": 90},\n            {\"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\"}\n          ],\n          \"resultText\": \"Her crew fight for every crate, and lose. Your crew climb back cut and carrying the hold.\"\n        },\n        {\n          \"label\": \"Light the fuses\",\n          \"requirements\": [{\"type\": \"CaptainIs\", \"captain\": \"Fearmongerer\"}],\n          \"outcomes\": [{\"type\": \"Gold\", \"delta\": 90}],\n          \"resultText\": \"Smoke rolls off your beard and across the reef. Her crew hand up the hold and ask to keep their buckets.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheEmptyHulk\",\n      \"title\": \"The Empty Hulk\",\n      \"body\": \"A rival brig drifts on the swell with her longboats gone and nobody aboard. Her mainmast is ringed with round scars, each the size of a cask lid. Whatever her crew saw ahead, they rowed away from it. Her hold is still battened, and she is settling by the bow.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Take what's on deck\",\n          \"requirements\": [],\n          \"outcomes\": [{\"type\": \"Gold\", \"delta\": 40}],\n          \"resultText\": \"Loose coin, a purse in the cabin, a few bits of brass. You're back aboard before she settles any lower.\"\n        },\n        {\n          \"label\": \"Break open the hold\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\"type\": \"Gold\", \"delta\": 80},\n            {\"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 1},\n            {\"type\": \"CrewHealth\", \"delta\": -20, \"selector\": \"Random\"}\n          ],\n          \"resultText\": \"Waist-deep in her hold, the crew float out a strongbox and one corked tonic. Someone comes up with a gashed leg.\"\n        },\n        {\n          \"label\": \"Grapple her in\",\n          \"requirements\": [{\"type\": \"CaptainIs\", \"captain\": \"TeamLeader\"}],\n          \"outcomes\": [\n            {\"type\": \"Gold\", \"delta\": 80},\n            {\"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 1}\n          ],\n          \"resultText\": \"Your grapple hook drags her flush against your rail. The crew work her hold in pairs, one hauling and one holding the line, and nobody goes under.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheBoardingWager\",\n      \"title\": \"The Boarding Wager\",\n      \"body\": \"A rival crew lies at anchor in a still cove and waves you alongside. Their captain sets a purse on a barrelhead and names a game: both crews jump the gap, and the first hand on the other ship's sniper's nest takes the purse. Fists and boots only, he says, and the loser buys the rum.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Take the wager\",\n          \"requirements\": [],\n          \"outcomes\": [\n            {\"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\"},\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                {\"weight\": 1, \"outcomes\": [{\"type\": \"Gold\", \"delta\": 100}]},\n                {\"weight\": 1, \"outcomes\": [{\"type\": \"Gold\", \"delta\": -30}]}\n              ]\n            }\n          ],\n          \"resultText\": \"By dusk both crews are bruised and one purse has changed hands. Nobody draws steel over it.\"\n        },\n        {\n          \"label\": \"Buy a round instead\",\n          \"requirements\": [{\"type\": \"MinGold\", \"amount\": 20}],\n          \"outcomes\": [\n            {\"type\": \"Gold\", \"delta\": -20},\n            {\"type\": \"CrewHealth\", \"delta\": 15, \"selector\": \"All\"},\n            {\"type\": \"GrantXp\", \"amount\": 30, \"selector\": \"All\"}\n          ],\n          \"resultText\": \"You pay for the rum, and the two crews trade boarding tricks until the lanterns gutter. Your lot wake rested and a little wiser.\"\n        },\n        {\n          \"label\": \"Take the nest yourself\",\n          \"requirements\": [{\"type\": \"CaptainIs\", \"captain\": \"Conqueror\"}],\n          \"outcomes\": [\n            {\"type\": \"Gold\", \"delta\": 100},\n            {\"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"Captain\"}\n          ],\n          \"resultText\": \"You cross his deck in a few strides and knock down whoever stands in the way. He pays up, and nurses his jaw while he does it.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_SmokeFromTheHold\",\n      \"title\": \"Smoke from the Hold\",\n      \"body\": \"A rival sloop cuts across your bow, and her crew lob a burning cask over your rail before tacking away. It rolls down the hatch, and smoke starts curling up from the hold. One less crew racing them to the Kraken, they must reckon. Something aboard will pay for putting it out.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Send someone down\",\n          \"requirements\": [],\n          \"outcomes\": [{\"type\": \"CrewHealth\", \"delta\": -30, \"selector\": \"Random\"}],\n          \"resultText\": \"Whoever goes down comes up black with soot and blistered to the elbows. The hold stays yours.\"\n        },\n        {\n          \"label\": \"Flood the hold\",\n          \"requirements\": [],\n          \"outcomes\": [{\"type\": \"ShipHealth\", \"delta\": -50}],\n          \"resultText\": \"You knock out the plugs and let the sea in. The fire dies, and the hull drinks deep before you bail her out.\"\n        },\n        {\n          \"label\": \"Smother it with the cargo\",\n          \"requirements\": [],\n          \"outcomes\": [{\"type\": \"Gold\", \"delta\": -40}],\n          \"resultText\": \"You bury the flames under the sailcloth and salt pork you meant to sell. The fire dies, and so does the price of the cargo.\"\n        }\n      ]\n    }\n  ],\n  \"changes\": [\n    {\"event\": \"DA_Event_TheEmptyHulk\", \"field\": \"body\", \"finding\": \"V06 clumsy menu sentence; fit 'mystery goes nowhere'; specificity (S06/S08)\", \"after\": \"Kraken-scarred mast, crew rowed away from what lies ahead, hold battened and settling by the bow. No more list of options.\"},\n    {\"event\": \"DA_Event_TheEmptyHulk\", \"field\": \"choices[0]\", \"finding\": \"major design: +50 ShipHealth dead at full hull; fit: timber repeats The Turning Brig\", \"after\": \"'Take what's on deck' Gold +40, the quick, safe half of S02. It always counts.\"},\n    {\"event\": \"DA_Event_TheEmptyHulk\", \"field\": \"choices[1]\", \"finding\": \"fit: drill repeats Castaway on a Spar; S02 sink-or-plunder tension\", \"after\": \"'Break open the hold' Gold +80, HealthRestore x1, CrewHealth -20 Random. The slow, rich half paid for in crew. Result names one tonic to match count 1 (V07).\"},\n    {\"event\": \"DA_Event_TheEmptyHulk\", \"field\": \"choices[2]\", \"finding\": \"design: Team Leader drill wasn't a decision; C01\", \"after\": \"'Grapple her in' uses Grapple Hook and pair work. Full plunder with no crew cost, the same way the Fearmongerer's choice works in The Grounded Sloop.\"},\n    {\"event\": \"DA_Event_DiceAtAnchor\", \"field\": \"id/title/body\", \"finding\": \"major S02/S06: generic dice game, Kraken name-drop; minor V07: 'loses often' oversold odds\", \"after\": \"Renamed DA_Event_TheBoardingWager, 'The Boarding Wager'. A race across both decks to the rival's sniper's nest. The Kraken line and the odds hint are gone.\"},\n    {\"event\": \"DA_Event_TheBoardingWager\", \"field\": \"choices[0]\", \"finding\": \"S02/S03 no crew cost; keep the RandomOf text that works on both branches\", \"after\": \"CrewHealth -15 All plus a RandomOf of Gold +100 or -30, so the bet costs crew. The result still reads true on either branch, and 'rows home' is gone.\"},\n    {\"event\": \"DA_Event_TheBoardingWager\", \"field\": \"choices[1]\", \"finding\": \"minor design: 'Buy a round' dead at full crew HP\", \"after\": \"Gold -20, CrewHealth +15 All, GrantXp 30 All. The XP keeps it live at full health.\"},\n    {\"event\": \"DA_Event_TheBoardingWager\", \"field\": \"choices[2]\", \"finding\": \"minor V06: 'Hold your course... Nothing happens' copied Drifting Wreck; specificity\", \"after\": \"Replaced with a Conqueror choice, 'Take the nest yourself'. Gold +100 for CrewHealth -15 on the Captain, playing to his strength and extra move (C03). 'Take the wager' still has no requirements.\"},\n    {\"event\": \"DA_Event_SmokeFromTheHold\", \"field\": \"body\", \"finding\": \"specificity: generic ship fire; minor V07: body left out the gold choice\", \"after\": \"A rival racing you to the Kraken fire-bombs your hold (S08). Ends 'Something aboard will pay for putting it out.' Powder line cut.\"},\n    {\"event\": \"DA_Event_SmokeFromTheHold\", \"field\": \"choices[2]\", \"finding\": \"major V07: powder loss with no outcome; copied Hidden Shoal's 'Over go...'\", \"after\": \"'Smother it with the cargo'. The gold loss is the cargo you meant to sell, with no powder and no 'Over go'.\"},\n    {\"event\": \"DA_Event_SmokeFromTheHold\", \"field\": \"choices[0].resultText\", \"finding\": \"V07 consistency after the powder was removed\", \"after\": \"'The powder stays dry' changed to 'The hold stays yours.'\"}\n  ],\n  \"notes\": \"I left The Grounded Sloop untouched because it is locked. The Empty Hulk stays at minLayer 1: every choice now gives Gold, so none is dead at full hull or full crew. The Dice at Anchor id changed to DA_Event_TheBoardingWager so it matches the new scene. If ids must stay stable, revert the id only; the title and content can stay. The wager's -30 branch has no MinGold gate, because gold floors at 0 and the event needs one choice with no requirements. The Team Leader and Conqueror choices are dominant on purpose, the same way the Fearmongerer surrender works in the locked Sloop.\"\n}\n```",
+  "ttft_ms": 57280,
+  "type": "result",
+  "duration_ms": 86838,
+  "uuid": "a09d8555-5b9f-4ae2-85a0-a95b8c853bf5",
+  "ttft_stream_ms": 3814,
+  "time_to_request_ms": 45,
+  "first_content_frame_ms": 3814,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

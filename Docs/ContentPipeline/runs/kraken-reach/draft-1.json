@@ -1,0 +1,255 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_TheGuttedBrigantine",
+      "title": "The Gutted Brigantine",
+      "body": "A rival brigantine wallows in the swell, her deck split from bow to stern by something with a grip. Her cannons are already under water. Three of her crew stand at the rail with cutlasses drawn, guarding a hold that sits low with plunder.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Put her under",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 75
+            }
+          ],
+          "resultText": "Two shots below the waterline and she goes down fast. What floats up is yours: one strongbox and a great many splinters."
+        },
+        {
+          "label": "Board her and clear the deck",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -25,
+              "selector": "All"
+            },
+            {
+              "type": "Gold",
+              "delta": 140
+            }
+          ],
+          "resultText": "They fight like a crew with nothing left to sail for. The hold is full, and so is the list of cuts to stitch."
+        },
+        {
+          "label": "Run up your colours",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Fearmongerer"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 140
+            }
+          ],
+          "resultText": "They know the flag. The blades hit the deck before you're alongside, the hold comes over the rail crate by crate, and nobody dies today."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheWreckCurrent",
+      "title": "The Wreck Current",
+      "body": "The current takes the ship and won't let go. It drags you through a field of broken hulls, rival colours still nailed to their stumps, each one holed from below. Timber grinds along your keel, and the next wreck is bigger.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Let the hull take it",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -50
+            }
+          ],
+          "resultText": "You lash the wheel and let the current have her. When it spits you out, the pumps are working harder than anyone aboard."
+        },
+        {
+          "label": "Fend off from the rail",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -25,
+              "selector": "All"
+            },
+            {
+              "type": "Gold",
+              "delta": 40
+            }
+          ],
+          "resultText": "The crew hang over the side with boathooks and snag a purse off a dead rail on the way through. The hull stays whole, and their arms pay for it."
+        },
+        {
+          "label": "Take the bow yourself",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "TeamLeader"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -35,
+              "selector": "Captain"
+            },
+            {
+              "type": "GrantXp",
+              "amount": 40,
+              "selector": "All"
+            }
+          ],
+          "resultText": "You stand at the bow where the timber hits hardest and call every push. The crew learn more in an hour than in a week of drill, and nobody else bleeds for it."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheGalleonOnTheReef",
+      "title": "The Galleon on the Reef",
+      "body": "A galleon sits high on the reef where no wave could have put her, one side caved in along a long curved line. A rival crew already has ropes on her and is lowering crates into their longboat. Her timber is sound where it isn't broken, and there is a lot of it.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Strip her far side",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": 60
+            }
+          ],
+          "resultText": "You take planks and pitch from the side nobody wants. The scavengers watch you work and leave you to it."
+        },
+        {
+          "label": "Take their crates",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -30,
+              "selector": "All"
+            },
+            {
+              "type": "Gold",
+              "delta": 120
+            }
+          ],
+          "resultText": "The scavengers fight for every crate and lose every one. Your crew row back with the gold and a lot of cuts."
+        },
+        {
+          "label": "Go over alone",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Conqueror"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -30,
+              "selector": "Captain"
+            },
+            {
+              "type": "Gold",
+              "delta": 120
+            }
+          ],
+          "resultText": "You leave the crew at the rail and wade onto the reef with nothing but your sword. The crates come back, and your crew never get their boots wet."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheBurningCutter",
+      "title": "The Burning Cutter",
+      "body": "A cutter drifts down on you with the current, burning from the waterline up. Her longboat is gone, and her stern is torn open in a long curved bite. Somewhere under the smoke are her powder and her captain's cabin.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 6,
+      "maxLayer": 9,
+      "choices": [
+        {
+          "label": "Sink her at range",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -30
+            },
+            {
+              "type": "Gold",
+              "delta": 30
+            }
+          ],
+          "resultText": "Two shots and she goes down hissing, but the blast still throws burning timber across your deck. A small strongbox bobs up in the smoke."
+        },
+        {
+          "label": "Board her for the cabin",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "CrewHealth",
+                      "delta": -20,
+                      "selector": "All"
+                    },
+                    {
+                      "type": "Gold",
+                      "delta": 120
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "CrewHealth",
+                      "delta": -45,
+                      "selector": "All"
+                    },
+                    {
+                      "type": "Gold",
+                      "delta": 40
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "The crew go into the smoke for her cabin and come out burned, carrying whatever they could grab before the powder went. How much that is depends on how long they dared stay."
+        },
+        {
+          "label": "Put the helm over",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -20
+            }
+          ],
+          "resultText": "You claw off to windward and she goes up a cable's length away. Only the paint on your stern blisters."
+        }
+      ]
+    }
+  ],
+  "notes": "Batch: 2 Good (Gutted Brigantine, Galleon on the Reef) and 2 Bad (Wreck Current, Burning Cutter). All are set at layers 6-9. Each captain gets one CaptainIs choice: Fearmongerer gets the surrender plunder in Brigantine, TeamLeader takes the hits for the crew in Wreck Current, Conqueror fights alone in Galleon. Burning Cutter has no gated choice. Every event has at least one choice with no requirements. The Kraken is only hinted at: the deck split by something with a grip, curved caved-in hulls, wrecks holed from below, and a stern torn open in a bite. It is never named or fought. The Fearmongerer choice avoids the beard fuses, which two shipped events already use, and plays to Dread Reputation and surrender instead. The Fearmongerer and Conqueror choices are strictly better than the ungated plunder choice. That's on purpose: they're captain perks. Flag it if the critic wants a cost added. I left LoseCrew out of this batch. With the Random selector the result text can't name who goes (S04), and Chosen-selector loss may not be supported in the event UI. That needs a decision before the man-overboard idea can be written. All numbers are within the guardrails: gold up to +140, crew up to -45, ship loss up to -50, ship gain +60, XP 40."
+}

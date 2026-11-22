@@ -40,8 +40,10 @@
 | Sound Wrangler | Sound assets, mix, combat sound cues |
 | Release Engineer | Packaged builds, Steam depot upload, store page checklist |
 | Asset Scraper | Finds art/audio options for approval (2-3 options per request) |
-| Event Writer | Drafts events (text, choices, outcomes) for Brandon to approve |
-| Content Critic | Reviews generated content against the GDD, tuning and voice sheet |
+| Event Writer | Generator in the content loop: drafts events (text, choices, outcomes) |
+| Content Critic | Evaluator in the content loop: scores generated content 0-100 with reasons against the GDD, tuning and style guide |
+| Content Refiner | Refiner in the content loop: rewrites only what the critic scored low |
+| Content Director | Runs the content loop from my request: brief -> generate -> score -> refine, no human step, scored drafts back |
 
 All systems are built to work together - no system in a silo. See `Docs/Orchestration.md`.
 

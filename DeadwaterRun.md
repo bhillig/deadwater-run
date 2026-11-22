@@ -201,15 +201,27 @@
 
 #### Event Writer
 
-- **Role**: Drafts map events (text, choices, outcomes) in the event data format from a brief. Drafts only; Brandon approves and adds every event
-- **Input & Output**: Brief + GDD/tuning facts -> Event drafts (JSON + readable sheet)
+- **Role**: The Generator in the content loop. Drafts map events (text, choices, outcomes) in the event data format from a brief. Drafts only; never adds events to the game
+- **Input & Output**: Brief + GDD/tuning facts + style guide -> Event drafts (JSON + readable sheet)
 - **What the player sees**: A drifting wreck asks whether to risk the crew for the gold in its hold
 
 #### Content Critic
 
-- **Role**: Reviews any generated content against the GDD, tuning data, architecture docs and voice sheet. Read-only; returns findings
-- **Input & Output**: Generated content + game facts -> Findings (blocker/major/minor) and a voice score
+- **Role**: The Evaluator in the content loop. Scores any generated content against the GDD, tuning data, architecture docs and the style guide. Read-only; returns scores and findings
+- **Input & Output**: Generated content + game facts + style guide -> A 0-100 score per dimension and per event, each with a reason, plus findings (blocker/major/minor)
 - **What the player sees**: Events and text that sound like one game and never promise what the game can't do
+
+#### Content Refiner
+
+- **Role**: The Refiner in the content loop. Takes the best-scoring draft and the critic's scores and rewrites only what scored low. Drafts only; never adds content to the game
+- **Input & Output**: Draft + scores and findings + game facts + style guide -> Refined draft and a change list
+- **What the player sees**: An event that could only be from Deadwater Run - the Fearmongerer's reputation buys a surrender that the Conqueror would have had to fight for
+
+#### Content Director
+
+- **Role**: Runs the self-correcting content loop (Generator -> Evaluator -> Refiner) from my request, with no human step inside the loop. Only runs when I invoke it
+- **Input & Output**: Request -> Brief -> Scored event drafts (0-100 per batch and per event, with reasons)
+- **What the player sees**: Every event reads like Deadwater Run and nothing else
 
 #### Working together
 

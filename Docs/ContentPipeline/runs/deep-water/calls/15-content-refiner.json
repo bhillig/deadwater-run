@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 53396,
+  "stop_reason": "end_turn",
+  "session_id": "270c8ac0-9573-4dc5-843a-9366899cd29f",
+  "total_cost_usd": 0.2649162,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 18627,
+    "cache_read_input_tokens": 3161,
+    "output_tokens": 5763,
+    "output_tokens_details": {
+      "thinking_tokens": 2497
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 18627,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 5763,
+        "cache_read_input_tokens": 3161,
+        "cache_creation_input_tokens": 18627,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 18627
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 5763,
+      "cacheReadInputTokens": 3161,
+      "cacheCreationInputTokens": 18627,
+      "webSearchRequests": 0,
+      "costUSD": 0.2649162,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2497,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 18627,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\"events\":[{\"id\":\"DA_Event_TheScuttledSloop\",\"title\":\"The Scuttled Sloop\",\"body\":\"A sloop is settling by the stern, her side stove in by cannon shot. Whoever sank her took the quick way and never set foot on her deck, so her hold is still full. Under a battened hatch, someone is hammering to be let out.\",\"valence\":\"Good\",\"weight\":1,\"minLayer\":4,\"maxLayer\":6,\"choices\":[{\"label\":\"Break the hatch\",\"requirements\":[{\"type\":\"CrewCountAtMost\",\"count\":3}],\"outcomes\":[{\"type\":\"Recruit\",\"unit\":\"Sniper\"},{\"type\":\"ShipHealth\",\"delta\":-25}],\"resultText\":\"The sloop drags at your rail while you strike the irons off a sniper her own crew had chained below. She takes the empty bunk without being asked.\"},{\"label\":\"Dive for the hold\",\"requirements\":[],\"outcomes\":[{\"type\":\"Gold\",\"delta\":120},{\"type\":\"CrewHealth\",\"delta\":-20,\"selector\":\"Random\"}],\"resultText\":\"The hold floods as you haul, and a loose crate pins one of yours against the bulkhead before the coin comes free. When you come up the hatch is under water, and whoever was behind it will have to find their own way out.\"},{\"label\":\"Grab what's on deck\",\"requirements\":[],\"outcomes\":[{\"type\":\"Gold\",\"delta\":40}],\"resultText\":\"Her captain's purse is still in the binnacle drawer. You cast off before she rolls and leave the hatch to whoever is behind it.\"}]},{\"id\":\"DA_Event_DeadCalm\",\"title\":\"Dead Calm\",\"body\":\"The wind dies with a rival brig two cannon shots off your beam, and the sea lies still as poured lead. Neither ship can turn. She is making her own run at the Kraken, and her captain would rather wait you out than spend his crew on you. His gun ports have been open since noon.\",\"valence\":\"Bad\",\"weight\":1,\"minLayer\":4,\"maxLayer\":6,\"choices\":[{\"label\":\"Tow clear by longboat\",\"requirements\":[],\"outcomes\":[{\"type\":\"CrewHealth\",\"delta\":-10,\"selector\":\"All\"}],\"resultText\":\"The crew pull at the oars until the brig is a speck astern. Nobody speaks at supper.\"},{\"label\":\"Run out the cannons\",\"requirements\":[],\"outcomes\":[{\"type\":\"Gold\",\"delta\":40},{\"type\":\"ShipHealth\",\"delta\":-30}],\"resultText\":\"Two broadsides put her under, and her answering shot takes a bite out of your hull. Her deck cargo floats free, and the sea keeps the rest of her hold.\"},{\"label\":\"Board her\",\"requirements\":[{\"type\":\"CrewCountAtLeast\",\"count\":3}],\"outcomes\":[{\"type\":\"Gold\",\"delta\":90},{\"type\":\"RandomOf\",\"options\":[{\"weight\":1,\"outcomes\":[{\"type\":\"CrewHealth\",\"delta\":-15,\"selector\":\"Random\"}]},{\"weight\":1,\"outcomes\":[{\"type\":\"CrewHealth\",\"delta\":-40,\"selector\":\"Random\"}]}]}],\"resultText\":\"Your boarders take her deck hand to hand and come back with her full purse. One of them comes back slower than the rest.\"}]},{\"id\":\"DA_Event_TheLockedHulls\",\"title\":\"The Locked Hulls\",\"body\":\"Two rival ships drift lashed together by their own grapple lines, and nothing moves on either deck. One is burning at the waterline. The other is whole, and the lines are dragging her down with it. Both crews went for the plunder instead of the cannons, and nobody was left to take it.\",\"valence\":\"Good\",\"weight\":1,\"minLayer\":4,\"maxLayer\":6,\"choices\":[{\"label\":\"Strip the open decks\",\"requirements\":[],\"outcomes\":[{\"type\":\"Gold\",\"delta\":70}],\"resultText\":\"Purses off the deck and a ring off a captain's hand. Quick work, and you're clear before she rolls.\"},{\"label\":\"Cut her loose and search the hold\",\"requirements\":[],\"outcomes\":[{\"type\":\"Gold\",\"delta\":150},{\"type\":\"ShipHealth\",\"delta\":-35}],\"resultText\":\"The burning hull swings into yours as the last line parts. The sound ship's hold comes up full, and your bow comes away with a hole in it.\"},{\"label\":\"Walk the crew through the fight\",\"requirements\":[{\"type\":\"CaptainIs\",\"captain\":\"TeamLeader\"}],\"outcomes\":[{\"type\":\"GrantXp\",\"amount\":80,\"selector\":\"All\"}],\"resultText\":\"You walk both decks with your crew and show them the pairs who fell back to back and held longest. They pick their partners for the next fight before you're done.\"}]},{\"id\":\"DA_Event_TheShadowAstern\",\"title\":\"The Shadow Astern\",\"body\":\"The same black sails have sat in your wake since dawn, close enough to count their guns. A rival crew, letting you break the water toward the Kraken so they arrive fresh. At dusk they run out their cannons and hail you: a share of your hold, or they stop following and start shooting.\",\"valence\":\"Bad\",\"weight\":1,\"minLayer\":4,\"maxLayer\":6,\"choices\":[{\"label\":\"Pay their share\",\"requirements\":[{\"type\":\"MinGold\",\"amount\":80}],\"outcomes\":[{\"type\":\"Gold\",\"delta\":-80}],\"resultText\":\"Eighty gold goes across in a bucket on a line. They dip their colours and fall back.\"},{\"label\":\"Give them both cannons\",\"requirements\":[],\"outcomes\":[{\"type\":\"ShipHealth\",\"delta\":-60},{\"type\":\"Gold\",\"delta\":10}],\"resultText\":\"You turn and fire, and they fire back. Their ship goes down with her hold, and all that floats up is a few loose coins.\"},{\"label\":\"Jump the gap alone\",\"requirements\":[{\"type\":\"CaptainIs\",\"captain\":\"Conqueror\"}],\"outcomes\":[{\"type\":\"CrewHealth\",\"delta\":-35,\"selector\":\"Captain\"},{\"type\":\"Gold\",\"delta\":60}],\"resultText\":\"You charge across before their boarders can form up and cut through the first rank with your sword. Their captain pays you to sail on ahead, and you sail on bleeding through your coat.\"}]}],\"changes\":[{\"event\":\"DA_Event_DeadCalm\",\"field\":\"choices[1].outcomes\",\"finding\":\"S02 major: cannons trap / inverted hook\",\"after\":\"Cannons is now the quick, safe sink: a guaranteed Gold +40 and ShipHealth -30.\"},{\"event\":\"DA_Event_DeadCalm\",\"field\":\"choices[2].outcomes\",\"finding\":\"S02 major: Board dominated cannons; batch still needs a RandomOf\",\"after\":\"Board is now the slow, rich plunder: Gold +90 plus a RandomOf on crew health (-15 or -40 to one random crew member). The ship takes no damage, so this choice spends the crew bar and cannons spends the hull.\"},{\"event\":\"DA_Event_DeadCalm\",\"field\":\"body\",\"finding\":\"S01/S08 major: stranger test / specificity\",\"after\":\"The brig is now a rival on her own Kraken run whose captain would rather wait you out than spend his crew on you, so the calm becomes a choice between the hull and the crew.\"},{\"event\":\"DA_Event_DeadCalm\",\"field\":\"choices[1].resultText\",\"finding\":\"V07 minor: hedge line, gold had no source\",\"after\":\"'Two broadsides put her under, and her answering shot takes a bite out of your hull. Her deck cargo floats free, and the sea keeps the rest of her hold.'\"},{\"event\":\"DA_Event_DeadCalm\",\"field\":\"choices[2].resultText\",\"finding\":\"V07 (RandomOf must read true for both branches)\",\"after\":\"'...come back with her full purse. One of them comes back slower than the rest.' This holds for both the -15 and the -40 branch.\"},{\"event\":\"DA_Event_TheScuttledSloop\",\"field\":\"choices[2]\",\"finding\":\"design major: full crew had one forced choice\",\"after\":\"Added 'Grab what's on deck' (Gold +40, no cost), which is always available. With a full crew you now choose between a safe small purse and a rich hold that costs crew.\"},{\"event\":\"DA_Event_TheScuttledSloop\",\"field\":\"choices[0].resultText\",\"finding\":\"S05 minor: repeated DesertersLongboat's rifle beat\",\"after\":\"The recruit is now a sniper her own crew had chained below in irons. The rifle-held-out-of-the-water image is gone.\"},{\"event\":\"DA_Event_TheScuttledSloop\",\"field\":\"choices[1].resultText\",\"finding\":\"V03 minor: grimdark\",\"after\":\"'...whoever was behind it will have to find their own way out.' The line is drier, and it leaves open whether they survived.\"},{\"event\":\"DA_Event_TheLockedHulls\",\"field\":\"body\",\"finding\":\"V07 minor: sound ship never set up; specificity\",\"after\":\"The body now says one ship is burning and the other is whole but dragged down by the lines. The last line, 'went for the plunder instead of the cannons', ties the wreck to the sink-or-plunder hook (S02).\"}],\"notes\":\"ShadowAstern is locked and is returned exactly as it was. The batch's RandomOf now lives in DeadCalm's Board choice, and the roster requirement is still met by the ScuttledSloop Sniper recruit, gated with CrewCountAtMost 3. All numbers stay inside the guardrails: the largest are Gold 150, ShipHealth -60, crew -40 and GrantXp 80. DeadCalm stays a Bad event. Towing clear is the choice that limits the damage (S07), and both choices that take gold cost a health bar.\"}\n```",
+  "ttft_ms": 30536,
+  "type": "result",
+  "duration_ms": 53442,
+  "uuid": "ca6dbda9-cada-463d-ac4a-c9083110628a",
+  "ttft_stream_ms": 3892,
+  "time_to_request_ms": 46,
+  "first_content_frame_ms": 3892,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

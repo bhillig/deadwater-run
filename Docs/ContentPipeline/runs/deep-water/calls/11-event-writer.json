@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 93613,
+  "stop_reason": "end_turn",
+  "session_id": "0be9ee62-6a33-48cd-b06f-0a3140c56b7f",
+  "total_cost_usd": 0.27722300000000005,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 12352,
+    "cache_read_input_tokens": 3495,
+    "output_tokens": 8885,
+    "output_tokens_details": {
+      "thinking_tokens": 6507
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 12352,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 8885,
+        "cache_read_input_tokens": 3495,
+        "cache_creation_input_tokens": 12352,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 12352
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 8885,
+      "cacheReadInputTokens": 3495,
+      "cacheCreationInputTokens": 12352,
+      "webSearchRequests": 0,
+      "costUSD": 0.27722300000000005,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 6507,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 12352,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\"events\":[{\"id\":\"DA_Event_TheScuttledSloop\",\"title\":\"The Scuttled Sloop\",\"body\":\"A sloop is settling by the stern, her side stove in by cannon shot. Whoever sank her took the quick way and never set foot on her deck, so her hold is still full. Under a battened hatch, someone is hammering to be let out.\",\"valence\":\"Good\",\"weight\":1,\"minLayer\":4,\"maxLayer\":6,\"choices\":[{\"label\":\"Break the hatch\",\"requirements\":[{\"type\":\"CrewCountAtMost\",\"count\":3}],\"outcomes\":[{\"type\":\"Recruit\",\"unit\":\"Sniper\"},{\"type\":\"ShipHealth\",\"delta\":-25}],\"resultText\":\"The sloop drags at your rail as she goes down, and a sniper climbs out with her rifle held clear of the water. She takes the empty bunk without being asked.\"},{\"label\":\"Dive for the hold\",\"requirements\":[],\"outcomes\":[{\"type\":\"Gold\",\"delta\":120},{\"type\":\"CrewHealth\",\"delta\":-20,\"selector\":\"Random\"}],\"resultText\":\"Your diver comes up gashed and hauling a sea chest full of coin. By then the hatch is under water.\"}]},{\"id\":\"DA_Event_DeadCalm\",\"title\":\"Dead Calm\",\"body\":\"The wind dies and the sea goes flat as glass. Three days on, the water casks are low and the crew have stopped talking. Smoke rises off a rival's deck on the horizon, stuck as fast as you are and drifting closer.\",\"valence\":\"Bad\",\"weight\":1,\"minLayer\":4,\"maxLayer\":6,\"choices\":[{\"label\":\"Tow her by longboat\",\"requirements\":[],\"outcomes\":[{\"type\":\"CrewHealth\",\"delta\":-25,\"selector\":\"All\"}],\"resultText\":\"The crew pull at the oars until the first breeze comes. Nobody speaks at supper.\"},{\"label\":\"Wait for the wind\",\"requirements\":[],\"outcomes\":[{\"type\":\"RandomOf\",\"options\":[{\"weight\":1,\"outcomes\":[{\"type\":\"Nothing\"}]},{\"weight\":1,\"outcomes\":[{\"type\":\"ShipHealth\",\"delta\":-60}]}]}],\"resultText\":\"You load both cannons and sit out the calm. When the wind finally fills the sails, you take it and don't look back.\"},{\"label\":\"Row over and take theirs\",\"requirements\":[{\"type\":\"CrewCountAtLeast\",\"count\":3}],\"outcomes\":[{\"type\":\"Gold\",\"delta\":80},{\"type\":\"CrewHealth\",\"delta\":-30,\"selector\":\"Random\"}],\"resultText\":\"Your boarders come back with their purse and one fresh cutlass wound. The rival crew watch them row away and do nothing about it.\"}]},{\"id\":\"DA_Event_TheLockedHulls\",\"title\":\"The Locked Hulls\",\"body\":\"Two rival ships drift lashed together by their own grapple lines, and nothing moves on either deck. One is burnt to the waterline and dragging the other down. Both crews fought to the last, and nobody stayed to plunder.\",\"valence\":\"Good\",\"weight\":1,\"minLayer\":4,\"maxLayer\":6,\"choices\":[{\"label\":\"Strip the open decks\",\"requirements\":[],\"outcomes\":[{\"type\":\"Gold\",\"delta\":70}],\"resultText\":\"Purses off the deck and a ring off a captain's hand. Quick work, and you're clear before she rolls.\"},{\"label\":\"Cut her loose and search the hold\",\"requirements\":[],\"outcomes\":[{\"type\":\"Gold\",\"delta\":150},{\"type\":\"ShipHealth\",\"delta\":-35}],\"resultText\":\"The burning hull swings into yours as the last line parts. The sound ship's hold comes up full, and your bow comes away with a hole in it.\"},{\"label\":\"Walk the crew through the fight\",\"requirements\":[{\"type\":\"CaptainIs\",\"captain\":\"TeamLeader\"}],\"outcomes\":[{\"type\":\"GrantXp\",\"amount\":80,\"selector\":\"All\"}],\"resultText\":\"You walk both decks with your crew and show them where each line broke. They learn more here than from a month of drills.\"}]},{\"id\":\"DA_Event_TheShadowAstern\",\"title\":\"The Shadow Astern\",\"body\":\"The same black sails have sat on your wake since dawn, close enough to count their guns. A rival crew, letting you do the hard sailing toward the Kraken. At dusk they run out their cannons and hail you for a share of your hold.\",\"valence\":\"Bad\",\"weight\":1,\"minLayer\":4,\"maxLayer\":6,\"choices\":[{\"label\":\"Pay their share\",\"requirements\":[{\"type\":\"MinGold\",\"amount\":80}],\"outcomes\":[{\"type\":\"Gold\",\"delta\":-80}],\"resultText\":\"Eighty gold goes across in a bucket on a line. They dip their colours and fall back.\"},{\"label\":\"Give them both cannons\",\"requirements\":[],\"outcomes\":[{\"type\":\"ShipHealth\",\"delta\":-60},{\"type\":\"Gold\",\"delta\":50}],\"resultText\":\"You turn and fire, and they fire back. Their ship goes down with her hold, and you fish out what floats.\"},{\"label\":\"Jump the gap alone\",\"requirements\":[{\"type\":\"CaptainIs\",\"captain\":\"Conqueror\"}],\"outcomes\":[{\"type\":\"CrewHealth\",\"delta\":-35,\"selector\":\"Captain\"},{\"type\":\"Gold\",\"delta\":100}],\"resultText\":\"You charge across before their boarders can form up and cut through the first rank with your sword. Their captain pays you to go home, and you go home bleeding through your coat.\"}]}],\"notes\":\"- Brief coverage: The Scuttled Sloop adds to the roster (Recruit Sniper, gated with CrewCountAtMost 3). Dead Calm has the gamble (RandomOf: 50% Nothing, 50% ShipHealth -60). 2 Good and 2 Bad, all on layers 4-6.\\n- Sink or plunder: Scuttled Sloop and Locked Hulls are both about what a rival who took the quick 1x sink left behind. In Dead Calm and Shadow Astern you choose hull or crew (cannons vs boarding).\\n- Captain choices: Locked Hulls has a Team Leader option (Veteran Crew, crew who fight side by side). Shadow Astern has a Conqueror option (Charge, sword only, the captain is strongest). Each event also has at least one choice anyone can take.\\n- I left LoseCrew out on purpose. The selectors (All, Random, Captain, Chosen) can't pick a unit type, so the result text can't name who goes (S04). Suggest a unit-type selector or a `{crewName}` token in ResultText.\\n- Gap: there is no outcome that uses up an item, so 'trade away a medicine kit' events can't be written.\\n- Banned-word substrings ('ye', 'arr') were avoided, including inside words like 'eye' and 'carry'.\\n- All numbers are inside the guardrails. Biggest values: Gold +150, ShipHealth -60, CrewHealth -35, XP 80.\"}\n```",
+  "ttft_ms": 76759,
+  "type": "result",
+  "duration_ms": 93665,
+  "uuid": "5cb13812-1de3-4502-8ca7-6d252ef828d5",
+  "ttft_stream_ms": 2376,
+  "time_to_request_ms": 51,
+  "first_content_frame_ms": 2376,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

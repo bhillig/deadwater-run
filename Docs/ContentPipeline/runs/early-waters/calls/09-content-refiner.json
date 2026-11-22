@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 54230,
+  "stop_reason": "end_turn",
+  "session_id": "010a5af0-2e67-4239-baeb-94dfc5204b5d",
+  "total_cost_usd": 0.12649339999999998,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 22027,
+    "output_tokens": 6104,
+    "output_tokens_details": {
+      "thinking_tokens": 2248
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 6104,
+        "cache_read_input_tokens": 22027,
+        "cache_creation_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 6104,
+      "cacheReadInputTokens": 22027,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.12649339999999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2248,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 0,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheGroundedSloop\",\n      \"title\": \"The Grounded Sloop\",\n      \"body\": \"A rival sloop sits hard on a reef, heeled over, her crew bailing with buckets. Her cannons point at the sky. You could put two shots into her and fish out what floats, or go over her rail and take the hold whole.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Fire the cannons\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 60 }\n          ],\n          \"resultText\": \"Two shots and she goes under. You fish a few purses out of the foam.\"\n        },\n        {\n          \"label\": \"Board her\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 90 },\n            { \"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"Her crew fight for every crate, and lose. Your crew climb back cut and carrying the hold.\"\n        },\n        {\n          \"label\": \"Light the fuses\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"Fearmongerer\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 90 }\n          ],\n          \"resultText\": \"Smoke rolls off your beard and across the reef. Her crew hand up the hold and ask to keep their buckets.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheEmptyHulk\",\n      \"title\": \"The Empty Hulk\",\n      \"body\": \"A rival brig drifts on the swell with her longboats gone and nobody aboard. Her mainmast is ringed with round scars, each the size of a cask lid. Whatever her crew saw ahead, they rowed away from it. Her hold is still battened.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Take what's on deck\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 50 }\n          ],\n          \"resultText\": \"Sea chests lie open on her berth deck, packed in a hurry and left. You take the coin from the toes of their boots.\"\n        },\n        {\n          \"label\": \"Break open the hold\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 80 },\n            { \"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 1 },\n            { \"type\": \"CrewHealth\", \"delta\": -20, \"selector\": \"Random\" }\n          ],\n          \"resultText\": \"Down in her dark hold, the crew prise loose a strongbox and one corked tonic. Someone comes up with a leg gashed on a split timber.\"\n        },\n        {\n          \"label\": \"Go down first\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"TeamLeader\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 80 },\n            { \"type\": \"GiveItem\", \"item\": \"HealthRestore\", \"count\": 1 },\n            { \"type\": \"CrewHealth\", \"delta\": -20, \"selector\": \"Captain\" }\n          ],\n          \"resultText\": \"You swing across on the grapple hook and rig a line into her hold, then take the first drop yourself. The crew haul up a strongbox and one corked tonic, and the split timber gets your leg instead of theirs.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_TheBoardingWager\",\n      \"title\": \"The Boarding Wager\",\n      \"body\": \"A rival crew lies at anchor in a still cove and waves you alongside. Their captain sets a purse on a barrelhead and names the game: first crew up the other ship's sniper's nest wins it. The losers pay a forfeit and buy the rum. Fists and boots only, he says.\",\n      \"valence\": \"Good\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Take the wager\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -15, \"selector\": \"All\" },\n            {\n              \"type\": \"RandomOf\",\n              \"options\": [\n                { \"weight\": 1, \"outcomes\": [ { \"type\": \"Gold\", \"delta\": 100 } ] },\n                { \"weight\": 1, \"outcomes\": [ { \"type\": \"Gold\", \"delta\": -30 } ] }\n              ]\n            }\n          ],\n          \"resultText\": \"By dusk both crews are bruised and one purse has changed hands. Nobody draws steel over it.\"\n        },\n        {\n          \"label\": \"Buy a round instead\",\n          \"requirements\": [\n            { \"type\": \"MinGold\", \"amount\": 20 }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -20 },\n            { \"type\": \"CrewHealth\", \"delta\": 15, \"selector\": \"All\" },\n            { \"type\": \"GrantXp\", \"amount\": 30, \"selector\": \"All\" }\n          ],\n          \"resultText\": \"You pay for the rum, and the two crews trade boarding tricks until the lanterns gutter. Your lot wake rested and a little wiser.\"\n        },\n        {\n          \"label\": \"Take the nest yourself\",\n          \"requirements\": [\n            { \"type\": \"CaptainIs\", \"captain\": \"Conqueror\" }\n          ],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": 70 },\n            { \"type\": \"CrewHealth\", \"delta\": -25, \"selector\": \"Captain\" }\n          ],\n          \"resultText\": \"You cross his deck in a few strides and knock down whoever stands in the way, and his whole crew piles onto you at the mast. He pays most of the purse, and nurses his jaw while he does it.\"\n        }\n      ]\n    },\n    {\n      \"id\": \"DA_Event_SmokeFromTheHold\",\n      \"title\": \"Smoke from the Hold\",\n      \"body\": \"A rival sloop cuts across your bow on her way to the Kraken, and her crew lob a burning cask over your rail as they pass. It rolls down the hatch, and smoke starts curling up from the hold. The smoke thickens with every breath.\",\n      \"valence\": \"Bad\",\n      \"weight\": 1,\n      \"minLayer\": 1,\n      \"maxLayer\": 3,\n      \"choices\": [\n        {\n          \"label\": \"Send someone down\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"CrewHealth\", \"delta\": -30, \"selector\": \"Random\" }\n          ],\n          \"resultText\": \"Whoever goes down comes up black with soot and blistered to the elbows. The hold stays yours.\"\n        },\n        {\n          \"label\": \"Flood the hold\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"ShipHealth\", \"delta\": -50 }\n          ],\n          \"resultText\": \"You knock out the plugs and let the sea in. The fire dies, and the hull drinks deep before you bail her out.\"\n        },\n        {\n          \"label\": \"Smother it with the stores\",\n          \"requirements\": [],\n          \"outcomes\": [\n            { \"type\": \"Gold\", \"delta\": -40 }\n          ],\n          \"resultText\": \"You throw sailcloth, stores and the strongbox on the flames until they choke. The fire dies, and some of the coin goes over the side with the ash.\"\n        }\n      ]\n    }\n  ],\n  \"changes\": [\n    { \"event\": \"DA_Event_TheEmptyHulk\", \"field\": \"body\", \"finding\": \"V07 settling-by-the-bow promise with no outcome; S08 settling-wreck frame repeats Drifting Wreck\", \"after\": \"Dropped \\\"she is settling by the bow\\\". The body now ends on \\\"Her hold is still battened.\\\" and builds the choice on the scars and the abandoned crew, not on a sinking hull.\" },\n    { \"event\": \"DA_Event_TheEmptyHulk\", \"field\": \"choices[0]\", \"finding\": \"S08 deck loot repeats Drifting Wreck; design: deck choice too weak\", \"after\": \"\\\"Sea chests lie open on her berth deck, packed in a hurry and left. You take the coin from the toes of their boots.\\\" Gold 40 -> 50 so the safe line is still worth picking.\" },\n    { \"event\": \"DA_Event_TheEmptyHulk\", \"field\": \"choices[1].resultText\", \"finding\": \"V02 'Waist-deep' echoes Hidden Shoal\", \"after\": \"\\\"Down in her dark hold, the crew prise loose a strongbox and one corked tonic. Someone comes up with a leg gashed on a split timber.\\\"\" },\n    { \"event\": \"DA_Event_TheEmptyHulk\", \"field\": \"choices[2]\", \"finding\": \"design major: strict dominance; C01 grapple scaled up to hauling a brig\", \"after\": \"Label \\\"Go down first\\\". It keeps the cost and moves it onto the captain (CrewHealth -20 Captain). That plays to the Team Leader taking hits for his crew, and it is a real trade because the captain is the run-ending life. The grapple now pulls the captain across at a person's scale (C01).\" },\n    { \"event\": \"DA_Event_TheBoardingWager\", \"field\": \"body\", \"finding\": \"V02 clunky rule sentence; coin stake only implied\", \"after\": \"\\\"first crew up the other ship's sniper's nest wins it. The losers pay a forfeit and buy the rum.\\\" This sets up the -30 branch.\" },\n    { \"event\": \"DA_Event_TheBoardingWager\", \"field\": \"choices[2]\", \"finding\": \"design: Conqueror choice near-dominant\", \"after\": \"Gold 100 -> 70 and captain cost -15 -> -25. The result now says \\\"He pays most of the purse\\\", so the text matches the smaller gold.\" },\n    { \"event\": \"DA_Event_SmokeFromTheHold\", \"field\": \"body\", \"finding\": \"V04 'they must reckon'; body tells the choice\", \"after\": \"The Kraken race is folded into the opening (\\\"on her way to the Kraken\\\"). The body ends on the scene: \\\"The smoke thickens with every breath.\\\"\" },\n    { \"event\": \"DA_Event_SmokeFromTheHold\", \"field\": \"choices[2]\", \"finding\": \"S05 'salt pork you meant to sell' implies a trade system\", \"after\": \"Label \\\"Smother it with the stores\\\". Result: \\\"You throw sailcloth, stores and the strongbox on the flames until they choke. The fire dies, and some of the coin goes over the side with the ash.\\\" The Gold loss now maps to lost coin.\" }\n  ],\n  \"notes\": \"The Grounded Sloop is locked and returned word for word, so the 'goes under' on a reef stays as it is. The critic also says Smoke from the Hold repeats the Hidden Shoal's hull/crew/stores triad. I kept that triad, because it is S03's core spend-one-bar-to-save-another shape. The threat is different here (a rival sabotaging you mid-race, S08), and none of the shipped lines are reused. In the Empty Hulk, the Team Leader option still matches the hold's gold and tonic. The difference is that the captain takes the -20, and he is the only crewmate whose death ends the run. That makes it a real choice, not a strict improvement.\"\n}\n```",
+  "ttft_ms": 27556,
+  "type": "result",
+  "duration_ms": 54277,
+  "uuid": "3b22a486-59a2-4bbc-b58f-ee563842e315",
+  "ttft_stream_ms": 3693,
+  "time_to_request_ms": 48,
+  "first_content_frame_ms": 3693,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

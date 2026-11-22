@@ -26,9 +26,11 @@ The roster is defined in `DeadwaterRun.md` → "AI Agents". Definitions live in 
 | `release-engineer` | Packaging, Steamworks, store page and release checklists (Uses Sonnet 5.5) |
 | `asset-scraper` | Third-party asset options (read-only, never imports) (Uses Sonnet 5.5)|
 | `event-writer` | Event drafts (text, choices, outcomes) from a brief; never adds them to `Content/` (Uses Opus 5.5) |
-| `content-critic` | Reviews any generated content against the GDD, tuning and `Docs/ContentPipeline/voice.md`; read-only (Uses Opus 5.5) |
+| `content-critic` | Scores any generated content 0-100 with reasons against the GDD, tuning and `Docs/ContentPipeline/style-guide.md`; read-only (Uses Opus 5.5) |
+| `content-refiner` | Rewrites only the low-scoring parts of a draft from the critic's scores; never adds them to `Content/` (Uses Opus 5.5) |
+| `content-director` | Turns a content request into a brief and runs the content loop (`Tools/ContentPipeline/`); edits only `briefs.json`. Runs only when Brandon invokes it (Uses Opus 5.5) |
 
-Content pipeline: `Tools/ContentPipeline/` runs writer -> code checks + critic -> one revision. See `Docs/ContentPipeline/README.md`.
+Content loop: `Tools/ContentPipeline/` runs event-writer (Generator) -> code checks + content-critic (Evaluator, 0-100 score) -> content-refiner (Refiner) until the score clears the threshold or stops improving, with no human step. See `Docs/ContentPipeline/README.md`.
 
 ## Working together
 - Deadwater Run is one game, not a set of features. No system is built in a silo: every system uses the shared tags, attributes, data assets and run state, and every report lists the other systems a change touches

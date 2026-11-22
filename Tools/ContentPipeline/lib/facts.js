@@ -86,9 +86,9 @@ function buildFacts(root) {
         'Event health loss floors at 1 for crew and ship (C10a placeholder) - events never kill',
         'LoseCrew never removes the captain',
         'MP refills at every fight start, so there is no mana outcome (C9)',
-        `Recruit fails gracefully when the crew is full (max ${econ.MaxCrew} including the captain)`,
+        `Recruit does nothing when the crew is full (max ${econ.MaxCrew} including the captain) - gate it with CrewCountAtMost ${econ.MaxCrew - 1}`,
         `Inventory holds at most ${econ.MaxInventory} items in total`,
-        'Every choice needs at least one outcome unless its result text says nothing happens',
+        'A choice with no outcomes imports as the Nothing outcome, so its result text must say nothing happens',
       ],
     },
     names: {

@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 74958,
+  "stop_reason": "end_turn",
+  "session_id": "3ce449f4-d6cd-4a62-84b4-7d33c73978f6",
+  "total_cost_usd": 0.289136,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 17020,
+    "cache_read_input_tokens": 3540,
+    "output_tokens": 7613,
+    "output_tokens_details": {
+      "thinking_tokens": 4059
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 17020,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 7613,
+        "cache_read_input_tokens": 3540,
+        "cache_creation_input_tokens": 17020,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 17020
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 7613,
+      "cacheReadInputTokens": 3540,
+      "cacheCreationInputTokens": 17020,
+      "webSearchRequests": 0,
+      "costUSD": 0.289136,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 4059,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 17020,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"dimensions\": {\n    \"rules\": {\n      \"score\": 92,\n      \"reason\": \"Every outcome, requirement, unit, captain and number is in the facts and inside the guardrails (Gold 150, ShipHealth -60, crew -40, GrantXp 80). Recruit is correctly gated with CrewCountAtMost 3, and the CaptainIs gates use real captains. One small S03 slip: DeadCalm choices[1] says \\\"Two broadsides put her under\\\", but the ship has two 70-damage cannons, not broadsides. A broadside implies a full gun deck the game doesn't have.\"\n    },\n    \"text_data\": {\n      \"score\": 88,\n      \"reason\": \"V07 is mostly clean. The RandomOf result in DeadCalm, \\\"One of them comes back slower than the rest\\\", reads true for both the -15 and the -40 branch. CrewHealth Random matches \\\"pins one of yours\\\". Gold 10 matches \\\"a few loose coins\\\", and the Captain selector matches \\\"you sail on bleeding through your coat\\\". Weakest line: ScuttledSloop choices[0], \\\"The sloop drags at your rail\\\". It only hints at the ShipHealth -25 and never says the hull took damage.\"\n    },\n    \"design\": {\n      \"score\": 73,\n      \"reason\": \"S02 is restaged well in three events: deck vs hold, cannons vs boarding. S03 hull-or-crew trades are present in all four. The real problem is DeadCalm. Board her (+90 gold, expected -27.5 HP on one crew member) dominates Run out the cannons (+40 gold, -30 ship, about 30 gold of repair). CrewCountAtLeast 3 is almost always met, so the cannons choice is a trap. It also leaves a Bad event whose best choice is clearly profitable, which weakens the S07 Bad valence. Secondary: ScuttledSloop and LockedHulls are the same shape, a sinking abandoned ship with free deck gold against hold gold that costs a health bar. Two of four events in the batch share it.\"\n    },\n    \"voice\": {\n      \"score\": 86,\n      \"reason\": \"V02/V03 are strong: \\\"still as poured lead\\\", \\\"Nobody speaks at supper.\\\", \\\"Both crews went for the plunder instead of the cannons, and nobody was left to take it.\\\" Bodies are 3-4 sentences and results 1-2 (V06). Labels are short imperatives (V05). Weak spots: the phrase \\\"before she rolls\\\" appears in both ScuttledSloop choices[2] and LockedHulls choices[0]. ScuttledSloop closes two results on the same beat, leaving the prisoner to drown: \\\"whoever was behind it will have to find their own way out\\\" and \\\"leave the hatch to whoever is behind it\\\". That reads closer to grimdark than to dry understatement (V03).\"\n    },\n    \"specificity\": {\n      \"score\": 84,\n      \"reason\": \"Most events are built on Deadwater Run's own hook. LockedHulls is the sink-vs-plunder rule turned into a wreck: \\\"Both crews went for the plunder instead of the cannons\\\" (S02). DeadCalm restages cannons (1x) against boarding (more gold). ShadowAstern uses the two cannons and a rival tailing you toward the Kraken (S06/S08). ScuttledSloop fills \\\"the empty bunk\\\" in the 3-4 roster (S05). Weakest: ScuttledSloop's \\\"Dive for the hold\\\" repeats the diver beat from the shipped DriftingWreck and RivalsCache. Its scuttled-ship scene would work in most pirate games apart from the recruit gate.\"\n    }\n  },\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheScuttledSloop\",\n      \"score\": 81,\n      \"reason\": \"Solid three-way choice: a gated Sniper recruit for -25 hull, 120 gold for -20 on one crew member, or a free 40. The recruit is gated correctly and the costs are fair. Held back by the diver beat repeated from the shipped pool, a grim double ending for the prisoner, and the same structure as LockedHulls.\",\n      \"stranger_test\": \"A Sniper recruit filling the empty bunk of a 3-4 crew, paid with the hull, plus a deck-vs-hold call. Weaker: the diving scene is generic.\"\n    },\n    {\n      \"id\": \"DA_Event_DeadCalm\",\n      \"score\": 71,\n      \"reason\": \"Good weather beat and a direct sink-vs-board restaging with a clean RandomOf result. But Board her dominates Run out the cannons and nets positive in a Bad event. \\\"Broadsides\\\" also contradicts the two-cannon ship, and boarding a brig two cannon shots off in a dead calm is never explained.\",\n      \"stranger_test\": \"Sink her with the cannons for 40 or board for the full purse: the 1x vs plunder rule, against a rival on her own Kraken run.\"\n    },\n    {\n      \"id\": \"DA_Event_TheLockedHulls\",\n      \"score\": 87,\n      \"reason\": \"The strongest event in the batch. The body is the game's thesis as a scene. Safe 70, or 150 for -35 hull, is a real call. The TeamLeader choice draws on adjacency synergy (C01) without borrowing traits. Only polish is left: \\\"before she rolls\\\" is repeated and the hold label is long.\",\n      \"stranger_test\": \"Two crews who both chose plunder over cannons and lost everything: Deadwater Run's sink-or-plunder rule as a wreck.\"\n    },\n    {\n      \"id\": \"DA_Event_TheShadowAstern\",\n      \"score\": 84,\n      \"reason\": \"Locked event. Pay 80 or take -60 hull is roughly an even trade, and paying limits the damage (S07). The Conqueror choice plays to the sword-only charge (C03). It nets +60 gold for 35 captain HP, which is generous for a Bad event but reasonable as a captain perk.\",\n      \"stranger_test\": \"A rival letting you break the water toward the Kraken, \\\"Give them both cannons\\\", and a sword-only Conqueror charge.\"\n    }\n  ],\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"choices[2].outcomes\",\n      \"rule\": \"S07\",\n      \"problem\": \"Board her (+90 gold, RandomOf -15/-40 on one crew member, gated only by CrewCountAtLeast 3, which the starting crew meets) dominates Run out the cannons (+40 gold, -30 ship ≈ 30 gold of repair). It is the obvious pick and nets clearly positive, so this Bad event plays like a Good one.\",\n      \"fix\": \"Make boarding a real gamble. Either put the gold inside the RandomOf, with one branch landing the full purse and the other a light purse with -40 crew, or cut the flat Gold to about 60 and make the worst branch hit two crew (selector All, -20).\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"body / choices\",\n      \"rule\": \"design\",\n      \"problem\": \"Same structure as LockedHulls in the same batch: a sinking, abandoned rival ship, free deck gold, and hold gold that costs a health bar. Both use \\\"before she rolls\\\". Two of the four events play identically.\",\n      \"fix\": \"Make the prisoner the centre of ScuttledSloop, for example a choice between freeing the Sniper and taking the hold. Or swap the deck-gold choice for something that isn't loot-on-a-wreck.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"choices[1].label\",\n      \"rule\": \"S08\",\n      \"problem\": \"\\\"Dive for the hold\\\" repeats the diver beat from the shipped DriftingWreck and RivalsCache.\",\n      \"fix\": \"Have the crew work the hold from the deck, for example \\\"Cut into her hold\\\", with a crate or timber hurting one of them.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"choices[1].resultText, choices[2].resultText\",\n      \"rule\": \"V03\",\n      \"problem\": \"Both results end by abandoning the hammering prisoner (\\\"will have to find their own way out\\\", \\\"leave the hatch to whoever is behind it\\\"). The repeated beat tips toward grimdark rather than dry understatement.\",\n      \"fix\": \"Keep the beat in one result only. Give the other a different closing image.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"V07\",\n      \"problem\": \"\\\"The sloop drags at your rail\\\" only hints at the ShipHealth -25.\",\n      \"fix\": \"Name the damage, for example \\\"Her sinking weight tears a strake off your rail while you strike the irons off...\\\"\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"choices[1].resultText\",\n      \"rule\": \"S03\",\n      \"problem\": \"\\\"Two broadsides\\\" implies a gun deck. The ship has two cannons.\",\n      \"fix\": \"\\\"Both cannons, twice, put her under.\\\"\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"choices[2].label\",\n      \"rule\": \"V07\",\n      \"problem\": \"The body says neither ship can turn and the brig is two cannon shots off, so boarding has no stated way across.\",\n      \"fix\": \"Label \\\"Row over and board her\\\", or have the result mention the longboat.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheLockedHulls\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"V02\",\n      \"problem\": \"\\\"before she rolls\\\" repeats ScuttledSloop choices[2] in the same batch.\",\n      \"fix\": \"Use a different image, for example \\\"clear before the fire reaches her powder\\\".\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"summary\": \"LockedHulls and ShadowAstern sound and play like Deadwater Run. The score is held down by DeadCalm, where Board her dominates the cannons and turns a Bad event profitable, and by ScuttledSloop repeating LockedHulls' wreck-loot structure in the same batch.\"\n}\n```",
+  "ttft_ms": 43982,
+  "type": "result",
+  "duration_ms": 75017,
+  "uuid": "d732495e-db23-4058-a590-6f87ef0496a6",
+  "ttft_stream_ms": 4910,
+  "time_to_request_ms": 60,
+  "first_content_frame_ms": 4910,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

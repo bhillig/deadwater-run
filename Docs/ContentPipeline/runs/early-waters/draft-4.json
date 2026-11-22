@@ -1,0 +1,266 @@
+{
+  "events": [
+    {
+      "id": "DA_Event_TheGroundedSloop",
+      "title": "The Grounded Sloop",
+      "body": "A rival sloop sits hard on a reef, heeled over, her crew bailing with buckets. Her cannons point at the sky. You could put two shots into her and fish out what floats, or go over her rail and take the hold whole.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Fire the cannons",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 60
+            }
+          ],
+          "resultText": "Two shots and she goes under. You fish a few purses out of the foam."
+        },
+        {
+          "label": "Board her",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 90
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -15,
+              "selector": "All"
+            }
+          ],
+          "resultText": "Her crew fight for every crate, and lose. Your crew climb back cut and carrying the hold."
+        },
+        {
+          "label": "Light the fuses",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Fearmongerer"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 90
+            }
+          ],
+          "resultText": "Smoke rolls off your beard and across the reef. Her crew hand up the hold and ask to keep their buckets."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheEmptyHulk",
+      "title": "The Empty Hulk",
+      "body": "A rival brig drifts on the swell with her longboats gone and nobody aboard. Her mainmast is ringed with round scars, each the size of a cask lid. Whatever her crew saw ahead, they rowed away from it. Her hold is still battened.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Take what's on deck",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 50
+            }
+          ],
+          "resultText": "Sea chests lie open on her berth deck, packed in a hurry and left. You take the coin from the toes of their boots."
+        },
+        {
+          "label": "Break open the hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 80
+            },
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 1
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -20,
+              "selector": "Random"
+            }
+          ],
+          "resultText": "Down in her dark hold, the crew prise loose a strongbox and one corked tonic. Someone comes up with a leg gashed on a split timber."
+        },
+        {
+          "label": "Go down first",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "TeamLeader"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 80
+            },
+            {
+              "type": "GiveItem",
+              "item": "HealthRestore",
+              "count": 1
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -20,
+              "selector": "Captain"
+            }
+          ],
+          "resultText": "You swing across on the grapple hook and rig a line into her hold, then take the first drop yourself. The crew haul up a strongbox and one corked tonic, and the split timber gets your leg instead of theirs."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheBoardingWager",
+      "title": "The Boarding Wager",
+      "body": "A rival crew lies at anchor in a still cove and waves you alongside. Their captain sets a purse on a barrelhead and names the game: first crew up the other ship's sniper's nest wins it. The losers pay a forfeit and buy the rum. Fists and boots only, he says.",
+      "valence": "Good",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Take the wager",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -15,
+              "selector": "All"
+            },
+            {
+              "type": "RandomOf",
+              "options": [
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": 100
+                    }
+                  ]
+                },
+                {
+                  "weight": 1,
+                  "outcomes": [
+                    {
+                      "type": "Gold",
+                      "delta": -30
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "resultText": "By dusk both crews are bruised and one purse has changed hands. Nobody draws steel over it."
+        },
+        {
+          "label": "Buy a round instead",
+          "requirements": [
+            {
+              "type": "MinGold",
+              "amount": 20
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -20
+            },
+            {
+              "type": "CrewHealth",
+              "delta": 15,
+              "selector": "All"
+            },
+            {
+              "type": "GrantXp",
+              "amount": 30,
+              "selector": "All"
+            }
+          ],
+          "resultText": "You pay for the rum, and the two crews trade boarding tricks until the lanterns gutter. Your lot wake rested and a little wiser."
+        },
+        {
+          "label": "Take the nest yourself",
+          "requirements": [
+            {
+              "type": "CaptainIs",
+              "captain": "Conqueror"
+            }
+          ],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": 70
+            },
+            {
+              "type": "CrewHealth",
+              "delta": -25,
+              "selector": "Captain"
+            }
+          ],
+          "resultText": "You cross his deck in a few strides and knock down whoever stands in the way, and his whole crew piles onto you at the mast. He pays most of the purse, and nurses his jaw while he does it."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_SmokeFromTheHold",
+      "title": "Smoke from the Hold",
+      "body": "A rival sloop cuts across your bow on her way to the Kraken, and her crew lob a burning cask over your rail as they pass. It rolls down the hatch, and smoke starts curling up from the hold. The smoke thickens with every breath.",
+      "valence": "Bad",
+      "weight": 1,
+      "minLayer": 1,
+      "maxLayer": 3,
+      "choices": [
+        {
+          "label": "Send someone down",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "CrewHealth",
+              "delta": -30,
+              "selector": "Random"
+            }
+          ],
+          "resultText": "Whoever goes down comes up black with soot and blistered to the elbows. The hold stays yours."
+        },
+        {
+          "label": "Flood the hold",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "ShipHealth",
+              "delta": -50
+            }
+          ],
+          "resultText": "You knock out the plugs and let the sea in. The fire dies, and the hull drinks deep before you bail her out."
+        },
+        {
+          "label": "Smother it with the stores",
+          "requirements": [],
+          "outcomes": [
+            {
+              "type": "Gold",
+              "delta": -40
+            }
+          ],
+          "resultText": "You throw sailcloth, stores and the strongbox on the flames until they choke. The fire dies, and some of the coin goes over the side with the ash."
+        }
+      ]
+    }
+  ],
+  "notes": "The Grounded Sloop is locked and returned word for word, so the 'goes under' on a reef stays as it is. The critic also says Smoke from the Hold repeats the Hidden Shoal's hull/crew/stores triad. I kept that triad, because it is S03's core spend-one-bar-to-save-another shape. The threat is different here (a rival sabotaging you mid-race, S08), and none of the shipped lines are reused. In the Empty Hulk, the Team Leader option still matches the hold's gold and tonic. The difference is that the captain takes the -20, and he is the only crewmate whose death ends the run. That makes it a real choice, not a strict improvement."
+}

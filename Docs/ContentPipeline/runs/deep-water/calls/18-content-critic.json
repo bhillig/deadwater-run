@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 91454,
+  "stop_reason": "end_turn",
+  "session_id": "b9e87f50-6313-44ef-a85a-683d608fa115",
+  "total_cost_usd": 0.32545999999999997,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 17133,
+    "cache_read_input_tokens": 3540,
+    "output_tokens": 9384,
+    "output_tokens_details": {
+      "thinking_tokens": 5362
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 17133,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 9384,
+        "cache_read_input_tokens": 3540,
+        "cache_creation_input_tokens": 17133,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 17133
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 9384,
+      "cacheReadInputTokens": 3540,
+      "cacheCreationInputTokens": 17133,
+      "webSearchRequests": 0,
+      "costUSD": 0.32545999999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 5362,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 17133,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"dimensions\": {\n    \"rules\": {\n      \"score\": 93,\n      \"reason\": \"Every outcome, requirement, unit and captain is in the facts, and every number is inside the guardrails: Gold +150 (goldGainMax), ShipHealth -60 (shipLossMax 70), CrewHealth -40 (crewDeltaMax 50), GrantXp 80 (xpMax). Recruit is gated with CrewCountAtMost 3 as the rule requires. Health loss floors at 1, so the Conqueror's -35 to himself can't end the run. Nothing the game can't do. The only stretch is flavour with no data behind it, such as \\\"a ring off a captain's hand\\\" (LockedHulls c0), which is just gold. That's fine.\"\n    },\n    \"text_data\": {\n      \"score\": 85,\n      \"reason\": \"Results generally match the data, and the DeadCalm RandomOf text \\\"One of them comes back slower than the rest\\\" reads true in both branches (V07). Small mismatches: (1) DeadCalm c2 says \\\"Your boarders\\\", which puts the captain on your own deck, but selector Random can wound the captain (V01). (2) ScuttledSloop c0 puts the -25 hull on the quick hatch job (\\\"Her sinking weight tears a strake off your rail\\\"), while the longer \\\"Cut into her hold\\\" costs the hull nothing. The physical logic is backwards. (3) ShadowAstern c2 says \\\"Jump the gap alone\\\", but the rival is astern, not alongside.\"\n    },\n    \"design\": {\n      \"score\": 76,\n      \"reason\": \"Real S02/S03 calls in most events. LockedHulls trades a 70-gold deck strip for a 150-gold hold at -35 hull. DeadCalm offers a crew cost, a hull cost (sink for 40) and a crew-gamble plunder (EV 55). Problems: (1) DeadCalm and ShadowAstern have the same shape in one batch: a rival with guns run out, a cheap way out, then a cannon exchange that costs ShipHealth for scraps (\\\"Run out the cannons\\\" / \\\"Give them both cannons\\\"). (2) In ShadowAstern a player under 80 gold who isn't the Conqueror is forced into ShipHealth -60, close to the cap, with no damage-limiting option (S07). (3) Repair costs 1 gold per HP, so LockedHulls' hold (+80 gold over the deck for 35 hull) is nearly dominant. ScuttledSloop's 'free' option (+40) also loses to the hold (+120 / -20 on one crew member) unless you weigh the mercy.\"\n    },\n    \"voice\": {\n      \"score\": 87,\n      \"reason\": \"Close to the shipped pool. Lines like \\\"the sea lies still as poured lead\\\", \\\"Nobody speaks at supper.\\\" and \\\"you sail on bleeding through your coat\\\" are dry understatement (V03). Labels are short imperatives (V05), bodies run 3-4 sentences and results 2 (V06), with no banned words or caps (V04, A02), and every title names the thing (A03). Weakest: ScuttledSloop c0, \\\"Her sinking weight tears a strake off your rail while you strike the irons off a sniper her own crew had chained below.\\\" It's one long clause chain, against V02's short sentences. ScuttledSloop c2's label \\\"Free her\\\" is ambiguous after a body that calls the sloop \\\"her\\\" and the prisoner \\\"someone\\\".\"\n    },\n    \"specificity\": {\n      \"score\": 82,\n      \"reason\": \"LockedHulls is built on the hook itself: \\\"Both crews went for the plunder instead of the cannons, and nobody was left to take it\\\" (S02). Its Team Leader choice draws on crew pairing and synergy (C01). ScuttledSloop's \\\"took the quick way and never set foot on her deck, so her hold is still full\\\" is the sink rule, plus a roster Recruit (S05). ShadowAstern ties its rival to the Kraken run (\\\"break the water toward the Kraken so they arrive fresh\\\", S06/S08), and the Conqueror choice uses Charge and the sword (C03). Weakest: DeadCalm's standoff and ShadowAstern's toll would play nearly unchanged in another pirate game once you remove the Kraken mention. ScuttledSloop's \\\"long rifle lies on the planks\\\" reuses DesertersLongboat's rifle cue for a Sniper recruit.\"\n    }\n  },\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheScuttledSloop\",\n      \"score\": 83,\n      \"reason\": \"A three-way prisoner call with a Recruit (hull cost), a rich hold (crew cost) and a small safe purse, so S02/S03 are both present. Held back by backwards hull logic (the quick hatch job costs hull, the long hold job doesn't), a weak free option, a long result sentence, and the rifle cue echoing DesertersLongboat.\",\n      \"stranger_test\": \"A rival sank rather than plundered, so the hold is still full (the sink vs plunder rule), and the prisoner joins as a Sniper in a 4-slot roster.\"\n    },\n    {\n      \"id\": \"DA_Event_DeadCalm\",\n      \"score\": 79,\n      \"reason\": \"A good Bad event: a cheap crew cost to escape, a sink option for little loot, and a plunder gamble whose result text holds in both branches. But it repeats ShadowAstern's rival-standoff shape in the same batch. \\\"Your boarders\\\" also hides that Random can hit the captain.\",\n      \"stranger_test\": \"Mostly the two cannons and the sink-or-board split, plus a rival on its own Kraken run. A calm standoff with a rival brig is otherwise generic.\"\n    },\n    {\n      \"id\": \"DA_Event_TheLockedHulls\",\n      \"score\": 88,\n      \"reason\": \"The strongest event. The body is a parable of the sink/plunder rule, deck vs hold is a clean S02 call, and the Team Leader choice plays to pairing and synergy (C01). Only polish left: the hold is close to dominant given the 1 gold per HP repair rate.\",\n      \"stranger_test\": \"Two crews that both went for the plunder instead of the cannons and wiped each other out, plus Team Leader crew pairing. Only Deadwater Run has that rule.\"\n    },\n    {\n      \"id\": \"DA_Event_TheShadowAstern\",\n      \"score\": 80,\n      \"reason\": \"Tight voice and a fitting Conqueror choice (Charge, sword, self-damage). But a broke non-Conqueror player is forced into -60 hull. The pay-a-toll / scrape-by / captain-gated-third shape echoes the shipped WreckersAmongTheHulls, and it overlaps DeadCalm in this batch.\",\n      \"stranger_test\": \"A rival drafting in your wake to reach the Kraken fresh, both cannons, and a Conqueror charge. Weakly specific: the toll standoff itself is generic.\"\n    }\n  ],\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"choices[1]\",\n      \"rule\": \"design\",\n      \"problem\": \"Same shape as ShadowAstern in this batch: a hostile rival with gun ports open, a cheap way out, and a cannon duel that costs ShipHealth for a small purse (\\\"Run out the cannons\\\" -30 hull/+40 vs \\\"Give them both cannons\\\" -60 hull/+10). Two of the four events play the same.\",\n      \"fix\": \"Move DeadCalm away from a rival standoff. Make the calm itself the threat to the crew (for example, rations and thirst under the theme's 'crew under strain'). Or drop the cannon choice and use a crew-vs-hull trade that ShadowAstern doesn't have.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheShadowAstern\",\n      \"field\": \"choices[0].requirements\",\n      \"rule\": \"S07\",\n      \"problem\": \"With MinGold 80 unmet and any captain other than the Conqueror, the only option is ShipHealth -60, so there is no damage-limiting choice for a poor player mid-run.\",\n      \"fix\": \"Lower the cannon choice's cost (for example -40), or turn it into a RandomOf with a lighter branch, so a broke player still has a limited-damage path.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"V07\",\n      \"problem\": \"The hull cost sits on the quick hatch rescue (\\\"Her sinking weight tears a strake off your rail\\\"), while staying longer to saw into the hold costs the hull nothing. The physical logic is backwards. The sentence is also one long chain (V02).\",\n      \"fix\": \"Tie the hull cost to staying lashed while you break the irons, in two short sentences, for example: \\\"You stay lashed to her while the irons come off. She drags a strake off your rail going down.\\\"\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"body\",\n      \"rule\": \"design\",\n      \"problem\": \"\\\"a long rifle lies on the planks beside it\\\" repeats DesertersLongboat's Sniper-recruit cue (\\\"a long rifle wrapped in sailcloth\\\").\",\n      \"fix\": \"Signal the Sniper another way, for example a spyglass and powder horn by the hatch, or the sniper's nest left empty on her mast.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"choices[2].label\",\n      \"rule\": \"V05\",\n      \"problem\": \"\\\"Free her and lend a longboat\\\": the body calls the sloop \\\"her\\\" and the prisoner \\\"someone\\\", so \\\"her\\\" is ambiguous.\",\n      \"fix\": \"\\\"Free the prisoner, lend a boat\\\" or \\\"Open the hatch and cut her loose\\\".\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"V01\",\n      \"problem\": \"\\\"Your boarders pull across\\\" and \\\"One of them comes back slower\\\" imply the captain stays aboard, but CrewHealth selector Random can wound the captain.\",\n      \"fix\": \"Put the captain in the boat (\\\"You pull across with your boarders...\\\"), or change the selector so the text holds.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheLockedHulls\",\n      \"field\": \"choices[1]\",\n      \"rule\": \"design\",\n      \"problem\": \"With repair at 1 gold per HP, +150/-35 hull beats +70/0 by about 45 gold net, so the hold is close to dominant.\",\n      \"fix\": \"Locked by the author, so note this only: on a future pass, raise the hold's hull cost toward -50 or bring the deck purse up toward 90.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheShadowAstern\",\n      \"field\": \"choices[2].label\",\n      \"rule\": \"V07\",\n      \"problem\": \"\\\"Jump the gap alone\\\": the rival is astern in your wake, not alongside, so there is no gap to jump.\",\n      \"fix\": \"Have her close alongside to hail (\\\"At dusk she runs up alongside...\\\"), or rename the choice to \\\"Charge their rail\\\".\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"summary\": \"The batch is within the rules and close to the shipped voice, and LockedHulls is a standout. It isn't higher because DeadCalm and ShadowAstern are the same rival-standoff event, and that standoff carries the weakest stranger test. ShadowAstern also leaves a broke non-Conqueror player with only a -60 hull hit.\"\n}\n```",
+  "ttft_ms": 55217,
+  "type": "result",
+  "duration_ms": 91500,
+  "uuid": "146920e4-9800-4f26-8c33-47910fc2a226",
+  "ttft_stream_ms": 2230,
+  "time_to_request_ms": 47,
+  "first_content_frame_ms": 2230,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

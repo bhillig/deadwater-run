@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 72357,
+  "stop_reason": "end_turn",
+  "session_id": "0cf6796b-996a-4767-bc70-564d19f74e8f",
+  "total_cost_usd": 0.280912,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 17037,
+    "cache_read_input_tokens": 3540,
+    "output_tokens": 7195,
+    "output_tokens_details": {
+      "thinking_tokens": 3275
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 17037,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 7195,
+        "cache_read_input_tokens": 3540,
+        "cache_creation_input_tokens": 17037,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 17037
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 7195,
+      "cacheReadInputTokens": 3540,
+      "cacheCreationInputTokens": 17037,
+      "webSearchRequests": 0,
+      "costUSD": 0.280912,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3275,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 17037,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"dimensions\": {\n    \"rules\": {\n      \"score\": 92,\n      \"reason\": \"Every outcome, requirement, item, selector and captain exists, and all numbers stay inside the guardrails. The largest are ShipHealth -50 (cap 70), CrewHealth -30 (cap 50), Gold +100 (cap 150) and GrantXp 30. The one rules problem is in the author's notes, not the data: they say the Team Leader's -20 matters because the captain is \\\"the only crewmate whose death ends the run\\\". Events floor health at 1 and never kill (event.rules C10a), so that reasoning doesn't hold. See design.\"\n    },\n    \"text_data\": {\n      \"score\": 84,\n      \"reason\": \"V07 mostly holds. The RandomOf result \\\"one purse has changed hands\\\" reads true on both branches, and \\\"He pays most of the purse\\\" matches 70 of the 100. Weak spots: (1) Smoke from the Hold, choices[2] says \\\"You throw sailcloth, stores and the strongbox on the flames ... some of the coin goes over the side with the ash\\\". Nobody throws a strongbox on a fire, and the coin's path from fire to sea is muddled. (2) The Grounded Sloop, choices[0] says \\\"Two shots and she goes under\\\" about a ship sitting hard on a reef. It is locked, but it still reads oddly. (3) The Empty Hulk label \\\"Take what's on deck\\\" leads to a result set on \\\"her berth deck\\\", which is below decks.\"\n    },\n    \"design\": {\n      \"score\": 80,\n      \"reason\": \"The Grounded Sloop is the S02 hook almost exactly: sink for 60, or board for 90 (1.5x) and pay crew HP. The Fearmongerer gets the surrender third choice, which is C02's GDD rule. The Boarding Wager offers a real choice between a gamble, a heal plus XP, and the Conqueror's solo brawl. Smoke is a fair S07 Bad event: three priced costs, none dominant (50 hull is about 50 gold in repairs, against 40 gold or 30 HP on one crewmate). Problems: (1) Smoke reuses the Hidden Shoal's hull/crew/stores triad, down to the stores-and-coin choice (shipped: \\\"Over go stores and a chest of coin\\\"). (2) The Empty Hulk's Team Leader choice gives the same 80 gold and tonic for the same -20, just aimed at the Captain instead of Random. Since events can't kill, that is barely a decision. (3) The Fearmongerer's \\\"Light the fuses\\\" gives 90 gold for free and beats both base choices outright. That is on-trait, but it is the biggest gated bonus in the batch.\"\n    },\n    \"voice\": {\n      \"score\": 86,\n      \"reason\": \"The voice is close to the shipped pool. It is present tense, second person, built from things on deck, with dry understatement: \\\"ask to keep their buckets\\\", \\\"Her crew fight for every crate, and lose.\\\", \\\"Nobody draws steel over it.\\\" There is no banned diction, no caps and no UI talk (V04, A01, A02), and the titles name the thing you sailed into (A03). The weakest line is filler: \\\"The smoke thickens with every breath.\\\" It repeats \\\"smoke starts curling up from the hold\\\" and adds no new thing (V02, V06). The Conqueror result is two long sentences that run together (V06). \\\"take the coin from the toes of their boots\\\" is evocative but leaves the reader asking why the boots were left behind.\"\n    },\n    \"specificity\": {\n      \"score\": 77,\n      \"reason\": \"Two events pass the stranger test cleanly. The Grounded Sloop is sink-or-plunder at 1x/1.5x, plus the Fearmongerer's surrender. The Empty Hulk has the Kraken scars (\\\"round scars, each the size of a cask lid\\\", S06), a rival crew who turned back (S08), and the Team Leader taking the hit for his crew (C01). The Boarding Wager uses the sniper's nest and ship-to-ship boarding, but a brawl for a purse between friendly crews would work in most pirate games. Smoke from the Hold is the weakest: a firebomb down the hatch is a generic scene, and \\\"on her way to the Kraken\\\" is the kind of name-drop the stranger test excludes. Its two-bar trade is borrowed from the Hidden Shoal rather than built on this threat.\"\n    }\n  },\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheGroundedSloop\",\n      \"score\": 88,\n      \"reason\": \"This restages S02 almost literally: sink for 60, or board for 90 at a crew-HP cost. The Fearmongerer surrender choice is pure C02, and \\\"ask to keep their buckets\\\" is the right dry humour. Minor issues: the locked \\\"goes under\\\" on a reef reads oddly, and the gated choice beats both base choices.\",\n      \"stranger_test\": \"The sink (1x) vs plunder (1.5x) choice, plus the Fearmongerer's surrender third option, belong only to Deadwater Run.\"\n    },\n    {\n      \"id\": \"DA_Event_TheEmptyHulk\",\n      \"score\": 82,\n      \"reason\": \"This has strong S06/S08 foreshadowing, and the Team Leader taking the timber himself (C01, plus the Grapple Hook) is a good beat. The gated choice is nearly the same as \\\"Break open the hold\\\": it only moves the -20 from Random to Captain, and that can't kill. The idea also overlaps the Turning Brig, a rival who saw what's ahead and quit.\",\n      \"stranger_test\": \"The Kraken-sized scars on a ship whose rival crew fled the run, and the Team Leader shielding his crew.\"\n    },\n    {\n      \"id\": \"DA_Event_TheBoardingWager\",\n      \"score\": 76,\n      \"reason\": \"It offers three real choices, the RandomOf result is honest on both branches, and the Conqueror text fits C03. But a brawling wager between friendly crews is a stock pirate scene. The sniper's nest is the only hook that is really this game's.\",\n      \"stranger_test\": \"Mostly generic. Only the race to the sniper's nest and the swapped boarding tricks tie it to Deadwater Run's ship-to-ship fights.\"\n    },\n    {\n      \"id\": \"DA_Event_SmokeFromTheHold\",\n      \"score\": 66,\n      \"reason\": \"It is a fair Bad event with a real S03 bar trade, but it reuses the Hidden Shoal's hull/crew/stores triad. The Kraken is a name-drop, the stores result is muddled (\\\"the strongbox on the flames\\\"), and the body has a filler line.\",\n      \"stranger_test\": \"Almost nothing. Remove \\\"on her way to the Kraken\\\" and this firebomb works in any pirate game. Only the hull-or-crew cost is this game's, and that is copied from the Hidden Shoal.\"\n    }\n  ],\n  \"findings\": [\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_SmokeFromTheHold\",\n      \"field\": \"choices\",\n      \"rule\": \"S01\",\n      \"problem\": \"The three choices copy the shipped Hidden Shoal: a hull cost, a crew cost, and a stores-and-coin cost (shipped: \\\"Over go stores and a chest of coin\\\"). A different threat doesn't make it a new idea, and the shipped pool says never repeat its ideas.\",\n      \"fix\": \"Keep one bar trade, but build the other choices on this threat. For example, the Sniper shoots the cask from the sniper's nest before it lands, or you chase the rival sloop and trade cannon fire. Drop the stores-overboard choice.\"\n    },\n    {\n      \"severity\": \"major\",\n      \"event\": \"DA_Event_SmokeFromTheHold\",\n      \"field\": \"body\",\n      \"rule\": \"S06\",\n      \"problem\": \"\\\"on her way to the Kraken\\\" is a name-drop. Nothing in the scene depends on the race, so it fails the stranger test.\",\n      \"fix\": \"Tie the sabotage to the run itself: the rival needs you slowed or out of the race. Show that in one concrete detail, for example their crew calling out that only one ship reaches the end of the chart, instead of naming the Kraken.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_SmokeFromTheHold\",\n      \"field\": \"body\",\n      \"rule\": \"V02\",\n      \"problem\": \"\\\"The smoke thickens with every breath.\\\" repeats the previous sentence and adds nothing concrete.\",\n      \"fix\": \"Cut it, or replace it with a deck detail such as what is stored in the hold.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_SmokeFromTheHold\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"V07\",\n      \"problem\": \"\\\"the strongbox on the flames ... some of the coin goes over the side with the ash\\\" is muddled. Nobody smothers a fire with a strongbox, and the coin's path is unclear.\",\n      \"fix\": \"Make the -40 gold concrete and logical, for example \\\"The cargo you were going to sell goes on the flames.\\\"\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheEmptyHulk\",\n      \"field\": \"choices[2].outcomes\",\n      \"rule\": \"C01\",\n      \"problem\": \"The Team Leader choice gives the same 80 gold, tonic and -20 as choices[1], with Captain instead of Random. Events floor health at 1, so the author's \\\"his death ends the run\\\" reasoning doesn't apply. Picking it changes almost nothing.\",\n      \"fix\": \"Change one number so the choice matters. For example, give it a small edge for leading from the front (+10 gold, or GrantXp to All to echo Veteran Crew), or make the captain's cost larger than the random one.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheEmptyHulk\",\n      \"field\": \"choices[0]\",\n      \"rule\": \"V07\",\n      \"problem\": \"The label \\\"Take what's on deck\\\" leads to a result set \\\"on her berth deck\\\", which is below decks.\",\n      \"fix\": \"Put the sea chests on the open deck, or relabel the choice, for example \\\"Search the berths\\\".\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheGroundedSloop\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"V07\",\n      \"problem\": \"\\\"Two shots and she goes under\\\" is said of a ship sitting hard on a reef. It is locked by the author, but a grounded hull breaking up would read truer.\",\n      \"fix\": \"If the lock ever lifts: \\\"Two shots and she breaks her back on the reef.\\\"\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheBoardingWager\",\n      \"field\": \"body\",\n      \"rule\": \"S08\",\n      \"problem\": \"A friendly brawl for a purse is a stock pirate scene. Only \\\"sniper's nest\\\" places it in this game.\",\n      \"fix\": \"Give the rival crew a reason tied to the run, for example sizing up who will reach the end of the chart first.\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"summary\": \"The Grounded Sloop and the Empty Hulk are clearly Deadwater Run. Smoke from the Hold is the weak event: it reuses the Hidden Shoal's hull/crew/stores triad and its Kraken mention is a name-drop. The Empty Hulk's Team Leader choice is barely different from the base choice, since events can't kill.\"\n}\n```",
+  "ttft_ms": 37791,
+  "type": "result",
+  "duration_ms": 72405,
+  "uuid": "74d60111-0464-41fb-9f48-292c95e7d051",
+  "ttft_stream_ms": 4982,
+  "time_to_request_ms": 48,
+  "first_content_frame_ms": 4982,
+  "queued_turn_count": 0,
+  "result_index": 0
+}

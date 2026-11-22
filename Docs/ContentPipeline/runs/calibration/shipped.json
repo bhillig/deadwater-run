@@ -1,0 +1,343 @@
+{
+  "score": {
+    "score": 67,
+    "base": 79.7,
+    "penalty": 13,
+    "capped": false,
+    "strangerCapped": false,
+    "blockers": [],
+    "dims": [
+      {
+        "key": "rules",
+        "weight": 20,
+        "what": "Game rules: only outcomes, requirements, items, units, captains and numbers in the facts; nothing the game can't do",
+        "score": 90,
+        "reason": "Every outcome, requirement, item (HealthRestore), unit (Swordsman, Sniper), captain (Conqueror) and number exists in the facts and stays inside the guardrails: SquallLine -70 ship equals shipLossMax, Mutterings Captain -50 equals crewDeltaMax, TallyRock +120 gold is under 150 and 80 XP equals xpMax. Captain -50 floors at 1, so no event can kill. The ungated Recruit choices are already deducted by code. Weakest remaining rules point: LoseCrew Random in MutteringsBelowDeck choices[2] has no CrewCountAtLeast gate, so on a captain-only crew that branch silently does nothing (S04)."
+      },
+      {
+        "key": "text_data",
+        "weight": 15,
+        "what": "Text matches data: every body, label and result is true to the outcomes of its choice, in every RandomOf branch (V07)",
+        "score": 84,
+        "reason": "Most text maps to data (V07). TallyRock 'pocket half the coin' matches Gold +60 against the strongbox's +120. SquallLine's single RandomOf result 'Whatever the sea took, it took fast' reads true for both -10 and -70. Weakest line: the DesertersLongboat label 'Trade rations for medicine' promises rations, but the data spends only Gold -20. The result half-admits this ('a sack of hardtack and a few coins'), so the label still misleads. Mutterings 'By morning, the crew has settled it their own way' is true in both branches but hides a permanent LoseCrew (see voice/S04). 'Whether there's a bunk to spare is another matter' admits the full-crew no-op but doesn't make it true."
+      },
+      {
+        "key": "design",
+        "weight": 20,
+        "what": "Real decisions with sink-or-plunder tension (S02), ship vs crew costs (S03), Good/Bad fit (S07), fair for a medium ~30 minute run, no dominant or trap choice",
+        "score": 73,
+        "reason": "SquallLine and Mutterings are strong. SquallLine makes you choose between the hull and the crew (S03): ship -45, crew -20 All plus ship -15, or a 50/50 of ship -10/-70. Mutterings sets gold against the captain's health against a 1-in-3 permanent loss, and both Bad events offer a choice that limits the damage (S07). The two Good events have no sink-or-plunder tension (S02). TallyRock is three free gains: 'Open the strongbox' (+120 gold) or 'Read the notes aloud' (60 XP All), with no cost or risk anywhere. DesertersLongboat sets a free recruit (shop value 80) against 2 HealthRestore for 20 gold (shop value 60). With a crew of 3 the recruit nearly always wins, and with a crew of 4 it is a trap (already deducted)."
+      },
+      {
+        "key": "voice",
+        "weight": 20,
+        "what": "Sounds like the voice rules (V01-V07), the reference lines and the shipped pool; Ship's Log aesthetic (A01-A03)",
+        "score": 85,
+        "reason": "The voice is dry and concrete and matches the reference lines (V02, V03): 'Old coin, still dry. Whoever left it isn't coming back for it.' and 'Coin goes around the deck and the muttering stops. For now.' Weakest line: Mutterings choices[1].resultText 'The captain takes the ringleader on in front of everyone' drops into third person and breaks V01's 'you'. The Mutterings LoseCrew branch never names who goes (S04's 'lets it land'). SquallLine's 'You have a minute to decide how to take it.' is flat filler, and 'until their hands bleed' repeats the shipped SomethingUnderTheKeel line."
+      },
+      {
+        "key": "specificity",
+        "weight": 25,
+        "what": "Stranger test: could a stranger tell this is Deadwater Run? Low if the event would work unchanged in any other pirate game (S01-S08, C01-C03)",
+        "score": 70,
+        "reason": "Uneven. TallyRock is built on this game: crews that sailed on to the Kraken (S06), the rival crews' run (S08), and a Conqueror gate that plays to C03 ('You'll be the one ending it'). DesertersLongboat leans on the Swordsman/Sniper roster and the 4-crew cap (S05) plus rival-ship deserters (S08). Weakest: SquallLine ('The horizon goes black from end to end.') and Mutterings ('Too many fights and too few shares have soured the crew.') are a storm and a mutiny from any pirate game. Only the ship/crew split (S03) and the unnamed LoseCrew (S04) tie them to Deadwater Run."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "major": 2,
+      "minor": 1
+    },
+    "reason": "67/100. Dimensions (weighted 20/15/20/20/25): rules 90 - Every outcome, requirement, item (HealthRestore), unit (Swordsman, Sniper), captain (Conqueror) and number exists in the facts and stays inside the guardrails: SquallLine -70 ship equals shipLossMax, Mutterings Captain -50 equals crewDeltaMax, TallyRock +120 gold is under 150 and 80 XP equals xpMax. Captain -50 floors at 1, so no event can kill. The ungated Recruit choices are already deducted by code. Weakest remaining rules point: LoseCrew Random in MutteringsBelowDeck choices[2] has no CrewCountAtLeast gate, so on a captain-only crew that branch silently does nothing (S04). | text_data 84 - Most text maps to data (V07). TallyRock 'pocket half the coin' matches Gold +60 against the strongbox's +120. SquallLine's single RandomOf result 'Whatever the sea took, it took fast' reads true for both -10 and -70. Weakest line: the DesertersLongboat label 'Trade rations for medicine' promises rations, but the data spends only Gold -20. The result half-admits this ('a sack of hardtack and a few coins'), so the label still misleads. Mutterings 'By morning, the crew has settled it their own way' is true in both branches but hides a permanent LoseCrew (see voice/S04). 'Whether there's a bunk to spare is another matter' admits the full-crew no-op but doesn't make it true. | design 73 - SquallLine and Mutterings are strong. SquallLine makes you choose between the hull and the crew (S03): ship -45, crew -20 All plus ship -15, or a 50/50 of ship -10/-70. Mutterings sets gold against the captain's health against a 1-in-3 permanent loss, and both Bad events offer a choice that limits the damage (S07). The two Good events have no sink-or-plunder tension (S02). TallyRock is three free gains: 'Open the strongbox' (+120 gold) or 'Read the notes aloud' (60 XP All), with no cost or risk anywhere. DesertersLongboat sets a free recruit (shop value 80) against 2 HealthRestore for 20 gold (shop value 60). With a crew of 3 the recruit nearly always wins, and with a crew of 4 it is a trap (already deducted). | voice 85 - The voice is dry and concrete and matches the reference lines (V02, V03): 'Old coin, still dry. Whoever left it isn't coming back for it.' and 'Coin goes around the deck and the muttering stops. For now.' Weakest line: Mutterings choices[1].resultText 'The captain takes the ringleader on in front of everyone' drops into third person and breaks V01's 'you'. The Mutterings LoseCrew branch never names who goes (S04's 'lets it land'). SquallLine's 'You have a minute to decide how to take it.' is flat filler, and 'until their hands bleed' repeats the shipped SomethingUnderTheKeel line. | specificity 70 - Uneven. TallyRock is built on this game: crews that sailed on to the Kraken (S06), the rival crews' run (S08), and a Conqueror gate that plays to C03 ('You'll be the one ending it'). DesertersLongboat leans on the Swordsman/Sniper roster and the 4-crew cap (S05) plus rival-ship deserters (S08). Weakest: SquallLine ('The horizon goes black from end to end.') and Mutterings ('Too many fights and too few shares have soured the crew.') are a storm and a mutiny from any pirate game. Only the ship/crew split (S03) and the unnamed LoseCrew (S04) tie them to Deadwater Run.. Base 79.7. Code checks -13 (2 major x6, 1 minor x1). Evaluator: The voice is strong, but SquallLine and MutteringsBelowDeck are a stock storm and a stock mutiny, and both Good events lack sink-or-plunder tension (S02). That holds specificity at 70 and design at 73."
+  },
+  "eventScores": [
+    {
+      "id": "DA_Event_DesertersLongboat",
+      "score": 64,
+      "reason": "Clean scene and voice ('a long rifle wrapped in sailcloth'). The recruit dominates the medicine trade on a crew of 3 and is a trap at 4 (code). The rations label doesn't match the gold cost. No sink-or-plunder tension (S02).",
+      "findings": [
+        {
+          "source": "code",
+          "severity": "major",
+          "event": "DA_Event_DesertersLongboat",
+          "field": "choices[0].requirements",
+          "rule": "E15 recruit trap",
+          "problem": "Recruit with no CrewCountAtMost gate: with a full crew of 4 the button is live and does nothing",
+          "fix": "Add { \"type\": \"CrewCountAtMost\", \"count\": 3 }"
+        },
+        {
+          "source": "code",
+          "severity": "major",
+          "event": "DA_Event_DesertersLongboat",
+          "field": "choices[1].requirements",
+          "rule": "E15 recruit trap",
+          "problem": "Recruit with no CrewCountAtMost gate: with a full crew of 4 the button is live and does nothing",
+          "fix": "Add { \"type\": \"CrewCountAtMost\", \"count\": 3 }"
+        },
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_DesertersLongboat",
+          "field": "choices",
+          "rule": "design",
+          "problem": "With a crew of 3, a free recruit (shop cost 80) dominates 2 HealthRestore for 20 gold. The event has no risk or tension (S02).",
+          "fix": "Give the recruit a cost or a risk, e.g. Gold -40 for provisions, or a RandomOf where one deserter turns out sick (CrewHealth Random)."
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_DesertersLongboat",
+          "field": "choices[2].label",
+          "rule": "V07",
+          "problem": "The label 'Trade rations for medicine' promises rations, but the only cost is Gold -20.",
+          "fix": "Relabel it 'Buy their medicine', or make the result text frame the coin as the price."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_SquallLine",
+      "score": 73,
+      "reason": "A real hull-vs-crew choice (S03), and the RandomOf text works for both branches. The scene itself is a stock storm with flat filler ('You have a minute to decide how to take it'), and the 'hands bleed' line repeats the shipped pool.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_SquallLine",
+          "field": "choices[1].resultText",
+          "rule": "V02",
+          "problem": "'until their hands bleed' repeats the shipped DA_Event_SomethingUnderTheKeel line, and the body's 'You have a minute to decide how to take it' is filler.",
+          "fix": "Use a deck-specific image, e.g. 'Rope burns through every palm on deck. The ship mostly holds.'"
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_MutteringsBelowDeck",
+      "score": 70,
+      "reason": "Good three-way trade of gold, captain HP and a permadeath gamble. The 'The captain takes...' line breaks V01, and the LoseCrew branch never names or lands the loss (S04). The mutiny premise is generic.",
+      "findings": [
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_MutteringsBelowDeck",
+          "field": "choices[2].resultText",
+          "rule": "S04",
+          "problem": "A 1-in-3 permanent crew loss hides behind 'the crew has settled it their own way'. The loss never lands, and the same vague line covers the -20 All branch.",
+          "fix": "Keep one RandomOf text that is true for both branches, but make the stakes concrete, e.g. 'By morning there is blood on the deck, and you count heads before breakfast.'"
+        },
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_MutteringsBelowDeck",
+          "field": "choices[1].resultText",
+          "rule": "V01",
+          "problem": "'The captain takes the ringleader on in front of everyone' is third person, not the 'you' voice.",
+          "fix": "'You take the ringleader on in front of everyone and win, barely. No one mutters after that.'"
+        },
+        {
+          "source": "critic",
+          "severity": "minor",
+          "event": "DA_Event_MutteringsBelowDeck",
+          "field": "choices[2].outcomes",
+          "rule": "S04",
+          "problem": "LoseCrew Random has no crew gate, so with a captain-only crew that branch silently does nothing.",
+          "fix": "Gate the choice with CrewCountAtLeast 2."
+        }
+      ]
+    },
+    {
+      "id": "DA_Event_TheTallyRock",
+      "score": 81,
+      "reason": "The most specific event in the batch: Kraken foreshadowing without a fight (S06) and a Conqueror line true to C03. The data is consistent (half of 120 is 60). No choice costs or risks anything (S02/S07), and the result text runs 3 sentences (already deducted by code).",
+      "findings": [
+        {
+          "source": "code",
+          "severity": "minor",
+          "event": "DA_Event_TheTallyRock",
+          "field": "choices[2].resultText",
+          "rule": "E02 text",
+          "problem": "Result text is more than 2 sentences",
+          "fix": "Trim"
+        },
+        {
+          "source": "critic",
+          "severity": "major",
+          "event": "DA_Event_TheTallyRock",
+          "field": "choices",
+          "rule": "S02",
+          "problem": "All three choices are free gains (+120 gold, 60 XP All, or 80 XP Captain plus 60 gold) with no risk or cost, so there is no quick-safe vs slow-rich call.",
+          "fix": "Make one choice the slow, rich one: e.g. dig under the cairn as a RandomOf with a CrewHealth Random cost against a larger payout, or make reading the notes cost the strongbox."
+        }
+      ]
+    }
+  ],
+  "code": [
+    {
+      "source": "code",
+      "severity": "major",
+      "event": "DA_Event_DesertersLongboat",
+      "field": "choices[0].requirements",
+      "rule": "E15 recruit trap",
+      "problem": "Recruit with no CrewCountAtMost gate: with a full crew of 4 the button is live and does nothing",
+      "fix": "Add { \"type\": \"CrewCountAtMost\", \"count\": 3 }"
+    },
+    {
+      "source": "code",
+      "severity": "major",
+      "event": "DA_Event_DesertersLongboat",
+      "field": "choices[1].requirements",
+      "rule": "E15 recruit trap",
+      "problem": "Recruit with no CrewCountAtMost gate: with a full crew of 4 the button is live and does nothing",
+      "fix": "Add { \"type\": \"CrewCountAtMost\", \"count\": 3 }"
+    },
+    {
+      "source": "code",
+      "severity": "minor",
+      "event": "DA_Event_TheTallyRock",
+      "field": "choices[2].resultText",
+      "rule": "E02 text",
+      "problem": "Result text is more than 2 sentences",
+      "fix": "Trim"
+    }
+  ],
+  "signals": {
+    "DA_Event_DesertersLongboat": {
+      "terms": [
+        "Swordsman"
+      ],
+      "mechanics": [
+        "Recruit: the 4-pirate roster (S05)"
+      ]
+    },
+    "DA_Event_SquallLine": {
+      "terms": [],
+      "mechanics": [
+        "ship vs crew health bars (S03)"
+      ]
+    },
+    "DA_Event_MutteringsBelowDeck": {
+      "terms": [],
+      "mechanics": [
+        "LoseCrew: permadeath (S04)"
+      ]
+    },
+    "DA_Event_TheTallyRock": {
+      "terms": [
+        "Kraken",
+        "tentacle"
+      ],
+      "mechanics": [
+        "CaptainIs gate (S-captain)"
+      ]
+    }
+  },
+  "evaluation": {
+    "dimensions": {
+      "rules": {
+        "score": 90,
+        "reason": "Every outcome, requirement, item (HealthRestore), unit (Swordsman, Sniper), captain (Conqueror) and number exists in the facts and stays inside the guardrails: SquallLine -70 ship equals shipLossMax, Mutterings Captain -50 equals crewDeltaMax, TallyRock +120 gold is under 150 and 80 XP equals xpMax. Captain -50 floors at 1, so no event can kill. The ungated Recruit choices are already deducted by code. Weakest remaining rules point: LoseCrew Random in MutteringsBelowDeck choices[2] has no CrewCountAtLeast gate, so on a captain-only crew that branch silently does nothing (S04)."
+      },
+      "text_data": {
+        "score": 84,
+        "reason": "Most text maps to data (V07). TallyRock 'pocket half the coin' matches Gold +60 against the strongbox's +120. SquallLine's single RandomOf result 'Whatever the sea took, it took fast' reads true for both -10 and -70. Weakest line: the DesertersLongboat label 'Trade rations for medicine' promises rations, but the data spends only Gold -20. The result half-admits this ('a sack of hardtack and a few coins'), so the label still misleads. Mutterings 'By morning, the crew has settled it their own way' is true in both branches but hides a permanent LoseCrew (see voice/S04). 'Whether there's a bunk to spare is another matter' admits the full-crew no-op but doesn't make it true."
+      },
+      "design": {
+        "score": 73,
+        "reason": "SquallLine and Mutterings are strong. SquallLine makes you choose between the hull and the crew (S03): ship -45, crew -20 All plus ship -15, or a 50/50 of ship -10/-70. Mutterings sets gold against the captain's health against a 1-in-3 permanent loss, and both Bad events offer a choice that limits the damage (S07). The two Good events have no sink-or-plunder tension (S02). TallyRock is three free gains: 'Open the strongbox' (+120 gold) or 'Read the notes aloud' (60 XP All), with no cost or risk anywhere. DesertersLongboat sets a free recruit (shop value 80) against 2 HealthRestore for 20 gold (shop value 60). With a crew of 3 the recruit nearly always wins, and with a crew of 4 it is a trap (already deducted)."
+      },
+      "voice": {
+        "score": 85,
+        "reason": "The voice is dry and concrete and matches the reference lines (V02, V03): 'Old coin, still dry. Whoever left it isn't coming back for it.' and 'Coin goes around the deck and the muttering stops. For now.' Weakest line: Mutterings choices[1].resultText 'The captain takes the ringleader on in front of everyone' drops into third person and breaks V01's 'you'. The Mutterings LoseCrew branch never names who goes (S04's 'lets it land'). SquallLine's 'You have a minute to decide how to take it.' is flat filler, and 'until their hands bleed' repeats the shipped SomethingUnderTheKeel line."
+      },
+      "specificity": {
+        "score": 70,
+        "reason": "Uneven. TallyRock is built on this game: crews that sailed on to the Kraken (S06), the rival crews' run (S08), and a Conqueror gate that plays to C03 ('You'll be the one ending it'). DesertersLongboat leans on the Swordsman/Sniper roster and the 4-crew cap (S05) plus rival-ship deserters (S08). Weakest: SquallLine ('The horizon goes black from end to end.') and Mutterings ('Too many fights and too few shares have soured the crew.') are a storm and a mutiny from any pirate game. Only the ship/crew split (S03) and the unnamed LoseCrew (S04) tie them to Deadwater Run."
+      }
+    },
+    "events": [
+      {
+        "id": "DA_Event_DesertersLongboat",
+        "score": 76,
+        "reason": "Clean scene and voice ('a long rifle wrapped in sailcloth'). The recruit dominates the medicine trade on a crew of 3 and is a trap at 4 (code). The rations label doesn't match the gold cost. No sink-or-plunder tension (S02).",
+        "stranger_test": "Recruiting exactly a Swordsman or a Sniper into a crew capped at 4, from deserters of a rival Kraken-run ship: partly specific."
+      },
+      {
+        "id": "DA_Event_SquallLine",
+        "score": 73,
+        "reason": "A real hull-vs-crew choice (S03), and the RandomOf text works for both branches. The scene itself is a stock storm with flat filler ('You have a minute to decide how to take it'), and the 'hands bleed' line repeats the shipped pool.",
+        "stranger_test": "Only the two health bars; the storm works unchanged in any sailing game."
+      },
+      {
+        "id": "DA_Event_MutteringsBelowDeck",
+        "score": 70,
+        "reason": "Good three-way trade of gold, captain HP and a permadeath gamble. The 'The captain takes...' line breaks V01, and the LoseCrew branch never names or lands the loss (S04). The mutiny premise is generic.",
+        "stranger_test": "Nearly nothing: a mutiny over shares fits any pirate game; only the permanent LoseCrew ties it here."
+      },
+      {
+        "id": "DA_Event_TheTallyRock",
+        "score": 82,
+        "reason": "The most specific event in the batch: Kraken foreshadowing without a fight (S06) and a Conqueror line true to C03. The data is consistent (half of 120 is 60). No choice costs or risks anything (S02/S07), and the result text runs 3 sentences (already deducted by code).",
+        "stranger_test": "A rock of names left by every crew that sailed on to the Kraken, plus a Conqueror-only choice: clearly Deadwater Run."
+      }
+    ],
+    "findings": [
+      {
+        "severity": "major",
+        "event": "DA_Event_TheTallyRock",
+        "field": "choices",
+        "rule": "S02",
+        "problem": "All three choices are free gains (+120 gold, 60 XP All, or 80 XP Captain plus 60 gold) with no risk or cost, so there is no quick-safe vs slow-rich call.",
+        "fix": "Make one choice the slow, rich one: e.g. dig under the cairn as a RandomOf with a CrewHealth Random cost against a larger payout, or make reading the notes cost the strongbox."
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_MutteringsBelowDeck",
+        "field": "choices[2].resultText",
+        "rule": "S04",
+        "problem": "A 1-in-3 permanent crew loss hides behind 'the crew has settled it their own way'. The loss never lands, and the same vague line covers the -20 All branch.",
+        "fix": "Keep one RandomOf text that is true for both branches, but make the stakes concrete, e.g. 'By morning there is blood on the deck, and you count heads before breakfast.'"
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_MutteringsBelowDeck",
+        "field": "choices[1].resultText",
+        "rule": "V01",
+        "problem": "'The captain takes the ringleader on in front of everyone' is third person, not the 'you' voice.",
+        "fix": "'You take the ringleader on in front of everyone and win, barely. No one mutters after that.'"
+      },
+      {
+        "severity": "major",
+        "event": "DA_Event_DesertersLongboat",
+        "field": "choices",
+        "rule": "design",
+        "problem": "With a crew of 3, a free recruit (shop cost 80) dominates 2 HealthRestore for 20 gold. The event has no risk or tension (S02).",
+        "fix": "Give the recruit a cost or a risk, e.g. Gold -40 for provisions, or a RandomOf where one deserter turns out sick (CrewHealth Random)."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_DesertersLongboat",
+        "field": "choices[2].label",
+        "rule": "V07",
+        "problem": "The label 'Trade rations for medicine' promises rations, but the only cost is Gold -20.",
+        "fix": "Relabel it 'Buy their medicine', or make the result text frame the coin as the price."
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_SquallLine",
+        "field": "choices[1].resultText",
+        "rule": "V02",
+        "problem": "'until their hands bleed' repeats the shipped DA_Event_SomethingUnderTheKeel line, and the body's 'You have a minute to decide how to take it' is filler.",
+        "fix": "Use a deck-specific image, e.g. 'Rope burns through every palm on deck. The ship mostly holds.'"
+      },
+      {
+        "severity": "minor",
+        "event": "DA_Event_MutteringsBelowDeck",
+        "field": "choices[2].outcomes",
+        "rule": "S04",
+        "problem": "LoseCrew Random has no crew gate, so with a captain-only crew that branch silently does nothing.",
+        "fix": "Gate the choice with CrewCountAtLeast 2."
+      }
+    ],
+    "code_check_disputes": [],
+    "summary": "The voice is strong, but SquallLine and MutteringsBelowDeck are a stock storm and a stock mutiny, and both Good events lack sink-or-plunder tension (S02). That holds specificity at 70 and design at 73."
+  }
+}

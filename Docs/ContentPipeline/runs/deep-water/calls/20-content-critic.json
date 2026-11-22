@@ -1,0 +1,101 @@
+{
+  "duration_api_ms": 86928,
+  "stop_reason": "end_turn",
+  "session_id": "38cf6a64-9ab2-4062-b2f2-1462b4faa1f2",
+  "total_cost_usd": 0.321136,
+  "usage": {
+    "input_tokens": 2,
+    "cache_creation_input_tokens": 17055,
+    "cache_read_input_tokens": 3540,
+    "output_tokens": 9199,
+    "output_tokens_details": {
+      "thinking_tokens": 5695
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 17055,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 9199,
+        "cache_read_input_tokens": 3540,
+        "cache_creation_input_tokens": 17055,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 17055
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 2,
+      "outputTokens": 9199,
+      "cacheReadInputTokens": 3540,
+      "cacheCreationInputTokens": 17055,
+      "webSearchRequests": 0,
+      "costUSD": 0.321136,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 5695,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 17055,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 1,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "```json\n{\n  \"dimensions\": {\n    \"rules\": {\n      \"score\": 94,\n      \"reason\": \"Every outcome, requirement, unit and captain exists, and all numbers are inside the guardrails: Gold 150 is the maximum, ShipHealth -60 is under 70, CrewHealth -35 is under 50 and GrantXp 80 is the maximum. Recruit Sniper is gated with CrewCountAtMost 3, as the facts require. No mana, no LoseCrew on the captain, no lethal text. The weakest line, as an S03 cannon fact, is ShadowAstern's \\\"You turn and fire... Their ship goes down\\\": one volley of two 70-damage cannons sinking a whole rival ship stretches the numbers. DeadCalm gets this right with \\\"Both cannons, twice\\\".\"\n    },\n    \"text_data\": {\n      \"score\": 88,\n      \"reason\": \"Every result matches its outcomes. DeadCalm's RandomOf result reads true for both branches (V07): \\\"Everyone comes back over the rail bleeding, carrying whatever her captain hadn't hidden\\\" fits both CrewHealth All -10/+110 and -25/+40. Two weak spots. Sloop choices[0] has unclear pronouns: \\\"Her sinking weight tears a strake off your rail... She takes the empty bunk\\\", where 'her' is the sloop and 'she' is the sniper. ShadowAstern choices[2] says \\\"Jump the gap alone\\\" and \\\"You charge across\\\" against a body where the rival only \\\"sat in your wake\\\", not alongside.\"\n    },\n    \"design\": {\n      \"score\": 85,\n      \"reason\": \"S02 is strong across the batch. Sloop and LockedHulls are each a quick/safe vs slow/rich call. DeadCalm offers flee (crew bar) vs sink (+40, hull) vs board (RandomOf, crew bar), which is the S03 trade the guide asks for. Bad events have a limiter, as S07 requires: tow -10 All, pay 80. The recruit is gated, and Sloop's \\\"Free her and take her word\\\" covers a full crew. The weakest spot is ShadowAstern choices[1]: \\\"all that floats up is a few loose coins\\\" is +10 gold for sinking a ship. That makes the sink side of S02 almost worthless instead of the 1x 'quick' payout, and the only crew-bar option is Conqueror-only.\"\n    },\n    \"voice\": {\n      \"score\": 87,\n      \"reason\": \"This mostly matches the shipped pool: second person, deck nouns (V02), understatement (V03), such as \\\"Nobody speaks at supper.\\\", \\\"the sea lies still as poured lead\\\" and \\\"Nobody had a hand free for the hatch.\\\" No banned words, caps or exclamation marks (A01/A02), and the titles name the thing you sailed into (A03). The weakest lines are ShadowAstern's \\\"Their captain pays you to sail on ahead, and you sail on bleeding through your coat\\\", which repeats 'sail on', and Sloop's one-sentence result \\\"Her sinking weight tears a strake off your rail while you strike the irons off a sniper her own crew had chained below\\\", which crowds two actions together against V02's short-sentence rule.\"\n    },\n    \"specificity\": {\n      \"score\": 85,\n      \"reason\": \"Two events are built on the game's own sink-or-plunder rule. Sloop: \\\"Whoever sank her took the quick way and never set foot on her deck, so her hold is still full.\\\" LockedHulls: \\\"Both crews went for the plunder instead of the cannons.\\\" No other pirate game has that rule (S02). DeadCalm uses the two cannons and the crew-vs-hull bars (S03), and rivals racing to the Kraken (S08). The weakest event is ShadowAstern: the body \\\"a share of your hold, or they stop following and start shooting\\\" is a toll-or-fight standoff that would work in any pirate game, and the Conqueror Charge choice (C03) is what saves it.\"\n    }\n  },\n  \"events\": [\n    {\n      \"id\": \"DA_Event_TheScuttledSloop\",\n      \"score\": 88,\n      \"reason\": \"A clean S02 hook, a gated Recruit for the roster and a hull-vs-crew split between choices[0] and choices[1]. The understated abandonment line works. What remains is polish: unclear she/her in choices[0] and a label that gives away the prisoner.\",\n      \"stranger_test\": \"The premise is the 1x sink rule: a rival sank her the quick way, so the plunder is still aboard, plus a Sniper for a crew of four.\"\n    },\n    {\n      \"id\": \"DA_Event_DeadCalm\",\n      \"score\": 84,\n      \"reason\": \"Strong three-way choice: tow clear (crew bar), sink with both cannons (hull, small loot) or board (RandomOf, crew bar, bigger loot). The RandomOf text is true for both branches. It falls just short because its premise, a rival racing to the Kraken with open guns, overlaps ShadowAstern in the same batch.\",\n      \"stranger_test\": \"Sinking for the deck cargo vs boarding for the hold, with \\\"Both cannons, twice\\\", plays the game's sink-or-plunder choice on its two-cannon ship.\"\n    },\n    {\n      \"id\": \"DA_Event_TheLockedHulls\",\n      \"score\": 89,\n      \"reason\": \"Quick 70 vs slow 150 for -35 hull is a clean S02 trade. The Team Leader choice draws on synergy pairs and the crew-growth run rule (C01). Small logic gap: you calmly walk both decks while the lines drag the sound ship down.\",\n      \"stranger_test\": \"Two rival crews who went for the plunder instead of the cannons, and a Team Leader teaching back-to-back pairs.\"\n    },\n    {\n      \"id\": \"DA_Event_TheShadowAstern\",\n      \"score\": 84,\n      \"reason\": \"Clear Bad event with a gold limiter and a Conqueror sword-charge choice that fits C03. The extortion body is the most generic premise in the batch. Sinking for +10 gold undercuts S02, and the 'jump the gap' geometry contradicts a ship sitting in your wake.\",\n      \"stranger_test\": \"Thin: a rival letting you break water toward the Kraken, and the Conqueror's Charge. Without those it is a stock toll-or-fight.\"\n    }\n  ],\n  \"findings\": [\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"choices[0].resultText\",\n      \"rule\": \"V02\",\n      \"problem\": \"\\\"Her sinking weight tears a strake off your rail while you strike the irons off a sniper her own crew had chained below. She takes the empty bunk...\\\" 'Her' is the sloop and 'she' is the sniper, so the referents are unclear, and the first sentence crams two actions together.\",\n      \"fix\": \"Split it and name the sloop, e.g. \\\"The sloop rolls against your rail and tears a strake loose. The sniper chained below takes the empty bunk without being asked.\\\"\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheScuttledSloop\",\n      \"field\": \"choices[2].label\",\n      \"rule\": \"V05\",\n      \"problem\": \"The body only says \\\"someone is hammering\\\", but the label \\\"Free her and take her word\\\" reveals the prisoner's gender. It also reads close to choices[0], which frees her too.\",\n      \"fix\": \"Use a short imperative that marks the difference, e.g. \\\"Let them go\\\" or \\\"Free them and sail on\\\".\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_DeadCalm\",\n      \"field\": \"body\",\n      \"rule\": \"fit\",\n      \"problem\": \"This overlaps ShadowAstern in the same batch. \\\"She is making her own run at the Kraken\\\" and \\\"His gun ports have been open since noon\\\" echo ShadowAstern's \\\"break the water toward the Kraken\\\" and \\\"they run out their cannons\\\". Two Bad events in the same layers become the same rival-with-guns standoff.\",\n      \"fix\": \"ShadowAstern is locked, so give DeadCalm's rival a different want or fear: short of water in the calm, or nursing a wound from the Kraken. Keep the calm and the choice structure.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheShadowAstern\",\n      \"field\": \"choices[1]\",\n      \"rule\": \"S02\",\n      \"problem\": \"Sinking the ship pays +10 (\\\"a few loose coins\\\"), so the 'quick' side of sink-or-plunder is nearly worthless. One volley (\\\"You turn and fire\\\") sinking a ship also stretches two 70-damage cannons (S03).\",\n      \"fix\": \"If the lock is lifted, raise the sink payout toward DeadCalm's 40 and make it \\\"You turn and fire until she settles\\\".\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheShadowAstern\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"V07\",\n      \"problem\": \"\\\"Jump the gap\\\" and \\\"You charge across\\\" need the ships alongside, but the body has the rival \\\"in your wake\\\". The result also repeats itself: \\\"pays you to sail on ahead, and you sail on bleeding\\\".\",\n      \"fix\": \"If the lock is lifted, add a beat that brings them alongside (\\\"When they come alongside to collect...\\\") and cut the second 'sail on'.\"\n    },\n    {\n      \"severity\": \"minor\",\n      \"event\": \"DA_Event_TheLockedHulls\",\n      \"field\": \"choices[2].resultText\",\n      \"rule\": \"V07\",\n      \"problem\": \"\\\"You walk both decks with your crew\\\" ignores the body's clock: one hull is burning and the lines are dragging the other down. The walk takes no time and costs nothing.\",\n      \"fix\": \"If the lock is lifted, nod to the clock, e.g. \\\"...before the burning hull takes them both under.\\\"\"\n    }\n  ],\n  \"code_check_disputes\": [],\n  \"summary\": \"The batch is in Deadwater Run's voice, and Sloop and LockedHulls are built directly on the sink-or-plunder rule. What holds it below 90 is ShadowAstern's generic toll-or-fight premise with a near-zero sink payout, and DeadCalm repeating the same rival-with-guns setup.\"\n}\n```",
+  "ttft_ms": 56328,
+  "type": "result",
+  "duration_ms": 86987,
+  "uuid": "fa0260f8-76f4-469a-b0eb-5b1bf905f3e1",
+  "ttft_stream_ms": 1941,
+  "time_to_request_ms": 59,
+  "first_content_frame_ms": 1941,
+  "queued_turn_count": 0,
+  "result_index": 0
+}
