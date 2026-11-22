@@ -604,7 +604,7 @@ function calibrationKey(ctx, args) {
   for (const part of [styleForPrompt(ctx.guide), factsForPrompt(ctx.facts), ctx.facts.gddMechanics,
     read(path.join(args.root, '.claude', 'agents', 'content-critic.md')), read(path.join(__dirname, 'lib', 'score.js')), read(CONTROL),
     evaluatorPrompt.toString(), commonSections.toString(), formatSpec.toString(), JSON.stringify(EVAL_SCHEMA), String(args.threshold)]) {
-    h.update(part).update('|');
+    h.update(part.replace(/\r\n/g, '\n')).update('|'); // same key on an LF or CRLF checkout
   }
   return h.digest('hex').slice(0, 16);
 }
