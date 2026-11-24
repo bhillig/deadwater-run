@@ -44,7 +44,11 @@ struct DEADWATERRUN_API FDwAiWeights
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Position") float Danger = 0.f;
 	/** (cost) Standing on the opponent's ship when this side's cannons can sink it before the unit acts again. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Position") float SinkingRisk = 0.f;
-	/** (cost) Per tile the destination is beyond attack range of the nearest opponent the unit could hit. */
+	/**
+	 * (cost) Per point of move cost the unit would still walk from the destination to the nearest tile one of its attacks
+	 * (that it can pay for) can hit an opponent from, around obstacles. Nobody hittable is reachable: the walk to a tile it
+	 * can fire a cannon from; no cannon reachable either: 0.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Position") float Approach = 0.f;
 	/** Per level of elevation at the destination, for units with a ranged attack (the sniper's nest gives range). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AI|Position") float HighGround = 0.f;

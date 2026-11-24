@@ -52,6 +52,150 @@ namespace DwAiScoring
 			|| FDwFearRules::ShouldCower(Unit.Fear, Unit.MaxFear, Unit.Tags.HasTagExact(DwTags::Unit_Immune_Fear));
 	}
 
+	/** The unit can pay for Ability and nothing blocks it: it can use it on a coming turn (action and move budgets aside). */
+	static bool CanUseLater(const FDwUnitSnapshot& Unit, const UDwAbilityDefinition& Ability)
+	{
+		const UDwGameplayAbility* CDO = FDwCombatQueries::GetAbilityCDO(&Ability);
+		const FDwAbilityTuningRow* Tuning = UDwGameplayAbility::GetTuning(&Ability);
+		return CDO && Tuning && Tuning->ManaCost <= Unit.Mana && !Unit.Tags.HasAny(CDO->GetBlockingTags());
+	}
+
+	struct FOpenEntry
+	{
+		int32 Cost;
+		int32 Index;
+	};
+
+	/** Min-heap on (cost, board index), as the pathfinder: equal costs never depend on insertion order. */
+	struct FOpenLess
+	{
+		bool operator()(const FOpenEntry& A, const FOpenEntry& B) const { return A.Cost != B.Cost ? A.Cost < B.Cost : A.Index < B.Index; }
+	};
+
+	/**
+	 * Multi-source Dijkstra run backwards: OutCost[i] = cheapest walk from tile i to any source, with the moves the unit
+	 * makes (FDwGridModel::GetNeighbors: 4-way, ladders, boarding edges) through allies, never through opponents (C1-C2).
+	 */
+	static void WalkCostToSources(const FDwGridModel& Grid, const FDwGridRules& Rules, EDwSide MoverSide, TConstArrayView<int32> Sources,
+		TArray<int32>& OutCost)
+	{
+		OutCost.Init(MAX_int32, Grid.Tiles.Num());
+		TArray<FOpenEntry> Open;
+		for (const int32 Index : Sources)
+		{
+			OutCost[Index] = 0;
+			Open.HeapPush({ 0, Index }, FOpenLess());
+		}
+		TArray<FDwGridStep> Steps;
+		while (Open.Num() > 0)
+		{
+			FOpenEntry Current;
+			Open.HeapPop(Current, FOpenLess());
+			if (Current.Cost > OutCost[Current.Index])
+			{
+				continue; // stale entry
+			}
+			const FIntPoint To = Grid.ToTile(Current.Index);
+			const FDwTile& ToData = *Grid.GetTile(To);
+			// Moves are symmetric (GetNeighbors), only the cost of entering a tile isn't: price the forward step Step -> To.
+			Grid.GetNeighbors(To, Rules, Steps);
+			for (const FDwGridStep& Step : Steps)
+			{
+				const FDwOccupant Occupant = Grid.GetOccupant(Step.Tile);
+				if (Occupant.IsSet() && Occupant.Side != MoverSide)
+				{
+					continue;
+				}
+				const FDwTile& FromData = *Grid.GetTile(Step.Tile);
+				const int32 StepCost = FromData.Owner != ToData.Owner ? Rules.BoardingMoveCost
+					: FromData.Elevation != ToData.Elevation ? Rules.ClimbMoveCost : FMath::Max(ToData.MoveCost, 1);
+				const int32 NewCost = Current.Cost + StepCost;
+				const int32 FromIndex = Grid.ToIndex(Step.Tile);
+				if (NewCost < OutCost[FromIndex])
+				{
+					OutCost[FromIndex] = NewCost;
+					Open.HeapPush({ NewCost, FromIndex }, FOpenLess());
+				}
+			}
+		}
+	}
+
+	/**
+	 * The Approach field (FDwAiScoringContext::GetApproachCost). Goals, in order, among the tiles the unit can walk to:
+	 * 1. tiles one of its attacks can hit an opponent from, by the attack's own targeting (range, line of sight, nest, Charge's line);
+	 * 2. failing that (nothing it can hit is reachable), tiles it can fire one of its ship's cannons from;
+	 * 3. failing that, no goal: Approach is 0 everywhere and the unit's other terms (actions, Danger) or holding still decide.
+	 */
+	static TArray<int32> BuildApproachField(const FDwAiScoringContext& Context)
+	{
+		const FDwCombatSnapshot& Snapshot = *Context.Snapshot;
+		const FDwGridModel& Grid = Snapshot.Grid;
+		const FDwGridRules& Rules = Snapshot.GridRules;
+		const FDwUnitSnapshot* Self = Context.GetUnit();
+		TArray<int32> Field;
+		if (!Self)
+		{
+			Field.Init(MAX_int32, Grid.Tiles.Num());
+			return Field;
+		}
+
+		// Where the unit can stand at all, on this turn or a later one: its tile plus every free tile it can walk to.
+		TArray<FIntPoint> Region;
+		FDwPathfinder::ComputeReachable(Grid, Rules, Self->Tile, MAX_int32, Context.Side).GetKeys(Region);
+		Region.Add(Self->Tile);
+		Region.Sort([&Grid](const FIntPoint& A, const FIntPoint& B) { return Grid.ToIndex(A) < Grid.ToIndex(B); });
+
+		TArray<const FDwUnitSnapshot*, TInlineAllocator<8>> Opponents;
+		for (const FDwUnitSnapshot& Unit : Snapshot.Units)
+		{
+			if (Unit.Side == Context.GetOpponentSide() && Unit.bAlive)
+			{
+				Opponents.Add(&Unit);
+			}
+		}
+
+		TArray<int32> Goals;
+		for (const FIntPoint& Tile : Region)
+		{
+			const int32 Bonus = GetElevation(Grid, Tile) * Rules.RangeBonusPerElevation;
+			for (const FDwAiReach& Reach : Context.Reach)
+			{
+				// Cheap range filter first; then the attack's own rules decide, as they will when the unit gets there.
+				if (!Opponents.ContainsByPredicate([&](const FDwUnitSnapshot* O) { return FDwLineOfSight::GetDistance(Rules, Tile, O->Tile) <= Reach.Range + Bonus; }))
+				{
+					continue;
+				}
+				FDwTargetingContext Targeting = MakeTargeting(Snapshot, Context.Unit, Reach.Ability);
+				Targeting.SourceTileOverride = Tile;
+				TArray<FDwAbilityTarget> Targets;
+				FDwCombatQueries::GetAbilityCDO(Reach.Ability)->GatherValidTargets(Targeting, Targets);
+				if (Targets.ContainsByPredicate([&](const FDwAbilityTarget& T) { return T.IsUnit() && Opponents.ContainsByPredicate([&](const FDwUnitSnapshot* O) { return O->Handle == T.Unit; }); }))
+				{
+					Goals.Add(Grid.ToIndex(Tile));
+					break;
+				}
+			}
+		}
+		// Nobody it can hit is reachable (a cutlass against a pirate in the nest, a crew walled off): standing next to them
+		// achieves nothing, the guns still can. Next turn every cannon is loaded again, so this turn's shots don't matter.
+		const UDwAbilityDefinition* Cannon = FDwCombatQueries::FindAbility(*Self, DwTags::Ability_Cannon);
+		const bool bGunsHaveTarget = Snapshot.FindShip(Context.GetOpponentSide())
+			|| Opponents.ContainsByPredicate([](const FDwUnitSnapshot* O) { return O->Tags.HasTagExact(DwTags::Unit_CannonTarget); });
+		if (Goals.IsEmpty() && Cannon && CanUseLater(*Self, *Cannon) && bGunsHaveTarget)
+		{
+			const TArray<FIntPoint> Loaded;
+			for (const FIntPoint& Tile : Region)
+			{
+				if (FDwCannonRules::FindUsableCannon(Grid, Tile, Context.Side, Loaded).IsSet())
+				{
+					Goals.Add(Grid.ToIndex(Tile));
+				}
+			}
+		}
+		WalkCostToSources(Grid, Rules, Context.Side, Goals, Field);
+		return Field;
+	}
+
 	static float DangerAt(const FDwAiScoringContext& Context, FIntPoint Tile, TConstArrayView<FDwUnitHandle> Ignored)
 	{
 		const FDwGridModel& Grid = Context.Snapshot->Grid;
@@ -125,16 +269,16 @@ FDwAiScoringContext FDwAiScoringContext::Make(const FDwCombatSnapshot& Snapshot,
 	Context.Side = Self->Side;
 	const EDwSide Opponents = Context.GetOpponentSide();
 
-	// Own attacks: how far each reaches (Approach) and whether height helps (HighGround).
+	// Own attacks it can pay for (MP never comes back, C9): where they hit from (Approach) and whether height helps (HighGround).
 	for (const UDwAbilityDefinition* Ability : Self->Abilities)
 	{
 		const FDwTargetingContext Targeting = MakeTargeting(Snapshot, InUnit, Ability);
-		if (Ability && FDwAiScoring::IsUnitAttack(*Ability, Targeting))
+		if (Ability && FDwAiScoring::IsUnitAttack(*Ability, Targeting) && CanUseLater(*Self, *Ability))
 		{
 			const FDwTargetingRules& Rules = FDwCombatQueries::GetAbilityCDO(Ability)->GetTargetingRules(Targeting);
 			FDwAiReach& Reach = Context.Reach.AddDefaulted_GetRef();
+			Reach.Ability = Ability;
 			Reach.Range = GetRange(Rules, *UDwGameplayAbility::GetTuning(Ability));
-			Reach.bCanTargetElevated = Rules.bCanTargetElevated;
 			Reach.bRanged = Reach.Range >= 2 && Rules.bCanTargetElevated;
 		}
 	}
@@ -159,8 +303,7 @@ FDwAiScoringContext FDwAiScoringContext::Make(const FDwCombatSnapshot& Snapshot,
 			const UDwGameplayAbility* CDO = FDwCombatQueries::GetAbilityCDO(Ability);
 			const FDwAbilityTuningRow& Tuning = *UDwGameplayAbility::GetTuning(Ability);
 			const FDwTargetingRules& Rules = CDO->GetTargetingRules(Targeting);
-			if (Tuning.ManaCost > Opponent.Mana || Opponent.Tags.HasAny(CDO->GetBlockingTags())
-				|| !Self->Tags.HasAll(Rules.RequiredTargetTags) || Self->Tags.HasAny(Rules.BlockedTargetTags))
+			if (!CanUseLater(Opponent, *Ability) || !Self->Tags.HasAll(Rules.RequiredTargetTags) || Self->Tags.HasAny(Rules.BlockedTargetTags))
 			{
 				continue;
 			}
@@ -230,30 +373,22 @@ void FDwAiScoring::ScorePosition(const FDwAiScoringContext& Context, FIntPoint T
 	OutTerms.CannonAffinity = Context.bPreferCannons && FDwCannonRules::FindUsableCannon(Grid, Tile, Context.Side, Snapshot.CannonsUsed).IsSet() ? 1.f : 0.f;
 	OutTerms.HighGround = Context.Reach.ContainsByPredicate([](const FDwAiReach& R) { return R.bRanged; }) ? static_cast<float>(Elevation) : 0.f;
 
-	// Approach: tiles short of hitting the nearest opponent this unit's attacks can reach at all (melee can't reach the nest).
-	TOptional<int32> Shortfall;
-	TOptional<int32> Nearest;
-	for (const FDwUnitSnapshot& Opponent : Snapshot.Units)
+	// Approach: the walk still needed from here to where the unit can hurt the opponents (0 when there's nowhere to go).
+	const int32 Walk = Context.GetApproachCost(Tile);
+	OutTerms.Approach = Walk == MAX_int32 ? 0.f : static_cast<float>(Walk);
+}
+
+int32 FDwAiScoringContext::GetApproachCost(FIntPoint Tile) const
+{
+	if (!Snapshot || !Snapshot->Grid.IsInBounds(Tile))
 	{
-		if (Opponent.Side != Opponents || !Opponent.bAlive)
-		{
-			continue;
-		}
-		const int32 Distance = FDwLineOfSight::GetDistance(Snapshot.GridRules, Tile, Opponent.Tile);
-		Nearest = FMath::Min(Nearest.Get(MAX_int32), Distance);
-		const bool bOpponentElevated = GetElevation(Grid, Opponent.Tile) > 0;
-		for (const FDwAiReach& Reach : Context.Reach)
-		{
-			if (!Reach.bCanTargetElevated && (bOpponentElevated || Elevation > 0))
-			{
-				continue;
-			}
-			const int32 Range = Reach.Range + Elevation * Snapshot.GridRules.RangeBonusPerElevation;
-			Shortfall = FMath::Min(Shortfall.Get(MAX_int32), FMath::Max(0, Distance - Range));
-		}
+		return MAX_int32;
 	}
-	// No attack can reach anyone from here: at least close the distance.
-	OutTerms.Approach = static_cast<float>(Shortfall.IsSet() ? Shortfall.GetValue() : (Nearest.IsSet() ? FMath::Max(0, Nearest.GetValue() - 1) : 0));
+	if (!ApproachCost.IsSet())
+	{
+		ApproachCost = DwAiScoring::BuildApproachField(*this);
+	}
+	return ApproachCost.GetValue()[Snapshot->Grid.ToIndex(Tile)];
 }
 
 float FDwAiScoring::DangerAt(const FDwAiScoringContext& Context, FIntPoint Tile)

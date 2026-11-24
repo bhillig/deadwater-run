@@ -11,6 +11,7 @@
 #include "CoreMinimal.h"
 #include "AI/DwAiProfile.h"
 #include "AI/DwCrewAiBrain.h"
+#include "Abilities/DwGA_Charge.h"
 #include "Abilities/DwGA_FireCannon.h"
 #include "Abilities/DwGA_Move.h"
 #include "Abilities/DwGA_UseItem.h"
@@ -40,6 +41,8 @@ struct FDwAiTestBench
 	UDwAbilityDefinition* Rifle = nullptr;
 	/** Ability.Captain.RallyCry slot: heals one ally for 30, range 3. */
 	UDwAbilityDefinition* Heal = nullptr;
+	/** Ability.Captain.Charge (the real UDwGA_Charge): 60, range 6 along a clear straight line, 3 MP. */
+	UDwAbilityDefinition* Charge = nullptr;
 	UDwAbilityDefinition* Move = nullptr;
 	UDwAbilityDefinition* Cannon = nullptr;
 	UDwAbilityDefinition* Item = nullptr;
@@ -57,6 +60,7 @@ struct FDwAiTestBench
 		Row.Damage = 25; Row.Range = 1; AbilityTable->AddRow(TEXT("Sword"), Row);
 		Row = FDwAbilityTuningRow(); Row.Damage = 20; Row.Range = 6; AbilityTable->AddRow(TEXT("Rifle"), Row);
 		Row = FDwAbilityTuningRow(); Row.Heal = 30; Row.Range = 3; AbilityTable->AddRow(TEXT("Heal"), Row);
+		Row = FDwAbilityTuningRow(); Row.Damage = 60; Row.Range = 6; Row.ManaCost = 3; AbilityTable->AddRow(TEXT("Charge"), Row);
 		Row = FDwAbilityTuningRow();
 		AbilityTable->AddRow(TEXT("Move"), Row);
 		AbilityTable->AddRow(TEXT("Cannon"), Row);
@@ -65,6 +69,7 @@ struct FDwAiTestBench
 		Sword = MakeAbility(TEXT("Sword"), UDwTestPayload_Melee::StaticClass(), DwTags::Ability_Attack_Melee);
 		Rifle = MakeAbility(TEXT("Rifle"), UDwAiTestPayload_Rifle::StaticClass(), DwTags::Ability_Attack_Ranged);
 		Heal = MakeAbility(TEXT("Heal"), UDwAiTestPayload_Heal::StaticClass(), DwTags::Ability_Captain_RallyCry);
+		Charge = MakeAbility(TEXT("Charge"), UDwGA_Charge::StaticClass(), DwTags::Ability_Captain_Charge);
 		Move = MakeAbility(TEXT("Move"), UDwGA_Move::StaticClass(), DwTags::Ability_Move);
 		Cannon = MakeAbility(TEXT("Cannon"), UDwGA_FireCannon::StaticClass(), DwTags::Ability_Cannon);
 		Item = MakeAbility(TEXT("Item"), UDwGA_UseItem::StaticClass(), DwTags::Ability_Item);
@@ -183,6 +188,19 @@ struct FDwAiTestBench
 		Snapshot.ActingUnit = Snapshot.ActiveSide == EDwSide::Enemy ? Handle : FDwUnitHandle();
 	}
 
+	/** A crew brain on another shipping Tuning/AiTuning.json row (an enemy crew's personality), with its profile switches. */
+	UDwCrewAiBrain* MakeBrain(FName TuningRow, bool bBoarders = false, bool bPreferCannons = false)
+	{
+		UDwAiProfile* Other = Root(NewObject<UDwAiProfile>(GetTransientPackage(), MakeUniqueObjectName(GetTransientPackage(), UDwAiProfile::StaticClass(), TEXT("DA_AiProfile_Test"))));
+		Other->Tuning.DataTable = AiTable;
+		Other->Tuning.RowName = TuningRow;
+		Other->bBoarders = bBoarders;
+		Other->bPreferCannons = bPreferCannons;
+		UDwCrewAiBrain* OtherBrain = Root(NewObject<UDwCrewAiBrain>(GetTransientPackage()));
+		OtherBrain->Profile = Other;
+		return OtherBrain;
+	}
+
 	FDwCombatCommand Decide(FDwUnitHandle Handle, int32 Seed = 1)
 	{
 		SetActing(Handle);
@@ -194,15 +212,17 @@ struct FDwAiTestBench
 	/**
 	 * Plays Handle's whole turn on the snapshot: every command the brain chooses, applied with Apply, until EndUnit.
 	 * Returns the commands in order (EndUnit last). Every command must pass ValidateCommand or the list ends early.
+	 * WithBrain plays the unit with another brain (e.g. one from MakeBrain), else the bench's.
 	 */
-	TArray<FDwCombatCommand> PlayTurn(FDwUnitHandle Handle, FRandomStream& Rng, FString* OutRejected = nullptr)
+	TArray<FDwCombatCommand> PlayTurn(FDwUnitHandle Handle, FRandomStream& Rng, FString* OutRejected = nullptr, const UDwAiBrain* WithBrain = nullptr)
 	{
 		SetActing(Handle);
 		FDwAiTurnContext Context;
 		TArray<FDwCombatCommand> Commands;
+		const UDwAiBrain* Playing = WithBrain ? WithBrain : Brain;
 		for (int32 Step = 0; Step < 8; ++Step)
 		{
-			const FDwCombatCommand Command = Brain->ChooseNextCommand(Snapshot, Handle, Context, Rng);
+			const FDwCombatCommand Command = Playing->ChooseNextCommand(Snapshot, Handle, Context, Rng);
 			Commands.Add(Command);
 			if (Command.Type == EDwCommandType::EndUnit)
 			{

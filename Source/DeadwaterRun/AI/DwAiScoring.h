@@ -27,11 +27,12 @@ struct FDwAiThreat
 	TArray<FDwAiThreatOption> Options;
 };
 
-/** One of the acting unit's own attacks, for "how far am I from being able to hit someone" (Approach). */
+/** One of the acting unit's own attacks it can pay for, for "how far am I from being able to hit someone" (Approach). */
 struct FDwAiReach
 {
+	/** Its real targeting decides which tiles it can hit someone from (Charge needs a clear line, melee can't reach the nest). */
+	const UDwAbilityDefinition* Ability = nullptr;
 	int32 Range = 0;
-	bool bCanTargetElevated = true;
 	/** Ranged and able to shoot into or out of the nest: elevation is worth something (HighGround). */
 	bool bRanged = false;
 };
@@ -58,8 +59,18 @@ struct DEADWATERRUN_API FDwAiScoringContext
 	const FDwUnitSnapshot* GetUnit() const { return Snapshot ? Snapshot->FindUnit(Unit) : nullptr; }
 	EDwSide GetOpponentSide() const { return Side == EDwSide::Player ? EDwSide::Enemy : EDwSide::Player; }
 
+	/**
+	 * Approach for every tile (grid index): the move cost the unit would walk from there to the nearest tile it could
+	 * attack an opponent from (or, if it can reach none, fire a cannon from), around masts, cabins and the nest, through
+	 * allies but not opponents. MAX_int32 = it can't get there. Built on first use (the Kraken brain never asks).
+	 */
+	int32 GetApproachCost(FIntPoint Tile) const;
+
 	/** Scratch copy of units and ships for "does this end the fight" checks; built on first use. */
 	mutable TOptional<FDwCombatSnapshot> OutcomeScratch;
+
+private:
+	mutable TOptional<TArray<int32>> ApproachCost;
 };
 
 /**
@@ -69,7 +80,11 @@ struct DEADWATERRUN_API FDwAiScoringContext
  */
 struct DEADWATERRUN_API FDwAiScoring
 {
-	/** Positional terms of ending the move on Tile, except Danger (see DangerAt): SinkingRisk, Approach, HighGround, Boarding, CannonAffinity. */
+	/**
+	 * Positional terms of ending the move on Tile, except Danger (see DangerAt): SinkingRisk, Approach, HighGround, Boarding,
+	 * CannonAffinity. Approach is walking cost (FDwAiScoringContext::GetApproachCost), not distance as the crow flies: a
+	 * straight-line measure has local minima behind a mast or a nest where every step looks like a step back.
+	 */
 	static void ScorePosition(const FDwAiScoringContext& Context, FIntPoint Tile, FDwAiWeights& OutTerms);
 
 	/** Damage the opponents could deal to the unit standing on Tile during their next turn (sum of each one's best option). */
