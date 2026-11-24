@@ -23,7 +23,7 @@ The roster is defined in `DeadwaterRun.md` → "AI Agents". Definitions live in 
 | `balance-designer` | Tuning values in data, balance reports (Uses Opus 5.5) |
 | `qa-tester` | Breaking the game, bug reports, verifying deliveries (Uses Sonnet 5.5)|
 | `sound-wrangler` | Sound .uassets, mixes, combat sound cues (Uses Sonnet 5.5) |
-| `release-engineer` | Packaging, Steamworks, store page and release checklists (Uses Sonnet 5.5) |
+| `release-engineer` | Packaging, Itch.io butler uploads, Itch page and release checklists (Uses Sonnet 5.5) |
 | `asset-scraper` | Third-party asset options (read-only, never imports) (Uses Sonnet 5.5)|
 | `event-writer` | Event drafts (text, choices, outcomes) from a brief; never adds them to `Content/` (Uses Opus 5.5) |
 | `content-critic` | Scores any generated content 0-100 with reasons against the GDD, tuning and `Docs/ContentPipeline/style-guide.md`; read-only (Uses Opus 5.5) |

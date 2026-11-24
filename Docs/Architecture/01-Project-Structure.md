@@ -56,7 +56,7 @@ Content/DeadwaterRun/
   Dev/           test maps, tool EUWs, templates - never cooked                    (tools-engineer)
 Tuning/          *.json tuning sources (repo root, outside Content)                (balance-designer)
 Tools/           Build.ps1, Test.ps1, Validate.ps1, Simulate.ps1, ImportTuning.ps1  (tools-engineer)
-Build/           packaging and Steam scripts                                       (release-engineer)
+Build/           packaging and Itch upload scripts                                 (release-engineer)
 ```
 
 ## Naming

@@ -46,7 +46,7 @@ Deadwater Run is built by **11 specialist AI agents** running in Claude Code, ea
 | Sound Wrangler | Approved audio → Sound .uassets | Sound cues, MetaSounds, mixes, combat sound hooks |
 | Asset Scraper | Prompt → Asset options report | Finds art/audio/fonts Synty doesn't cover (never imports) |
 | QA Tester | Game → Bug report + suggested fix | Breaking the game, verifying deliveries |
-| Release Engineer | Build → Packaged build / Checklist | Packaging, Steamworks, store page, deadlines |
+| Release Engineer | Build → Packaged build / Checklist | Packaging, Itch.io uploads, Itch page, release dates |
 
 ### Agent Roles, Connections and Data Flow
 
@@ -91,8 +91,8 @@ flowchart TD
     subgraph Ship["4 · Verify & Ship"]
         QA["QA Tester"]
         RE["Release Engineer"]
-        Steam(["Steam"])
-        RE -->|depot upload| Steam
+        Itch(["Itch.io"])
+        RE -->|butler push| Itch
     end
 
     Orch -->|architecture tickets first| Design

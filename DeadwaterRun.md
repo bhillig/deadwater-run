@@ -189,9 +189,9 @@
 
 #### Release Engineer
 
-- **Role**: Packages builds and prepares Steam releases (depot uploads, store page checklist, deadlines)
+- **Role**: Packages builds and prepares Itch.io releases (butler uploads, Itch page checklist, release dates)
 - **Input & Output**: Prompt -> Packaged build / release checklist
-- **What the player sees**: A stable build on Steam, launched on time
+- **What the player sees**: A stable build on Itch.io, launched on time
 
 #### Asset Scraper
 

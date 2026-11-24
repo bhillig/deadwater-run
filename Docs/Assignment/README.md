@@ -42,7 +42,7 @@ score = 10 × value × critical × milestone × unblocks × urgency × momentum 
 | critical | 1.5 if on the Roadmap critical path | Late critical-path work delays launch |
 | milestone | 2.0 if the earliest unmet weekly exit criterion needs it | Finish the current milestone before starting the next |
 | unblocks | 1 + 0.25 per ticket waiting on it (transitive) | Unblock other agents |
-| urgency | 1 + 1 per week past its planned end (max 2); 1.2 if due within 7 days | Launch is a fixed date (Dec 10) |
+| urgency | 1 + 1 per week past its planned end (max 2); 1.2 if due within 7 days | Launch is a fixed date (Dec 3) |
 | momentum | 1 + 0.5 × coverage | Finish half-built work before starting new work |
 | cost | planned days, square-rooted | Cheap wins rank higher without starving big critical tickets |
 
