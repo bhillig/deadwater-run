@@ -465,7 +465,7 @@ Ticket IDs are defined in `Roadmap.md`.
 |---|---|---|
 | Pick 1 of 3 captains (DR Main loop, Scope Run loop) | 05, 16 | DW-201, DW-206, DW-207, DW-208, DW-210 |
 | Map of fights, shops, events (DR Main loop) | 09 | DW-202, DW-211 |
-| Kraken final boss, 500 HP (DR Boss) | 08 | DW-209, DW-301, DW-302, DW-303 |
+| Kraken final boss, 1600 HP (DR Boss) | 08 | DW-209, DW-301, DW-302, DW-303 |
 | Team Leader: synergy moves | 05 | DW-207 |
 | Team Leader: defend other crew | 05 | DW-207 |
 | Team Leader: Rally Cry, Grapple Hook (range 10, viewing distance) | 05, 04 | DW-207 |

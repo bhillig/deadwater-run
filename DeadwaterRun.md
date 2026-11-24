@@ -119,7 +119,7 @@
 
 ### At The Final Boss Node
 - Players must fight a Kraken to beat the game
-- Kraken has 500 HP
+- Kraken has 1600 HP (500 until DW-401: cannons hit the body for full damage, so 500 fell in ~2 rounds)
 - Players can target the Kraken’s tentacles to reduce its actions/damage
 - Initial phase (Kraken can perform the following moves):
     - Tentacle slam (One player or the ship gets dealt 50 damage)

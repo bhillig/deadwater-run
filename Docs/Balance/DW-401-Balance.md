@@ -112,6 +112,8 @@ Unchanged on purpose:
 
 ## Judgment calls (options for Brandon)
 
+**Brandon's ruling, 2026-11-24:** the defaults, 1a / 2a / 3a / 4a / 5a / 6a. The committed numbers stand, including the design changes Kraken body 1600 and Conqueror 200 HP (now in `DeadwaterRun.md`). Difficulty stays until the DW-404 playtests. The stalled fights (R1) went to ai-engineer.
+
 1. **Team Leader leads by ~10 pts (60 vs 50).** His edge is Veteran Crew (+50% XP, more levels and perks). Synergy and Rally cost barely move it.
    - a) Accept: a real player gains more from smart Defend and Grapple play with the other two captains.
    - b) Veteran Crew +50% -> +25% XP (`XpMultiplier` 1.25; design number).
@@ -170,6 +172,6 @@ Unchanged on purpose:
   - `Tests/Combat/DwCombatContentSpec.cpp`: the enemy hull is read from its `ShipTuning` row. The sink test sets the hull to just under four shots, so the rule "the shot that takes it to 0 sinks it" is tested independently of tuning.
   - `Tests/Run/DwRunContentSpec.cpp`: the shop test wins fights until the gold covers repair + recruit + third cannon, reading prices and `RepairAmount` from tuning.
   - `Tests/Run/DwCaptainSpec.cpp`: refills MP before each Smoke and Fire in the surrender test.
-  - `Tests/Data/DwDataSpec.cpp` (the "design doc numbers" guard): Conqueror 200 HP, Kraken 1600 HP, `RepairAmount` 60, each commented as DW-401 pending approval. **If you reject a design-number change, revert that line together with the JSON.**
+  - `Tests/Data/DwDataSpec.cpp` (the "design doc numbers" guard): Conqueror 200 HP, Kraken 1600 HP, `RepairAmount` 60, each commented as approved by Brandon on 2026-11-24.
 - `Tests/Run/DwRunContentSpec.cpp` also: with the new prices, seed 7's purse only covers all three buys at the pre-boss shop, so the next fight is the Kraken. The enemy-ship cannon comparison now runs only when there is an enemy ship.
 - Result after the changes: `BUILD PASS (0 warnings)`, **`TEST PASS 484/484`**. `Simulate.ps1` at 3000 runs: `SIM FAIL` only because of the 19 stuck runs (R1).

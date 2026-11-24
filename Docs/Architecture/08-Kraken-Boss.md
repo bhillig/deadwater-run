@@ -1,7 +1,7 @@
 # 08 - Kraken Boss
 
 ## Problem
-- Final node: the Kraken, 500 HP. Players can target its tentacles to reduce its actions/damage.
+- Final node: the Kraken, 1600 HP (500 until DW-401). Players can target its tentacles to reduce its actions/damage.
 - Initial phase moves: Tentacle Slam (50 to one crew member or the ship), Kranky Swipe (20 to the whole team), Tentacle Grab (one crew member can't move for a turn).
 - Enraged phase below 30% HP: Arms of Fury (3-5 random hits of 40), Eyes of the Sea (two actions next turn).
 - Fixed decision: its own board layout (player ship plus tentacle targets). Big moves must be telegraphed (ai-engineer rule).
