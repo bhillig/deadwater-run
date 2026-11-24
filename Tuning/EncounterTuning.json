@@ -1,9 +1,9 @@
 [
 	{ "Name": "Placeholder",   "BaseGold": 150, "ClearXp": 80,  "bGrantsAbilityChoice": true },
-	{ "Name": "Deckhands",     "BaseGold": 150, "ClearXp": 80,  "bGrantsAbilityChoice": true },
-	{ "Name": "PowderMonkeys", "BaseGold": 170, "ClearXp": 90,  "bGrantsAbilityChoice": true },
-	{ "Name": "Sharpshooters", "BaseGold": 195, "ClearXp": 105, "bGrantsAbilityChoice": true },
-	{ "Name": "Cutthroats",    "BaseGold": 215, "ClearXp": 115, "bGrantsAbilityChoice": true },
-	{ "Name": "DreadCrew",     "BaseGold": 240, "ClearXp": 130, "bGrantsAbilityChoice": true },
+	{ "Name": "Deckhands",     "BaseGold": 110, "ClearXp": 80,  "bGrantsAbilityChoice": true },
+	{ "Name": "PowderMonkeys", "BaseGold": 120, "ClearXp": 90,  "bGrantsAbilityChoice": true },
+	{ "Name": "Sharpshooters", "BaseGold": 125, "ClearXp": 105, "bGrantsAbilityChoice": true },
+	{ "Name": "Cutthroats",    "BaseGold": 130, "ClearXp": 115, "bGrantsAbilityChoice": true },
+	{ "Name": "DreadCrew",     "BaseGold": 140, "ClearXp": 130, "bGrantsAbilityChoice": true },
 	{ "Name": "Kraken",        "BaseGold": 0,   "ClearXp": 0,   "bGrantsAbilityChoice": false }
 ]

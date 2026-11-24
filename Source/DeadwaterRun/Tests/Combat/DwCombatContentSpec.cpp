@@ -11,8 +11,11 @@
 #include "Combat/DwCombatRules.h"
 #include "Combat/DwEncounterSetupBuilder.h"
 #include "Core/DwAssetManager.h"
+#include "Abilities/DwAttributeSets.h"
+#include "Combat/DwShip.h"
 #include "Core/DwGameData.h"
 #include "Data/DwEncounterDefinition.h"
+#include "Data/Tuning/DwTuningRows.h"
 #include "Misc/DataValidation.h"
 #include "Tests/Combat/DwCombatTestFixture.h"
 
@@ -128,12 +131,18 @@ void FDwCombatContentSpec::Define()
 		}
 	});
 
-	It("spawns the placeholder 3 v 3 from DA_Encounter_Placeholder on two 250 HP ships", [this]()
+	It("spawns the placeholder 3 v 3 from DA_Encounter_Placeholder on the 250 HP player ship and the tuned enemy ship", [this]()
 	{
 		if (!StartPlaceholderFight()) { return; }
 		TestEqual(TEXT("Six units"), F.Combat->GetUnits().Num(), 6);
 		TestEqual(TEXT("Player ship"), F.ShipHealth(EDwSide::Player), 250.f);
-		TestEqual(TEXT("Enemy ship"), F.ShipHealth(EDwSide::Enemy), 250.f);
+		// The enemy hull is a balance number (DT_ShipTuning EnemyPlaceholder, DW-401): read it, don't pin it.
+		const UDwEncounterDefinition* EncounterDef = DwCombatContentSpec::Load<UDwEncounterDefinition>(DwCombatContentSpec::Encounter);
+		const FDwShipTuningRow* EnemyRow = EncounterDef ? EncounterDef->ShipTuning.GetRow<FDwShipTuningRow>(TEXT("DwCombatContentSpec")) : nullptr;
+		if (TestNotNull(TEXT("Enemy ship tuning row"), EnemyRow))
+		{
+			TestEqual(TEXT("Enemy ship at its tuned hull"), F.ShipHealth(EDwSide::Enemy), static_cast<float>(EnemyRow->MaxHealth));
+		}
 		TestEqual(TEXT("Two player cannons"), F.Combat->GetShip(EDwSide::Player)->GetCannonTiles().Num(), 2);
 		TestTrue(TEXT("Enemy cannons"), F.Combat->GetShip(EDwSide::Enemy)->GetCannonTiles().Num() > 0);
 		for (const ADwCombatUnit* Unit : F.Combat->GetUnits())
@@ -161,11 +170,14 @@ void FDwCombatContentSpec::Define()
 		TestTrue(TEXT("Preview == result"), Preview.bValid && Preview.Targets.Num() == 1 && Preview.Targets[0].Damage == 25);
 	});
 
-	It("sinks the enemy ship in four cannon turns", [this]()
+	It("sinks the enemy ship with the cannon shot that takes its hull to 0", [this]()
 	{
 		if (!StartPlaceholderFight()) { return; }
 		const FDwUnitHandle Gunner = F.CrewHandle(2);
 		F.Combat->MoveUnit(Gunner, F.Combat->GetShip(EDwSide::Player)->GetCannonTiles()[0]);
+		// Four shots' worth of hull, minus one: the hull is a balance number (DW-401); the rule is that the fourth shot sinks it.
+		const float Shot = F.Combat->GetShip(EDwSide::Player)->GetCannonDamage();
+		F.Combat->GetShip(EDwSide::Enemy)->GetAbilitySystemComponent()->SetNumericAttributeBase(UDwShipAttributeSet::GetHealthAttribute(), 4.f * Shot - 1.f);
 		for (int32 Turn = 0; Turn < 4; ++Turn)
 		{
 			TestEqual(TEXT("Fire"), F.Combat->SubmitCommand(FDwCombatCommand::MakeAbility(Gunner, DwTags::Ability_Cannon,
@@ -175,7 +187,7 @@ void FDwCombatContentSpec::Define()
 				F.EndTurn();
 			}
 		}
-		TestEqual(TEXT("4 x 70 >= 250"), F.Combat->GetOutcome(), EDwCombatOutcome::VictorySunk);
+		TestEqual(TEXT("4 shots >= the hull"),F.Combat->GetOutcome(), EDwCombatOutcome::VictorySunk);
 	});
 
 	It("heals with grog", [this]()

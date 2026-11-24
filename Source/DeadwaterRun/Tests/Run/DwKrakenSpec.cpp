@@ -1,7 +1,7 @@
 // Copyright Brandon Hillig 2026
 
 // DW-209 + DW-301: the Kraken boss (Docs/Architecture/08-Kraken-Boss.md). The arena builder, layout rules and Kraken
-// rules are pure; the encounter is the real content (Tools/CreateCombatContent.ps1): a 500 HP body out in the water and
+// rules are pure; the encounter is the real content (Tools/CreateCombatContent.ps1): a body (HP from DT_UnitTuning) out in the water and
 // four 60 HP tentacles along the rail, five moves gated by phase, cut tentacles weakening it (B2), melee only reaching
 // the tentacles while muskets and cannons reach the body (B4), the enraged phase starting on its next turn (B7), and
 // intents stored for the brain and HUD. The Kraken's turns are scripted here; choosing moves is DW-302's brain. Played
@@ -134,6 +134,9 @@ BEGIN_DEFINE_SPEC(FDwKrakenSpec, "DeadwaterRun.Run.Kraken",
 	{
 		F.Asc(Unit)->SetNumericAttributeBase(UDwUnitAttributeSet::GetHealthAttribute(), Health);
 	}
+
+	/** The body's max HP: a balance number (DT_UnitTuning KrakenBody, DW-401), so tests read it instead of pinning it. */
+	float BodyMax() const { return F.Attr(Body(), UDwUnitAttributeSet::GetMaxHealthAttribute()); }
 
 	/** Big crews, so random multi-hit moves never kill anyone (or the captain, C10) mid-test. */
 	void ToughenCrew()
@@ -323,7 +326,7 @@ void FDwKrakenSpec::Define()
 	Describe("Encounter", [this]()
 	{
 #if WITH_EDITOR
-		It("is DA_GameData.KrakenEncounter: valid, a 500 HP body with five moves, four 60 HP tentacles, two phases", [this]()
+		It("is DA_GameData.KrakenEncounter: valid, a body with its tuned HP, five moves, four 60 HP tentacles, two phases", [this]()
 		{
 			const UDwEncounterDefinition* Encounter = Kraken();
 			if (!TestNotNull(TEXT("KrakenEncounter"), Encounter) || !TestNotNull(TEXT("Kraken definition"), Encounter->Kraken.Get())) { return; }
@@ -346,7 +349,7 @@ void FDwKrakenSpec::Define()
 			const FDwUnitTuningRow* BodyRow = Def->Body ? Def->Body->GetTuningRow<FDwUnitTuningRow>() : nullptr;
 			const FDwUnitTuningRow* TentacleRow = Def->Tentacle ? Def->Tentacle->GetTuningRow<FDwUnitTuningRow>() : nullptr;
 			if (!TestNotNull(TEXT("KrakenBody row"), BodyRow) || !TestNotNull(TEXT("KrakenTentacle row"), TentacleRow)) { return; }
-			TestEqual(TEXT("500 HP body"), static_cast<float>(BodyRow->GetMaxHealthAtLevel(1)), 500.f);
+			TestTrue(TEXT("Body HP from tuning (the design number is checked in DeadwaterRun.Data.Tuning)"), BodyRow->GetMaxHealthAtLevel(1) > 0);
 			TestEqual(TEXT("60 HP tentacles (B1)"), static_cast<float>(TentacleRow->GetMaxHealthAtLevel(1)), 60.f);
 			const FGameplayTag BodyTags[] = { DwTags::Unit_Kraken_Body, DwTags::Unit_Immune_Fear, DwTags::Unit_Immune_Grapple, DwTags::Unit_Immune_Freeze,
 				DwTags::Unit_Immune_Melee, DwTags::Unit_CannonTarget };
@@ -481,12 +484,12 @@ void FDwKrakenSpec::Define()
 
 	Describe("Fight", [this]()
 	{
-		It("spawns the 500 HP body on its anchor and four 60 HP tentacles on the rail, with no enemy ship", [this]()
+		It("spawns the body at full HP on its anchor and four 60 HP tentacles on the rail, with no enemy ship", [this]()
 		{
 			FDwEncounterSetup Setup;
 			if (!StartFreshKrakenFight(Setup)) { return; }
 			TestEqual(TEXT("Eight units: three crew, the body, four tentacles"), F.Combat->GetUnits().Num(), 8);
-			TestEqual(TEXT("500 HP"), F.Health(Body()), 500.f);
+			TestTrue(TEXT("Full HP"), BodyMax() > 0.f && F.Health(Body()) == BodyMax());
 			TestEqual(TEXT("Body on the anchor"), F.Unit(Body())->GetTile(), AnchorTile());
 			for (int32 Index = 0; Index < 4; ++Index)
 			{
@@ -525,9 +528,10 @@ void FDwKrakenSpec::Define()
 			TestTrue(*FString::Printf(TEXT("Says melee hits the tentacles (%s)"), *Reason.ToString()), Reason.ToString().Contains(TEXT("tentacles")));
 			TestEqual(TEXT("Cutlass at the tentacle beside him"), Attack(Swordsman(), Cutlass, Tentacle(2)), EDwCommandResult::Accepted);
 			TestEqual(TEXT("60 - 25"), F.Health(Tentacle(2)), 35.f);
-			TestEqual(TEXT("The body is untouched (B3)"), F.Health(Body()), 500.f);
+			const float Full = BodyMax();
+			TestEqual(TEXT("The body is untouched (B3)"), F.Health(Body()), Full);
 			TestEqual(TEXT("Musket from the rail at the body"), Attack(Sniper(), Musket, Body()), EDwCommandResult::Accepted);
-			TestEqual(TEXT("500 - 20"), F.Health(Body()), 480.f);
+			TestEqual(TEXT("Full - 20"), F.Health(Body()), Full - 20.f);
 
 			// Cannons: with no enemy ship the guns aim at the body, flat CannonDamage whatever the gunner's bonus.
 			const UDwAbilityDefinition* Cannon = GameData->CommonAbilities.FindByPredicate([](const UDwAbilityDefinition* A) { return A && A->AbilityTag == DwTags::Ability_Cannon; })->Get();
@@ -545,7 +549,7 @@ void FDwKrakenSpec::Define()
 			const FDwAbilityPreview Preview = CannonCdo->PreviewOutcome(Context, AtUnit(Body()));
 			TestTrue(TEXT("Preview: 70"), Preview.bValid && Preview.Targets.Num() == 1 && Preview.Targets[0].Damage == 70);
 			TestEqual(TEXT("Fire"), F.Combat->SubmitCommand(FDwCombatCommand::MakeAbility(Captain(), DwTags::Ability_Cannon, AtUnit(Body()))), EDwCommandResult::Accepted);
-			TestEqual(TEXT("480 - 70, no gunner bonus"), F.Health(Body()), 410.f);
+			TestEqual(TEXT("Full - 20 - 70, no gunner bonus"), F.Health(Body()), Full - 90.f);
 		});
 
 		It("gives tentacles no turn and the body one action a turn", [this]()
@@ -653,7 +657,7 @@ void FDwKrakenSpec::Define()
 				FDwEncounterSetup Setup;
 				if (!StartFreshKrakenFight(Setup, Seed)) { return; }
 				ToughenCrew();
-				SetHealth(Body(), 140.f); // 28%: enraged from its next turn
+				SetHealth(Body(), 0.28f * BodyMax()); // 28%: enraged from its next turn
 				bool bUsed = false;
 				ScriptKraken([&](UDwCombatSubsystem&, FDwUnitHandle)
 				{
@@ -680,7 +684,7 @@ void FDwKrakenSpec::Define()
 			FDwEncounterSetup Setup;
 			if (!StartFreshKrakenFight(Setup)) { return; }
 			ToughenCrew();
-			SetHealth(Body(), 140.f);
+			SetHealth(Body(), 0.28f * BodyMax());
 			int32 Turn = 0;
 			TArray<float> Actions;
 			TArray<EDwCommandResult> Second;
@@ -774,9 +778,9 @@ void FDwKrakenSpec::Define()
 				SlamResults.Add(KrakenUses(DwTags::Ability_Kraken_TentacleSlam, AtUnit(Swordsman())));
 			});
 
-			SetHealth(Body(), 150.f); // exactly 30%: still the initial phase
+			SetHealth(Body(), BodyMax() * 3.f / 10.f); // exactly 30%: still the initial phase
 			F.EndTurn();
-			SetHealth(Body(), 145.f); // 29%, during the player's turn
+			SetHealth(Body(), BodyMax() * 29.f / 100.f); // 29%, during the player's turn
 			TestEqual(TEXT("Not mid-turn"), F.Combat->GetKrakenState().PhaseId, FName(TEXT("Initial")));
 			TestEqual(TEXT("No phase event yet"), F.Listener->Count(EDwCombatEventType::PhaseChanged), 0);
 			F.EndTurn();
@@ -930,7 +934,7 @@ void FDwKrakenSpec::Define()
 			TestTrue(TEXT("Boss fight"), Setup.OutcomeConfig.bIsBossFight);
 			TestFalse(TEXT("No enemy ship"), Setup.bHasEnemyShip);
 			TestEqual(TEXT("Every survivor aboard"), Setup.Crew.Num(), S.CountLivingCrew());
-			TestEqual(TEXT("The Kraken at 500"), F.Health(RunBody()), 500.f);
+			TestEqual(TEXT("The Kraken at full HP"), F.Health(RunBody()), F.Attr(RunBody(), UDwUnitAttributeSet::GetMaxHealthAttribute()));
 			const int32 Cleared = S.Stats.NodesCleared;
 
 			CaptainKillsEveryEnemy();

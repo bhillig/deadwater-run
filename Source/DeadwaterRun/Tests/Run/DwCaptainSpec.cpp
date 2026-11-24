@@ -142,6 +142,9 @@ void FDwCaptainSpec::Define()
 				{
 					R.PassRound();
 				}
+				// The rule under test is Fear stacking to a surrender; MP cost is a balance number (K13, DW-401), so keep MP full.
+				R.F.Asc(R.CaptainUnit())->SetNumericAttributeBase(UDwUnitAttributeSet::GetManaAttribute(),
+					R.F.Attr(R.CaptainUnit(), UDwUnitAttributeSet::GetMaxManaAttribute()));
 				TestEqual(*FString::Printf(TEXT("Cast %d"), Cast + 1), R.Use(R.CaptainUnit(), Smoke, Enemies[0]), EDwCommandResult::Accepted);
 			}
 			TestEqual(TEXT("They surrender"), R.F.Combat->GetOutcome(), EDwCombatOutcome::VictorySurrender);

@@ -148,7 +148,8 @@ void FDwKrakenHudSpec::Define()
 			const FDwBossView& Boss = Hud->GetBoss();
 			TestTrue(TEXT("Present"), Boss.bPresent);
 			TestEqual(TEXT("Name"), Boss.Name.ToString(), FString(TEXT("The Kraken")));
-			TestTrue(TEXT("500 / 500"), Boss.Health == 500.f && Boss.MaxHealth == 500.f);
+			// The body's HP is a balance number (DT_UnitTuning KrakenBody, DW-401): the bar shows it full, whatever it is.
+			TestTrue(TEXT("Full / full"), Boss.MaxHealth > 0.f && Boss.Health == Boss.MaxHealth);
 			TestFalse(TEXT("Calm"), Boss.bEnraged);
 			TestTrue(TEXT("No phase label while calm"), Boss.PhaseText.IsEmpty());
 			TestEqual(TEXT("Tentacles"), Boss.TentacleText.ToString(), FString(TEXT("Tentacles 4/4")));

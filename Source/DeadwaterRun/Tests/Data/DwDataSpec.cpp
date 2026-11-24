@@ -110,7 +110,9 @@ void FDwDataSpec::Define()
 				const FDwUnitTuningRow* R = DwDataSpec::Row<FDwUnitTuningRow>(GameData->TuningTables.Unit, Unit);
 				if (TestNotNull(Unit, R))
 				{
-					TestEqual(FString::Printf(TEXT("%s HP"), Unit), R->MaxHealth, 100);
+					// DW-401 (pending Brandon's approval, K13 "Conqueror base stats"): the Conqueror is "significantly stronger than his crew", 200 HP.
+					const int32 ExpectedHp = FCString::Strcmp(Unit, TEXT("Captain_Conqueror")) == 0 ? 200 : 100;
+					TestEqual(FString::Printf(TEXT("%s HP"), Unit), R->MaxHealth, ExpectedHp);
 					TestEqual(FString::Printf(TEXT("%s MP"), Unit), R->MaxMana, 20);
 					TestEqual(FString::Printf(TEXT("%s move"), Unit), R->MoveRange, 5);
 					TestEqual(FString::Printf(TEXT("%s actions"), Unit), R->MaxActionPoints, 1);
@@ -155,7 +157,8 @@ void FDwDataSpec::Define()
 			const FDwAbilityTuningRow* Grab = DwDataSpec::Row<FDwAbilityTuningRow>(A, TEXT("Kraken_TentacleGrab"));
 			const FDwAbilityTuningRow* Fury = DwDataSpec::Row<FDwAbilityTuningRow>(A, TEXT("Kraken_ArmsOfFury"));
 			if (!TestTrue(TEXT("All Kraken rows exist"), Body && Slam && Swipe && Grab && Fury)) { return; }
-			TestEqual(TEXT("Kraken 500 HP"), Body->MaxHealth, 500);
+			// DW-401 (pending Brandon's approval): the design's 500 fell in ~2 rounds to flat cannon damage (B4), 97% boss wins.
+			TestEqual(TEXT("Kraken 1600 HP (design 500, DW-401)"), Body->MaxHealth, 1600);
 			TestEqual(TEXT("Tentacle Slam 50"), Slam->Damage, 50);
 			TestEqual(TEXT("Kranky Swipe 20"), Swipe->Damage, 20);
 			TestEqual(TEXT("Tentacle Grab 1 turn"), Grab->DurationTurns, 1);
@@ -187,7 +190,7 @@ void FDwDataSpec::Define()
 			TestEqual(TEXT("Plunder 1.5x loot"), Eco->PlunderLootMultiplier, 1.5f);
 			TestEqual(TEXT("Surrender 1.5x loot"), Eco->SurrenderLootMultiplier, 1.5f);
 			TestEqual(TEXT("Repair 100 gold"), Eco->RepairCost, 100);
-			TestEqual(TEXT("Repair +100 hull (P7)"), Eco->RepairAmount, 100);
+			TestEqual(TEXT("Repair +60 hull (P7 placeholder, DW-401)"), Eco->RepairAmount, 60);
 			TestEqual(TEXT("Max crew 4"), Eco->MaxCrew, 4);
 			TestEqual(TEXT("Inventory cap 6 items in total (P10)"), Eco->MaxInventory, 6);
 			TestEqual(TEXT("Recruit level = crew average - 1 (P8)"), Eco->RecruitLevelOffset, -1);

@@ -7,7 +7,7 @@
 		"SurrenderLootMultiplier": 1.5,
 		"PlunderItemChance": 1.0,
 		"RepairCost": 100,
-		"RepairAmount": 100,
+		"RepairAmount": 60,
 		"DisbandRefund": 0,
 		"MaxCrew": 4,
 		"RecruitLevelOffset": -1,

@@ -413,12 +413,21 @@ void FDwRunContentSpec::Define()
 	{
 		if (!StartRun(Captain(TEXT("TeamLeader")))) { return; }
 		const FDwRunState& S = Run->GetState();
-		// Win two fights (the hull knocked down to 150 each time) for the gold, then take the next shop offered.
+		// Prices and gold are balance numbers (DW-401): read what the three buys cost instead of assuming two fights pay for them.
+		const FDwTuningTables& T = GameData->TuningTables;
+		const FDwEconomyTuningRow* Eco = T.Economy ? T.Economy->FindRow<FDwEconomyTuningRow>(TEXT("Default"), TEXT("Shop test")) : nullptr;
+		const FDwShipUpgradeTuningRow* CannonRow = T.ShipUpgrade ? T.ShipUpgrade->FindRow<FDwShipUpgradeTuningRow>(TEXT("ExtraCannon"), TEXT("Shop test")) : nullptr;
+		const FDwUnitTuningRow* SwordRow = T.Unit ? T.Unit->FindRow<FDwUnitTuningRow>(TEXT("Swordsman"), TEXT("Shop test")) : nullptr;
+		const FDwUnitTuningRow* SniperRow = T.Unit ? T.Unit->FindRow<FDwUnitTuningRow>(TEXT("Sniper"), TEXT("Shop test")) : nullptr;
+		if (!TestTrue(TEXT("Economy, ExtraCannon and recruit rows"), Eco && CannonRow && SwordRow && SniperRow)) { return; }
+		const int32 Needed = Eco->RepairCost + FMath::Max(SwordRow->RecruitCost, SniperRow->RecruitCost) + CannonRow->Price;
+		const float Repaired = FMath::Min(150.f + Eco->RepairAmount, 250.f);
+		// Win at least two fights (the hull knocked down to 150 each time) and enough gold for all three, then take the next shop offered.
 		for (int32 Wins = 0; Wins < 12 && Run->GetPhase() != EDwRunPhase::Shop; ++Wins)
 		{
 			const TArray<int32> Choices = Run->GetChoices();
 			const int32* Shop = Choices.FindByPredicate([&S](int32 Index) { return S.Map.Nodes[Index].Type == EDwNodeType::Shop; });
-			if (Shop && Wins >= 2)
+			if (Shop && Wins >= 2 && S.Gold >= Needed)
 			{
 				Run->ChooseNode(*Shop);
 				break;
@@ -446,7 +455,7 @@ void FDwRunContentSpec::Define()
 		TestEqual(TEXT("Repair"), Run->TryPurchase(Repair, FGuid()), EDwPurchaseResult::Ok);
 		TestEqual(TEXT("Third cannon"), Run->TryPurchase(Cannon, FGuid()), EDwPurchaseResult::Ok);
 		TestEqual(TEXT("Recruit"), Run->TryPurchase(Recruit, FGuid()), EDwPurchaseResult::Ok);
-		TestEqual(TEXT("Hull +100"), S.Ship.Health, 250.f);
+		TestEqual(TEXT("Hull + RepairAmount"), S.Ship.Health, Repaired);
 		TestEqual(TEXT("Four crew"), S.CountLivingCrew(), 4);
 		const FGuid RecruitId = S.Crew.Last().Id;
 		TestTrue(TEXT("Left"), Run->LeaveShop());
@@ -456,8 +465,14 @@ void FDwRunContentSpec::Define()
 		TestTrue(TEXT("The recruit is in the fight"), FindCrewUnit(RecruitId).IsValid());
 		const ADwShip* Ship = F.Combat->GetShip(EDwSide::Player);
 		TestEqual(TEXT("Three player cannons"), Ship ? Ship->GetCannonTiles().Num() : 0, 3);
-		TestEqual(TEXT("Ship spawned with the repaired hull"), Ship ? Ship->GetHealth() : 0.f, 250.f);
-		// The upgrade is the player's: the enemy ship keeps exactly its own layout's cannons.
+		TestEqual(TEXT("Ship spawned with the repaired hull"), Ship ? Ship->GetHealth() : 0.f, Repaired);
+		// The upgrade is the player's: the enemy ship keeps exactly its own layout's cannons. With DW-401's prices the
+		// purse may only cover all three at the pre-boss shop; the Kraken has no ship, so there is nothing to compare.
+		if (!Setup.bHasEnemyShip)
+		{
+			TestTrue(TEXT("No enemy ship only at the boss"), Setup.OutcomeConfig.bIsBossFight);
+			return;
+		}
 		const ADwShip* Enemy = F.Combat->GetShip(EDwSide::Enemy);
 		const UDwDeckLayout* EnemyDeck = Run->GetCurrentNode() && Run->GetCurrentNode()->Encounter ? Run->GetCurrentNode()->Encounter->ShipDeck.Get() : nullptr;
 		const int32 EnemyCannons = EnemyDeck ? static_cast<int32>(Algo::CountIf(EnemyDeck->Tiles, [](const FDwTile& T) { return T.Tags.HasTagExact(DwTags::Tile_Cannon); })) : -1;

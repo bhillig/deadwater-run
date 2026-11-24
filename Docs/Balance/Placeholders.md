@@ -181,3 +181,23 @@ The numbers of Set A (`Docs/Balance/N1-AbilityDrafts.md`, chosen by Brandon) and
 | `PerkTuning.json` | `ThickSkin` / `RumRation` | `Value` | 20 HP / 5 MP | A fifth of a fresh pirate's Health and a quarter of its MP; 2 stacks each |
 | `PerkTuning.json` | `IronHide` / `SteadyHand` | `Value` | 0.2 / 0.2 | Twice the shared Hardened / Cutthroat, as the archetype's signature pick; 1 stack each |
 | `PerkTuning.json` | `Brawler` / `DeepBreath` | `Value` | 30 HP / 10 MP | One and a half / two times the shared versions |
+
+## Set by DW-401 (simulator balance pass), 2026-11-24
+
+From 3000-run simulator data (`Docs/Balance/DW-401-Balance.md`). These rows replace the earlier placeholders for the same fields. They are still placeholders until Brandon approves them and QA playtests (DW-404) calibrate the time estimate. Rows marked **design** change a number from `DeadwaterRun.md` and need Brandon's sign-off.
+
+| File | Row | Field | Old -> new | Why |
+|---|---|---|---|---|
+| `ShipTuning.json` | `EnemyPlaceholder` | `MaxHealth` | 250 -> 700 | Two 70-damage cannons take 5 rounds to sink it instead of 2, so boarding, abilities and Fear get time to matter |
+| `ShipTuning.json` | `EnemyPlaceholder` | `CannonDamage` | 70 -> 10 | Keeps hull loss per won fight at ~30 (was ~76) over the longer fights, so repairs stay a choice and not a tax |
+| `AbilityTuning.json` | `Captain_RallyCry` / `GrappleHook` / `SmokeAndFire` / `SixPistols` / `Charge` / `EyeOfTheTiger` | `ManaCost` | 0 -> 8 / 4 / 7 / 6 / 3 / 5 | K13. Free abilities let Smoke and Fire chain round-1 surrenders (Fearmongerer 98% wins once fights got longer). 7 MP = two casts per 20 MP fight, so a first surrender needs a third Fear source (Boarding Cry, Dread Reputation); at 6 MP (three casts) he won 97% |
+| `AbilityTuning.json` | `Captain_Charge` | `Damage` / `DamageScale` | 40 / 0 -> 60 / 1.0 | K13: Conqueror's signature hit; scales with his `AttackDamage` (85 at level 1) |
+| `AbilityTuning.json` | `Attack_Sword` | `DamageScale` | 0 -> 1.0 | Lets the Conqueror's `AttackDamage` add to his cutlass. Every other unit has `AttackDamage` 0, so their swords are unchanged |
+| `UnitTuning.json` | `Captain_Conqueror` | `MaxHealth` / `HealthPerLevel` | 100 / 10 -> 200 / 20 | K13 "Conqueror base stats"; **design** (crew of "100 HP"). "Significantly stronger than his crew"; at 100 HP he died charging Deckhands in 37% of first fights |
+| `UnitTuning.json` | `Captain_Conqueror` | `AttackDamage` / `AttackDamagePerLevel` | 0 / 0 -> 25 / 2 | K13: cutlass 50 at level 1 (crew 25). Makes up for his crew's one-choice turns, which cost him ~1 round per fight |
+| `UnitTuning.json` | `KrakenBody` | `MaxHealth` | 500 -> 1600 | **design**. Cannons hit the body for flat `CannonDamage` (B4); 500 fell in ~2 rounds with a 97% win rate. Stopgap until a rule change (report, R4) |
+| `EncounterTuning.json` | `Deckhands` / `PowderMonkeys` / `Sharpshooters` / `Cutthroats` / `DreadCrew` | `BaseGold` | 150 / 170 / 195 / 215 / 240 -> 110 / 120 / 125 / 130 / 140 | Flatter tiers (x1.0 to x1.27, was x1.6): late gold piled up to ~700 at the pre-boss shop, which bought everything |
+| `ShipUpgradeTuning.json` | `ReinforcedHull` / `HeavyShot` / `ExtraCannon` | `Price` | 150 / 150 / 150 -> 200 / 250 / 300 | P18 b) tiered. The third cannon is +50% ship damage and was the best buy at any price |
+| `EconomyTuning.json` | `Default` | `RepairAmount` | 100 -> 60 | P7: 100 gold now buys 60 hull, so a hurt crew must choose between repairing and upgrading (`RepairCost` stays 100, the design number) |
+
+Not changed and still placeholders: enemy `Level` 1 / 2 / 3 (set in C++ in `UDwEnemyCrewContentLibrary`, not in data; see the report's recommendations), `ClearXp`, perk values, crew ability numbers, AI weights.
