@@ -12,22 +12,22 @@ Sources: `DeadwaterRun.md`, `Docs/ContentPipeline/voice.md`, `Docs/Release/Store
 - **S02** Each event restages the game's hook in miniature: a quick, safe option against a slow, rich one, the same call as sinking the ship (1x loot) or killing the crew to plunder (1.5x). If no choice carries that sink-or-plunder tension, the event is not Deadwater Run.
   - `DeadwaterRun.md:5`: "sink your enemy’s ship allowing you to progress through the fight quicker or slay all enemies for the opportunity to plunder?"
   - `DeadwaterRun.md:88`: "grants you 1.5x the loot"
-  - `Docs/Release/StorePage.md:102`: "Quick and safe, or slow and rich - your call, every fight."
+  - `Docs/Release/StorePage.md:93`: "Quick and safe, or slow and rich - your call, every fight."
 - **S03** Costs land on Deadwater Run's two health bars: the ship (250 HP, two 70-damage cannons, ShipHealth) and the crew (100 HP each, CrewHealth). The strongest events make you spend one bar to save the other: the hull or the crew.
   - `DeadwaterRun.md:61`: "Ship starts with 250 HP and two cannons"
   - `DeadwaterRun.md:66`: "Start with a pirate crew of three (100 HP/20 MP)"
   - `DeadwaterRun.md:5`: "Each pirate ship has a health bar too."
 - **S04** Crew lives are permanent. A pirate lost to LoseCrew is gone for good, from a crew of 4 at most. That loss is never a throwaway line: the result text names who goes (the Swordsman, the Sniper) and lets it land.
   - `DeadwaterRun.md:70`: "Once a crew member dies… they are gone for good!"
-  - `Docs/Release/StorePage.md:108`: "Permadeath crew: a fallen pirate is gone for good"
+  - `Docs/Release/StorePage.md:99`: "Permadeath crew: a fallen pirate is gone for good"
   - `DeadwaterRun.md:72`: "Maximum crew of 4 members (including the captain)"
 - **S05** You are a small, tough crew: a captain, a Swordsman (close range) and a Sniper (long range), up to four. Not a fleet, not a navy, no first mate, quartermaster or cabin boy the game doesn't have. Crowds of your own sailors don't exist.
-  - `Docs/Release/StorePage.md:123`: "You have a ship, a captain and two crewmates. That will have to do."
+  - `Docs/Release/StorePage.md:114`: "You have a ship, a captain and two crewmates. That will have to do."
   - `DeadwaterRun.md:68`: "Swordsman (Close range)"
   - `DeadwaterRun.md:69`: "Sniper (Long range)"
 - **S06** The Kraken waits at the end of the chart and has never been beaten. Events can foreshadow it (tentacle scars, hulls it broke, crews that sailed on before you) but never fight it, wound it or hand you its weakness. It is the only monster in Aquadia.
   - `DeadwaterRun.md:121`: "Players must fight a Kraken to beat the game"
-  - `Docs/Release/StorePage.md:123`: "the Kraken has never been beaten"
+  - `Docs/Release/StorePage.md:114`: "the Kraken has never been beaten"
   - `DeadwaterRun.md:125`: "Tentacle slam"
 - **S07** Aquadia's sea is mostly kind but never safe: 60% of events are Good, the rest Bad. Good events can still cost something; Bad events always offer a choice that limits the damage.
   - `DeadwaterRun.md:118`: "Random event occurs with 60% good / 40% bad odds"
@@ -54,7 +54,7 @@ Sources: `DeadwaterRun.md`, `Docs/ContentPipeline/voice.md`, `Docs/Release/Store
   - `DeadwaterRun.md:82`: "The sniper's nest of a ship is available"
 - **V03** Dry gallows humour, the store page's "That will have to do." Understatement over punchlines. Aquadia is dangerous and tense: not a cartoon, not grimdark.
   - `Docs/ContentPipeline/voice.md:10`: "The tone is a small, tough crew against a cruel sea. Dangerous and tense, with dry gallows humour. It isn't a cartoon and it isn't grimdark"
-  - `Docs/Release/StorePage.md:123`: "That will have to do."
+  - `Docs/Release/StorePage.md:114`: "That will have to do."
 - **V04** One salty word per line at most. Deadwater Run never says "arr", "matey", "ye", "shiver me timbers": those are stage pirates, and the code checks ban them.
   - `Docs/ContentPipeline/voice.md:17`: "**Light pirate flavour.** One salty word per line at most. No "arr", "matey", "ye" or "shiver me timbers""
 - **V05** Labels are short imperatives ("Cut the line"). The event screen already prints each outcome's Describe() "you will" line under its button, so a label never restates the numbers and never reads like "Option A: lose 20 gold".
@@ -79,10 +79,10 @@ Sources: `DeadwaterRun.md`, `Docs/ContentPipeline/voice.md`, `Docs/Release/Store
 
 ## Reference lines
 
-- "The seas of Aquadia have never been kind, and the Kraken has never been beaten." (`Docs/Release/StorePage.md:123`)
-- "You have a ship, a captain and two crewmates. That will have to do." (`Docs/Release/StorePage.md:123`)
-- "Quick and safe, or slow and rich - your call, every fight." (`Docs/Release/StorePage.md:102`)
-- "Lose a pirate and they're gone for good." (`Docs/Release/StorePage.md:90`)
+- "The seas of Aquadia have never been kind, and the Kraken has never been beaten." (`Docs/Release/StorePage.md:114`)
+- "You have a ship, a captain and two crewmates. That will have to do." (`Docs/Release/StorePage.md:114`)
+- "Quick and safe, or slow and rich - your call, every fight." (`Docs/Release/StorePage.md:93`)
+- "Lose a pirate and they're gone for good." (`Docs/Release/StorePage.md:81`)
 
 ## The shipped event pool (`Tuning/Events.json`, in the game)
 
